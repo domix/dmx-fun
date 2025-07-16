@@ -53,7 +53,7 @@ class ResultSpecs extends Specification {
         when:
             result.peek { touched.set(true) }
         then:
-            touched
+            touched.get()
     }
 
     def 'should verify peek on err'() {
@@ -64,6 +64,26 @@ class ResultSpecs extends Specification {
             result.peek { touched.set(true) }
         then:
             !touched.get()
+    }
+
+    def 'should verify peekError on ok'() {
+        given:
+            def result = Result.ok('hello')
+            def touched = new AtomicBoolean(false)
+        when:
+            result.peekError { touched.set(true) }
+        then:
+            !touched.get()
+    }
+
+    def 'should verify peekError on err'() {
+        given:
+            def result = Result.err('hello')
+            def touched = new AtomicBoolean(false)
+        when:
+            result.peekError { touched.set(true) }
+        then:
+            touched.get()
     }
 
     def 'should avoid to map an Error value'() {
