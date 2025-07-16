@@ -26,7 +26,7 @@ class ResultSpecs extends Specification {
 
     /**
      * Tests mapping functionality on an OK value.
-     * Verifies that the map operation correctly transforms the value and maintains the OK state.
+     * Verifies that the mapping operation correctly transforms the value and maintains the OK state.
      */
     def 'should map an OK value'() {
         given:
@@ -294,7 +294,7 @@ class ResultSpecs extends Specification {
                     mapper
                 )
                 .peekError {
-                    println it.getClass().name
+                    /* intentionally left blank – side-effects verified elsewhere */
                 }
         then:
             filtered.getError() == 'hello world!'
@@ -388,21 +388,21 @@ class ResultSpecs extends Specification {
     /**
      * Helper method that simulates an operation returning a Result.
      */
-    static Result<String, Integer> someOperation(String input) {
+    private static Result<String, Integer> someOperation(String input) {
         Result.ok(input)
     }
 
     /**
      * Helper method that simulates another operation returning a Result.
      */
-    static Result<String, Integer> anotherOperation(String input) {
+    private static Result<String, Integer> anotherOperation(String input) {
         Result.ok(input)
     }
 
     /**
      * Helper method that simulates an operation always returning an Error Result.
      */
-    static Result<String, Integer> anotherOperationWithError(int input) {
+    private static Result<String, Integer> anotherOperationWithError(int input) {
         Result.err(input)
     }
 
