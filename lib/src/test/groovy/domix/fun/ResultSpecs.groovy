@@ -1,5 +1,6 @@
 package domix.fun
 
+
 import spock.lang.Specification
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -293,5 +294,21 @@ class ResultSpecs extends Specification {
 
     static Result<String, Integer> anotherOperationWithError(int input) {
         Result.err(input)
+    }
+
+    def 'should getOrThrow for ok value'() {
+        given:
+            def result = Result.ok('hello')
+        expect:
+            result.getOrThrow { new NullPointerException() } == 'hello'
+    }
+
+    def 'should getOrThrow for err'() {
+        given:
+            def result = Result.err('hello')
+        when:
+            result.getOrThrow { new NullPointerException() }
+        then:
+            thrown(NullPointerException)
     }
 }
