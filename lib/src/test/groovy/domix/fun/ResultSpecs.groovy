@@ -311,4 +311,32 @@ class ResultSpecs extends Specification {
         then:
             thrown(NullPointerException)
     }
+
+    def 'should fold an ok value'() {
+        given:
+            def result = Result.ok('hello')
+                .flatMap { someOperation(it) }
+        when:
+            def folded = result
+                .fold(
+                    { it },
+                    { 'the error' }
+                )
+        then:
+            folded == 'hello'
+    }
+
+    def 'should fold an err value'() {
+        given:
+            def result = Result.err('hello')
+                .flatMap { anotherOperation('foo') }
+        when:
+            def folded = result
+                .fold(
+                    { it },
+                    { 'the error' }
+                )
+        then:
+            folded == 'the error'
+    }
 }
