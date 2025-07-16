@@ -318,6 +318,4 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         }
         return this;
     }
-
-
 }
