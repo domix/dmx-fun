@@ -3,8 +3,17 @@ package domix.fun
 import spock.lang.Specification
 
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Function
 
 class ResultSpecs extends Specification {
+    def static mapper = new Function<String, String>() {
+
+        @Override
+        String apply(String s) {
+            return s + ' world!'
+        }
+    }
+
     def 'should map an OK value'() {
         given:
             def result = Result.ok('hello')
@@ -187,6 +196,49 @@ class ResultSpecs extends Specification {
                 .filter(
                     { input -> input.length() > 10 },
                     'error'
+                )
+        then:
+            filtered.getError() == 'hello world!'
+    }
+
+    def 'should filter an ok and use provided function for error'() {
+        given:
+            def result = Result.ok('hello')
+        when:
+
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    mapper
+                )
+                .peekError {
+                    println it.getClass().name
+                }
+        then:
+            filtered.getError() == 'hello world!'
+    }
+
+    def 'should filter an ok and ignore provided function for error'() {
+        given:
+            def result = Result.ok('hello world!')
+        when:
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    mapper
+                )
+        then:
+            filtered.get() == 'hello world!'
+    }
+
+    def 'should filter an err and ignore provided function for error'() {
+        given:
+            def result = Result.err('hello world!')
+        when:
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    mapper
                 )
         then:
             filtered.getError() == 'hello world!'

@@ -314,7 +314,12 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      */
     default Result<Value, Error> filter(Predicate<Value> predicate, Function<Value, Error> errorIfFalse) {
         if (this instanceof Ok<Value, Error>(Value value)) {
-            return predicate.test(value) ? this : Result.err(errorIfFalse.apply(value));
+            if (predicate.test(value)) {
+                return this;
+            } else {
+                return Result.err(errorIfFalse.apply(value));
+            }
+//            return predicate.test(value) ? this : Result.err(errorIfFalse.apply(value));
         }
         return this;
     }
