@@ -2,16 +2,68 @@ package domix.fun
 
 import spock.lang.Specification
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 class ResultSpecs extends Specification {
     def 'should map an OK value'() {
         given:
             def result = Result.ok('hello')
         when:
+            def isOk = result.isOk()
             def mappedValue = result
                 .map { it.length() }
                 .get()
         then:
-            assert 5 == mappedValue
+            5 == mappedValue
+            isOk
+    }
+
+    def 'should verify getOrElse return value when ok'() {
+        given:
+            def result = Result.ok('hello')
+        expect:
+            result.getOrElse('fallback') == 'hello'
+    }
+
+    def 'should verify getOrElse return fallback when error'() {
+        given:
+            def result = Result.err('hello')
+        expect:
+            result.getOrElse('fallback') == 'fallback'
+    }
+
+    def 'should verify getOrElseGet return value when ok'() {
+        given:
+            def result = Result.ok('hello')
+        expect:
+            result.getOrElseGet { 'fallback' } == 'hello'
+    }
+
+    def 'should verify getOrElseGet return fallback when error'() {
+        given:
+            def result = Result.err('hello')
+        expect:
+            result.getOrElseGet { 'fallback' } == 'fallback'
+    }
+
+    def 'should verify peek on ok'() {
+        given:
+            def result = Result.ok('hello')
+            def touched = new AtomicBoolean(false)
+        when:
+            result.peek { touched.set(true) }
+        then:
+            touched
+    }
+
+    def 'should verify peek on err'() {
+        given:
+            def result = Result.err('hello')
+            def touched = new AtomicBoolean(false)
+        when:
+            result.peek { touched.set(true) }
+        then:
+            !touched.get()
     }
 
     def 'should avoid to map an Error value'() {
@@ -32,7 +84,8 @@ class ResultSpecs extends Specification {
             def value = result
                 .getOrNull()
         then:
-            assert value == null
+            value == null
+            result.isError()
     }
 
     def 'should get the value'() {
@@ -42,7 +95,7 @@ class ResultSpecs extends Specification {
             def value = result
                 .getOrNull()
         then:
-            assert value == 'hello'
+            value == 'hello'
     }
 
     def 'should get the error'() {
@@ -73,7 +126,7 @@ class ResultSpecs extends Specification {
             mappedError == 3
         when:
             result = Result<String, String>.ok('foo')
-            def error = result
+            result
                 .mapError { '' }
                 .getError()
         then:
