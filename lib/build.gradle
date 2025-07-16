@@ -5,6 +5,7 @@ plugins {
 
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
+    id 'jacoco'
 }
 
 repositories {
@@ -39,4 +40,11 @@ java {
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
 }
