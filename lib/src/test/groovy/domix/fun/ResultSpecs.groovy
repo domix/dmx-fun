@@ -1,10 +1,20 @@
 package domix.fun
 
+
 import spock.lang.Specification
 
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Function
 
 class ResultSpecs extends Specification {
+    def static mapper = new Function<String, String>() {
+
+        @Override
+        String apply(String s) {
+            return s + ' world!'
+        }
+    }
+
     def 'should map an OK value'() {
         given:
             def result = Result.ok('hello')
@@ -190,5 +200,143 @@ class ResultSpecs extends Specification {
                 )
         then:
             filtered.getError() == 'hello world!'
+    }
+
+    def 'should filter an ok and use provided function for error'() {
+        given:
+            def result = Result.ok('hello')
+        when:
+
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    mapper
+                )
+                .peekError {
+                    println it.getClass().name
+                }
+        then:
+            filtered.getError() == 'hello world!'
+    }
+
+    def 'should filter an ok and ignore provided function for error'() {
+        given:
+            def result = Result.ok('hello world!')
+        when:
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    mapper
+                )
+        then:
+            filtered.get() == 'hello world!'
+    }
+
+    def 'should filter an err and ignore provided function for error'() {
+        given:
+            def result = Result.err('hello world!')
+        when:
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    mapper
+                )
+        then:
+            filtered.getError() == 'hello world!'
+    }
+
+    def 'should process match for ok'() {
+        given:
+            def result = Result.ok('dd')
+            def touchedOk = new AtomicBoolean(false)
+        when:
+            result.match(
+                { touchedOk.set(true) },
+                { touchedOk.set(false) }
+            )
+        then:
+            touchedOk.get()
+    }
+
+    def 'should process match for error'() {
+        given:
+            def result = Result.err('dd')
+            def touchedErr = new AtomicBoolean(false)
+        when:
+            result.match(
+                { touchedErr.set(false) },
+                { touchedErr.set(true) }
+            )
+        then:
+            touchedErr.get()
+    }
+
+    def 'should flatMap'() {
+        given:
+            def result = someOperation('hello')
+
+        when:
+            def flatMapped = result
+                .flatMap { anotherOperation(it) }
+                .flatMap { anotherOperationWithError(it.length()) }
+                .flatMap { someOperation(it) }
+        then:
+            flatMapped.isError()
+    }
+
+    static Result<String, Integer> someOperation(String input) {
+        Result.ok(input)
+    }
+
+    static Result<String, Integer> anotherOperation(String input) {
+        Result.ok(input)
+    }
+
+    static Result<String, Integer> anotherOperationWithError(int input) {
+        Result.err(input)
+    }
+
+    def 'should getOrThrow for ok value'() {
+        given:
+            def result = Result.ok('hello')
+        expect:
+            result.getOrThrow { new NullPointerException() } == 'hello'
+    }
+
+    def 'should getOrThrow for err'() {
+        given:
+            def result = Result.err('hello')
+        when:
+            result.getOrThrow { new NullPointerException() }
+        then:
+            thrown(NullPointerException)
+    }
+
+    def 'should fold an ok value'() {
+        given:
+            def result = Result.ok('hello')
+                .flatMap { someOperation(it) }
+        when:
+            def folded = result
+                .fold(
+                    { it },
+                    { 'the error' }
+                )
+        then:
+            folded == 'hello'
+    }
+
+    def 'should fold an err value'() {
+        given:
+            def result = Result.err('hello')
+                .flatMap { anotherOperation('foo') }
+        when:
+            def folded = result
+                .fold(
+                    { it },
+                    { 'the error' }
+                )
+        then:
+            folded == 'the error'
     }
 }
