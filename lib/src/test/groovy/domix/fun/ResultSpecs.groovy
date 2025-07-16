@@ -269,4 +269,29 @@ class ResultSpecs extends Specification {
         then:
             touchedErr.get()
     }
+
+    def 'should flatMap'() {
+        given:
+            def result = someOperation('hello')
+
+        when:
+            def flatMapped = result
+                .flatMap { anotherOperation(it) }
+                .flatMap { anotherOperationWithError(it.length()) }
+                .flatMap { someOperation(it) }
+        then:
+            flatMapped.isError()
+    }
+
+    static Result<String, Integer> someOperation(String input) {
+        Result.ok(input)
+    }
+
+    static Result<String, Integer> anotherOperation(String input) {
+        Result.ok(input)
+    }
+
+    static Result<String, Integer> anotherOperationWithError(int input) {
+        Result.err(input)
+    }
 }
