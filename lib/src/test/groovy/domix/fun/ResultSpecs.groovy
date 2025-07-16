@@ -6,7 +6,16 @@ import spock.lang.Specification
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
+/**
+ * Spock specification class that tests the functionality of the {@code Result} class.
+ * This class contains comprehensive tests to verify the behavior of monadic operations
+ * and error handling implemented in the {@code Result} class.
+ */
 class ResultSpecs extends Specification {
+    /**
+     * Static mapper function used in several tests.
+     * Concatenates the string " world!" to the input value.
+     */
     def static mapper = new Function<String, String>() {
 
         @Override
@@ -15,6 +24,10 @@ class ResultSpecs extends Specification {
         }
     }
 
+    /**
+     * Tests mapping functionality on an OK value.
+     * Verifies that the mapping operation correctly transforms the value and maintains the OK state.
+     */
     def 'should map an OK value'() {
         given:
             def result = Result.ok('hello')
@@ -28,6 +41,10 @@ class ResultSpecs extends Specification {
             isOk
     }
 
+    /**
+     * Tests getOrElse functionality when the Result is OK.
+     * Verifies that the original value is returned instead of the fallback.
+     */
     def 'should verify getOrElse return value when ok'() {
         given:
             def result = Result.ok('hello')
@@ -35,6 +52,10 @@ class ResultSpecs extends Specification {
             result.getOrElse('fallback') == 'hello'
     }
 
+    /**
+     * Tests getOrElse functionality when the Result is Error.
+     * Verifies that the fallback value is returned.
+     */
     def 'should verify getOrElse return fallback when error'() {
         given:
             def result = Result.err('hello')
@@ -42,6 +63,10 @@ class ResultSpecs extends Specification {
             result.getOrElse('fallback') == 'fallback'
     }
 
+    /**
+     * Tests getOrElseGet functionality when the Result is OK.
+     * Verifies that the original value is returned instead of the supplier's value.
+     */
     def 'should verify getOrElseGet return value when ok'() {
         given:
             def result = Result.ok('hello')
@@ -49,6 +74,10 @@ class ResultSpecs extends Specification {
             result.getOrElseGet { 'fallback' } == 'hello'
     }
 
+    /**
+     * Tests getOrElseGet functionality when the Result is Error.
+     * Verifies that the supplier's value is returned.
+     */
     def 'should verify getOrElseGet return fallback when error'() {
         given:
             def result = Result.err('hello')
@@ -56,6 +85,10 @@ class ResultSpecs extends Specification {
             result.getOrElseGet { 'fallback' } == 'fallback'
     }
 
+    /**
+     * Tests peek operation on OK Result.
+     * Verifies that the consumer is executed for OK values.
+     */
     def 'should verify peek on ok'() {
         given:
             def result = Result.ok('hello')
@@ -66,6 +99,10 @@ class ResultSpecs extends Specification {
             touched.get()
     }
 
+    /**
+     * Tests peek operation on Error Result.
+     * Verifies that the consumer is not executed for Error values.
+     */
     def 'should verify peek on err'() {
         given:
             def result = Result.err('hello')
@@ -76,6 +113,10 @@ class ResultSpecs extends Specification {
             !touched.get()
     }
 
+    /**
+     * Tests peekError operation on OK Result.
+     * Verifies that the error consumer is not executed for OK values.
+     */
     def 'should verify peekError on ok'() {
         given:
             def result = Result.ok('hello')
@@ -86,6 +127,10 @@ class ResultSpecs extends Specification {
             !touched.get()
     }
 
+    /**
+     * Tests peekError operation on Error Result.
+     * Verifies that the error consumer is executed for Error values.
+     */
     def 'should verify peekError on err'() {
         given:
             def result = Result.err('hello')
@@ -96,6 +141,10 @@ class ResultSpecs extends Specification {
             touched.get()
     }
 
+    /**
+     * Tests that mapping is not performed on Error values.
+     * Verifies that attempting to get the value throws NoSuchElementException.
+     */
     def 'should avoid to map an Error value'() {
         given:
             def result = Result.err('hello')
@@ -107,6 +156,10 @@ class ResultSpecs extends Specification {
             thrown(NoSuchElementException)
     }
 
+    /**
+     * Tests getOrNull functionality on Error Result.
+     * Verifies that null is returned for Error values.
+     */
     def 'should get a null on Error value'() {
         given:
             def result = Result.err('hello')
@@ -118,6 +171,10 @@ class ResultSpecs extends Specification {
             result.isError()
     }
 
+    /**
+     * Tests getting value from OK Result.
+     * Verifies that the correct value is returned.
+     */
     def 'should get the value'() {
         given:
             def result = Result.ok('hello')
@@ -128,6 +185,10 @@ class ResultSpecs extends Specification {
             value == 'hello'
     }
 
+    /**
+     * Tests getting error from Error Result.
+     * Verifies error retrieval behavior for both OK and Error Results.
+     */
     def 'should get the error'() {
         given:
             def result = Result.err('hello')
@@ -144,6 +205,10 @@ class ResultSpecs extends Specification {
             ex.message == 'No error present.'
     }
 
+    /**
+     * Tests error mapping functionality.
+     * Verifies that error transformation works correctly.
+     */
     def 'should map error'() {
         given:
             def result = Result.err('foo')
@@ -163,6 +228,10 @@ class ResultSpecs extends Specification {
             thrown(NoSuchElementException)
     }
 
+    /**
+     * Tests filter operation with direct error value.
+     * Verifies filtering behavior when predicate fails.
+     */
     def 'should filter an ok and set provided value for error'() {
         given:
             def result = Result.ok('hello')
@@ -176,6 +245,10 @@ class ResultSpecs extends Specification {
             filtered.getError() == 'error'
     }
 
+    /**
+     * Tests filter operation with passing predicate.
+     * Verifies that the Result remains unchanged when predicate passes.
+     */
     def 'should filter an ok and ignore provided value for error'() {
         given:
             def result = Result.ok('hello world!')
@@ -189,6 +262,10 @@ class ResultSpecs extends Specification {
             filtered.get() == 'hello world!'
     }
 
+    /**
+     * Tests filter operation on Error Result.
+     * Verifies that filtering doesn't affect Error Results.
+     */
     def 'should filter an err and ignore provided value for error'() {
         given:
             def result = Result.err('hello world!')
@@ -202,6 +279,10 @@ class ResultSpecs extends Specification {
             filtered.getError() == 'hello world!'
     }
 
+    /**
+     * Tests filter operation with error mapping function.
+     * Verifies filtering behavior with custom error mapping.
+     */
     def 'should filter an ok and use provided function for error'() {
         given:
             def result = Result.ok('hello')
@@ -213,12 +294,16 @@ class ResultSpecs extends Specification {
                     mapper
                 )
                 .peekError {
-                    println it.getClass().name
+                    /* intentionally left blank – side-effects verified elsewhere */
                 }
         then:
             filtered.getError() == 'hello world!'
     }
 
+    /**
+     * Tests filter operation with passing predicate and mapping function.
+     * Verifies that the Result remains unchanged when predicate passes.
+     */
     def 'should filter an ok and ignore provided function for error'() {
         given:
             def result = Result.ok('hello world!')
@@ -232,6 +317,10 @@ class ResultSpecs extends Specification {
             filtered.get() == 'hello world!'
     }
 
+    /**
+     * Tests filter operation on Error Result with mapping function.
+     * Verifies that filtering doesn't affect Error Results.
+     */
     def 'should filter an err and ignore provided function for error'() {
         given:
             def result = Result.err('hello world!')
@@ -245,6 +334,10 @@ class ResultSpecs extends Specification {
             filtered.getError() == 'hello world!'
     }
 
+    /**
+     * Tests match operation for OK Result.
+     * Verifies that the success consumer is executed.
+     */
     def 'should process match for ok'() {
         given:
             def result = Result.ok('dd')
@@ -258,6 +351,10 @@ class ResultSpecs extends Specification {
             touchedOk.get()
     }
 
+    /**
+     * Tests match operation for Error Result.
+     * Verifies that the error consumer is executed.
+     */
     def 'should process match for error'() {
         given:
             def result = Result.err('dd')
@@ -271,6 +368,10 @@ class ResultSpecs extends Specification {
             touchedErr.get()
     }
 
+    /**
+     * Tests flatMap operation chaining.
+     * Verifies behavior of multiple flatMap operations.
+     */
     def 'should flatMap'() {
         given:
             def result = someOperation('hello')
@@ -284,18 +385,31 @@ class ResultSpecs extends Specification {
             flatMapped.isError()
     }
 
-    static Result<String, Integer> someOperation(String input) {
+    /**
+     * Helper method that simulates an operation returning a Result.
+     */
+    private static Result<String, Integer> someOperation(String input) {
         Result.ok(input)
     }
 
-    static Result<String, Integer> anotherOperation(String input) {
+    /**
+     * Helper method that simulates another operation returning a Result.
+     */
+    private static Result<String, Integer> anotherOperation(String input) {
         Result.ok(input)
     }
 
-    static Result<String, Integer> anotherOperationWithError(int input) {
+    /**
+     * Helper method that simulates an operation always returning an Error Result.
+     */
+    private static Result<String, Integer> anotherOperationWithError(int input) {
         Result.err(input)
     }
 
+    /**
+     * Tests getOrThrow functionality for OK Result.
+     * Verifies that the value is returned without throwing exception.
+     */
     def 'should getOrThrow for ok value'() {
         given:
             def result = Result.ok('hello')
@@ -303,6 +417,10 @@ class ResultSpecs extends Specification {
             result.getOrThrow { new NullPointerException() } == 'hello'
     }
 
+    /**
+     * Tests getOrThrow functionality for Error Result.
+     * Verifies that the specified exception is thrown.
+     */
     def 'should getOrThrow for err'() {
         given:
             def result = Result.err('hello')
@@ -312,6 +430,10 @@ class ResultSpecs extends Specification {
             thrown(NullPointerException)
     }
 
+    /**
+     * Tests fold operation on OK Result.
+     * Verifies that the success mapping function is applied.
+     */
     def 'should fold an ok value'() {
         given:
             def result = Result.ok('hello')
@@ -326,6 +448,10 @@ class ResultSpecs extends Specification {
             folded == 'hello'
     }
 
+    /**
+     * Tests fold operation on Error Result.
+     * Verifies that the error mapping function is applied.
+     */
     def 'should fold an err value'() {
         given:
             def result = Result.err('hello')
