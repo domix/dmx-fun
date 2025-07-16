@@ -243,4 +243,30 @@ class ResultSpecs extends Specification {
         then:
             filtered.getError() == 'hello world!'
     }
+
+    def 'should process match for ok'() {
+        given:
+            def result = Result.ok('dd')
+            def touchedOk = new AtomicBoolean(false)
+        when:
+            result.match(
+                { touchedOk.set(true) },
+                { touchedOk.set(false) }
+            )
+        then:
+            touchedOk.get()
+    }
+
+    def 'should process match for error'() {
+        given:
+            def result = Result.err('dd')
+            def touchedErr = new AtomicBoolean(false)
+        when:
+            result.match(
+                { touchedErr.set(false) },
+                { touchedErr.set(true) }
+            )
+        then:
+            touchedErr.get()
+    }
 }
