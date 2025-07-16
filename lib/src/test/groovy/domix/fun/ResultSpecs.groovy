@@ -73,7 +73,7 @@ class ResultSpecs extends Specification {
             mappedError == 3
         when:
             result = Result<String, String>.ok('foo')
-            def error = result
+            result
                 .mapError { '' }
                 .getError()
         then:
