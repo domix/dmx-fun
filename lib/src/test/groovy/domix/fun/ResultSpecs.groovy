@@ -152,4 +152,43 @@ class ResultSpecs extends Specification {
         then:
             thrown(NoSuchElementException)
     }
+
+    def 'should filter an ok and set provided value for error'() {
+        given:
+            def result = Result.ok('hello')
+        when:
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    'error'
+                )
+        then:
+            filtered.getError() == 'error'
+    }
+
+    def 'should filter an ok and ignore provided value for error'() {
+        given:
+            def result = Result.ok('hello world!')
+        when:
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    'error'
+                )
+        then:
+            filtered.get() == 'hello world!'
+    }
+
+    def 'should filter an err and ignore provided value for error'() {
+        given:
+            def result = Result.err('hello world!')
+        when:
+            def filtered = result
+                .filter(
+                    { input -> input.length() > 10 },
+                    'error'
+                )
+        then:
+            filtered.getError() == 'hello world!'
+    }
 }
