@@ -25,6 +25,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in the successful result
      * @param <Error> the type of the error contained in the erroneous result, unused here
+     * @param value   the value that represents the successful result
      */
     record Ok<Value, Error>(Value value) implements Result<Value, Error> {
     }
@@ -37,6 +38,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in a successful result, unused here
      * @param <Error> the type of the error contained in the erroneous result
+     * @param error   the error value that represents the erroneous result
      */
     record Err<Value, Error>(Error error) implements Result<Value, Error> {
     }

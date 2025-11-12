@@ -50,7 +50,7 @@ jacocoTestReport {
 mavenPublishing {
     publishToMavenCentral(true, false)
     signAllPublications()
-    coordinates("codes.domix", "fun", "0.0.1")
+    coordinates("codes.domix", "fun", "0.0.2")
 
     pom {
         name = 'Functional Programming Constructions in Java.'
