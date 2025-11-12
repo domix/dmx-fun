@@ -4,6 +4,30 @@ import spock.lang.Specification
 
 import java.util.function.Function
 
+/**
+ * Specification that verifies the Result type adheres to the Monad and Functor laws.
+ * <p>
+ * This test suite ensures that the {@link Result} type correctly implements the mathematical
+ * properties required for a proper monad and functor, which guarantees predictable and composable behavior.
+ * <p>
+ * <h3>Monad Laws Verified:</h3>
+ * <ul>
+ *   <li><b>Left Identity:</b> {@code return a >>= f} should equal {@code f a}</li>
+ *   <li><b>Right Identity:</b> {@code m >>= return} should equal {@code m}</li>
+ *   <li><b>Associativity:</b> {@code (m >>= f) >>= g} should equal {@code m >>= (x -> f x >>= g)}</li>
+ * </ul>
+ * <p>
+ * <h3>Functor Laws Verified:</h3>
+ * <ul>
+ *   <li><b>Identity:</b> {@code map(id)} should equal {@code id}</li>
+ *   <li><b>Composition:</b> {@code map(f . g)} should equal {@code map(f) . map(g)}</li>
+ * </ul>
+ * <p>
+ * These laws ensure that {@code flatMap} and {@code map} operations can be safely refactored,
+ * nested, and composed without changing the semantic meaning of the code.
+ *
+ * @see Result
+ */
 class ResultMonadLawsSpec extends Specification {
 
     // f: x -> Ok(x * 2)
