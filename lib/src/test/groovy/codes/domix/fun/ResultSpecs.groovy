@@ -19,8 +19,8 @@ class ResultSpecs extends Specification {
     def static mapper = new Function<String, String>() {
 
         @Override
-        String apply(String s) {
-            return s + ' world!'
+        String apply(String message) {
+            "$message world!"
         }
     }
 
