@@ -46,3 +46,35 @@ jacocoTestReport {
         xml.required = true
     }
 }
+
+mavenPublishing {
+    publishToMavenCentral(true)
+    signAllPublications()
+    coordinates("codes.domix", "fun", "0.0.1")
+
+    pom {
+        name = 'Functional Programming Constructions in Java.'
+        description = ' The goal is to demonstrate how functional paradigms—such as immutability, pure functions, higher-order functions, currying, and more—can be expressed in Java, a traditionally object-oriented language.'
+        inceptionYear = "2025"
+        url = 'https://fun.domix.codes'
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+        developers {
+            developer {
+                id = 'domix'
+                name = 'Domingo Suarez Torres'
+                email = 'domingo.suarez@gmail.com'
+            }
+        }
+        scm {
+            connection = 'scm:git:https://github.com/domix/dmx-fun'
+            developerConnection = 'scm:git:https://github.com/domix/dmx-fun'
+            url = 'https://github.com/domix/dmx-fun'
+        }
+    }
+}
