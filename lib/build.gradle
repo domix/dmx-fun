@@ -48,7 +48,7 @@ jacocoTestReport {
 }
 
 mavenPublishing {
-    publishToMavenCentral(true)
+    publishToMavenCentral(true, false)
     signAllPublications()
     coordinates("codes.domix", "fun", "0.0.1")
 

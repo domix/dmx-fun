@@ -38,3 +38,22 @@ Contributions, discussions, and suggestions are welcome! Feel free to open issue
 ## 📄 License
 
 This project is licensed under the Apache License. See the [LICENSE](./LICENSE) file for more details.
+
+## 🛠️ Usage
+
+This library is available on Maven Central. To use it, include the following dependency to your project's configuration file:
+
+### Maven
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun</artifactId>
+    <version>0.0.1</version>
+</dependency>
+```
+
+### Gradle
+
+```groovy
+implementation("codes.domix:fun:0.0.1")
+```
