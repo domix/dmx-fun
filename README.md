@@ -93,7 +93,7 @@ In a nutshell, the `Result` type allows you to express a computation that may fa
 
 If everything goes well, the `Result` will contain the original value, in case of error, it will contain an error message.
 
-Now you want to validate the user's password, and you want to use the same logic. You can create a new method like this:
+Now you want to validate the user's password, with similar logic. You can create a new method like this:
 
 ```java
     protected Result<CreateUserCommand, String> isValidPassword(
@@ -118,7 +118,7 @@ Now you want to validate the user's password, and you want to use the same logic
 
 As you can see, the `Result` type is used to express the result of the validation. 
 
-Now you want to combine both validations in a single method. You can do it like this:
+Now we can combine both validations in a single method. You can do it like this:
 
 ```java
     public Result<User, String> createUser(CreateUserCommand command) {
@@ -130,6 +130,6 @@ Now you want to combine both validations in a single method. You can do it like 
 
 In this case, the validation is performed in two steps, and the result of the first step is used as the input for the second step.
 
-At the end, the result of the whole validation process is used to create the user in the database.
+In the end, the result of the whole validation process is used to create the user in the database.
 
 The main benefit of this approach is that the validation logic is encapsulated in a single method, and it can be reused in other places.
