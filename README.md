@@ -26,7 +26,7 @@ Examples and implementations may include:
 
 ## 🛠 Technologies
 
-- Java 24+  
+- Java 25+  
 - Gradle
 - Spock for testing  
 - [Vavr](https://www.vavr.io/) or similar libraries for functional data types (optional)  
@@ -41,19 +41,95 @@ This project is licensed under the Apache License. See the [LICENSE](./LICENSE) 
 
 ## 🛠️ Usage
 
+
+### Installation
+
 This library is available on Maven Central. To use it, include the following dependency to your project's configuration file:
 
-### Maven
+#### Maven
+
 ```xml
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
 </dependency>
 ```
 
-### Gradle
+#### Gradle
 
 ```groovy
-implementation("codes.domix:fun:0.0.1")
+implementation("codes.domix:fun:0.0.2")
 ```
+### Usage
+
+Assuming you have imported the library, you can start using it in your code.
+
+Let's start with a simple example. You have a method that validates a user's email, in a method like this:
+
+```java
+    protected Result<CreateUserCommand, String> isValidEmail(
+        CreateUserCommand command
+    ) {
+        var email = command.email();
+        if (email == null || email.isBlank()) {
+            return Result.err("Provided email is either null or blank");
+        }
+        boolean emailMatches = EMAIL_PATTERN
+            .matcher(email)
+            .matches();
+
+        if (!emailMatches) {
+            return Result.err("Invalid email");
+        }
+
+        return Result.ok(command);
+    }
+```
+
+In the previous example, we are using the `Result` type from the `fun` library. This type is a simple wrapper around an `Optional` that provides additional methods for handling errors.
+
+In a nutshell, the `Result` type allows you to express a computation that may fail, and handle the error case in a type-safe way.
+
+If everything goes well, the `Result` will contain the original value, in case of error, it will contain an error message.
+
+Now you want to validate the user's password, with similar logic. You can create a new method like this:
+
+```java
+    protected Result<CreateUserCommand, String> isValidPassword(
+        CreateUserCommand command
+    ) {
+
+        var password = command.password();
+        if (password == null) {
+            return Result.err("Provided password is null");
+        }
+        boolean validPassword = PASSWORD_PATTERN
+            .matcher(password)
+            .matches();
+
+        if (!validPassword) {
+            return Result.err("Invalid password.");
+        }
+
+        return Result.ok(command);
+    }
+```
+
+As you can see, the `Result` type is used to express the result of the validation. 
+
+Now we can combine both validations in a single method. You can do it like this:
+
+```java
+    public Result<User, String> createUser(CreateUserCommand command) {
+        return this.isValidEmail(command)
+            .flatMap(this::isValidPassword)
+            .flatMap(this.userRepository::createUser);
+    }
+```
+
+In this case, the validation is performed in two steps, and the result of the first step is used as the input for the second step.
+
+In the end, the result of the whole validation process is used to create the user in the database.
+
+The main benefit of this approach is that the validation logic is encapsulated in a single method, and it can be reused in other places.

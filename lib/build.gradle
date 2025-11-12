@@ -54,7 +54,7 @@ mavenPublishing {
 
     pom {
         name = 'Functional Programming Constructions in Java.'
-        description = ' The goal is to demonstrate how functional paradigms—such as immutability, pure functions, higher-order functions, currying, and more—can be expressed in Java, a traditionally object-oriented language.'
+        description = 'The goal is to demonstrate how functional paradigms—such as immutability, pure functions, higher-order functions, currying, and more—can be expressed in Java, a traditionally object-oriented language.'
         inceptionYear = "2025"
         url = 'https://fun.domix.codes'
         licenses {
