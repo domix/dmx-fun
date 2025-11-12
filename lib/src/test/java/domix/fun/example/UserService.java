@@ -29,6 +29,14 @@ public class UserService {
         Result<Result<CreateUserCommand, String>, String> map = this.isValidEmail(command)
                 .map(this::isValidPassword);
 
+        Result<CreateUserCommand, String> validPassword = this.isValidPassword(command);
+
+        if (validPassword.isOk()) {
+            CreateUserCommand createUserCommand = validPassword.get();
+        } else {
+
+        }
+
         final var result = this.isValidEmail(command)
                 .flatMap(this::isValidPassword)
                 .flatMap(this.userRepository::createUser);
