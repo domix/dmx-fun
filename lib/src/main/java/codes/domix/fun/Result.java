@@ -1,4 +1,4 @@
-package domix.fun;
+package codes.domix.fun;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;

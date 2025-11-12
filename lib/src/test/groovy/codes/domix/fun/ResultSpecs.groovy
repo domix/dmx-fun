@@ -1,4 +1,4 @@
-package domix.fun
+package codes.domix.fun
 
 
 import spock.lang.Specification

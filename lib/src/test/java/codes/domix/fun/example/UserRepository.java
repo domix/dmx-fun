@@ -1,6 +1,6 @@
-package domix.fun.example;
+package codes.domix.fun.example;
 
-import domix.fun.Result;
+import codes.domix.fun.Result;
 
 public interface UserRepository {
     Result<User, String> createUser(CreateUserCommand command);

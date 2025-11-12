@@ -1,6 +1,6 @@
-package domix.fun.example;
+package codes.domix.fun.example;
 
-import domix.fun.Result;
+import codes.domix.fun.Result;
 
 public class UserService {
     private final UserRepository userRepository;
@@ -27,7 +27,7 @@ public class UserService {
 
     public Result<User, String> createUser(CreateUserCommand command) {
         Result<Result<CreateUserCommand, String>, String> map = this.isValidEmail(command)
-                .map(this::isValidPassword);
+            .map(this::isValidPassword);
 
         Result<CreateUserCommand, String> validPassword = this.isValidPassword(command);
 
@@ -38,8 +38,8 @@ public class UserService {
         }
 
         final var result = this.isValidEmail(command)
-                .flatMap(this::isValidPassword)
-                .flatMap(this.userRepository::createUser);
+            .flatMap(this::isValidPassword)
+            .flatMap(this.userRepository::createUser);
 
         // 1. Validar email
         if (this.isValidEmail(command).isError()) {
