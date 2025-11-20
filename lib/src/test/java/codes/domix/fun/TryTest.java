@@ -1,18 +1,24 @@
 package codes.domix.fun;
 
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TryTest {
 
     @Test
     void of_shouldReturnSuccessWhenComputationDoesNotThrow() {
-        Try<Integer> t = Try.of(() -> 42);
+        var t = Try.of(() -> 42);
 
         assertTrue(t.isSuccess());
         assertFalse(t.isFailure());
@@ -21,22 +27,22 @@ class TryTest {
 
     @Test
     void of_shouldReturnFailureWhenComputationThrows() {
-        Try<Integer> t = Try.of(() -> {
+        var t = Try.of(() -> {
             throw new IOException("boom");
         });
 
         assertTrue(t.isFailure());
         assertFalse(t.isSuccess());
-        Throwable cause = t.getCause();
+        var cause = t.getCause();
         assertInstanceOf(IOException.class, cause);
         assertEquals("boom", cause.getMessage());
     }
 
     @Test
     void run_shouldReturnSuccessOnVoidSideEffect() {
-        AtomicBoolean executed = new AtomicBoolean(false);
+        var executed = new AtomicBoolean(false);
 
-        Try<Void> t = Try.run(() -> executed.set(true));
+        var t = Try.run(() -> executed.set(true));
 
         assertTrue(t.isSuccess());
         assertTrue(executed.get());
@@ -44,7 +50,7 @@ class TryTest {
 
     @Test
     void run_shouldReturnFailureWhenSideEffectThrows() {
-        Try<Void> t = Try.run(() -> {
+        var t = Try.run(() -> {
             throw new IllegalStateException("side-effect failed");
         });
 
@@ -54,9 +60,9 @@ class TryTest {
 
     @Test
     void map_shouldTransformValueOnSuccess() {
-        Try<Integer> t = Try.of(() -> 10);
+        var t = Try.of(() -> 10);
 
-        Try<String> mapped = t.map(v -> "value:" + v);
+        var mapped = t.map(v -> "value:" + v);
 
         assertTrue(mapped.isSuccess());
         assertEquals("value:10", mapped.get());
@@ -64,9 +70,9 @@ class TryTest {
 
     @Test
     void map_shouldConvertToFailureWhenMapperThrows() {
-        Try<Integer> t = Try.of(() -> 10);
+        var t = Try.of(() -> 10);
 
-        Try<String> mapped = t.map(v -> {
+        var mapped = t.map(_ -> {
             throw new RuntimeException("mapper failed");
         });
 
@@ -76,9 +82,9 @@ class TryTest {
 
     @Test
     void flatMap_shouldChainSuccessValues() {
-        Try<Integer> t = Try.of(() -> 2);
+        var t = Try.of(() -> 2);
 
-        Try<String> result = t
+        var result = t
             .flatMap(v -> Try.of(() -> v * 10))
             .flatMap(v -> Try.success("result:" + v));
 
@@ -88,9 +94,9 @@ class TryTest {
 
     @Test
     void flatMap_shouldPropagateFailure() {
-        Try<Integer> t = Try.of(() -> 2);
+        var t = Try.of(() -> 2);
 
-        Try<String> result = t.flatMap(v -> Try.failure(new IllegalArgumentException("bad")));
+        var result = t.flatMap(_ -> Try.failure(new IllegalArgumentException("bad")));
 
         assertTrue(result.isFailure());
         assertInstanceOf(IllegalArgumentException.class, result.getCause());
@@ -99,15 +105,15 @@ class TryTest {
 
     @Test
     void onSuccess_shouldRunActionOnlyOnSuccess() {
-        AtomicBoolean successCalled = new AtomicBoolean(false);
-        AtomicBoolean failureCalled = new AtomicBoolean(false);
+        var successCalled = new AtomicBoolean(false);
+        var failureCalled = new AtomicBoolean(false);
 
-        Try<Integer> success = Try.success(42);
-        Try<Integer> failure = Try.failure(new RuntimeException("err"));
+        var success = Try.success(42);
+        var failure = Try.failure(new RuntimeException("err"));
 
         success
-            .onSuccess(v -> successCalled.set(true))
-            .onFailure(cause -> failureCalled.set(true));
+            .onSuccess(_ -> successCalled.set(true))
+            .onFailure(_ -> failureCalled.set(true));
 
         assertTrue(successCalled.get());
         assertFalse(failureCalled.get());
@@ -115,14 +121,14 @@ class TryTest {
 
     @Test
     void onFailure_shouldRunActionOnlyOnFailure() {
-        AtomicBoolean successCalled = new AtomicBoolean(false);
-        AtomicBoolean failureCalled = new AtomicBoolean(false);
+        var successCalled = new AtomicBoolean(false);
+        var failureCalled = new AtomicBoolean(false);
 
-        Try<Integer> failure = Try.failure(new RuntimeException("err"));
+        var failure = Try.failure(new RuntimeException("err"));
 
         failure
-            .onSuccess(v -> successCalled.set(true))
-            .onFailure(cause -> failureCalled.set(true));
+            .onSuccess(_ -> successCalled.set(true))
+            .onFailure(_ -> failureCalled.set(true));
 
         assertFalse(successCalled.get());
         assertTrue(failureCalled.get());
@@ -130,9 +136,9 @@ class TryTest {
 
     @Test
     void recover_shouldReturnSameSuccess() {
-        Try<Integer> success = Try.success(10);
+        var success = Try.success(10);
 
-        Try<Integer> recovered = success.recover(throwable -> 99);
+        var recovered = success.recover(_ -> 99);
 
         assertSame(success, recovered); // misma instancia
         assertEquals(10, recovered.get());
@@ -140,9 +146,9 @@ class TryTest {
 
     @Test
     void recover_shouldProduceNewSuccessFromFailure() {
-        Try<Integer> failure = Try.failure(new RuntimeException("boom"));
+        var failure = Try.<Integer>failure(new RuntimeException("boom"));
 
-        Try<Integer> recovered = failure.recover(throwable -> 99);
+        var recovered = failure.recover(_ -> 99);
 
         assertTrue(recovered.isSuccess());
         assertEquals(99, recovered.get());
@@ -150,9 +156,9 @@ class TryTest {
 
     @Test
     void recoverWith_shouldReturnSameSuccess() {
-        Try<Integer> success = Try.success(10);
+        var success = Try.success(10);
 
-        Try<Integer> recovered = success.recoverWith(t -> Try.success(99));
+        var recovered = success.recoverWith(_ -> Try.success(99));
 
         assertSame(success, recovered);
         assertEquals(10, recovered.get());
@@ -160,9 +166,9 @@ class TryTest {
 
     @Test
     void recoverWith_shouldUseAlternativeTryOnFailure() {
-        Try<Integer> failure = Try.failure(new RuntimeException("boom"));
+        var failure = Try.<Integer>failure(new RuntimeException("boom"));
 
-        Try<Integer> recovered = failure.recoverWith(t -> Try.success(123));
+        var recovered = failure.recoverWith(_ -> Try.success(123));
 
         assertTrue(recovered.isSuccess());
         assertEquals(123, recovered.get());
@@ -170,8 +176,8 @@ class TryTest {
 
     @Test
     void getOrElse_shouldReturnValueOnSuccessOrFallbackOnFailure() {
-        Try<Integer> success = Try.success(5);
-        Try<Integer> failure = Try.failure(new RuntimeException("err"));
+        var success = Try.success(5);
+        var failure = Try.failure(new RuntimeException("err"));
 
         assertEquals(5, success.getOrElse(99));
         assertEquals(99, failure.getOrElse(99));
@@ -179,10 +185,10 @@ class TryTest {
 
     @Test
     void getOrElseGet_shouldUseSupplierOnlyOnFailure() {
-        Try<Integer> success = Try.success(5);
-        Try<Integer> failure = Try.failure(new RuntimeException("err"));
+        var success = Try.success(5);
+        var failure = Try.<Integer>failure(new RuntimeException("err"));
 
-        AtomicBoolean supplierCalled = new AtomicBoolean(false);
+        var supplierCalled = new AtomicBoolean(false);
 
         int value1 = success.getOrElseGet(() -> {
             supplierCalled.set(true);
@@ -200,28 +206,28 @@ class TryTest {
 
     @Test
     void getOrNull_shouldReturnNullOnFailure() {
-        Try<Integer> success = Try.success(5);
-        Try<Integer> failure = Try.failure(new RuntimeException("err"));
+        var success = Try.success(5);
+        var failure = Try.failure(new RuntimeException("err"));
 
         assertEquals(5, success.getOrNull());
         assertNull(failure.getOrNull());
     }
 
     @Test
-    void getOrThrow_withoutMapper_shouldThrowOriginalExceptionIfException() {
-        Try<Integer> failure = Try.of(() -> {
+    void getOrThrow_withoutMapper_shouldThrowOriginalExceptionIfException() throws Exception {
+        var failure = Try.of(() -> {
             throw new IOException("io boom");
         });
 
-        IOException ex = assertThrows(IOException.class, failure::getOrThrow);
+        var ex = assertThrows(IOException.class, failure::getOrThrow);
         assertEquals("io boom", ex.getMessage());
     }
 
     @Test
     void getOrThrow_withMapper_shouldThrowMappedRuntimeException() {
-        Try<Integer> failure = Try.failure(new IllegalStateException("illegal"));
+        var failure = Try.<Integer>failure(new IllegalStateException("illegal"));
 
-        RuntimeException ex = assertThrows(
+        var ex = assertThrows(
             RuntimeException.class,
             () -> failure.getOrThrow(cause -> new RuntimeException("wrapped: " + cause.getMessage()))
         );
@@ -231,15 +237,15 @@ class TryTest {
 
     @Test
     void fold_shouldApplyOnSuccessOrOnFailure() {
-        Try<Integer> success = Try.success(10);
-        Try<Integer> failure = Try.failure(new RuntimeException("err"));
+        var success = Try.success(10);
+        var failure = Try.failure(new RuntimeException("err"));
 
-        String foldedSuccess = success.fold(
+        var foldedSuccess = success.fold(
             v -> "value:" + v,
             t -> "error:" + t.getMessage()
         );
 
-        String foldedFailure = failure.fold(
+        var foldedFailure = failure.fold(
             v -> "value:" + v,
             t -> "error:" + t.getMessage()
         );
@@ -252,33 +258,33 @@ class TryTest {
 
     @Test
     void monad_leftIdentity() {
-        Integer a = 42;
+        var a = 42;
         Function<Integer, Try<String>> f = x -> Try.success("value:" + x);
 
-        Try<String> left = Try.of(() -> a).flatMap(f);
-        Try<String> right = f.apply(a);
+        var left = Try.of(() -> a).flatMap(f);
+        var right = f.apply(a);
 
         assertEquals(right, left);
     }
 
     @Test
     void monad_rightIdentity() {
-        Try<Integer> m = Try.success(7);
+        var m = Try.success(7);
 
-        Try<Integer> left = m.flatMap(Try::success);
-        Try<Integer> right = m;
+        var left = m.flatMap(Try::success);
+        var right = m;
 
         assertEquals(right, left);
     }
 
     @Test
     void monad_associativity() {
-        Try<Integer> m = Try.success(3);
+        var m = Try.success(3);
 
         Function<Integer, Try<Integer>> f = x -> Try.success(x + 1);
         Function<Integer, Try<Integer>> g = x -> Try.success(x * 2);
 
-        Try<Integer> left = m.flatMap(f).flatMap(g);
+        var left = m.flatMap(f).flatMap(g);
         Try<Integer> right = m.flatMap(x -> f.apply(x).flatMap(g));
 
         assertEquals(right, left);
@@ -325,5 +331,182 @@ class TryTest {
 
         assertTrue(t.isFailure());
         assertSame(ex, t.getCause());
+    }
+
+    // --------------------------------------------------------
+    //           weird cases / additional edge cases
+    // --------------------------------------------------------
+
+    @Test
+    void of_shouldCaptureErrorNotOnlyException() {
+        AssertionError error = new AssertionError("hard error");
+
+        Try<Integer> t = Try.of(() -> {
+            throw error;
+        });
+
+        assertTrue(t.isFailure());
+        assertSame(error, t.getCause());
+    }
+
+    @Test
+    void run_shouldCaptureErrorNotOnlyException() {
+        AssertionError error = new AssertionError("boom");
+
+        Try<Void> t = Try.run(() -> {
+            throw error;
+        });
+
+        assertTrue(t.isFailure());
+        assertSame(error, t.getCause());
+    }
+
+    @Test
+    void getOrThrow_withoutMapper_shouldWrapErrorInRuntimeException() {
+        AssertionError error = new AssertionError("assert failed");
+        Try<Integer> t = Try.failure(error);
+
+        // este es el getOrThrow() sin mapper
+        RuntimeException ex = assertThrows(RuntimeException.class, t::getOrThrow);
+
+        assertSame(error, ex.getCause());
+        assertEquals("assert failed", ex.getCause().getMessage());
+    }
+
+    @Test
+    @Disabled("need to handle the CheckedException")
+    void map_shouldTurnToFailureWhenMapperThrowsCheckedException() {
+        Try<Integer> t = Try.success(10);
+
+        Try<String> mapped = t.map(v -> {
+            try {
+                //TODO: handle CheckedException
+                throw new IOException("checked");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertTrue(mapped.isFailure());
+        assertInstanceOf(IOException.class, mapped.getCause());
+        assertEquals("checked", mapped.getCause().getMessage());
+    }
+
+    @Test
+    void map_shouldTurnToFailureWhenMapperThrowsError() {
+        Try<Integer> t = Try.success(10);
+        AssertionError error = new AssertionError("mapper error");
+
+        Try<String> mapped = t.map(v -> {
+            throw error;
+        });
+
+        assertTrue(mapped.isFailure());
+        assertSame(error, mapped.getCause());
+    }
+
+    @Test
+    @Disabled("need to handle the CheckedException")
+    void flatMap_shouldTurnToFailureWhenMapperThrowsCheckedException() {
+        Try<Integer> t = Try.success(10);
+
+        Try<String> mapped = t.flatMap(v -> {
+            try {
+                //TODO: handle CheckedException
+                throw new IOException("flat checked");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertTrue(mapped.isFailure());
+        assertInstanceOf(IOException.class, mapped.getCause());
+        assertEquals("flat checked", mapped.getCause().getMessage());
+    }
+
+    @Test
+    void flatMap_shouldTurnToFailureWhenMapperThrowsError() {
+        Try<Integer> t = Try.success(10);
+        AssertionError error = new AssertionError("flat error");
+
+        Try<String> mapped = t.flatMap(v -> {
+            throw error;
+        });
+
+        assertTrue(mapped.isFailure());
+        assertSame(error, mapped.getCause());
+    }
+
+    @Test
+    @Disabled("need to handle the CheckedException")
+    void recover_shouldReturnFailureIfRecoverFunctionThrows() {
+        Try<Integer> failure = Try.failure(new RuntimeException("original"));
+
+        Try<Integer> recovered = failure.recover(cause -> {
+            try {
+                //TODO: handle CheckedException
+                throw new IOException("recover failed");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertTrue(recovered.isFailure());
+        assertInstanceOf(IOException.class, recovered.getCause());
+        assertEquals("recover failed", recovered.getCause().getMessage());
+    }
+
+    @Test
+    @Disabled("need to handle the CheckedException")
+    void recoverWith_shouldReturnFailureIfRecoverFunctionThrows() {
+        Try<Integer> failure = Try.failure(new RuntimeException("original"));
+
+        Try<Integer> recovered = failure.recoverWith(cause -> {
+            try {
+                //TODO: handle CheckedException
+                throw new IOException("recoverWith failed");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertTrue(recovered.isFailure());
+        assertInstanceOf(IOException.class, recovered.getCause());
+        assertEquals("recoverWith failed", recovered.getCause().getMessage());
+    }
+
+    @Test
+    void recoverWith_shouldReturnFailureIfRecoverFunctionThrowsError() {
+        Try<Integer> failure = Try.failure(new RuntimeException("original"));
+        AssertionError error = new AssertionError("recoverWith error");
+
+        Try<Integer> recovered = failure.recoverWith(cause -> {
+            throw error;
+        });
+
+        assertTrue(recovered.isFailure());
+        assertSame(error, recovered.getCause());
+    }
+
+    @Test
+    void toResult_withErrorShouldKeepExactThrowableInstance() {
+        AssertionError error = new AssertionError("critical");
+        Try<Integer> t = Try.failure(error);
+
+        Result<Integer, Throwable> result = t.toResult();
+
+        assertTrue(result.isError());
+        assertSame(error, result.getError());
+    }
+
+    @Test
+    void fromResult_withNonExceptionThrowableShouldCreateFailureWithSameInstance() {
+        AssertionError error = new AssertionError("assert!");
+        Result<Integer, Throwable> result = Result.err(error);
+
+        Try<Integer> t = Try.fromResult(result);
+
+        assertTrue(t.isFailure());
+        assertSame(error, t.getCause());
     }
 }
