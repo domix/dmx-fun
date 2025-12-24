@@ -94,12 +94,11 @@ class TryTest {
         assertTrue(mapped.isFailure());
         assertThat(mapped.getCause())
             .isInstanceOf(RuntimeException.class)
-            // Maps success to failure when mapper throws an exception
             .hasMessage("boom");
     }
 
     /**
-     * Maps success to failure when mapper throws exception
+     * Maps success to failure when mapper throws an exception
      */
     @Test
     void map_shouldConvertToFailureWhenMapperThrows() {
@@ -107,7 +106,6 @@ class TryTest {
 
         var mapped = t.map(_ -> {
             throw new RuntimeException("mapper failed");
-            // Maps success to failure when mapper throws an exception
         });
 
         assertTrue(mapped.isFailure());
@@ -268,6 +266,7 @@ class TryTest {
             supplierCalled.set(true);
             return 99;
         });
+        assertFalse(supplierCalled.get(), "Supplier should not be called on success");
         int value2 = failure.getOrElseGet(() -> {
             supplierCalled.set(true);
             return 100;
