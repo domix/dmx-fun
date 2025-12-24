@@ -166,7 +166,6 @@ class TryTest {
         var failureCalled = new AtomicBoolean(false);
 
         var success = Try.success(42);
-        var _ = Try.failure(new RuntimeException("err"));
 
         success
             .onSuccess(_ -> successCalled.set(true))
