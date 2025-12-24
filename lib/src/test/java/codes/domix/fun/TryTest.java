@@ -135,7 +135,7 @@ class TryTest {
 
         var recovered = success.recover(_ -> 99);
 
-        assertSame(success, recovered); // misma instancia
+        assertSame(success, recovered); // same instance
         assertEquals(10, recovered.get());
     }
 
@@ -249,7 +249,7 @@ class TryTest {
         assertEquals("error:err", foldedFailure);
     }
 
-    // --- Leyes monádicas básicas para Try ---
+    // --- Basic monadic laws for Try ---
 
     @Test
     void monad_leftIdentity() {
@@ -285,7 +285,7 @@ class TryTest {
         assertEquals(right, left);
     }
 
-    // --- Integración con Result<Value, Throwable> ---
+    // --- Integration with Result<Value, Throwable> ---
 
     @Test
     void toResult_shouldConvertSuccessToOk() {
@@ -361,7 +361,7 @@ class TryTest {
         AssertionError error = new AssertionError("assert failed");
         Try<Integer> t = Try.failure(error);
 
-        // este es el getOrThrow() sin mapper
+        // no mapper
         RuntimeException ex = assertThrows(RuntimeException.class, t::getOrThrow);
 
         assertSame(error, ex.getCause());
