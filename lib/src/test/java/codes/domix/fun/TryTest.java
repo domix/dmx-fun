@@ -1,13 +1,19 @@
 package codes.domix.fun;
 
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TryTest {
 
@@ -18,6 +24,7 @@ class TryTest {
         assertTrue(t.isSuccess());
         assertFalse(t.isFailure());
         assertEquals(42, t.get());
+        assertThrows(NoSuchElementException.class, t::getCause);
     }
 
     @Test
@@ -31,6 +38,7 @@ class TryTest {
         var cause = t.getCause();
         assertInstanceOf(IOException.class, cause);
         assertEquals("boom", cause.getMessage());
+        assertThrows(NoSuchElementException.class, t::get);
     }
 
     @Test
@@ -61,6 +69,17 @@ class TryTest {
 
         assertTrue(mapped.isSuccess());
         assertEquals("value:10", mapped.get());
+    }
+
+    @Test
+    void map_shouldMapFailure() {
+        var t = Try.failure(new RuntimeException("boom"));
+        var mapped = t.map(v -> "value:" + v);
+
+        assertTrue(mapped.isFailure());
+        assertThat(mapped.getCause())
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom");
     }
 
     @Test
@@ -96,6 +115,17 @@ class TryTest {
         assertTrue(result.isFailure());
         assertInstanceOf(IllegalArgumentException.class, result.getCause());
         assertEquals("bad", result.getCause().getMessage());
+    }
+
+    @Test
+    void flatMap_shouldIgnoreMappedFailure() {
+        var t = Try.failure(new IllegalArgumentException("bad"));
+
+        var result = t.flatMap(_ -> Try.failure(new IllegalArgumentException("BAD")));
+        assertThat(result.isFailure());
+        assertThat(result.getCause())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("bad");
     }
 
     @Test
@@ -366,6 +396,19 @@ class TryTest {
 
         assertSame(error, ex.getCause());
         assertEquals("assert failed", ex.getCause().getMessage());
+    }
+
+    @Test
+    void getOrThrow_shouldReturnTheSuccessValue() throws Exception {
+        var aTry = Try.success(1);
+        var result = aTry
+            .getOrThrow();
+        assertEquals(1, result);
+
+        var result2 = aTry
+            .getOrThrow(cause -> new RuntimeException("wrapped: " + cause.getMessage()));
+
+        assertEquals(1, result2);
     }
 
     @Test
