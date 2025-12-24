@@ -1,18 +1,13 @@
 package codes.domix.fun;
 
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TryTest {
 
@@ -374,22 +369,21 @@ class TryTest {
     }
 
     @Test
-    @Disabled("need to handle the CheckedException")
     void map_shouldTurnToFailureWhenMapperThrowsCheckedException() {
         Try<Integer> t = Try.success(10);
 
         Try<String> mapped = t.map(v -> {
             try {
-                //TODO: handle CheckedException
                 throw new IOException("checked");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
 
-        assertTrue(mapped.isFailure());
-        assertInstanceOf(IOException.class, mapped.getCause());
-        assertEquals("checked", mapped.getCause().getMessage());
+        assertThat(mapped.isFailure()).isTrue();
+        assertInstanceOf(RuntimeException.class, mapped.getCause());
+        assertInstanceOf(IOException.class, mapped.getCause().getCause());
+        assertThat(mapped.getCause().getMessage()).contains("checked");
     }
 
     @Test
@@ -406,13 +400,11 @@ class TryTest {
     }
 
     @Test
-    @Disabled("need to handle the CheckedException")
     void flatMap_shouldTurnToFailureWhenMapperThrowsCheckedException() {
         Try<Integer> t = Try.success(10);
 
         Try<String> mapped = t.flatMap(v -> {
             try {
-                //TODO: handle CheckedException
                 throw new IOException("flat checked");
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -420,8 +412,11 @@ class TryTest {
         });
 
         assertTrue(mapped.isFailure());
-        assertInstanceOf(IOException.class, mapped.getCause());
-        assertEquals("flat checked", mapped.getCause().getMessage());
+        assertThat(mapped.getCause())
+            .isInstanceOf(RuntimeException.class);
+        assertThat(mapped.getCause().getCause())
+            .isInstanceOf(IOException.class);
+        assertThat(mapped.getCause().getMessage()).contains("flat checked");
     }
 
     @Test
@@ -438,13 +433,11 @@ class TryTest {
     }
 
     @Test
-    @Disabled("need to handle the CheckedException")
     void recover_shouldReturnFailureIfRecoverFunctionThrows() {
         Try<Integer> failure = Try.failure(new RuntimeException("original"));
 
         Try<Integer> recovered = failure.recover(cause -> {
             try {
-                //TODO: handle CheckedException
                 throw new IOException("recover failed");
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -452,18 +445,20 @@ class TryTest {
         });
 
         assertTrue(recovered.isFailure());
-        assertInstanceOf(IOException.class, recovered.getCause());
-        assertEquals("recover failed", recovered.getCause().getMessage());
+        assertThat(recovered.getCause())
+            .isInstanceOf(RuntimeException.class);
+        assertThat(recovered.getCause().getCause())
+            .isInstanceOf(IOException.class);
+        assertThat(recovered.getCause().getMessage())
+            .contains("recover failed");
     }
 
     @Test
-    @Disabled("need to handle the CheckedException")
     void recoverWith_shouldReturnFailureIfRecoverFunctionThrows() {
         Try<Integer> failure = Try.failure(new RuntimeException("original"));
 
         Try<Integer> recovered = failure.recoverWith(cause -> {
             try {
-                //TODO: handle CheckedException
                 throw new IOException("recoverWith failed");
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -471,8 +466,12 @@ class TryTest {
         });
 
         assertTrue(recovered.isFailure());
-        assertInstanceOf(IOException.class, recovered.getCause());
-        assertEquals("recoverWith failed", recovered.getCause().getMessage());
+        assertThat(recovered.getCause())
+            .isInstanceOf(RuntimeException.class);
+        assertThat(recovered.getCause().getCause())
+            .isInstanceOf(IOException.class);
+        assertThat(recovered.getCause().getMessage())
+            .contains("recoverWith failed");
     }
 
     @Test
