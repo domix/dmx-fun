@@ -52,7 +52,7 @@ This library is available on Maven Central. To use it, include the following dep
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
