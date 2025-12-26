@@ -26,7 +26,7 @@ Examples and implementations may include:
 
 ## 🛠 Technologies
 
-- Java 25+  
+- Java 24+  
 - Gradle
 - Spock for testing  
 - [Vavr](https://www.vavr.io/) or similar libraries for functional data types (optional)  
@@ -52,14 +52,14 @@ This library is available on Maven Central. To use it, include the following dep
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
 #### Gradle
 
 ```groovy
-implementation("codes.domix:fun:0.0.2")
+implementation("codes.domix:fun:0.0.4")
 ```
 ### Usage
 
