@@ -521,4 +521,17 @@ class ResultSpecs extends Specification {
             filteredResult.isSuccess()
             filteredResult.get() == 'hello'
     }
+
+    def 'should handle exception thrown by predicate'() {
+        given:
+            def result = Try.of { 'hello' }
+        when:
+            def filteredResult = result.filter {
+                throw new RuntimeException('predicate failed')
+            }
+        then:
+            filteredResult.isFailure()
+            filteredResult.getCause() instanceof RuntimeException
+            filteredResult.getCause().message == 'predicate failed'
+    }
 }

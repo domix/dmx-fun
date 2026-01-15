@@ -395,7 +395,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * @return a Success if the predicate evaluates to true, or a Failure otherwise
      */
     default Try<Value> filter(Predicate<? super Value> predicate) {
-        return filter(predicate, IllegalArgumentException::new);
+        return filter(predicate, () -> new IllegalArgumentException("Predicate does not hold for value"));
     }
 
     /**
