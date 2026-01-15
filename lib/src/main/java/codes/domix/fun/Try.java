@@ -410,7 +410,13 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      */
     default Try<Value> filter(Predicate<? super Value> predicate, Supplier<? extends Throwable> throwableSupplier) {
         return switch (this) {
-            case Success<Value> s -> predicate.test(s.value()) ? this : failure(throwableSupplier.get());
+            case Success<Value> s -> {
+                try {
+                    yield predicate.test(s.value()) ? this : failure(throwableSupplier.get());
+                } catch (Throwable t) {
+                    yield failure(t);
+                }
+            }
             case Failure<Value> _ -> this;
         };
     }

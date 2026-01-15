@@ -474,7 +474,7 @@ class ResultSpecs extends Specification {
             }
         then:
             filteredResult.isFailure()
-            filteredResult.getCause().getClass().isAssignableFrom(IllegalArgumentException)
+            filteredResult.getCause() instanceof IllegalArgumentException
     }
 
     def 'should filter an OK try but does not pass custom'() {
@@ -491,7 +491,7 @@ class ResultSpecs extends Specification {
             )
         then:
             filteredResult.isFailure()
-            filteredResult.getCause().getClass().isAssignableFrom(RuntimeException)
+            filteredResult.getCause() instanceof RuntimeException
     }
 
     def 'should not apply filter since try is failed'() {
@@ -505,7 +505,7 @@ class ResultSpecs extends Specification {
             }
         then:
             filteredAttempt.isFailure()
-            filteredAttempt.getCause().getClass().isAssignableFrom(RuntimeException)
+            filteredAttempt.getCause() instanceof RuntimeException
     }
 
     def 'should pass filter validation'() {
