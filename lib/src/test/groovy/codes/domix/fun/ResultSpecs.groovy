@@ -1,6 +1,5 @@
 package codes.domix.fun
 
-
 import spock.lang.Specification
 
 import java.util.concurrent.atomic.AtomicBoolean
@@ -464,5 +463,62 @@ class ResultSpecs extends Specification {
                 )
         then:
             folded == 'the error'
+    }
+
+    def 'should filter an OK try but does not pass default'() {
+        given:
+            def result = Try.of { 'hello' }
+        when:
+            def filteredResult = result.filter {
+                it.length() >= 10
+            }
+        then:
+            filteredResult.isFailure()
+            filteredResult.getCause().getClass().isAssignableFrom(IllegalArgumentException)
+    }
+
+    def 'should filter an OK try but does not pass custom'() {
+        given:
+            def result = Try.of { 'hello' }
+        when:
+            def filteredResult = result.filter(
+                {
+                    it.length() >= 10
+                },
+                {
+                    new RuntimeException('boom!')
+                }
+            )
+        then:
+            filteredResult.isFailure()
+            filteredResult.getCause().getClass().isAssignableFrom(RuntimeException)
+    }
+
+    def 'should not apply filter since try is failed'() {
+        given:
+            def attempt = Try.of {
+                throw new RuntimeException('Boom!')
+            }
+        when:
+            def filteredAttempt = attempt.filter {
+                true
+            }
+        then:
+            filteredAttempt.isFailure()
+            filteredAttempt.getCause().getClass().isAssignableFrom(RuntimeException)
+    }
+
+    def 'should pass filter validation'() {
+        given:
+            def result = Try.of {
+                'hello'
+            }
+        when:
+            def filteredResult = result.filter {
+                it == 'hello'
+            }
+        then:
+            filteredResult.isSuccess()
+            filteredResult.get() == 'hello'
     }
 }
