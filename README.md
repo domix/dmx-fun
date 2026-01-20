@@ -1,5 +1,5 @@
 
-# Functional Programming Constructions in Java
+# λ dmx-fun: Functional Programming Constructions in Java
 
 This repository contains a collection of implementations and experiments exploring **functional programming constructions in Java**. The goal is to demonstrate how functional paradigms—such as immutability, pure functions, higher-order functions, currying, and more—can be expressed in Java, a traditionally object-oriented language.
 
