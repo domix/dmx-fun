@@ -83,11 +83,13 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     }
 
     /**
-     * Creates an error result containing the specified error value.
+     * Creates and returns a new result instance representing an error state.
      *
-     * @param error             The error value to be contained in the result.
-     * @param classValueIgnored The class of the value type that is ignored in this operation.
-     * @return A result object representing an error with the given error value.
+     * @param error             The error to be encapsulated in the result.
+     * @param classValueIgnored The ignored class type of the value, typically used for type inference.
+     * @param <Value>           The type of the value that would have been contained in a success state.
+     * @param <Error>           The type of the error being represented.
+     * @return A result instance representing an error state containing the provided error.
      */
     static <Value, Error> Result<Value, Error> err(Error error, Class<Value> classValueIgnored) {
         return new Err<>(error);
