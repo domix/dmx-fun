@@ -56,6 +56,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         return new Ok<>(value);
     }
 
+    /**
+     * Creates an instance of {@code Ok} representing a successful result.
+     *
+     * @param <Value>           the type of the value in the success case
+     * @param <Error>           the type of the error in the error case
+     * @param value             the value to be wrapped in the {@code Ok} instance
+     * @param errorClassIgnored the class object of the error type, ignored in this method
+     * @return an {@code Ok} instance containing the provided value
+     */
     static <Value, Error> Result<Value, Error> ok(Value value, Class<Error> errorClassIgnored) {
         return new Ok<>(value);
     }
@@ -76,7 +85,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     /**
      * Creates an error result containing the specified error value.
      *
-     * @param error The error value to be contained in the result.
+     * @param error             The error value to be contained in the result.
      * @param classValueIgnored The class of the value type that is ignored in this operation.
      * @return A result object representing an error with the given error value.
      */
