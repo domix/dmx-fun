@@ -181,14 +181,37 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * is propagated without applying the mapping function.
      *
      * @param <NewValue> the type of the value in the resulting {@code Result} after applying the mapping function
-     * @param mapper     the function to apply to the value of the successful {@code Result} to produce a new {@code Result}
+     * @param okMapper   the function to apply to the value of the successful {@code Result} to produce a new {@code Result}
      * @return a new {@code Result} instance returned by applying the mapping function to the value if the original instance
      * was successful, or the same error if the original instance was an error
      */
-    default <NewValue> Result<NewValue, Error> flatMap(Function<Value, Result<NewValue, Error>> mapper) {
+    default <NewValue> Result<NewValue, Error> flatMap(
+        Function<? super Value, ? extends Result<NewValue, Error>> okMapper
+    ) {
         return switch (this) {
-            case Ok<Value, Error> ok -> mapper.apply(ok.value());
+            case Ok<Value, Error> ok -> okMapper.apply(ok.value());
             case Err<Value, Error> err -> Result.err(err.error());
+        };
+    }
+
+    /**
+     * Transforms the current result into a new result by mapping the value or the error
+     * using the provided mapping functions.
+     *
+     * @param <NewValue> the type of the value in the resulting {@code Result}
+     * @param <NewError> the type of the error in the resulting {@code Result}
+     * @param okMapper   a function to transform the value in case the result is {@code Ok}
+     * @param errMapper  a function to transform the error in case the result is {@code Err}
+     * @return a new {@code Result} produced by applying the appropriate mapping function
+     * based on the current state of the result
+     */
+    default <NewValue, NewError> Result<NewValue, NewError> flatMap(
+        Function<? super Value, ? extends Result<NewValue, NewError>> okMapper,
+        Function<? super Error, ? extends NewError> errMapper
+    ) {
+        return switch (this) {
+            case Ok<Value, Error> ok -> okMapper.apply(ok.value());
+            case Err<Value, Error> err -> Result.err(errMapper.apply(err.error()));
         };
     }
 
