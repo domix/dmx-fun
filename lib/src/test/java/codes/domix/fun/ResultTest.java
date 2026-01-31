@@ -33,6 +33,20 @@ public class ResultTest {
                 this::test1,
                 error -> "" + error
             );
+        
+        assertTrue(mapErrorOnFlatMap.isOk());
+        assertEquals(5, mapErrorOnFlatMap.get());
+        
+        // Test the error mapping path
+        Result<Integer, Integer> errResult = Result.err(42);
+        Result<Integer, String> mappedErr = errResult
+            .flatMap(
+                this::test1,
+                error -> "Error: " + error
+            );
+        
+        assertTrue(mappedErr.isError());
+        assertEquals("Error: 42", mappedErr.getError());
     }
 
     Result<String, Integer> okValue(String value) {
