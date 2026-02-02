@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.function.BiFunction;
 
 /**
  * A monadic type that represents an optional value: either Some(value present)
@@ -30,6 +31,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
 
     record None<Value>() implements Option<Value> {
     }
+
+    record Tuple2<A, B>(A _1, B _2) {}
 
     // ---------- Factories ----------
 
@@ -261,4 +264,51 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
             case None<Value> _ -> Try.failure(exceptionSupplier.get());
         };
     }
+
+    // ---------- zip / map2 ----------
+
+    default <B> Option<Tuple2<Value, B>> zip(Option<? extends B> other) {
+        Objects.requireNonNull(other, "other");
+        return zip(this, other);
+    }
+
+    default <B, R> Option<R> zipWith(Option<? extends B> other,
+                                     BiFunction<? super Value, ? super B, ? extends R> combiner) {
+        Objects.requireNonNull(other, "other");
+        Objects.requireNonNull(combiner, "combiner");
+        return map2(this, other, combiner);
+    }
+
+    /**
+     * zip: Option<A> + Option<B> -> Option<Tuple2<A,B>>
+     */
+    static <A, B> Option<Tuple2<A, B>> zip(Option<? extends A> a, Option<? extends B> b) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+
+        if (a instanceof None<?> || b instanceof None<?>) return Option.none();
+
+        A av = ((Some<? extends A>) a).value();
+        B bv = ((Some<? extends B>) b).value();
+        return Option.some(new Tuple2<>(av, bv));
+    }
+
+    /**
+     * map2: Option<A> + Option<B> + (A,B)->R -> Option<R>
+     * Si combiner regresa null, lo convertimos a None (igual que map()).
+     */
+    static <A, B, R> Option<R> map2(Option<? extends A> a,
+                                    Option<? extends B> b,
+                                    BiFunction<? super A, ? super B, ? extends R> combiner) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(combiner, "combiner");
+
+        if (a instanceof None<?> || b instanceof None<?>) return Option.none();
+
+        A av = ((Some<? extends A>) a).value();
+        B bv = ((Some<? extends B>) b).value();
+        return Option.ofNullable(combiner.apply(av, bv));
+    }
+
 }
