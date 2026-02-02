@@ -198,16 +198,18 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     static <V> Option<List<V>> sequence(Stream<Option<V>> options) {
         Objects.requireNonNull(options, "options");
         ArrayList<V> out = new ArrayList<>();
-        Iterator<Option<V>> it = options.iterator();
-        while (it.hasNext()) {
-            Option<V> opt = it.next();
-            if (opt == null) {
-                throw new NullPointerException("options contains null element (use Option.none() instead)");
+        try (options) {
+            Iterator<Option<V>> it = options.iterator();
+            while (it.hasNext()) {
+                Option<V> opt = it.next();
+                if (opt == null) {
+                    throw new NullPointerException("options contains null element (use Option.none() instead)");
+                }
+                if (opt instanceof None<V>) {
+                    return Option.none();
+                }
+                out.add(((Some<V>) opt).value());
             }
-            if (opt instanceof None<V>) {
-                return Option.none();
-            }
-            out.add(((Some<V>) opt).value());
         }
         return Option.some(List.copyOf(out));
     }
