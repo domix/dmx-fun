@@ -17,8 +17,6 @@ import java.util.stream.Stream;
 /**
  * A monadic type that represents an optional value: either Some(value present)
  * or None(no value).
- * <p>
- * Opinionated choice: Some(null) is not allowed. Use none() or ofNullable(null).
  *
  * @param <Value> the wrapped value type
  */
@@ -36,7 +34,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     // ---------- Factories ----------
 
     static <V> Option<V> some(V value) {
-        return new Some<>(value);
+        return value == null ? none() : new Some<>(value);
     }
 
     static <V> Option<V> none() {
@@ -44,7 +42,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     static <V> Option<V> ofNullable(V value) {
-        return value == null ? none() : some(value);
+        return some(value);
     }
 
     static <V> Option<V> fromOptional(Optional<V> optional) {
@@ -165,7 +163,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     /**
      * Collector that keeps present values from a stream of Option<T>.
      */
-    static <V> Collector<Option<V>, ?, List<V>> presentValuesToList() {
+    static <V> Collector<Option<? extends V>, ?, List<V>> presentValuesToList() {
         return Collectors.flatMapping(Option::stream, Collectors.toList());
     }
 
@@ -250,7 +248,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
 
     // ---------- Bridges (optional, but handy with your Result/Try) ----------
 
-    default <Error> Result<Value, Error> toResult(Error errorIfNone) {
+    default <TError> Result<Value, TError> toResult(TError errorIfNone) {
         return switch (this) {
             case Some<Value> s -> Result.ok(s.value());
             case None<Value> _ -> Result.err(errorIfNone);
