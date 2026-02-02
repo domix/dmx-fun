@@ -3,7 +3,7 @@
 [versions]
 groovy = "4.0.29"
 spock-core = "2.4-M6-groovy-4.0"
-assertj = "3.27.6"
+assertj = "3.27.7"
 
 [libraries]
 groovy = { module = "org.apache.groovy:groovy", version.ref = "groovy" }

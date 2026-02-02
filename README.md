@@ -1,5 +1,7 @@
 
-# Functional Programming Constructions in Java
+# λ dmx-fun: Functional Programming Constructions in Java
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/cab675c2-c8ca-4017-903f-6790309750e8" />
 
 This repository contains a collection of implementations and experiments exploring **functional programming constructions in Java**. The goal is to demonstrate how functional paradigms—such as immutability, pure functions, higher-order functions, currying, and more—can be expressed in Java, a traditionally object-oriented language.
 
@@ -19,7 +21,7 @@ Examples and implementations may include:
 - Function composition and higher-order functions  
 - Currying and partial application  
 - Immutable data structures  
-- Functional error handling (e.g., using `Try`, `Either`, or `Option`)  
+- Functional error handling (e.g., using `Try`, `Result`, or `Option`)  
 - Lazy evaluation  
 - Monads and functors (in a Java-friendly context)  
 - Functional streams and pipelines  

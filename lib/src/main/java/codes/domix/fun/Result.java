@@ -57,6 +57,19 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     }
 
     /**
+     * Creates an instance of {@code Ok} representing a successful result.
+     *
+     * @param <Value>           the type of the value in the success case
+     * @param <Error>           the type of the error in the error case
+     * @param value             the value to be wrapped in the {@code Ok} instance
+     * @param errorClassIgnored the class object of the error type, ignored in this method
+     * @return an {@code Ok} instance containing the provided value
+     */
+    static <Value, Error> Result<Value, Error> ok(Value value, Class<Error> errorClassIgnored) {
+        return new Ok<>(value);
+    }
+
+    /**
      * Creates a {@link Result} instance representing an erroneous result with the given error value.
      * This method is used to indicate that a computation or action has failed.
      *
@@ -66,6 +79,19 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return a {@link Result} instance of type {@code Err<Value, Error>} containing the provided error
      */
     static <Value, Error> Result<Value, Error> err(Error error) {
+        return new Err<>(error);
+    }
+
+    /**
+     * Creates and returns a new result instance representing an error state.
+     *
+     * @param error             The error to be encapsulated in the result.
+     * @param classValueIgnored The ignored class type of the value, typically used for type inference.
+     * @param <Value>           The type of the value that would have been contained in a success state.
+     * @param <Error>           The type of the error being represented.
+     * @return A result instance representing an error state containing the provided error.
+     */
+    static <Value, Error> Result<Value, Error> err(Error error, Class<Value> classValueIgnored) {
         return new Err<>(error);
     }
 
