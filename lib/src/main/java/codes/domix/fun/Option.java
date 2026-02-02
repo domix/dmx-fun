@@ -239,14 +239,16 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
         ArrayList<B> out = new ArrayList<>();
-        Iterator<A> it = values.iterator();
-        while (it.hasNext()) {
-            A a = it.next();
-            Option<B> ob = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
-            if (ob instanceof None<B>) {
-                return Option.none();
+        try (values) {
+            Iterator<A> it = values.iterator();
+            while (it.hasNext()) {
+                A a = it.next();
+                Option<B> ob = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
+                if (ob instanceof None<B>) {
+                    return Option.none();
+                }
+                out.add(((Some<B>) ob).value());
             }
-            out.add(((Some<B>) ob).value());
         }
         return Option.some(List.copyOf(out));
     }
