@@ -249,7 +249,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         return Option.some(List.copyOf(out));
     }
 
-    // ---------- Bridges (optional, but handy with your Result/Try) ----------
+    // ---------- Interoperability: Option <-> Result / Try ----------
 
     default <TError> Result<Value, TError> toResult(TError errorIfNone) {
         return switch (this) {
@@ -263,6 +263,29 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
             case Some<Value> s -> Try.success(s.value());
             case None<Value> _ -> Try.failure(exceptionSupplier.get());
         };
+    }
+
+    static <V, E> Option<V> fromResult(Result<? extends V, ? extends E> result) {
+        Objects.requireNonNull(result, "result");
+        return result.isOk() ? Option.ofNullable(result.get()) : Option.none();
+    }
+
+    static <V> Option<V> fromTry(Try<? extends V> t) {
+        Objects.requireNonNull(t, "t");
+        return t.isSuccess() ? Option.ofNullable(t.get()) : Option.none();
+    }
+
+    static <V, E> Result<V, E> toResult(Option<? extends V> opt, E errorIfNone) {
+        Objects.requireNonNull(opt, "opt");
+        return opt.isDefined() ? Result.ok(((Some<? extends V>) opt).value()) : Result.err(errorIfNone);
+    }
+
+    static <V> Try<V> toTry(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
+        Objects.requireNonNull(opt, "opt");
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
+        return opt.isDefined()
+            ? Try.success(((Some<? extends V>) opt).value())
+            : Try.failure(exceptionSupplier.get());
     }
 
     // ---------- zip / map2 ----------

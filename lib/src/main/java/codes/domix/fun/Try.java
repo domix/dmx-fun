@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.Objects;
+
 
 /**
  * A monadic type that represents a computation that may either result in a value
@@ -452,4 +454,23 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         }
         return Try.failure(result.getError());
     }
+
+
+    // ---------- Interoperability: Try <-> Option / Result ----------
+
+    default Option<Value> toOption() {
+        return switch (this) {
+            case Success<Value> s -> Option.ofNullable(s.value()); // null => None
+            case Failure<Value> _ -> Option.none();
+        };
+    }
+
+    static <V> Try<V> fromOption(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
+        Objects.requireNonNull(opt, "opt");
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
+        return opt.isDefined()
+            ? Try.success(((Option.Some<? extends V>) opt).value())
+            : Try.failure(exceptionSupplier.get());
+    }
+
 }

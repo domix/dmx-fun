@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.Objects;
+
 
 
 /**
@@ -346,4 +348,41 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         }
         return this;
     }
+
+    // ---------- Interoperability: Result <-> Option / Try ----------
+
+    default Option<Value> toOption() {
+        return switch (this) {
+            case Ok<Value, Error> ok -> Option.ofNullable(ok.value()); // null => None
+            case Err<Value, Error> _ -> Option.none();
+        };
+    }
+
+    /**
+     */
+    default Try<Value> toTry(Function<? super Error, ? extends Throwable> errorToThrowable) {
+        Objects.requireNonNull(errorToThrowable, "errorToThrowable");
+        return switch (this) {
+            case Ok<Value, Error> ok -> Try.success(ok.value());
+            case Err<Value, Error> err -> Try.failure(
+                Objects.requireNonNull(errorToThrowable.apply(err.error()), "errorToThrowable returned null")
+            );
+        };
+    }
+
+    /**
+     */
+    static <V, E> Result<V, E> fromOption(Option<? extends V> opt, E errorIfNone) {
+        Objects.requireNonNull(opt, "opt");
+        return opt.isDefined() ? Result.ok(((Option.Some<? extends V>) opt).value()) : Result.err(errorIfNone);
+    }
+
+    /**
+     * Crea un Result desde Try.
+     */
+    static <V> Result<V, Throwable> fromTry(Try<V> t) {
+        Objects.requireNonNull(t, "t");
+        return t.toResult(); // ya lo tienes en Try
+    }
+
 }
