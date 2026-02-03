@@ -488,7 +488,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
         return opt.isDefined()
             ? Try.success(((Option.Some<? extends V>) opt).value())
-            : Try.failure(exceptionSupplier.get());
+            : Try.failure(
+                Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
+            );
     }
 
 }
