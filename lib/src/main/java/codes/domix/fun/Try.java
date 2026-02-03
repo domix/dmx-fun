@@ -1,10 +1,12 @@
 package codes.domix.fun;
 
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
 
 /**
  * A monadic type that represents a computation that may either result in a value
@@ -452,4 +454,43 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         }
         return Try.failure(result.getError());
     }
+
+
+    // ---------- Interoperability: Try <-> Option / Result ----------
+
+    /**
+     * Converts the current instance to an Option.
+     * If the instance is a Success, wraps its value in an Option.
+     * If the instance is a Failure, returns an empty Option.
+     *
+     * @return an Option containing the value if the instance is a Success,
+     * or an empty Option if the instance is a Failure.
+     */
+    default Option<Value> toOption() {
+        return switch (this) {
+            case Success<Value> s -> Option.ofNullable(s.value()); // null => None
+            case Failure<Value> _ -> Option.none();
+        };
+    }
+
+    /**
+     * Converts an {@link Option} to a {@link Try}. If the {@link Option} contains a value, a successful {@link Try}
+     * is returned with that value. Otherwise, a failed {@link Try} is created using the supplied exception.
+     *
+     * @param <V>               the type of the value contained in the {@link Option}.
+     * @param opt               the {@link Option} to be converted into a {@link Try}, must not be null.
+     * @param exceptionSupplier the supplier of the exception to be used when the {@link Option} is empty, must not be null.
+     * @return a {@link Try} representing either a success containing the value of the {@link Option},
+     * or a failure containing the exception provided by the supplier.
+     */
+    static <V> Try<V> fromOption(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
+        Objects.requireNonNull(opt, "opt");
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
+        return opt.isDefined()
+            ? Try.success(((Option.Some<? extends V>) opt).value())
+            : Try.failure(
+                Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
+            );
+    }
+
 }

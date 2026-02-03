@@ -21,7 +21,7 @@ Examples and implementations may include:
 - Function composition and higher-order functions  
 - Currying and partial application  
 - Immutable data structures  
-- Functional error handling (e.g., using `Try`, `Either`, or `Option`)  
+- Functional error handling (e.g., using `Try`, `Result`, or `Option`)  
 - Lazy evaluation  
 - Monads and functors (in a Java-friendly context)  
 - Functional streams and pipelines  

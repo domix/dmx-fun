@@ -1,6 +1,7 @@
 package codes.domix.fun;
 
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -369,4 +370,73 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         }
         return this;
     }
+
+    // ---------- Interoperability: Result <-> Option / Try ----------
+
+    /**
+     * Converts the current instance into an {@code Option<Value>}.
+     * If the instance represents a successful result ({@code Ok}), the contained value is wrapped in an {@code Option}.
+     * If the instance represents an error ({@code Err}), an empty {@code Option} is returned.
+     *
+     * @return an {@code Option<Value>} containing the value if the instance is {@code Ok}, or an empty {@code Option} if the instance is {@code Err}.
+     */
+    default Option<Value> toOption() {
+        return switch (this) {
+            case Ok<Value, Error> ok -> Option.ofNullable(ok.value()); // null => None
+            case Err<Value, Error> _ -> Option.none();
+        };
+    }
+
+    /**
+     * Converts the current result into a {@code Try} instance. If the current
+     * result represents a success, the returned {@code Try} will contain the
+     * success value. If the current result represents an error, the specified
+     * function is used to transform the error into a {@link Throwable}, and
+     * the resulting {@code Try} will represent a failure.
+     *
+     * @param errorToThrowable a {@link Function} that converts the error type
+     *                         to a {@link Throwable}. Must not return null.
+     * @return a {@code Try} instance representing a success or failure
+     * based on the state of the current result.
+     * @throws NullPointerException if {@code errorToThrowable} is null or
+     *                              if {@code errorToThrowable.apply()}
+     *                              returns null.
+     */
+    default Try<Value> toTry(Function<? super Error, ? extends Throwable> errorToThrowable) {
+        Objects.requireNonNull(errorToThrowable, "errorToThrowable");
+        return switch (this) {
+            case Ok<Value, Error> ok -> Try.success(ok.value());
+            case Err<Value, Error> err -> Try.failure(
+                Objects.requireNonNull(errorToThrowable.apply(err.error()), "errorToThrowable returned null")
+            );
+        };
+    }
+
+    /**
+     * Converts an {@link Option} to a {@link Result}.
+     *
+     * @param <V>         The type of the value contained in the {@link Option}.
+     * @param <E>         The type of the error value used in the {@link Result}.
+     * @param opt         The {@link Option} to convert. Must not be null.
+     * @param errorIfNone The error value to return if the {@link Option} is empty.
+     * @return A {@link Result} that wraps the value from the {@link Option} if it is defined,
+     * or an error containing {@code errorIfNone} if the {@link Option} is empty.
+     */
+    static <V, E> Result<V, E> fromOption(Option<? extends V> opt, E errorIfNone) {
+        Objects.requireNonNull(opt, "opt");
+        return opt.isDefined() ? Result.ok(((Option.Some<? extends V>) opt).value()) : Result.err(errorIfNone);
+    }
+
+    /**
+     * Converts a Try instance into a Result instance.
+     *
+     * @param <V> the type of the value contained in the Try instance
+     * @param t   the Try instance to be converted; must not be null
+     * @return a Result instance that represents either the success or failure of the given Try instance
+     */
+    static <V> Result<V, Throwable> fromTry(Try<V> t) {
+        Objects.requireNonNull(t, "t");
+        return t.toResult();
+    }
+
 }
