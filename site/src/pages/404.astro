@@ -1,0 +1,230 @@
+---
+import {site} from "../config/site.ts";
+import DocsLayout from '../layouts/DocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+---
+
+<DocsLayout title="404 - Page Not Found" description="The page you are looking for could not be found">
+    <div class="error-container">
+        <div class="error-content">
+            <div class="error-code">404</div>
+            <h1>Page Not Found</h1>
+            <p class="error-message">
+                The page you are looking for doesn't exist or has been moved.
+            </p>
+
+            <div class="error-actions">
+                <a href=`${base}` class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Go Home
+                </a>
+                <a href=`${base}getting-started` class="btn btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    Documentation
+                </a>
+            </div>
+
+            <div class="helpful-links">
+                <h2>Popular Pages</h2>
+                <ul>
+                    <li><a href=`${base}`>Home</a></li>
+                    <li><a href=`${base}getting-started`>Getting Started</a></li>
+                    <li><a href=`${base}examples`>Examples</a></li>
+                    <li><a href=`${site.github}` target="_blank" rel="noopener">GitHub Repository</a></li>
+                </ul>
+            </div>
+
+            <div class="lambda-decoration" aria-hidden="true">λ</div>
+        </div>
+    </div>
+</DocsLayout>
+
+<style>
+    .error-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        position: relative;
+    }
+
+    .error-content {
+        text-align: center;
+        max-width: 600px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .error-code {
+        font-size: 8rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--color-primary), #6366f1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 1rem;
+    }
+
+    .error-content h1 {
+        font-size: 2.5rem;
+        margin: 1rem 0;
+        color: var(--color-text);
+    }
+
+    .error-message {
+        font-size: 1.25rem;
+        color: var(--color-text-secondary);
+        margin: 1.5rem 0 2.5rem;
+        line-height: 1.6;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 3rem;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        font-size: 1rem;
+    }
+
+    .btn svg {
+        transition: transform 0.2s ease;
+    }
+
+    .btn:hover svg {
+        transform: scale(1.1);
+    }
+
+    .btn-primary {
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--color-primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--color-shadow);
+    }
+
+    .btn-secondary {
+        background-color: transparent;
+        color: var(--color-text);
+        border-color: var(--color-border);
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        transform: translateY(-2px);
+    }
+
+    .helpful-links {
+        background-color: var(--color-surface);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--color-border);
+        margin-top: 2rem;
+    }
+
+    .helpful-links h2 {
+        font-size: 1.25rem;
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--color-text);
+    }
+
+    .helpful-links ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .helpful-links li {
+        margin: 0;
+    }
+
+    .helpful-links a {
+        display: block;
+        padding: 0.75rem 1rem;
+        background-color: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--color-text);
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .helpful-links a:hover {
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+        transform: translateX(4px);
+    }
+
+    .lambda-decoration {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 30rem;
+        opacity: 0.03;
+        z-index: 0;
+        pointer-events: none;
+        user-select: none;
+        font-weight: 700;
+        color: var(--color-primary);
+    }
+
+    @media (max-width: 768px) {
+        .error-code {
+            font-size: 6rem;
+        }
+
+        .error-content h1 {
+            font-size: 2rem;
+        }
+
+        .error-message {
+            font-size: 1.125rem;
+        }
+
+        .error-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn {
+            justify-content: center;
+        }
+
+        .helpful-links ul {
+            grid-template-columns: 1fr;
+        }
+
+        .lambda-decoration {
+            font-size: 15rem;
+        }
+    }
+</style>

@@ -1,0 +1,54 @@
+---
+fileName: 'Caching.java'
+---
+
+```java title="Caching.java"
+import codes.domix.fun.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+
+public class Cache<K, V> {
+    private final ConcurrentHashMap<K, V> store;
+
+    public Cache() {
+        this.store = new ConcurrentHashMap<>();
+    }
+
+    public Option<V> get(K key) {
+        return Option.of(store.get(key));
+    }
+
+    public V getOrCompute(K key, Supplier<V> supplier) {
+        return get(key).getOrElse(() -> {
+            V value = supplier.get();
+            store.put(key, value);
+            return value;
+        });
+    }
+
+    public Option<V> put(K key, V value) {
+        return Option.of(store.put(key, value));
+    }
+
+    public Option<V> remove(K key) {
+        return Option.of(store.remove(key));
+    }
+
+    public boolean contains(K key) {
+        return get(key).isDefined();
+    }
+}
+
+// Usage
+Cache<String, UserData> userCache = new Cache<>();
+
+// Get from cache or compute
+UserData user = userCache.getOrCompute(
+    "user:123",
+    () -> database.loadUser("123")
+);
+
+// Safe lookup
+Option<UserData> maybeUser = userCache.get("user:456");
+maybeUser.ifPresent(u -> System.out.println("Found: " + u.getName()));
+```

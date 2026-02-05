@@ -1,0 +1,63 @@
+---
+fileName: 'MultipleOperations.java'
+---
+
+```java title="MultipleOperations.java"
+import codes.domix.fun.*;
+
+public class OrderProcessor {
+    public Try<OrderResult> processOrder(OrderRequest request) {
+        Try<Customer> customer = validateCustomer(request.customerId());
+        Try<Product> product = validateProduct(request.productId());
+        Try<Integer> quantity = validateQuantity(request.quantity());
+
+        // Combine all validations
+        return customer.flatMap(c ->
+            product.flatMap(p ->
+                quantity.map(q ->
+                    createOrder(c, p, q)
+                )
+            )
+        );
+    }
+
+    private Try<Customer> validateCustomer(String id) {
+        return Try.of(() -> customerRepo.findById(id))
+            .flatMap(opt -> opt.isDefined()
+                ? Try.success(opt.get())
+                : Try.failure(new NotFoundException("Customer not found"))
+            );
+    }
+
+    private Try<Product> validateProduct(String id) {
+        return Try.of(() -> productRepo.findById(id))
+            .filter(p -> p.isAvailable())
+            .flatMap(opt -> opt.isDefined()
+                ? Try.success(opt.get())
+                : Try.failure(new NotFoundException("Product unavailable"))
+            );
+    }
+
+    private Try<Integer> validateQuantity(int qty) {
+        return qty > 0 && qty <= 100
+            ? Try.success(qty)
+            : Try.failure(new ValidationException("Invalid quantity"));
+    }
+
+    private OrderResult createOrder(Customer c, Product p, int qty) {
+        return new OrderResult(c, p, qty);
+    }
+}
+
+// Usage
+OrderProcessor processor = new OrderProcessor();
+
+Try<OrderResult> result = processor.processOrder(
+    new OrderRequest("cust123", "prod456", 5)
+);
+
+result.fold(
+    error -> handleError(error),
+    order -> confirmOrder(order)
+);
+```
