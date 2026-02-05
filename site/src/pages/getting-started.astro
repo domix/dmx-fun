@@ -1,10 +1,16 @@
 ---
 import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
+import {Content as MavenConfig} from '../data/code/getting-started/maven.mdx';
+import {Content as GradleConfig} from '../data/code/getting-started/gradle.mdx';
+import {Content as OptionJava} from '../data/code/getting-started/option.mdx';
+import {Content as TryJava} from '../data/code/getting-started/try.mdx';
+import {Content as ResultJava} from '../data/code/getting-started/result.mdx';
 const base = import.meta.env.BASE_URL;
 ---
 
-<DocsLayout title="Getting Started" description={`Get started with ${site.slug} functional programming library for Java`}>
+<DocsLayout title="Getting Started"
+            description={`Get started with ${site.slug} functional programming library for Java`}>
     <div class="docs-content">
         <h1>Getting Started</h1>
 
@@ -19,17 +25,11 @@ const base = import.meta.env.BASE_URL;
 
         <h3>Maven</h3>
         <p>Add the following dependency to your <code>pom.xml</code>:</p>
-        <pre is:raw><code class="language-xml">&lt;dependency&gt;
-  &lt;groupId&gt;com.domix&lt;/groupId&gt;
-  &lt;artifactId&gt;dmx-fun&lt;/artifactId&gt;
-  &lt;version&gt;1.0.0&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
+        <MavenConfig/>
 
         <h3>Gradle</h3>
         <p>Add the following to your <code>build.gradle</code>:</p>
-        <pre is:raw><code class="language-groovy">dependencies {
-    implementation 'com.domix:dmx-fun:1.0.0'
-}</code></pre>
+        <GradleConfig/>
 
         <h2>Requirements</h2>
         <ul>
@@ -43,79 +43,20 @@ const base = import.meta.env.BASE_URL;
         <p>
             The <code>Option</code> type represents an optional value. It's a type-safe alternative to <code>null</code>.
         </p>
-        <pre is:raw><code class="language-java">import com.domix.fun.Option;
-
-// Create an Option
-Option&lt;String&gt; some = Option.of("Hello");
-Option&lt;String&gt; none = Option.none();
-
-// Map over Option
-Option&lt;Integer&gt; length = some.map(String::length); // Some(5)
-
-// Provide default value
-String value = none.getOrElse("Default"); // "Default"
-
-// Chain operations
-Option&lt;String&gt; result = some
-    .filter(s -&gt; s.length() &gt; 3)
-    .map(String::toUpperCase); // Some("HELLO")</code></pre>
+        <OptionJava/>
 
         <h3>Try</h3>
         <p>
             The <code>Try</code> type represents a computation that may either result in an exception or return a value.
         </p>
-        <pre is:raw><code class="language-java">import com.domix.fun.Try;
+        <TryJava/>
 
-// Wrap risky operations
-Try&lt;Integer&gt; result = Try.of(() -&gt; Integer.parseInt("123"));
-
-// Handle success and failure
-String message = result
-    .map(i -&gt; "Success: " + i)
-    .recover(Exception.class, e -&gt; "Error: " + e.getMessage())
-    .get();
-
-// Chain operations
-Try&lt;Integer&gt; computed = Try.of(() -&gt; "42")
-    .map(Integer::parseInt)
-    .map(i -&gt; i * 2); // Success(84)</code></pre>
-
-        <h3>Either</h3>
+        <h3>Result</h3>
         <p>
-            The <code>Either</code> type represents a value of one of two possible types (a disjoint union).
+            The <code>Result</code> type represents a value of one of two possible types (a disjoint union).
         </p>
-        <pre is:raw><code class="language-java">import com.domix.fun.Either;
-
-// Create Either values
-Either&lt;String, Integer&gt; right = Either.right(42);
-Either&lt;String, Integer&gt; left = Either.left("Error");
-
-// Pattern matching
-String result = right.fold(
-    error -&gt; "Error: " + error,
-    value -&gt; "Value: " + value
-); // "Value: 42"
-
-// Map over right values
-Either&lt;String, Integer&gt; doubled = right.map(i -&gt; i * 2); // Right(84)</code></pre>
-
-        <h2>Function Composition</h2>
-        <p>
-            dmx-fun provides utilities for composing functions in a functional style.
-        </p>
-        <pre is:raw><code class="language-java">import java.util.function.Function;
-
-Function&lt;String, String&gt; trim = String::trim;
-Function&lt;String, String&gt; lower = String::toLowerCase;
-Function&lt;String, Integer&gt; length = String::length;
-
-// Compose functions
-Function&lt;String, Integer&gt; process = trim
-    .andThen(lower)
-    .andThen(length);
-
-int result = process.apply("  HELLO  "); // 5</code></pre>
-
+        <ResultJava/>
+        
         <h2>Next Steps</h2>
         <ul>
             <li><a href={`${base}api`}>Explore the API documentation</a></li>

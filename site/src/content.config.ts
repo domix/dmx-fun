@@ -7,8 +7,7 @@ import {z} from 'astro/zod';
 const code = defineCollection({
     loader: glob({pattern: "**/*.{md,mdx}", base: "./src/data/code"}),
     schema: z.object({
-        fileName: z.string(),
-        language: z.string()
+        fileName: z.string()
     })
 });
 
