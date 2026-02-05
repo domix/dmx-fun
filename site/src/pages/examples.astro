@@ -1,6 +1,7 @@
 ---
 import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
+import {Content as UserValidation} from '../data/code/examples/user_validation.mdx';
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -19,47 +20,7 @@ const base = import.meta.env.BASE_URL;
             <p>
                 A common scenario where you need to validate user input and handle various error cases.
             </p>
-            <pre is:raw><code class="language-java">import com.domix.fun.*;
-
-public class UserValidator {
-    public Either&lt;String, User&gt; validateAndCreateUser(
-        String email,
-        String password
-    ) {
-        return validateEmail(email)
-            .flatMap(e -&gt; validatePassword(password)
-                .map(p -&gt; new User(e, p)));
-    }
-
-    private Either&lt;String, String&gt; validateEmail(String email) {
-        if (email == null || email.isEmpty()) {
-            return Either.left("Email is required");
-        }
-        if (!email.contains("@")) {
-            return Either.left("Invalid email format");
-        }
-        return Either.right(email);
-    }
-
-    private Either&lt;String, String&gt; validatePassword(String password) {
-        if (password == null || password.length() &lt; 8) {
-            return Either.left("Password must be at least 8 characters");
-        }
-        return Either.right(password);
-    }
-}
-
-// Usage
-UserValidator validator = new UserValidator();
-Either&lt;String, User&gt; result = validator.validateAndCreateUser(
-    "user@example.com",
-    "securepass123"
-);
-
-String message = result.fold(
-    error -&gt; "Validation failed: " + error,
-    user -&gt; "User created: " + user.getEmail()
-);</code></pre>
+            <UserValidation/>
         </section>
 
         <section class="example-section">
