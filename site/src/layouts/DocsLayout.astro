@@ -15,7 +15,7 @@ const base = import.meta.env.BASE_URL;
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width"/>
-    <link rel="icon" type="image/svg+xml" href=`${base}favicon.svg`/>
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`}/>
     <meta name="generator" content={Astro.generator}/>
     <meta name="description" content={description}/>
     <title>{title} - {site.slug}</title>
@@ -24,16 +24,16 @@ const base = import.meta.env.BASE_URL;
 <div class="layout">
     <header class="header">
         <div class="header-content">
-            <a href=`${base}` class="logo">
+            <a href={base} class="logo">
                 <span class="logo-icon">λ</span>
                 <span class="logo-text">{site.slug}</span>
             </a>
             <nav class="nav">
-                <a href=`${base}`>Home</a>
-                <a href=`${base}getting-started`>Getting Started</a>
-                <a href=`${base}api`>API</a>
-                <a href=`${base}examples`>Examples</a>
-                <a href=`${site.github}` target="_blank" rel="noopener">GitHub</a>
+                <a href={base}>Home</a>
+                <a href={`${base}getting-started`}>Getting Started</a>
+                <a href={`${base}examples`}>Examples</a>
+                <a href={`${base}api`}>API</a>
+                <a href={site.github} target="_blank" rel="noopener">GitHub</a>
             </nav>
             <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
                 <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -64,9 +64,9 @@ const base = import.meta.env.BASE_URL;
         <div class="footer-content">
             <p>&copy; {new Date().getFullYear()} {site.author}. Open source under the Apache License 2.0.</p>
             <div class="footer-links">
-                <a href=`${site.github}` target="_blank" rel="noopener">GitHub</a>
-                <a href=`${site.github}/issues` target="_blank" rel="noopener">Issues</a>
-                <a href=`${site.github}/blob/main/LICENSE` target="_blank" rel="noopener">License</a>
+                <a href={site.github} target="_blank" rel="noopener">GitHub</a>
+                <a href={`${site.github}/issues`} target="_blank" rel="noopener">Issues</a>
+                <a href={`${site.github}/blob/main/LICENSE`} target="_blank" rel="noopener">License</a>
             </div>
         </div>
     </footer>

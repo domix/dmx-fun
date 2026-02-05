@@ -10,7 +10,7 @@ Function<String, String> normalize = str -> str.trim().toLowerCase();
 Function<String, Integer> toLength = String::length;
 
 var process = normalize.andThen(toLength);
-var result = process.apply("  HELLO WORLD  "); // 11
+var length = process.apply("  HELLO WORLD  "); // 11
 
 // Handle options safely
 Option<User> user = findUserById(id);
@@ -19,6 +19,6 @@ String name = user
     .getOrElse("Anonymous");
 
 // Handle errors functionally
-Try<Integer> result = Try.of(() -> Integer.parseInt(input))
+Try<Integer> parsed = Try.of(() -> Integer.parseInt(input))
     .recover(NumberFormatException.class, e -> 0);
 ```
