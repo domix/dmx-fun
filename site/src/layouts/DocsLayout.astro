@@ -83,12 +83,20 @@ const base = import.meta.env.BASE_URL;
     }
 
     function getStoredTheme() {
-        return localStorage.getItem(STORAGE_KEY);
+        try {
+            return localStorage.getItem(STORAGE_KEY);
+        } catch {
+            return null;
+        }
     }
 
     function setTheme(theme: string) {
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem(STORAGE_KEY, theme);
+        try {
+            localStorage.setItem(STORAGE_KEY, theme);
+        } catch {
+            // Storage unavailable; theme still applies for this session
+        }
     }
 
     function initTheme() {
