@@ -1,7 +1,8 @@
 ---
 import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
-import {Code} from 'astro:components';
+
+import { Code } from 'astro-expressive-code/components'
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -60,17 +61,7 @@ const base = import.meta.env.BASE_URL;
     </div>
     <div class="quick-example">
         <h2>Demo</h2>
-        <Code code={`const foo = 'bar';`} lang="js"/>
-        <Code code={`const foo = 'bar';`} lang="js" theme="dark-plus"/>
-        <!-- Optional: Enable word wrapping. -->
-        <Code code={`const foo = 'bar';`} lang="js" wrap/>
-        <!-- Optional: Output inline code. -->
-        <p>
-            <Code code={`const foo = 'bar';`} lang="js" inline/>
-            will be rendered inline.
-        </p>
-        <!-- Optional: defaultColor -->
-        <Code code={`const foo = 'bar';`} lang="js" defaultColor={false}/>
+        <Code code="const foo = 'bar';" lang="js" type="terminal" title="dd.js"/>
     </div>
     <div class="quick-example">
         <h2>Quick Example</h2>
