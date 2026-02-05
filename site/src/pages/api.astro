@@ -1,384 +1,385 @@
 ---
-import { site } from "../config/site.ts";
+import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
 ---
 
 <DocsLayout title="API Reference" description=`Complete API reference for ${site.slug} functional programming library`>
-  <div class="docs-content">
-    <h1>API Reference</h1>
+    <div class="docs-content">
+        <h1>API Reference</h1>
 
-    <div class="intro">
-      <p>
-        Complete API documentation for all classes and methods available in {site.slug}.
-      </p>
-    </div>
+        <div class="intro">
+            <p>
+                Complete API documentation for all classes and methods available in {site.slug}.
+            </p>
+        </div>
 
-    <nav class="api-nav">
-      <a href="#option">Option</a>
-      <a href="#try">Try</a>
-      <a href="#either">Either</a>
-      <a href="#functions">Functions</a>
-      <a href="#collections">Collections</a>
-    </nav>
+        <nav class="api-nav">
+            <a href="#option">Option</a>
+            <a href="#try">Try</a>
+            <a href="#either">Either</a>
+            <a href="#functions">Functions</a>
+            <a href="#collections">Collections</a>
+        </nav>
 
-    <section id="option" class="api-section">
-      <h2>Option&lt;T&gt;</h2>
-      <p>
-        A container type that represents an optional value. An <code>Option</code> is either
-        <code>Some</code> containing a value, or <code>None</code> representing the absence of a value.
-      </p>
+        <section id="option" class="api-section">
+            <h2>Option&lt;T&gt;</h2>
+            <p>
+                A container type that represents an optional value. An <code>Option</code> is either
+                <code>Some</code> containing a value, or <code>None</code> representing the absence of a value.
+            </p>
 
-      <h3>Static Methods</h3>
+            <h3>Static Methods</h3>
 
-      <div class="method">
-        <h4><code>Option&lt;T&gt; of(T value)</code></h4>
-        <p>Creates an Option from a value. Returns <code>None</code> if value is null, otherwise <code>Some(value)</code>.</p>
-        <pre is:raw><code class="language-java">Option&lt;String&gt; opt = Option.of("hello"); // Some("hello")
+            <div class="method">
+                <h4><code>Option&lt;T&gt; of(T value)</code></h4>
+                <p>Creates an Option from a value. Returns <code>None</code> if value is null, otherwise <code>Some(value)</code>.
+                </p>
+                <pre is:raw><code class="language-java">Option&lt;String&gt; opt = Option.of("hello"); // Some("hello")
 Option&lt;String&gt; empty = Option.of(null);   // None</code></pre>
-      </div>
+            </div>
 
-      <div class="method">
-        <h4><code>Option&lt;T&gt; some(T value)</code></h4>
-        <p>Creates a <code>Some</code> containing the given non-null value.</p>
-        <pre is:raw><code class="language-java">Option&lt;String&gt; opt = Option.some("hello"); // Some("hello")</code></pre>
-      </div>
+            <div class="method">
+                <h4><code>Option&lt;T&gt; some(T value)</code></h4>
+                <p>Creates a <code>Some</code> containing the given non-null value.</p>
+                <pre is:raw><code class="language-java">Option&lt;String&gt; opt = Option.some("hello"); // Some("hello")</code></pre>
+            </div>
 
-      <div class="method">
-        <h4><code>Option&lt;T&gt; none()</code></h4>
-        <p>Returns an empty <code>Option</code>.</p>
-        <pre is:raw><code class="language-java">Option&lt;String&gt; opt = Option.none(); // None</code></pre>
-      </div>
+            <div class="method">
+                <h4><code>Option&lt;T&gt; none()</code></h4>
+                <p>Returns an empty <code>Option</code>.</p>
+                <pre is:raw><code class="language-java">Option&lt;String&gt; opt = Option.none(); // None</code></pre>
+            </div>
 
-      <h3>Instance Methods</h3>
+            <h3>Instance Methods</h3>
 
-      <div class="method">
-        <h4><code>boolean isDefined()</code></h4>
-        <p>Returns true if this is a <code>Some</code>, false if <code>None</code>.</p>
-      </div>
+            <div class="method">
+                <h4><code>boolean isDefined()</code></h4>
+                <p>Returns true if this is a <code>Some</code>, false if <code>None</code>.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>boolean isEmpty()</code></h4>
-        <p>Returns true if this is <code>None</code>, false if a <code>Some</code>.</p>
-      </div>
+            <div class="method">
+                <h4><code>boolean isEmpty()</code></h4>
+                <p>Returns true if this is <code>None</code>, false if a <code>Some</code>.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>&lt;U&gt; Option&lt;U&gt; map(Function&lt;T, U&gt; mapper)</code></h4>
-        <p>Transforms the value inside the Option if present.</p>
-        <pre is:raw><code class="language-java">Option&lt;Integer&gt; length = Option.of("hello")
+            <div class="method">
+                <h4><code>&lt;U&gt; Option&lt;U&gt; map(Function&lt;T, U&gt; mapper)</code></h4>
+                <p>Transforms the value inside the Option if present.</p>
+                <pre is:raw><code class="language-java">Option&lt;Integer&gt; length = Option.of("hello")
     .map(String::length); // Some(5)</code></pre>
-      </div>
+            </div>
 
-      <div class="method">
-        <h4><code>&lt;U&gt; Option&lt;U&gt; flatMap(Function&lt;T, Option&lt;U&gt;&gt; mapper)</code></h4>
-        <p>Transforms and flattens the Option.</p>
-        <pre is:raw><code class="language-java">Option&lt;String&gt; result = Option.of("123")
+            <div class="method">
+                <h4><code>&lt;U&gt; Option&lt;U&gt; flatMap(Function&lt;T, Option&lt;U&gt;&gt; mapper)</code></h4>
+                <p>Transforms and flattens the Option.</p>
+                <pre is:raw><code class="language-java">Option&lt;String&gt; result = Option.of("123")
     .flatMap(s -&gt; tryParse(s)); // Some("123") or None</code></pre>
-      </div>
+            </div>
 
-      <div class="method">
-        <h4><code>Option&lt;T&gt; filter(Predicate&lt;T&gt; predicate)</code></h4>
-        <p>Returns this Option if it satisfies the predicate, otherwise None.</p>
-        <pre is:raw><code class="language-java">Option&lt;String&gt; filtered = Option.of("hello")
+            <div class="method">
+                <h4><code>Option&lt;T&gt; filter(Predicate&lt;T&gt; predicate)</code></h4>
+                <p>Returns this Option if it satisfies the predicate, otherwise None.</p>
+                <pre is:raw><code class="language-java">Option&lt;String&gt; filtered = Option.of("hello")
     .filter(s -&gt; s.length() &gt; 3); // Some("hello")</code></pre>
-      </div>
+            </div>
 
-      <div class="method">
-        <h4><code>T get()</code></h4>
-        <p>Returns the value if present, throws NoSuchElementException otherwise.</p>
-      </div>
+            <div class="method">
+                <h4><code>T get()</code></h4>
+                <p>Returns the value if present, throws NoSuchElementException otherwise.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>T getOrElse(T defaultValue)</code></h4>
-        <p>Returns the value if present, otherwise returns the default value.</p>
-        <pre is:raw><code class="language-java">String value = Option.&lt;String&gt;none()
+            <div class="method">
+                <h4><code>T getOrElse(T defaultValue)</code></h4>
+                <p>Returns the value if present, otherwise returns the default value.</p>
+                <pre is:raw><code class="language-java">String value = Option.&lt;String&gt;none()
     .getOrElse("default"); // "default"</code></pre>
-      </div>
+            </div>
 
-      <div class="method">
-        <h4><code>T getOrElse(Supplier&lt;T&gt; supplier)</code></h4>
-        <p>Returns the value if present, otherwise returns the result of the supplier.</p>
-      </div>
+            <div class="method">
+                <h4><code>T getOrElse(Supplier&lt;T&gt; supplier)</code></h4>
+                <p>Returns the value if present, otherwise returns the result of the supplier.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>Option&lt;T&gt; orElse(Option&lt;T&gt; alternative)</code></h4>
-        <p>Returns this Option if defined, otherwise returns the alternative.</p>
-      </div>
-    </section>
+            <div class="method">
+                <h4><code>Option&lt;T&gt; orElse(Option&lt;T&gt; alternative)</code></h4>
+                <p>Returns this Option if defined, otherwise returns the alternative.</p>
+            </div>
+        </section>
 
-    <section id="try" class="api-section">
-      <h2>Try&lt;T&gt;</h2>
-      <p>
-        Represents a computation that may either result in an exception (<code>Failure</code>)
-        or return a successfully computed value (<code>Success</code>).
-      </p>
+        <section id="try" class="api-section">
+            <h2>Try&lt;T&gt;</h2>
+            <p>
+                Represents a computation that may either result in an exception (<code>Failure</code>)
+                or return a successfully computed value (<code>Success</code>).
+            </p>
 
-      <h3>Static Methods</h3>
+            <h3>Static Methods</h3>
 
-      <div class="method">
-        <h4><code>Try&lt;T&gt; of(CheckedSupplier&lt;T&gt; supplier)</code></h4>
-        <p>Creates a Try by executing the supplier. Returns Success if no exception, Failure otherwise.</p>
-        <pre is:raw><code class="language-java">Try&lt;Integer&gt; result = Try.of(() -&gt; Integer.parseInt("123")); // Success(123)</code></pre>
-      </div>
+            <div class="method">
+                <h4><code>Try&lt;T&gt; of(CheckedSupplier&lt;T&gt; supplier)</code></h4>
+                <p>Creates a Try by executing the supplier. Returns Success if no exception, Failure otherwise.</p>
+                <pre is:raw><code class="language-java">Try&lt;Integer&gt; result = Try.of(() -&gt; Integer.parseInt("123")); // Success(123)</code></pre>
+            </div>
 
-      <div class="method">
-        <h4><code>Try&lt;T&gt; success(T value)</code></h4>
-        <p>Creates a successful Try containing the given value.</p>
-      </div>
+            <div class="method">
+                <h4><code>Try&lt;T&gt; success(T value)</code></h4>
+                <p>Creates a successful Try containing the given value.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>Try&lt;T&gt; failure(Throwable exception)</code></h4>
-        <p>Creates a failed Try containing the given exception.</p>
-      </div>
+            <div class="method">
+                <h4><code>Try&lt;T&gt; failure(Throwable exception)</code></h4>
+                <p>Creates a failed Try containing the given exception.</p>
+            </div>
 
-      <h3>Instance Methods</h3>
+            <h3>Instance Methods</h3>
 
-      <div class="method">
-        <h4><code>boolean isSuccess()</code></h4>
-        <p>Returns true if this is a Success.</p>
-      </div>
+            <div class="method">
+                <h4><code>boolean isSuccess()</code></h4>
+                <p>Returns true if this is a Success.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>boolean isFailure()</code></h4>
-        <p>Returns true if this is a Failure.</p>
-      </div>
+            <div class="method">
+                <h4><code>boolean isFailure()</code></h4>
+                <p>Returns true if this is a Failure.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>&lt;U&gt; Try&lt;U&gt; map(Function&lt;T, U&gt; mapper)</code></h4>
-        <p>Transforms the value if this is a Success.</p>
-      </div>
+            <div class="method">
+                <h4><code>&lt;U&gt; Try&lt;U&gt; map(Function&lt;T, U&gt; mapper)</code></h4>
+                <p>Transforms the value if this is a Success.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>&lt;U&gt; Try&lt;U&gt; flatMap(Function&lt;T, Try&lt;U&gt;&gt; mapper)</code></h4>
-        <p>Transforms and flattens the Try.</p>
-      </div>
+            <div class="method">
+                <h4><code>&lt;U&gt; Try&lt;U&gt; flatMap(Function&lt;T, Try&lt;U&gt;&gt; mapper)</code></h4>
+                <p>Transforms and flattens the Try.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>Try&lt;T&gt; recover(Class&lt;E&gt; exceptionClass, Function&lt;E, T&gt; fn)</code></h4>
-        <p>Recovers from a specific exception type by providing a recovery function.</p>
-        <pre is:raw><code class="language-java">Try&lt;Integer&gt; recovered = Try.of(() -&gt; Integer.parseInt("abc"))
+            <div class="method">
+                <h4><code>Try&lt;T&gt; recover(Class&lt;E&gt; exceptionClass, Function&lt;E, T&gt; fn)</code></h4>
+                <p>Recovers from a specific exception type by providing a recovery function.</p>
+                <pre is:raw><code class="language-java">Try&lt;Integer&gt; recovered = Try.of(() -&gt; Integer.parseInt("abc"))
     .recover(NumberFormatException.class, e -&gt; 0); // Success(0)</code></pre>
-      </div>
+            </div>
 
-      <div class="method">
-        <h4><code>T get()</code></h4>
-        <p>Returns the value if Success, throws the exception if Failure.</p>
-      </div>
+            <div class="method">
+                <h4><code>T get()</code></h4>
+                <p>Returns the value if Success, throws the exception if Failure.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>T getOrElse(T defaultValue)</code></h4>
-        <p>Returns the value if Success, otherwise returns the default value.</p>
-      </div>
+            <div class="method">
+                <h4><code>T getOrElse(T defaultValue)</code></h4>
+                <p>Returns the value if Success, otherwise returns the default value.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>Option&lt;T&gt; toOption()</code></h4>
-        <p>Converts this Try to an Option. Success becomes Some, Failure becomes None.</p>
-      </div>
-    </section>
+            <div class="method">
+                <h4><code>Option&lt;T&gt; toOption()</code></h4>
+                <p>Converts this Try to an Option. Success becomes Some, Failure becomes None.</p>
+            </div>
+        </section>
 
-    <section id="either" class="api-section">
-      <h2>Either&lt;L, R&gt;</h2>
-      <p>
-        Represents a value of one of two possible types. An <code>Either</code> is either
-        <code>Left</code> or <code>Right</code>, typically used for error handling where Left
-        represents an error and Right represents a successful value.
-      </p>
+        <section id="either" class="api-section">
+            <h2>Either&lt;L, R&gt;</h2>
+            <p>
+                Represents a value of one of two possible types. An <code>Either</code> is either
+                <code>Left</code> or <code>Right</code>, typically used for error handling where Left
+                represents an error and Right represents a successful value.
+            </p>
 
-      <h3>Static Methods</h3>
+            <h3>Static Methods</h3>
 
-      <div class="method">
-        <h4><code>Either&lt;L, R&gt; left(L value)</code></h4>
-        <p>Creates a Left value.</p>
-        <pre is:raw><code class="language-java">Either&lt;String, Integer&gt; error = Either.left("Error message");</code></pre>
-      </div>
+            <div class="method">
+                <h4><code>Either&lt;L, R&gt; left(L value)</code></h4>
+                <p>Creates a Left value.</p>
+                <pre is:raw><code class="language-java">Either&lt;String, Integer&gt; error = Either.left("Error message");</code></pre>
+            </div>
 
-      <div class="method">
-        <h4><code>Either&lt;L, R&gt; right(R value)</code></h4>
-        <p>Creates a Right value.</p>
-        <pre is:raw><code class="language-java">Either&lt;String, Integer&gt; success = Either.right(42);</code></pre>
-      </div>
+            <div class="method">
+                <h4><code>Either&lt;L, R&gt; right(R value)</code></h4>
+                <p>Creates a Right value.</p>
+                <pre is:raw><code class="language-java">Either&lt;String, Integer&gt; success = Either.right(42);</code></pre>
+            </div>
 
-      <h3>Instance Methods</h3>
+            <h3>Instance Methods</h3>
 
-      <div class="method">
-        <h4><code>boolean isLeft()</code></h4>
-        <p>Returns true if this is a Left.</p>
-      </div>
+            <div class="method">
+                <h4><code>boolean isLeft()</code></h4>
+                <p>Returns true if this is a Left.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>boolean isRight()</code></h4>
-        <p>Returns true if this is a Right.</p>
-      </div>
+            <div class="method">
+                <h4><code>boolean isRight()</code></h4>
+                <p>Returns true if this is a Right.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>&lt;T&gt; Either&lt;L, T&gt; map(Function&lt;R, T&gt; mapper)</code></h4>
-        <p>Transforms the Right value if present.</p>
-      </div>
+            <div class="method">
+                <h4><code>&lt;T&gt; Either&lt;L, T&gt; map(Function&lt;R, T&gt; mapper)</code></h4>
+                <p>Transforms the Right value if present.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>&lt;T&gt; Either&lt;T, R&gt; mapLeft(Function&lt;L, T&gt; mapper)</code></h4>
-        <p>Transforms the Left value if present.</p>
-      </div>
+            <div class="method">
+                <h4><code>&lt;T&gt; Either&lt;T, R&gt; mapLeft(Function&lt;L, T&gt; mapper)</code></h4>
+                <p>Transforms the Left value if present.</p>
+            </div>
 
-      <div class="method">
-        <h4><code>&lt;T&gt; T fold(Function&lt;L, T&gt; leftFn, Function&lt;R, T&gt; rightFn)</code></h4>
-        <p>Pattern matching for Either values.</p>
-        <pre is:raw><code class="language-java">String result = either.fold(
+            <div class="method">
+                <h4><code>&lt;T&gt; T fold(Function&lt;L, T&gt; leftFn, Function&lt;R, T&gt; rightFn)</code></h4>
+                <p>Pattern matching for Either values.</p>
+                <pre is:raw><code class="language-java">String result = either.fold(
     error -&gt; "Error: " + error,
     value -&gt; "Success: " + value
 );</code></pre>
-      </div>
-    </section>
+            </div>
+        </section>
 
-    <section id="functions" class="api-section">
-      <h2>Functions</h2>
-      <p>
-        Utilities for working with Java's functional interfaces and composing functions.
-      </p>
+        <section id="functions" class="api-section">
+            <h2>Functions</h2>
+            <p>
+                Utilities for working with Java's functional interfaces and composing functions.
+            </p>
 
-      <div class="method">
-        <h4>Function Composition</h4>
-        <p>Use <code>andThen</code> and <code>compose</code> for function composition.</p>
-        <pre is:raw><code class="language-java">Function&lt;String, Integer&gt; parse = Integer::parseInt;
+            <div class="method">
+                <h4>Function Composition</h4>
+                <p>Use <code>andThen</code> and <code>compose</code> for function composition.</p>
+                <pre is:raw><code class="language-java">Function&lt;String, Integer&gt; parse = Integer::parseInt;
 Function&lt;Integer, String&gt; format = i -&gt; String.format("%03d", i);
 
 Function&lt;String, String&gt; composed = parse.andThen(format);
 String result = composed.apply("42"); // "042"</code></pre>
-      </div>
-    </section>
+            </div>
+        </section>
 
-    <section id="collections" class="api-section">
-      <h2>Collections</h2>
-      <p>
-        Functional utilities for working with Java collections.
-      </p>
-      <p class="note">
-        <strong>Note:</strong> Additional collection utilities may be available.
-        Please refer to the source code for a complete list.
-      </p>
-    </section>
-  </div>
+        <section id="collections" class="api-section">
+            <h2>Collections</h2>
+            <p>
+                Functional utilities for working with Java collections.
+            </p>
+            <p class="note">
+                <strong>Note:</strong> Additional collection utilities may be available.
+                Please refer to the source code for a complete list.
+            </p>
+        </section>
+    </div>
 </DocsLayout>
 
 <style>
-  .docs-content {
-    max-width: 900px;
-  }
+    .docs-content {
+        max-width: 900px;
+    }
 
-  .intro {
-    background-color: var(--color-surface);
-    padding: 1.5rem;
-    border-radius: 8px;
-    border-left: 4px solid var(--color-primary);
-    margin: 2rem 0;
-  }
+    .intro {
+        background-color: var(--color-surface);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--color-primary);
+        margin: 2rem 0;
+    }
 
-  .intro p {
-    margin: 0;
-    font-size: 1.125rem;
-  }
+    .intro p {
+        margin: 0;
+        font-size: 1.125rem;
+    }
 
-  .api-nav {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 1rem;
-    background-color: var(--color-surface);
-    border-radius: 8px;
-    margin: 2rem 0;
-    border: 1px solid var(--color-border);
-  }
-
-  .api-nav a {
-    padding: 0.5rem 1rem;
-    background-color: var(--color-bg);
-    border-radius: 6px;
-    text-decoration: none;
-    color: var(--color-text);
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border: 1px solid var(--color-border);
-  }
-
-  .api-nav a:hover {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-    transform: translateY(-2px);
-  }
-
-  .api-section {
-    margin: 4rem 0;
-    padding-top: 2rem;
-    border-top: 2px solid var(--color-border);
-  }
-
-  .api-section:first-of-type {
-    border-top: none;
-  }
-
-  .api-section h2 {
-    color: var(--color-primary);
-    margin-top: 0;
-    font-size: 2rem;
-  }
-
-  .api-section h3 {
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    color: var(--color-text);
-    font-size: 1.5rem;
-  }
-
-  .method {
-    background-color: var(--color-surface);
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-    border: 1px solid var(--color-border);
-  }
-
-  .method h4 {
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    font-family: var(--font-mono);
-    color: var(--color-primary);
-    font-size: 1rem;
-    word-break: break-word;
-  }
-
-  .method h4 code {
-    background: none;
-    padding: 0;
-    font-size: inherit;
-  }
-
-  .method p {
-    margin-bottom: 1rem;
-  }
-
-  .method pre {
-    margin: 1rem 0 0;
-  }
-
-  .note {
-    background-color: var(--color-surface);
-    padding: 1rem;
-    border-radius: 6px;
-    border-left: 4px solid var(--color-primary);
-    margin: 1.5rem 0;
-  }
-
-  h1 {
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 0.5rem;
-  }
-
-  @media (max-width: 768px) {
     .api-nav {
-      flex-direction: column;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1rem;
+        background-color: var(--color-surface);
+        border-radius: 8px;
+        margin: 2rem 0;
+        border: 1px solid var(--color-border);
     }
 
     .api-nav a {
-      text-align: center;
+        padding: 0.5rem 1rem;
+        background-color: var(--color-bg);
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--color-text);
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1px solid var(--color-border);
     }
-  }
+
+    .api-nav a:hover {
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+        transform: translateY(-2px);
+    }
+
+    .api-section {
+        margin: 4rem 0;
+        padding-top: 2rem;
+        border-top: 2px solid var(--color-border);
+    }
+
+    .api-section:first-of-type {
+        border-top: none;
+    }
+
+    .api-section h2 {
+        color: var(--color-primary);
+        margin-top: 0;
+        font-size: 2rem;
+    }
+
+    .api-section h3 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: var(--color-text);
+        font-size: 1.5rem;
+    }
+
+    .method {
+        background-color: var(--color-surface);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        border: 1px solid var(--color-border);
+    }
+
+    .method h4 {
+        margin-top: 0;
+        margin-bottom: 0.75rem;
+        font-family: var(--font-mono);
+        color: var(--color-primary);
+        font-size: 1rem;
+        word-break: break-word;
+    }
+
+    .method h4 code {
+        background: none;
+        padding: 0;
+        font-size: inherit;
+    }
+
+    .method p {
+        margin-bottom: 1rem;
+    }
+
+    .method pre {
+        margin: 1rem 0 0;
+    }
+
+    .note {
+        background-color: var(--color-surface);
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 4px solid var(--color-primary);
+        margin: 1.5rem 0;
+    }
+
+    h1 {
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .api-nav {
+            flex-direction: column;
+        }
+
+        .api-nav a {
+            text-align: center;
+        }
+    }
 </style>

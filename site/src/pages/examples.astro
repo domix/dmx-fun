@@ -1,25 +1,25 @@
 ---
-import { site } from "../config/site.ts";
+import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
 <DocsLayout title="Examples" description=`Practical examples using ${site.slug} functional programming library`>
-  <div class="docs-content">
-    <h1>Examples</h1>
+    <div class="docs-content">
+        <h1>Examples</h1>
 
-    <div class="intro">
-      <p>
-        Practical examples demonstrating how to use {site.slug} in real-world scenarios.
-      </p>
-    </div>
+        <div class="intro">
+            <p>
+                Practical examples demonstrating how to use {site.slug} in real-world scenarios.
+            </p>
+        </div>
 
-    <section class="example-section">
-      <h2>User Validation</h2>
-      <p>
-        A common scenario where you need to validate user input and handle various error cases.
-      </p>
-      <pre is:raw><code class="language-java">import com.domix.fun.*;
+        <section class="example-section">
+            <h2>User Validation</h2>
+            <p>
+                A common scenario where you need to validate user input and handle various error cases.
+            </p>
+            <pre is:raw><code class="language-java">import com.domix.fun.*;
 
 public class UserValidator {
     public Either&lt;String, User&gt; validateAndCreateUser(
@@ -60,14 +60,14 @@ String message = result.fold(
     error -&gt; "Validation failed: " + error,
     user -&gt; "User created: " + user.getEmail()
 );</code></pre>
-    </section>
+        </section>
 
-    <section class="example-section">
-      <h2>Safe Configuration Loading</h2>
-      <p>
-        Loading configuration with fallback values and type conversions.
-      </p>
-      <pre is:raw><code class="language-java">import com.domix.fun.*;
+        <section class="example-section">
+            <h2>Safe Configuration Loading</h2>
+            <p>
+                Loading configuration with fallback values and type conversions.
+            </p>
+            <pre is:raw><code class="language-java">import com.domix.fun.*;
 import java.util.Properties;
 
 public class ConfigLoader {
@@ -106,14 +106,14 @@ int port = config.getInt("server.port", 8080);
 boolean sslEnabled = config.getBoolean("server.ssl.enabled", false);
 String host = config.getString("server.host")
     .getOrElse("localhost");</code></pre>
-    </section>
+        </section>
 
-    <section class="example-section">
-      <h2>API Response Handling</h2>
-      <p>
-        Handling API responses with proper error handling and data transformation.
-      </p>
-      <pre is:raw><code class="language-java">import com.domix.fun.*;
+        <section class="example-section">
+            <h2>API Response Handling</h2>
+            <p>
+                Handling API responses with proper error handling and data transformation.
+            </p>
+            <pre is:raw><code class="language-java">import com.domix.fun.*;
 import java.net.http.*;
 
 public class ApiClient {
@@ -162,14 +162,14 @@ String message = result
     .recover(ApiException.class, e -&gt; "API Error: " + e.getMessage())
     .recover(Exception.class, e -&gt; "Unexpected error")
     .get();</code></pre>
-    </section>
+        </section>
 
-    <section class="example-section">
-      <h2>Data Pipeline</h2>
-      <p>
-        Building a data processing pipeline with multiple transformations.
-      </p>
-      <pre is:raw><code class="language-java">import com.domix.fun.*;
+        <section class="example-section">
+            <h2>Data Pipeline</h2>
+            <p>
+                Building a data processing pipeline with multiple transformations.
+            </p>
+            <pre is:raw><code class="language-java">import com.domix.fun.*;
 import java.util.List;
 import java.util.function.Function;
 
@@ -226,14 +226,14 @@ results.fold(
     error -&gt; System.err.println("Pipeline failed: " + error),
     data -&gt; System.out.println("Processed " + data.size() + " items")
 );</code></pre>
-    </section>
+        </section>
 
-    <section class="example-section">
-      <h2>Caching with Options</h2>
-      <p>
-        Implementing a simple cache with Option types for safe lookups.
-      </p>
-      <pre is:raw><code class="language-java">import com.domix.fun.*;
+        <section class="example-section">
+            <h2>Caching with Options</h2>
+            <p>
+                Implementing a simple cache with Option types for safe lookups.
+            </p>
+            <pre is:raw><code class="language-java">import com.domix.fun.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -281,14 +281,14 @@ UserData user = userCache.getOrCompute(
 // Safe lookup
 Option&lt;UserData&gt; maybeUser = userCache.get("user:456");
 maybeUser.ifPresent(u -&gt; System.out.println("Found: " + u.getName()));</code></pre>
-    </section>
+        </section>
 
-    <section class="example-section">
-      <h2>Combining Multiple Operations</h2>
-      <p>
-        Combining multiple operations that can fail independently.
-      </p>
-      <pre is:raw><code class="language-java">import com.domix.fun.*;
+        <section class="example-section">
+            <h2>Combining Multiple Operations</h2>
+            <p>
+                Combining multiple operations that can fail independently.
+            </p>
+            <pre is:raw><code class="language-java">import com.domix.fun.*;
 
 public class OrderProcessor {
     public Try&lt;OrderResult&gt; processOrder(OrderRequest request) {
@@ -345,91 +345,91 @@ result.fold(
     error -&gt; handleError(error),
     order -&gt; confirmOrder(order)
 );</code></pre>
-    </section>
+        </section>
 
-    <div class="next-steps">
-      <h2>Next Steps</h2>
-      <p>Ready to use {site.slug} in your project?</p>
-      <ul>
-        <li><a href=`${base}getting-started`>Review the Getting Started guide</a></li>
-        <li><a href=`${base}api`>Explore the complete API reference</a></li>
-        <li><a href=`${site.github}` target="_blank" rel="noopener">Contribute on GitHub</a></li>
-      </ul>
+        <div class="next-steps">
+            <h2>Next Steps</h2>
+            <p>Ready to use {site.slug} in your project?</p>
+            <ul>
+                <li><a href=`${base}getting-started`>Review the Getting Started guide</a></li>
+                <li><a href=`${base}api`>Explore the complete API reference</a></li>
+                <li><a href=`${site.github}` target="_blank" rel="noopener">Contribute on GitHub</a></li>
+            </ul>
+        </div>
     </div>
-  </div>
 </DocsLayout>
 
 <style>
-  .docs-content {
-    max-width: 900px;
-  }
+    .docs-content {
+        max-width: 900px;
+    }
 
-  .intro {
-    background-color: var(--color-surface);
-    padding: 1.5rem;
-    border-radius: 8px;
-    border-left: 4px solid var(--color-primary);
-    margin: 2rem 0;
-  }
+    .intro {
+        background-color: var(--color-surface);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--color-primary);
+        margin: 2rem 0;
+    }
 
-  .intro p {
-    margin: 0;
-    font-size: 1.125rem;
-  }
+    .intro p {
+        margin: 0;
+        font-size: 1.125rem;
+    }
 
-  .example-section {
-    margin: 3rem 0;
-    padding: 2rem;
-    background-color: var(--color-surface);
-    border-radius: 12px;
-    border: 1px solid var(--color-border);
-  }
+    .example-section {
+        margin: 3rem 0;
+        padding: 2rem;
+        background-color: var(--color-surface);
+        border-radius: 12px;
+        border: 1px solid var(--color-border);
+    }
 
-  .example-section h2 {
-    margin-top: 0;
-    color: var(--color-primary);
-    font-size: 1.5rem;
-  }
+    .example-section h2 {
+        margin-top: 0;
+        color: var(--color-primary);
+        font-size: 1.5rem;
+    }
 
-  .example-section p {
-    color: var(--color-text-secondary);
-    margin-bottom: 1.5rem;
-  }
+    .example-section p {
+        color: var(--color-text-secondary);
+        margin-bottom: 1.5rem;
+    }
 
-  .example-section pre {
-    margin: 0;
-  }
+    .example-section pre {
+        margin: 0;
+    }
 
-  .next-steps {
-    margin: 4rem 0;
-    padding: 2rem;
-    background-color: var(--color-surface);
-    border-radius: 12px;
-    border: 1px solid var(--color-border);
-    text-align: center;
-  }
+    .next-steps {
+        margin: 4rem 0;
+        padding: 2rem;
+        background-color: var(--color-surface);
+        border-radius: 12px;
+        border: 1px solid var(--color-border);
+        text-align: center;
+    }
 
-  .next-steps h2 {
-    margin-top: 0;
-  }
+    .next-steps h2 {
+        margin-top: 0;
+    }
 
-  .next-steps ul {
-    list-style: none;
-    padding: 0;
-    margin: 1.5rem 0 0;
-  }
+    .next-steps ul {
+        list-style: none;
+        padding: 0;
+        margin: 1.5rem 0 0;
+    }
 
-  .next-steps li {
-    margin: 0.75rem 0;
-  }
+    .next-steps li {
+        margin: 0.75rem 0;
+    }
 
-  .next-steps a {
-    font-weight: 500;
-    font-size: 1.125rem;
-  }
+    .next-steps a {
+        font-weight: 500;
+        font-size: 1.125rem;
+    }
 
-  h1 {
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 0.5rem;
-  }
+    h1 {
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
 </style>

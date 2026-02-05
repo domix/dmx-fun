@@ -1,49 +1,49 @@
 ---
-import { site } from "../config/site.ts";
+import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
 const base = import.meta.env.BASE_URL;
 ---
 
 <DocsLayout title="Getting Started" description=`Get started with ${site.slug} functional programming library for Java`>
-  <div class="docs-content">
-    <h1>Getting Started</h1>
+    <div class="docs-content">
+        <h1>Getting Started</h1>
 
-    <div class="intro">
-      <p>
-          {site.slug} is a functional programming library for Java that provides essential tools and utilities
-        for writing functional code in a type-safe and composable way.
-      </p>
-    </div>
+        <div class="intro">
+            <p>
+                {site.slug} is a functional programming library for Java that provides essential tools and utilities
+                for writing functional code in a type-safe and composable way.
+            </p>
+        </div>
 
-    <h2>Installation</h2>
+        <h2>Installation</h2>
 
-    <h3>Maven</h3>
-    <p>Add the following dependency to your <code>pom.xml</code>:</p>
-    <pre is:raw><code class="language-xml">&lt;dependency&gt;
+        <h3>Maven</h3>
+        <p>Add the following dependency to your <code>pom.xml</code>:</p>
+        <pre is:raw><code class="language-xml">&lt;dependency&gt;
   &lt;groupId&gt;com.domix&lt;/groupId&gt;
   &lt;artifactId&gt;dmx-fun&lt;/artifactId&gt;
   &lt;version&gt;1.0.0&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 
-    <h3>Gradle</h3>
-    <p>Add the following to your <code>build.gradle</code>:</p>
-    <pre is:raw><code class="language-groovy">dependencies {
+        <h3>Gradle</h3>
+        <p>Add the following to your <code>build.gradle</code>:</p>
+        <pre is:raw><code class="language-groovy">dependencies {
     implementation 'com.domix:dmx-fun:1.0.0'
 }</code></pre>
 
-    <h2>Requirements</h2>
-    <ul>
-      <li>Java 24 or higher</li>
-      <li>No additional dependencies required</li>
-    </ul>
+        <h2>Requirements</h2>
+        <ul>
+            <li>Java 24 or higher</li>
+            <li>No additional dependencies required</li>
+        </ul>
 
-    <h2>Core Concepts</h2>
+        <h2>Core Concepts</h2>
 
-    <h3>Option</h3>
-    <p>
-      The <code>Option</code> type represents an optional value. It's a type-safe alternative to <code>null</code>.
-    </p>
-    <pre is:raw><code class="language-java">import com.domix.fun.Option;
+        <h3>Option</h3>
+        <p>
+            The <code>Option</code> type represents an optional value. It's a type-safe alternative to <code>null</code>.
+        </p>
+        <pre is:raw><code class="language-java">import com.domix.fun.Option;
 
 // Create an Option
 Option&lt;String&gt; some = Option.of("Hello");
@@ -60,11 +60,11 @@ Option&lt;String&gt; result = some
     .filter(s -&gt; s.length() &gt; 3)
     .map(String::toUpperCase); // Some("HELLO")</code></pre>
 
-    <h3>Try</h3>
-    <p>
-      The <code>Try</code> type represents a computation that may either result in an exception or return a value.
-    </p>
-    <pre is:raw><code class="language-java">import com.domix.fun.Try;
+        <h3>Try</h3>
+        <p>
+            The <code>Try</code> type represents a computation that may either result in an exception or return a value.
+        </p>
+        <pre is:raw><code class="language-java">import com.domix.fun.Try;
 
 // Wrap risky operations
 Try&lt;Integer&gt; result = Try.of(() -&gt; Integer.parseInt("123"));
@@ -80,11 +80,11 @@ Try&lt;Integer&gt; computed = Try.of(() -&gt; "42")
     .map(Integer::parseInt)
     .map(i -&gt; i * 2); // Success(84)</code></pre>
 
-    <h3>Either</h3>
-    <p>
-      The <code>Either</code> type represents a value of one of two possible types (a disjoint union).
-    </p>
-    <pre is:raw><code class="language-java">import com.domix.fun.Either;
+        <h3>Either</h3>
+        <p>
+            The <code>Either</code> type represents a value of one of two possible types (a disjoint union).
+        </p>
+        <pre is:raw><code class="language-java">import com.domix.fun.Either;
 
 // Create Either values
 Either&lt;String, Integer&gt; right = Either.right(42);
@@ -99,11 +99,11 @@ String result = right.fold(
 // Map over right values
 Either&lt;String, Integer&gt; doubled = right.map(i -&gt; i * 2); // Right(84)</code></pre>
 
-    <h2>Function Composition</h2>
-    <p>
-      dmx-fun provides utilities for composing functions in a functional style.
-    </p>
-    <pre is:raw><code class="language-java">import java.util.function.Function;
+        <h2>Function Composition</h2>
+        <p>
+            dmx-fun provides utilities for composing functions in a functional style.
+        </p>
+        <pre is:raw><code class="language-java">import java.util.function.Function;
 
 Function&lt;String, String&gt; trim = String::trim;
 Function&lt;String, String&gt; lower = String::toLowerCase;
@@ -116,72 +116,72 @@ Function&lt;String, Integer&gt; process = trim
 
 int result = process.apply("  HELLO  "); // 5</code></pre>
 
-    <h2>Next Steps</h2>
-    <ul>
-      <li><a href=`${base}api`>Explore the API documentation</a></li>
-      <li><a href=`${base}examples`>Check out practical examples</a></li>
-      <li><a href=`${site.github}` target="_blank" rel="noopener">View source code on GitHub</a></li>
-    </ul>
-  </div>
+        <h2>Next Steps</h2>
+        <ul>
+            <li><a href=`${base}api`>Explore the API documentation</a></li>
+            <li><a href=`${base}examples`>Check out practical examples</a></li>
+            <li><a href=`${site.github}` target="_blank" rel="noopener">View source code on GitHub</a></li>
+        </ul>
+    </div>
 </DocsLayout>
 
 <style>
-  .docs-content {
-    max-width: 800px;
-  }
+    .docs-content {
+        max-width: 800px;
+    }
 
-  .intro {
-    background-color: var(--color-surface);
-    padding: 1.5rem;
-    border-radius: 8px;
-    border-left: 4px solid var(--color-primary);
-    margin: 2rem 0;
-  }
+    .intro {
+        background-color: var(--color-surface);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--color-primary);
+        margin: 2rem 0;
+    }
 
-  .intro p {
-    margin: 0;
-    font-size: 1.125rem;
-    line-height: 1.7;
-  }
+    .intro p {
+        margin: 0;
+        font-size: 1.125rem;
+        line-height: 1.7;
+    }
 
-  h1 {
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 0.5rem;
-  }
+    h1 {
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
 
-  h2 {
-    margin-top: 3rem;
-    color: var(--color-text);
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 0.5rem;
-  }
+    h2 {
+        margin-top: 3rem;
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
 
-  h3 {
-    margin-top: 2rem;
-    color: var(--color-primary);
-  }
+    h3 {
+        margin-top: 2rem;
+        color: var(--color-primary);
+    }
 
-  ul {
-    list-style-position: outside;
-    padding-left: 1.5rem;
-    margin: 1rem 0;
-  }
+    ul {
+        list-style-position: outside;
+        padding-left: 1.5rem;
+        margin: 1rem 0;
+    }
 
-  li {
-    margin: 0.5rem 0;
-    line-height: 1.6;
-  }
+    li {
+        margin: 0.5rem 0;
+        line-height: 1.6;
+    }
 
-  code {
-    font-size: 0.9em;
-  }
+    code {
+        font-size: 0.9em;
+    }
 
-  pre {
-    margin: 1.5rem 0;
-    line-height: 1.5;
-  }
+    pre {
+        margin: 1.5rem 0;
+        line-height: 1.5;
+    }
 
-  pre code {
-    font-size: 0.875rem;
-  }
+    pre code {
+        font-size: 0.875rem;
+    }
 </style>
