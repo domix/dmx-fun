@@ -6,6 +6,7 @@ import {Content as ConfigLoading} from '../data/code/examples/configuration_load
 import {Content as ApiResponseHandling} from '../data/code/examples/api_handling.mdx';
 import {Content as DataPipeline} from '../data/code/examples/data_pipeline.mdx';
 import {Content as Caching} from '../data/code/examples/caching.mdx';
+import {Content as MultipleOperations} from '../data/code/examples/multiple_operations.mdx';
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -64,63 +65,7 @@ const base = import.meta.env.BASE_URL;
             <p>
                 Combining multiple operations that can fail independently.
             </p>
-            <pre is:raw><code class="language-java">import com.domix.fun.*;
-
-public class OrderProcessor {
-    public Try&lt;OrderResult&gt; processOrder(OrderRequest request) {
-        Try&lt;Customer&gt; customer = validateCustomer(request.customerId());
-        Try&lt;Product&gt; product = validateProduct(request.productId());
-        Try&lt;Integer&gt; quantity = validateQuantity(request.quantity());
-
-        // Combine all validations
-        return customer.flatMap(c -&gt;
-            product.flatMap(p -&gt;
-                quantity.map(q -&gt;
-                    createOrder(c, p, q)
-                )
-            )
-        );
-    }
-
-    private Try&lt;Customer&gt; validateCustomer(String id) {
-        return Try.of(() -&gt; customerRepo.findById(id))
-            .flatMap(opt -&gt; opt.isDefined()
-                ? Try.success(opt.get())
-                : Try.failure(new NotFoundException("Customer not found"))
-            );
-    }
-
-    private Try&lt;Product&gt; validateProduct(String id) {
-        return Try.of(() -&gt; productRepo.findById(id))
-            .filter(p -&gt; p.isAvailable())
-            .flatMap(opt -&gt; opt.isDefined()
-                ? Try.success(opt.get())
-                : Try.failure(new NotFoundException("Product unavailable"))
-            );
-    }
-
-    private Try&lt;Integer&gt; validateQuantity(int qty) {
-        return qty &gt; 0 && qty &lt;= 100
-            ? Try.success(qty)
-            : Try.failure(new ValidationException("Invalid quantity"));
-    }
-
-    private OrderResult createOrder(Customer c, Product p, int qty) {
-        return new OrderResult(c, p, qty);
-    }
-}
-
-// Usage
-OrderProcessor processor = new OrderProcessor();
-
-Try&lt;OrderResult&gt; result = processor.processOrder(
-    new OrderRequest("cust123", "prod456", 5)
-);
-
-result.fold(
-    error -&gt; handleError(error),
-    order -&gt; confirmOrder(order)
-);</code></pre>
+            <MultipleOperations/>
         </section>
 
         <div class="next-steps">
