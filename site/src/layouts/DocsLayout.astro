@@ -6,7 +6,7 @@ interface Props {
 }
 
 const {title, description = site.description} = Astro.props;
-export const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL;
 ---
 
 
