@@ -24,8 +24,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 25
+          node-version: 24
           cache: npm
+          cache-dependency-path: site/package-lock.json
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -35,19 +36,21 @@ jobs:
 
       - name: Install
         run: npm ci
+        working-directory: site
 
       - name: Build with Gradle Wrapper
         run: ./gradlew javadoc
 
       - name: Build
         run: npm run build
+        working-directory: site
         env:
           GITHUB_PAGES: "true"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./site/dist
 
   deploy:
     needs: build
