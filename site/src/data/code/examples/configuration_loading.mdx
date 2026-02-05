@@ -1,0 +1,45 @@
+---
+fileName: 'ConfigurationLoading.java'
+---
+
+```java title="ConfigurationLoading.java"
+import com.domix.fun.*;
+import java.util.Properties;
+
+public class ConfigLoader {
+    private final Properties props;
+
+    public ConfigLoader(Properties props) {
+        this.props = props;
+    }
+
+    public Option<String> getString(String key) {
+        return Option.of(props.getProperty(key));
+    }
+
+    public int getInt(String key, int defaultValue) {
+        return getString(key)
+            .flatMap(this::parseIntSafe)
+            .getOrElse(defaultValue);
+    }
+
+    public boolean getBoolean(String key, boolean defaultValue) {
+        return getString(key)
+            .map(Boolean::parseBoolean)
+            .getOrElse(defaultValue);
+    }
+
+    private Option<Integer> parseIntSafe(String value) {
+        return Try.of(() -> Integer.parseInt(value))
+            .toOption();
+    }
+}
+
+// Usage
+ConfigLoader config = new ConfigLoader(props);
+
+int port = config.getInt("server.port", 8080);
+boolean sslEnabled = config.getBoolean("server.ssl.enabled", false);
+String host = config.getString("server.host")
+    .getOrElse("localhost");
+```

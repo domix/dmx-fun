@@ -2,6 +2,10 @@
 import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
 import {Content as UserValidation} from '../data/code/examples/user_validation.mdx';
+import {Content as ConfigLoading} from '../data/code/examples/configuration_loading.mdx';
+import {Content as ApiResponseHandling} from '../data/code/examples/api_handling.mdx';
+import {Content as DataPipeline} from '../data/code/examples/data_pipeline.mdx';
+import {Content as Caching} from '../data/code/examples/caching.mdx';
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -28,45 +32,7 @@ const base = import.meta.env.BASE_URL;
             <p>
                 Loading configuration with fallback values and type conversions.
             </p>
-            <pre is:raw><code class="language-java">import com.domix.fun.*;
-import java.util.Properties;
-
-public class ConfigLoader {
-    private final Properties props;
-
-    public ConfigLoader(Properties props) {
-        this.props = props;
-    }
-
-    public Option&lt;String&gt; getString(String key) {
-        return Option.of(props.getProperty(key));
-    }
-
-    public int getInt(String key, int defaultValue) {
-        return getString(key)
-            .flatMap(this::parseIntSafe)
-            .getOrElse(defaultValue);
-    }
-
-    public boolean getBoolean(String key, boolean defaultValue) {
-        return getString(key)
-            .map(Boolean::parseBoolean)
-            .getOrElse(defaultValue);
-    }
-
-    private Option&lt;Integer&gt; parseIntSafe(String value) {
-        return Try.of(() -&gt; Integer.parseInt(value))
-            .toOption();
-    }
-}
-
-// Usage
-ConfigLoader config = new ConfigLoader(props);
-
-int port = config.getInt("server.port", 8080);
-boolean sslEnabled = config.getBoolean("server.ssl.enabled", false);
-String host = config.getString("server.host")
-    .getOrElse("localhost");</code></pre>
+            <ConfigLoading/>
         </section>
 
         <section class="example-section">
@@ -74,55 +40,7 @@ String host = config.getString("server.host")
             <p>
                 Handling API responses with proper error handling and data transformation.
             </p>
-            <pre is:raw><code class="language-java">import com.domix.fun.*;
-import java.net.http.*;
-
-public class ApiClient {
-    private final HttpClient client;
-
-    public ApiClient() {
-        this.client = HttpClient.newHttpClient();
-    }
-
-    public Try&lt;UserData&gt; fetchUser(String userId) {
-        return Try.of(() -&gt; {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.example.com/users/" + userId))
-                .GET()
-                .build();
-
-            return client.send(request, HttpResponse.BodyHandlers.ofString());
-        })
-        .flatMap(this::parseResponse)
-        .map(this::parseUserData);
-    }
-
-    private Try&lt;String&gt; parseResponse(HttpResponse&lt;String&gt; response) {
-        if (response.statusCode() == 200) {
-            return Try.success(response.body());
-        } else {
-            return Try.failure(
-                new ApiException("HTTP " + response.statusCode())
-            );
-        }
-    }
-
-    private UserData parseUserData(String json) {
-        // Parse JSON to UserData
-        return new UserData(json);
-    }
-}
-
-// Usage
-ApiClient api = new ApiClient();
-
-Try&lt;UserData&gt; result = api.fetchUser("123");
-
-String message = result
-    .map(user -&gt; "User: " + user.getName())
-    .recover(ApiException.class, e -&gt; "API Error: " + e.getMessage())
-    .recover(Exception.class, e -&gt; "Unexpected error")
-    .get();</code></pre>
+            <ApiResponseHandling/>
         </section>
 
         <section class="example-section">
@@ -130,63 +48,7 @@ String message = result
             <p>
                 Building a data processing pipeline with multiple transformations.
             </p>
-            <pre is:raw><code class="language-java">import com.domix.fun.*;
-import java.util.List;
-import java.util.function.Function;
-
-public class DataPipeline {
-    public static &lt;T, R&gt; Try&lt;List&lt;R&gt;&gt; process(
-        List&lt;T&gt; items,
-        Function&lt;T, Try&lt;R&gt;&gt; processor
-    ) {
-        return Try.of(() -&gt;
-            items.stream()
-                .map(processor)
-                .map(Try::get)
-                .collect(Collectors.toList())
-        );
-    }
-
-    public Try&lt;ProcessedData&gt; processUserData(String input) {
-        return parseInput(input)
-            .flatMap(this::validate)
-            .flatMap(this::transform)
-            .flatMap(this::enrich);
-    }
-
-    private Try&lt;RawData&gt; parseInput(String input) {
-        return Try.of(() -&gt; new RawData(input));
-    }
-
-    private Try&lt;RawData&gt; validate(RawData data) {
-        return data.isValid()
-            ? Try.success(data)
-            : Try.failure(new ValidationException("Invalid data"));
-    }
-
-    private Try&lt;TransformedData&gt; transform(RawData data) {
-        return Try.of(() -&gt; data.transform());
-    }
-
-    private Try&lt;ProcessedData&gt; enrich(TransformedData data) {
-        return Try.of(() -&gt; data.enrich());
-    }
-}
-
-// Usage
-DataPipeline pipeline = new DataPipeline();
-
-List&lt;String&gt; inputs = List.of("data1", "data2", "data3");
-
-Try&lt;List&lt;ProcessedData&gt;&gt; results = DataPipeline.process(
-    inputs,
-    pipeline::processUserData
-);
-
-results.fold(
-    error -&gt; System.err.println("Pipeline failed: " + error),
-    data -&gt; System.out.println("Processed " + data.size() + " items")
-);</code></pre>
+            <DataPipeline/>
         </section>
 
         <section class="example-section">
@@ -194,54 +56,7 @@ results.fold(
             <p>
                 Implementing a simple cache with Option types for safe lookups.
             </p>
-            <pre is:raw><code class="language-java">import com.domix.fun.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
-
-public class Cache&lt;K, V&gt; {
-    private final ConcurrentHashMap&lt;K, V&gt; store;
-
-    public Cache() {
-        this.store = new ConcurrentHashMap&lt;&gt;();
-    }
-
-    public Option&lt;V&gt; get(K key) {
-        return Option.of(store.get(key));
-    }
-
-    public V getOrCompute(K key, Supplier&lt;V&gt; supplier) {
-        return get(key).getOrElse(() -&gt; {
-            V value = supplier.get();
-            store.put(key, value);
-            return value;
-        });
-    }
-
-    public Option&lt;V&gt; put(K key, V value) {
-        return Option.of(store.put(key, value));
-    }
-
-    public Option&lt;V&gt; remove(K key) {
-        return Option.of(store.remove(key));
-    }
-
-    public boolean contains(K key) {
-        return get(key).isDefined();
-    }
-}
-
-// Usage
-Cache&lt;String, UserData&gt; userCache = new Cache&lt;&gt;();
-
-// Get from cache or compute
-UserData user = userCache.getOrCompute(
-    "user:123",
-    () -&gt; database.loadUser("123")
-);
-
-// Safe lookup
-Option&lt;UserData&gt; maybeUser = userCache.get("user:456");
-maybeUser.ifPresent(u -&gt; System.out.println("Found: " + u.getName()));</code></pre>
+            <Caching/>
         </section>
 
         <section class="example-section">
@@ -313,7 +128,8 @@ result.fold(
             <p>Ready to use {site.slug} in your project?</p>
             <ul>
                 <li><a href=`${base}getting-started`>Review the Getting Started guide</a></li>
-                <li><a href=`${base}api`>Explore the complete API reference</a></li>
+                <li><a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">Explore the complete API
+                    reference</a></li>
                 <li><a href=`${site.github}` target="_blank" rel="noopener">Contribute on GitHub</a></li>
             </ul>
         </div>

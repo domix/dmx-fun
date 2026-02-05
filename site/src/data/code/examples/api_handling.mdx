@@ -1,0 +1,55 @@
+---
+fileName: 'APIResponseHandling.java'
+---
+
+```java title="APIResponseHandling.java"
+import codes.domix.fun.*;
+import java.net.http.*;
+
+public class ApiClient {
+    private final HttpClient client;
+
+    public ApiClient() {
+        this.client = HttpClient.newHttpClient();
+    }
+
+    public Try<UserData> fetchUser(String userId) {
+        return Try.of(() -> {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.example.com/users/" + userId))
+                .GET()
+                .build();
+
+            return client.send(request, HttpResponse.BodyHandlers.ofString());
+        })
+        .flatMap(this::parseResponse)
+        .map(this::parseUserData);
+    }
+
+    private Try<String> parseResponse(HttpResponse<String> response) {
+        if (response.statusCode() == 200) {
+            return Try.success(response.body());
+        } else {
+            return Try.failure(
+                new ApiException("HTTP " + response.statusCode())
+            );
+        }
+    }
+
+    private UserData parseUserData(String json) {
+        // Parse JSON to UserData
+        return new UserData(json);
+    }
+}
+
+// Usage
+ApiClient api = new ApiClient();
+
+Try<UserData> result = api.fetchUser("123");
+
+String message = result
+    .map(user -> "User: " + user.getName())
+    .recover(ApiException.class, e -> "API Error: " + e.getMessage())
+    .recover(Exception.class, e -> "Unexpected error")
+    .get();
+```
