@@ -1,0 +1,435 @@
+---
+import { site } from "../config/site.ts";
+import DocsLayout from '../layouts/DocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+---
+
+<DocsLayout title="Examples" description=`Practical examples using ${site.slug} functional programming library`>
+  <div class="docs-content">
+    <h1>Examples</h1>
+
+    <div class="intro">
+      <p>
+        Practical examples demonstrating how to use {site.slug} in real-world scenarios.
+      </p>
+    </div>
+
+    <section class="example-section">
+      <h2>User Validation</h2>
+      <p>
+        A common scenario where you need to validate user input and handle various error cases.
+      </p>
+      <pre is:raw><code class="language-java">import com.domix.fun.*;
+
+public class UserValidator {
+    public Either&lt;String, User&gt; validateAndCreateUser(
+        String email,
+        String password
+    ) {
+        return validateEmail(email)
+            .flatMap(e -&gt; validatePassword(password)
+                .map(p -&gt; new User(e, p)));
+    }
+
+    private Either&lt;String, String&gt; validateEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return Either.left("Email is required");
+        }
+        if (!email.contains("@")) {
+            return Either.left("Invalid email format");
+        }
+        return Either.right(email);
+    }
+
+    private Either&lt;String, String&gt; validatePassword(String password) {
+        if (password == null || password.length() &lt; 8) {
+            return Either.left("Password must be at least 8 characters");
+        }
+        return Either.right(password);
+    }
+}
+
+// Usage
+UserValidator validator = new UserValidator();
+Either&lt;String, User&gt; result = validator.validateAndCreateUser(
+    "user@example.com",
+    "securepass123"
+);
+
+String message = result.fold(
+    error -&gt; "Validation failed: " + error,
+    user -&gt; "User created: " + user.getEmail()
+);</code></pre>
+    </section>
+
+    <section class="example-section">
+      <h2>Safe Configuration Loading</h2>
+      <p>
+        Loading configuration with fallback values and type conversions.
+      </p>
+      <pre is:raw><code class="language-java">import com.domix.fun.*;
+import java.util.Properties;
+
+public class ConfigLoader {
+    private final Properties props;
+
+    public ConfigLoader(Properties props) {
+        this.props = props;
+    }
+
+    public Option&lt;String&gt; getString(String key) {
+        return Option.of(props.getProperty(key));
+    }
+
+    public int getInt(String key, int defaultValue) {
+        return getString(key)
+            .flatMap(this::parseIntSafe)
+            .getOrElse(defaultValue);
+    }
+
+    public boolean getBoolean(String key, boolean defaultValue) {
+        return getString(key)
+            .map(Boolean::parseBoolean)
+            .getOrElse(defaultValue);
+    }
+
+    private Option&lt;Integer&gt; parseIntSafe(String value) {
+        return Try.of(() -&gt; Integer.parseInt(value))
+            .toOption();
+    }
+}
+
+// Usage
+ConfigLoader config = new ConfigLoader(props);
+
+int port = config.getInt("server.port", 8080);
+boolean sslEnabled = config.getBoolean("server.ssl.enabled", false);
+String host = config.getString("server.host")
+    .getOrElse("localhost");</code></pre>
+    </section>
+
+    <section class="example-section">
+      <h2>API Response Handling</h2>
+      <p>
+        Handling API responses with proper error handling and data transformation.
+      </p>
+      <pre is:raw><code class="language-java">import com.domix.fun.*;
+import java.net.http.*;
+
+public class ApiClient {
+    private final HttpClient client;
+
+    public ApiClient() {
+        this.client = HttpClient.newHttpClient();
+    }
+
+    public Try&lt;UserData&gt; fetchUser(String userId) {
+        return Try.of(() -&gt; {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.example.com/users/" + userId))
+                .GET()
+                .build();
+
+            return client.send(request, HttpResponse.BodyHandlers.ofString());
+        })
+        .flatMap(this::parseResponse)
+        .map(this::parseUserData);
+    }
+
+    private Try&lt;String&gt; parseResponse(HttpResponse&lt;String&gt; response) {
+        if (response.statusCode() == 200) {
+            return Try.success(response.body());
+        } else {
+            return Try.failure(
+                new ApiException("HTTP " + response.statusCode())
+            );
+        }
+    }
+
+    private UserData parseUserData(String json) {
+        // Parse JSON to UserData
+        return new UserData(json);
+    }
+}
+
+// Usage
+ApiClient api = new ApiClient();
+
+Try&lt;UserData&gt; result = api.fetchUser("123");
+
+String message = result
+    .map(user -&gt; "User: " + user.getName())
+    .recover(ApiException.class, e -&gt; "API Error: " + e.getMessage())
+    .recover(Exception.class, e -&gt; "Unexpected error")
+    .get();</code></pre>
+    </section>
+
+    <section class="example-section">
+      <h2>Data Pipeline</h2>
+      <p>
+        Building a data processing pipeline with multiple transformations.
+      </p>
+      <pre is:raw><code class="language-java">import com.domix.fun.*;
+import java.util.List;
+import java.util.function.Function;
+
+public class DataPipeline {
+    public static &lt;T, R&gt; Try&lt;List&lt;R&gt;&gt; process(
+        List&lt;T&gt; items,
+        Function&lt;T, Try&lt;R&gt;&gt; processor
+    ) {
+        return Try.of(() -&gt;
+            items.stream()
+                .map(processor)
+                .map(Try::get)
+                .collect(Collectors.toList())
+        );
+    }
+
+    public Try&lt;ProcessedData&gt; processUserData(String input) {
+        return parseInput(input)
+            .flatMap(this::validate)
+            .flatMap(this::transform)
+            .flatMap(this::enrich);
+    }
+
+    private Try&lt;RawData&gt; parseInput(String input) {
+        return Try.of(() -&gt; new RawData(input));
+    }
+
+    private Try&lt;RawData&gt; validate(RawData data) {
+        return data.isValid()
+            ? Try.success(data)
+            : Try.failure(new ValidationException("Invalid data"));
+    }
+
+    private Try&lt;TransformedData&gt; transform(RawData data) {
+        return Try.of(() -&gt; data.transform());
+    }
+
+    private Try&lt;ProcessedData&gt; enrich(TransformedData data) {
+        return Try.of(() -&gt; data.enrich());
+    }
+}
+
+// Usage
+DataPipeline pipeline = new DataPipeline();
+
+List&lt;String&gt; inputs = List.of("data1", "data2", "data3");
+
+Try&lt;List&lt;ProcessedData&gt;&gt; results = DataPipeline.process(
+    inputs,
+    pipeline::processUserData
+);
+
+results.fold(
+    error -&gt; System.err.println("Pipeline failed: " + error),
+    data -&gt; System.out.println("Processed " + data.size() + " items")
+);</code></pre>
+    </section>
+
+    <section class="example-section">
+      <h2>Caching with Options</h2>
+      <p>
+        Implementing a simple cache with Option types for safe lookups.
+      </p>
+      <pre is:raw><code class="language-java">import com.domix.fun.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
+
+public class Cache&lt;K, V&gt; {
+    private final ConcurrentHashMap&lt;K, V&gt; store;
+
+    public Cache() {
+        this.store = new ConcurrentHashMap&lt;&gt;();
+    }
+
+    public Option&lt;V&gt; get(K key) {
+        return Option.of(store.get(key));
+    }
+
+    public V getOrCompute(K key, Supplier&lt;V&gt; supplier) {
+        return get(key).getOrElse(() -&gt; {
+            V value = supplier.get();
+            store.put(key, value);
+            return value;
+        });
+    }
+
+    public Option&lt;V&gt; put(K key, V value) {
+        return Option.of(store.put(key, value));
+    }
+
+    public Option&lt;V&gt; remove(K key) {
+        return Option.of(store.remove(key));
+    }
+
+    public boolean contains(K key) {
+        return get(key).isDefined();
+    }
+}
+
+// Usage
+Cache&lt;String, UserData&gt; userCache = new Cache&lt;&gt;();
+
+// Get from cache or compute
+UserData user = userCache.getOrCompute(
+    "user:123",
+    () -&gt; database.loadUser("123")
+);
+
+// Safe lookup
+Option&lt;UserData&gt; maybeUser = userCache.get("user:456");
+maybeUser.ifPresent(u -&gt; System.out.println("Found: " + u.getName()));</code></pre>
+    </section>
+
+    <section class="example-section">
+      <h2>Combining Multiple Operations</h2>
+      <p>
+        Combining multiple operations that can fail independently.
+      </p>
+      <pre is:raw><code class="language-java">import com.domix.fun.*;
+
+public class OrderProcessor {
+    public Try&lt;OrderResult&gt; processOrder(OrderRequest request) {
+        Try&lt;Customer&gt; customer = validateCustomer(request.customerId());
+        Try&lt;Product&gt; product = validateProduct(request.productId());
+        Try&lt;Integer&gt; quantity = validateQuantity(request.quantity());
+
+        // Combine all validations
+        return customer.flatMap(c -&gt;
+            product.flatMap(p -&gt;
+                quantity.map(q -&gt;
+                    createOrder(c, p, q)
+                )
+            )
+        );
+    }
+
+    private Try&lt;Customer&gt; validateCustomer(String id) {
+        return Try.of(() -&gt; customerRepo.findById(id))
+            .flatMap(opt -&gt; opt.isDefined()
+                ? Try.success(opt.get())
+                : Try.failure(new NotFoundException("Customer not found"))
+            );
+    }
+
+    private Try&lt;Product&gt; validateProduct(String id) {
+        return Try.of(() -&gt; productRepo.findById(id))
+            .filter(p -&gt; p.isAvailable())
+            .flatMap(opt -&gt; opt.isDefined()
+                ? Try.success(opt.get())
+                : Try.failure(new NotFoundException("Product unavailable"))
+            );
+    }
+
+    private Try&lt;Integer&gt; validateQuantity(int qty) {
+        return qty &gt; 0 && qty &lt;= 100
+            ? Try.success(qty)
+            : Try.failure(new ValidationException("Invalid quantity"));
+    }
+
+    private OrderResult createOrder(Customer c, Product p, int qty) {
+        return new OrderResult(c, p, qty);
+    }
+}
+
+// Usage
+OrderProcessor processor = new OrderProcessor();
+
+Try&lt;OrderResult&gt; result = processor.processOrder(
+    new OrderRequest("cust123", "prod456", 5)
+);
+
+result.fold(
+    error -&gt; handleError(error),
+    order -&gt; confirmOrder(order)
+);</code></pre>
+    </section>
+
+    <div class="next-steps">
+      <h2>Next Steps</h2>
+      <p>Ready to use {site.slug} in your project?</p>
+      <ul>
+        <li><a href=`${base}getting-started`>Review the Getting Started guide</a></li>
+        <li><a href=`${base}api`>Explore the complete API reference</a></li>
+        <li><a href=`${site.github}` target="_blank" rel="noopener">Contribute on GitHub</a></li>
+      </ul>
+    </div>
+  </div>
+</DocsLayout>
+
+<style>
+  .docs-content {
+    max-width: 900px;
+  }
+
+  .intro {
+    background-color: var(--color-surface);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--color-primary);
+    margin: 2rem 0;
+  }
+
+  .intro p {
+    margin: 0;
+    font-size: 1.125rem;
+  }
+
+  .example-section {
+    margin: 3rem 0;
+    padding: 2rem;
+    background-color: var(--color-surface);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+  }
+
+  .example-section h2 {
+    margin-top: 0;
+    color: var(--color-primary);
+    font-size: 1.5rem;
+  }
+
+  .example-section p {
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .example-section pre {
+    margin: 0;
+  }
+
+  .next-steps {
+    margin: 4rem 0;
+    padding: 2rem;
+    background-color: var(--color-surface);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    text-align: center;
+  }
+
+  .next-steps h2 {
+    margin-top: 0;
+  }
+
+  .next-steps ul {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 0;
+  }
+
+  .next-steps li {
+    margin: 0.75rem 0;
+  }
+
+  .next-steps a {
+    font-weight: 500;
+    font-size: 1.125rem;
+  }
+
+  h1 {
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem;
+  }
+</style>
