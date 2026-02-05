@@ -6,7 +6,7 @@ import { Code } from 'astro-expressive-code/components'
 const base = import.meta.env.BASE_URL;
 ---
 
-<DocsLayout title="Home" description=`${site.slug} - ${site.description}`>
+<DocsLayout title="Home" description={`${site.slug} - ${site.description}`}>
     <div class="hero">
         <h1 class="hero-title">
             <span class="lambda">λ</span> {site.slug}
@@ -15,8 +15,8 @@ const base = import.meta.env.BASE_URL;
             {site.description}
         </p>
         <div class="hero-actions">
-            <a href=`${base}getting-started` class="btn btn-primary">Get Started</a>
-            <a href=`${site.github}` target="_blank" rel="noopener" class="btn btn-secondary">
+            <a href={`${base}getting-started`} class="btn btn-primary">Get Started</a>
+            <a href={site.github} target="_blank" rel="noopener" class="btn btn-secondary">
                 View on GitHub
             </a>
         </div>
@@ -88,7 +88,7 @@ Try&lt;Integer&gt; result = Try.of(() -&gt; Integer.parseInt(input))
     <div class="cta-section">
         <h2>Ready to Get Started?</h2>
         <p>Add functional programming power to your Java projects today.</p>
-        <a href=`${base}getting-started` class="btn btn-primary btn-large">View Documentation</a>
+        <a href={`${base}getting-started`} class="btn btn-primary btn-large">View Documentation</a>
     </div>
 </DocsLayout>
 
