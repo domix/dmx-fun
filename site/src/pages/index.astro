@@ -1,8 +1,9 @@
 ---
 import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
+import {Code} from 'astro-expressive-code/components'
+import {Content as QuickExample} from '../data/code/quick-example.mdx';
 
-import { Code } from 'astro-expressive-code/components'
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -60,29 +61,8 @@ const base = import.meta.env.BASE_URL;
         </div>
     </div>
     <div class="quick-example">
-        <h2>Demo</h2>
-        <Code code="const foo = 'bar';" lang="js" type="terminal" title="dd.js"/>
-    </div>
-    <div class="quick-example">
         <h2>Quick Example</h2>
-        <pre is:raw><code class="language-java">import codes.domix.fun.*;
-
-// Compose functions elegantly
-Function&lt;String, String&gt; normalize = str -&gt; str.trim().toLowerCase();
-Function&lt;String, Integer&gt; toLength = String::length;
-
-var process = normalize.andThen(toLength);
-var result = process.apply("  HELLO WORLD  "); // 11
-
-// Handle options safely
-Option&lt;User&gt; user = findUserById(id);
-String name = user
-    .map(User::getName)
-    .getOrElse("Anonymous");
-
-// Handle errors functionally
-Try&lt;Integer&gt; result = Try.of(() -&gt; Integer.parseInt(input))
-    .recover(NumberFormatException.class, e -&gt; 0);</code></pre>
+        <QuickExample/>
     </div>
 
     <div class="cta-section">

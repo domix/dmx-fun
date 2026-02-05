@@ -1,12 +1,17 @@
-// 1. Import utilities from `astro:content`
 import {defineCollection} from 'astro:content';
+import {glob} from 'astro/loaders';
+import {z} from 'astro/zod';
 
-// 2. Import loader(s)
 
-// 3. Import Zod
+// Define your collection(s)
+const code = defineCollection({
+    loader: glob({pattern: "**/*.{md,mdx}", base: "./src/data/code"}),
+    schema: z.object({
+        fileName: z.string(),
+        language: z.string()
+    })
+});
 
-// 4. Define your collection(s)
-const code = defineCollection({ /* ... */});
 
-// 5. Export a single `collections` object to register your collection(s)
+// Export a single `collections` object to register your collection(s)
 export const collections = {code};

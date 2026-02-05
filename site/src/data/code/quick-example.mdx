@@ -1,0 +1,25 @@
+---
+fileName: 'QuickExample.java'
+language: 'java'
+---
+
+```java
+import codes.domix.fun.*;
+
+// Compose functions elegantly
+Function<String, String> normalize = str -> str.trim().toLowerCase();
+Function<String, Integer> toLength = String::length;
+
+var process = normalize.andThen(toLength);
+var result = process.apply("  HELLO WORLD  "); // 11
+
+// Handle options safely
+Option<User> user = findUserById(id);
+String name = user
+    .map(User::getName)
+    .getOrElse("Anonymous");
+
+// Handle errors functionally
+Try<Integer> result = Try.of(() -> Integer.parseInt(input))
+    .recover(NumberFormatException.class, e -> 0);
+```
