@@ -1,0 +1,20 @@
+{
+  "name": "@domix/dmx-fun-website",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "copy:javadocs": "cp -r ../lib/build/docs/javadoc/ public/",
+    "predev": "npm run copy:javadocs",
+    "dev": "astro dev",
+    "prebuild": "npm run copy:javadocs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.13",
+    "astro": "^5.17.1",
+    "astro-expressive-code": "^0.41.6"
+  }
+}

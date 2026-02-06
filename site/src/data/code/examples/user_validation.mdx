@@ -1,0 +1,47 @@
+---
+fileName: 'UserValidation.java'
+---
+
+```java title="UserValidation.java"
+import codes.domix.fun.*;
+
+public class UserValidator {
+    public Either<String, User> validateAndCreateUser(
+        String email,
+        String password
+    ) {
+        return validateEmail(email)
+            .flatMap(e -> validatePassword(password)
+                .map(p -> new User(e, p)));
+    }
+
+    private Either<String, String> validateEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return Either.left("Email is required");
+        }
+        if (!email.contains("@")) {
+            return Either.left("Invalid email format");
+        }
+        return Either.right(email);
+    }
+
+    private Either<String, String> validatePassword(String password) {
+        if (password == null || password.length() < 8) {
+            return Either.left("Password must be at least 8 characters");
+        }
+        return Either.right(password);
+    }
+}
+
+// Usage
+UserValidator validator = new UserValidator();
+Either<String, User> result = validator.validateAndCreateUser(
+    "user@example.com",
+    "securepass123"
+);
+
+String message = result.fold(
+    error -> "Validation failed: " + error,
+    user -> "User created: " + user.getEmail()
+);
+```
