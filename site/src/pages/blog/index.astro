@@ -21,7 +21,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   <div class="blog-filters">
     <a href={`${base}blog`} class="filter-btn active">All Posts</a>
     {categories.map(category => (
-      <a href={`${base}blog/category/${category.toLowerCase().replace(' ', '-')}`} class="filter-btn">
+      <a href={`${base}blog/category/${category.toLowerCase().replaceAll(' ', '-')}`} class="filter-btn">
         {category}
       </a>
     ))}
