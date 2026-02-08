@@ -11,6 +11,18 @@ const code = defineCollection({
     })
 });
 
+const blog = defineCollection({
+    type: 'content',
+    schema: z.object({
+        title: z.string(),
+        description: z.string(),
+        pubDate: z.date(),
+        author: z.string().default('dmx-fun Team'),
+        category: z.enum(['Tutorial', 'Best Practices', 'Release', 'Community', 'Guide']),
+        tags: z.array(z.string()).default([]),
+        image: z.string().optional(),
+    }),
+});
 
 // Export a single `collections` object to register your collection(s)
-export const collections = {code};
+export const collections = {code, blog};
