@@ -12,13 +12,13 @@ const code = defineCollection({
 });
 
 const blog = defineCollection({
-    type: 'content',
+    loader: glob({pattern: "**/*.{md,mdx}", base: "./src/data/blog"}),
     schema: z.object({
         title: z.string(),
         description: z.string(),
         pubDate: z.date(),
         author: z.string().default('dmx-fun Team'),
-        category: z.enum(['Tutorial', 'Best Practices', 'Release', 'Community', 'Guide']),
+        category: z.enum(['Tutorial', 'Best Practices', 'Release', 'Community', 'Guide', 'Article']),
         tags: z.array(z.string()).default([]),
         image: z.string().optional(),
     }),
