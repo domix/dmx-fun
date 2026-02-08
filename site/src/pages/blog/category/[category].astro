@@ -55,7 +55,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       <article class="post-card">
         <div class="post-category">{post.data.category}</div>
         <h2 class="post-title">
-          <a href={`${base}blog/${post.slug}`}>{post.data.title}</a>
+          <a href={`${base}blog/${post.id}`}>{post.data.title}</a>
         </h2>
         <p class="post-description">{post.data.description}</p>
         <div class="post-meta">
