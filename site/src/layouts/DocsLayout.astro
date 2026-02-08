@@ -44,6 +44,31 @@ const GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || 'G-XXXXXXX
         gtag('config', GA_MEASUREMENT_ID);
     </script>
 
+    <!-- Theme initialization - inline to prevent FOUC -->
+    <script is:inline>
+        (function() {
+            const STORAGE_KEY = 'theme';
+            const LIGHT = 'light';
+            const DARK = 'dark';
+
+            function getSystemTheme() {
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? DARK : LIGHT;
+            }
+
+            function getStoredTheme() {
+                try {
+                    return localStorage.getItem(STORAGE_KEY);
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            const storedTheme = getStoredTheme();
+            const theme = storedTheme || getSystemTheme();
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
     <slot name="head" />
 </head>
 <body>
@@ -116,14 +141,10 @@ const GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || 'G-XXXXXXX
     const LIGHT = 'light';
     const DARK = 'dark';
 
-    function getSystemTheme() {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? DARK : LIGHT;
-    }
-
     function getStoredTheme() {
         try {
             return localStorage.getItem(STORAGE_KEY);
-        } catch {
+        } catch (e) {
             return null;
         }
     }
@@ -132,22 +153,16 @@ const GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || 'G-XXXXXXX
         document.documentElement.setAttribute('data-theme', theme);
         try {
             localStorage.setItem(STORAGE_KEY, theme);
-        } catch {
-            // Storage unavailable; theme still applies for this session
+        } catch (e) {
+            // Ignore localStorage errors
         }
     }
 
-    function initTheme() {
-        const storedTheme = getStoredTheme();
-        const theme = storedTheme || getSystemTheme();
-        setTheme(theme);
-    }
-
-    // Initialize theme immediately to avoid flash
-    initTheme();
-
-    // Handle theme toggle
+    // Handle theme toggle and menu interactions
     document.addEventListener('DOMContentLoaded', () => {
+        // Enable transitions after page load to prevent FOUC
+        document.body.classList.add('loaded');
+
         const toggle = document.getElementById('theme-toggle');
 
         toggle?.addEventListener('click', () => {
@@ -159,7 +174,8 @@ const GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || 'G-XXXXXXX
         // Listen for system theme changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (!getStoredTheme()) {
-                setTheme(e.matches ? DARK : LIGHT);
+                const systemTheme = e.matches ? DARK : LIGHT;
+                document.documentElement.setAttribute('data-theme', systemTheme);
             }
         });
 
