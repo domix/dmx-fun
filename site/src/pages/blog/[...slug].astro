@@ -87,6 +87,22 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
     </div>
 
     <div class="post-footer">
+        <script src="https://giscus.app/client.js"
+                data-repo="domix/dmx-fun"
+                data-repo-id="R_kgDOPErjFQ"
+                data-category="General"
+                data-category-id="DIC_kwDOPErjFc4CtAxw"
+                data-mapping="pathname"
+                data-strict="1"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="top"
+                data-theme="preferred_color_scheme"
+                data-lang="es"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+        </script>
       <a href={`${base}blog`} class="btn btn-secondary">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -95,6 +111,7 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
       </a>
     </div>
   </article>
+
 </DocsLayout>
 
 <style>
