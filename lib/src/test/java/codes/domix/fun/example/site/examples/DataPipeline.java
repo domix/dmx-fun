@@ -1,8 +1,5 @@
----
-fileName: 'DataPipeline.java'
----
+package codes.domix.fun.example.site.examples;
 
-```java title="DataPipeline.java"
 import codes.domix.fun.Try;
 import java.util.List;
 import java.util.function.Function;
@@ -84,4 +81,3 @@ public class DataPipeline {
         );
     }
 }
-```
