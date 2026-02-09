@@ -1,8 +1,5 @@
----
-fileName: 'TryExample.java'
----
+package codes.domix.fun.example.site.gettingstarted;
 
-```java title="TryExample.java"
 import codes.domix.fun.Try;
 
 class TryExample {
@@ -22,4 +19,3 @@ class TryExample {
             .map(i -> i * 2); // Success(84)
     }
 }
-```

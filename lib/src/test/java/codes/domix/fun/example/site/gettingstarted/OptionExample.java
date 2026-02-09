@@ -1,8 +1,5 @@
----
-fileName: 'OptionExample.java'
----
+package codes.domix.fun.example.site.gettingstarted;
 
-```java title="OptionExample.java"
 import codes.domix.fun.Option;
 
  class OptionExample {
@@ -23,4 +20,3 @@ import codes.domix.fun.Option;
             .map(String::toUpperCase); // Some("HELLO")
     }
 }
-```
