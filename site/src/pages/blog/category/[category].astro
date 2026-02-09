@@ -10,7 +10,7 @@ export async function getStaticPaths() {
   return categories.map(category => {
     const filteredPosts = allPosts.filter(post => post.data.category === category);
     return {
-      params: { category: category.toLowerCase().replace(' ', '-') },
+      params: { category: category.toLowerCase().replaceAll(' ', '-') },
       props: {
         posts: filteredPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()),
         category
