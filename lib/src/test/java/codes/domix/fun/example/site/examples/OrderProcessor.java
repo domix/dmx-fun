@@ -1,8 +1,5 @@
----
-fileName: 'OrderProcessor.java'
----
+package codes.domix.fun.example.site.examples;
 
-```java title="OrderProcessor.java"
 import codes.domix.fun.Option;
 import codes.domix.fun.Try;
 
@@ -113,4 +110,3 @@ public class OrderProcessor {
             .onFailure(processor::handleError);
     }
 }
-```

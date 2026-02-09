@@ -1,8 +1,5 @@
----
-fileName: 'QuickExample.java'
----
+package codes.domix.fun.example.site;
 
-```java title="QuickExample.java"
 import codes.domix.fun.Option;
 import codes.domix.fun.Try;
 import java.util.function.Function;
@@ -31,4 +28,3 @@ public class QuickExample {
             .onSuccess(System.out::println);
     }
 }
-```
