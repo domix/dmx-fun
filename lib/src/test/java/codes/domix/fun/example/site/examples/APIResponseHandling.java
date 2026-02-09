@@ -1,8 +1,5 @@
----
-fileName: 'APIResponseHandling.java'
----
+package codes.domix.fun.example.site.examples;
 
-```java title="APIResponseHandling.java"
 import codes.domix.fun.Try;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -59,4 +56,3 @@ public class APIResponseHandling {
             .get();
     }
 }
-```
