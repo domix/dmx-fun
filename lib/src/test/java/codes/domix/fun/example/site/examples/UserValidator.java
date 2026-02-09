@@ -1,8 +1,5 @@
----
-fileName: 'UserValidation.java'
----
+package codes.domix.fun.example.site.examples;
 
-```java title="UserValidation.java"
 import codes.domix.fun.Result;
 
 public class UserValidator {
@@ -53,4 +50,3 @@ public class UserValidator {
     }
 
 }
-```

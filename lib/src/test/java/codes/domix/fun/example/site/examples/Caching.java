@@ -1,8 +1,5 @@
----
-fileName: 'Caching.java'
----
+package codes.domix.fun.example.site.examples;
 
-```java title="Caching.java"
 import codes.domix.fun.Option;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -63,4 +60,3 @@ public class Caching<K, V> {
         maybeUser.peek(userData -> System.out.printf("Found %s%n", userData.name()));
     }
 }
-```

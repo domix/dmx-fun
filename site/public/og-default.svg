@@ -1,0 +1,42 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+
+  <!-- Grid pattern -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0366d6;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#gradient)"/>
+
+  <!-- Large Lambda symbol -->
+  <text x="600" y="450" font-family="Arial, sans-serif" font-size="400" fill="#1e293b" text-anchor="middle" opacity="0.3" font-weight="700">λ</text>
+
+  <!-- Main content -->
+  <g>
+    <!-- Lambda icon -->
+    <text x="600" y="240" font-family="Arial, sans-serif" font-size="120" fill="#0366d6" text-anchor="middle" font-weight="700">λ</text>
+
+    <!-- Library name -->
+    <text x="600" y="340" font-family="Arial, sans-serif" font-size="72" fill="#f8fafc" text-anchor="middle" font-weight="700">dmx-fun</text>
+
+    <!-- Tagline -->
+    <text x="600" y="400" font-family="Arial, sans-serif" font-size="32" fill="#94a3b8" text-anchor="middle">Functional Programming for Java</text>
+
+    <!-- Decorative line -->
+    <line x1="400" y1="430" x2="800" y2="430" stroke="#0366d6" stroke-width="2"/>
+
+    <!-- Features -->
+    <text x="600" y="480" font-family="Arial, sans-serif" font-size="20" fill="#cbd5e1" text-anchor="middle">Type-Safe • Composable • Production Ready</text>
+  </g>
+</svg>
