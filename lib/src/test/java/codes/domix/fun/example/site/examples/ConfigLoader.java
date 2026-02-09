@@ -1,8 +1,5 @@
----
-fileName: 'ConfigLoader.java'
----
+package codes.domix.fun.example.site.examples;
 
-```java title="ConfigLoader.java"
 import codes.domix.fun.Option;
 import codes.domix.fun.Try;
 import java.util.Properties;
@@ -47,4 +44,3 @@ public class ConfigLoader {
         System.out.printf("Server is running on %s:%d%n", host, port);
     }
 }
-```
