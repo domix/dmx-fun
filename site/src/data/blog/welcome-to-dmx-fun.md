@@ -1,17 +1,17 @@
 ---
 title: "Welcome to dmx-fun Blog"
 description: "Introducing the dmx-fun blog - your resource for functional programming in Java"
-pubDate: 2024-01-01
-author: "dmx-fun Team"
+pubDate: 2026-01-01
+author: "domix"
 category: "Community"
 tags: ["Announcement", "Welcome"]
 ---
 
-Welcome to the official dmx-fun blog! We're excited to have you here and share our journey in bringing functional programming concepts to Java.
+Welcome to the official `dmx-fun` blog! We're excited to have you here and share our journey in bringing functional programming concepts to Java.
 
-## What is dmx-fun?
+## What is `dmx-fun`?
 
-dmx-fun is a functional programming library for Java that provides essential tools and patterns for writing cleaner, safer, and more maintainable code. Whether you're new to functional programming or an experienced practitioner, dmx-fun offers the tools you need to write better Java code.
+`dmx-fun` is a functional/declarative and experimental programming library for Java that provides essential tools and patterns for writing cleaner, safer, and more maintainable code. Whether you're new to functional programming or an experienced practitioner, dmx-fun offers the tools you need to write better Java code.
 
 ## What to Expect from This Blog
 
@@ -64,7 +64,7 @@ Functional programming offers several advantages:
 
 ## Getting Started
 
-Ready to dive in? Check out our [Getting Started Guide](/getting-started) to learn the basics, or browse the [API Reference](/api) for detailed documentation.
+Ready to dive in? Check out our [Getting Started Guide](/dmx-fun/getting-started) to learn the basics, or browse the [API Reference](/dmx-fun/javadoc/index.html) for detailed documentation.
 
 ## Join the Community
 
@@ -90,7 +90,7 @@ Stay tuned for regular updates and new content!
 
 Thank you for being part of the dmx-fun community. Whether you're just starting with functional programming or you're an experienced developer, we're glad to have you here.
 
-Happy coding! 🎉
+Happy coding!
 
 ---
 
