@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GA_MEASUREMENT_ID: "G-9C4WZNE7JJ"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
