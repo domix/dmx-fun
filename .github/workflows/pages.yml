@@ -6,6 +6,7 @@ on:
     paths:
       - 'site/**'
       - 'lib/src/test/java/codes/domix/fun/example/**'
+      - 'lib/src/main/**'
   workflow_dispatch:
 
 permissions:
