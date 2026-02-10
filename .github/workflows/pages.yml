@@ -3,6 +3,10 @@ name: Deploy site to GitHub Pages
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'site/**'
+      - 'lib/src/test/java/codes/domix/fun/example/**'
+      - 'lib/src/main/**'
   workflow_dispatch:
 
 permissions:
