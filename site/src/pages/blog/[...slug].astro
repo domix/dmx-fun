@@ -66,11 +66,15 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
             })}
           </time>
         </div>
-        <div class="meta-item">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+          <div class="meta-item author-item">
+              {entry.data.authorImage ? (
+                  <img src={entry.data.authorImage} alt={entry.data.author} class="author-avatar" />
+              ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+              )}
           <span>{entry.data.author}</span>
         </div>
       </div>
@@ -184,7 +188,13 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
   .meta-item svg {
     opacity: 0.7;
   }
-
+  .author-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--color-border);
+  }
   .post-tags {
     display: flex;
     flex-wrap: wrap;

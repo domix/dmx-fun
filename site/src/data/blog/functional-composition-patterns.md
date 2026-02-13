@@ -2,9 +2,11 @@
 title: "Functional Composition Patterns"
 description: "Explore powerful composition patterns to build complex functionality from simple, reusable functions"
 pubDate: 2026-02-13
-author: "dmx-fun Team"
+author: "domix"
+authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Best Practices"
 tags: ["Composition", "Functions", "Patterns", "Advanced"]
+image: "https://images.unsplash.com/photo-1506506931473-341add2fa375?q=80&w=1166&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 ---
 
 Function composition is the heart of functional programming. By combining simple functions into more complex ones, you can build powerful, maintainable systems with minimal code.
