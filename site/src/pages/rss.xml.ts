@@ -10,7 +10,7 @@ export async function GET(context: APIContext) {
     return rss({
         title: 'dmx-fun Blog',
         description: 'Articles, tutorials, and insights about functional programming in Java',
-        site: context.site || 'https://domix.github.io/dmx-fun/',
+        site: context.site?.href ?? 'https://domix.github.io/dmx-fun/',
         items: sortedPosts.map((post) => ({
             title: post.data.title,
             pubDate: post.data.pubDate,
@@ -18,9 +18,13 @@ export async function GET(context: APIContext) {
             author: post.data.author,
             link: `${base}blog/${post.id}/`,
             categories: [post.data.category, ...post.data.tags],
-            customData: post.data.image
-                ? `<enclosure url="${post.data.image}" type="image/jpeg" />`
-                : undefined,
+            ...(post.data.image ? {
+                enclosure: {
+                    url: post.data.image,
+                    type: 'image/jpeg',
+                    length: 0,
+                },
+            } : {}),
         })),
         customData: `<language>en-us</language>`,
     });
