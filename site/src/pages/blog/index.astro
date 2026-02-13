@@ -16,6 +16,14 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     <p class="blog-subtitle">
       Articles, tutorials, and insights about functional programming in Java
     </p>
+      <a href={`${base}rss.xml`} class="rss-link" target="_blank" rel="noopener" title="Subscribe to RSS feed">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 11a9 9 0 0 1 9 9"></path>
+              <path d="M4 4a16 16 0 0 1 16 16"></path>
+              <circle cx="5" cy="19" r="1"></circle>
+          </svg>
+          Subscribe via RSS
+      </a>
   </div>
 
   <div class="blog-filters">
@@ -82,6 +90,32 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   .blog-subtitle {
     font-size: 1.25rem;
     color: var(--color-text-secondary);
+      margin-bottom: 1rem;
+  }
+
+  .rss-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--color-primary);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+  }
+
+  .rss-link:hover {
+      background-color: var(--color-primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(3, 102, 214, 0.3);
+  }
+
+  .rss-link svg {
+      flex-shrink: 0;
   }
 
   .blog-filters {

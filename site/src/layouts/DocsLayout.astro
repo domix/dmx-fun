@@ -18,6 +18,7 @@ const GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width"/>
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`}/>
+    <link rel="alternate" type="application/rss+xml" title="dmx-fun Blog" href={`${base}rss.xml`} />
     <meta name="generator" content={Astro.generator}/>
     <meta name="description" content={description}/>
     <title>{title} - {site.slug}</title>
@@ -139,6 +140,7 @@ const GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
                 <a href={site.github} target="_blank" rel="noopener">GitHub</a>
                 <a href={`${site.github}/issues`} target="_blank" rel="noopener">Issues</a>
                 <a href={`${site.github}/blob/main/LICENSE`} target="_blank" rel="noopener">License</a>
+                <a href={`${base}rss.xml`} target="_blank" rel="noopener" title="Subscribe to RSS feed">RSS</a>
             </div>
         </div>
     </footer>
