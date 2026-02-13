@@ -18,9 +18,10 @@ const blog = defineCollection({
         description: z.string(),
         pubDate: z.date(),
         author: z.string().default('dmx-fun Team'),
+        authorImage: z.string().url().optional(),
         category: z.enum(['Tutorial', 'Best Practices', 'Release', 'Community', 'Guide', 'Article']),
         tags: z.array(z.string()).default([]),
-        image: z.string().optional(),
+        image: z.string().url().optional(),
     }),
 });
 
