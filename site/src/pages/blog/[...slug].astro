@@ -3,7 +3,6 @@ import { getCollection, render } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import {site} from "../../config/site.ts";
 const base = import.meta.env.BASE_URL;
-const {ogImageDefault} = Astro.props;
 
 export async function getStaticPaths() {
   const blogEntries = await getCollection('blog');
@@ -16,7 +15,7 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 
-const ogImage = entry.data.image || ogImageDefault;
+const ogImage = entry.data.image || site.ogImage;
 const ogUrl = `${Astro.site}blog/${entry.id}`;
 ---
 

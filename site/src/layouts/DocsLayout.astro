@@ -3,6 +3,7 @@ import {site} from "../config/site.ts";
 interface Props {
     title: string;
     description?: string;
+    ogImage?: string;
 }
 
 const {title, description = site.description, ogImage = site.ogImage} = Astro.props;

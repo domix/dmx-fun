@@ -42,7 +42,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     <a href={`${base}blog`} class="filter-btn">All Posts</a>
     {categories.map(cat => (
       <a
-        href={`${base}blog/category/${cat.toLowerCase().replace(' ', '-')}`}
+        href={`${base}blog/category/${cat.toLowerCase().replaceAll(' ', '-')}`}
         class={`filter-btn ${cat === category ? 'active' : ''}`}
       >
         {cat}
