@@ -1,7 +1,7 @@
 ---
 title: "Functional Composition Patterns"
 description: "Explore powerful composition patterns to build complex functionality from simple, reusable functions"
-pubDate: 2024-02-05
+pubDate: 2026-02-13
 author: "dmx-fun Team"
 category: "Best Practices"
 tags: ["Composition", "Functions", "Patterns", "Advanced"]
