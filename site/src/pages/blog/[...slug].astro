@@ -1,7 +1,9 @@
 ---
 import { getCollection, render } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
+import {site} from "../../config/site.ts";
 const base = import.meta.env.BASE_URL;
+const {ogImageDefault} = Astro.props;
 
 export async function getStaticPaths() {
   const blogEntries = await getCollection('blog');
@@ -14,11 +16,11 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 
-const ogImage = entry.data.image || '/og-default.png';
+const ogImage = entry.data.image || ogImageDefault;
 const ogUrl = `${Astro.site}blog/${entry.id}`;
 ---
 
-<DocsLayout title={entry.data.title} description={entry.data.description}>
+<DocsLayout title={entry.data.title} description={entry.data.description} ogImage={ogImage}>
   <Fragment slot="head">
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="article" />
@@ -81,6 +83,12 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
         </div>
       )}
     </div>
+
+      {entry.data.image && (
+          <div class="post-featured-image">
+              <img src={entry.data.image} alt={entry.data.title} loading="eager" />
+          </div>
+      )}
 
     <div class="post-content">
       <Content />
@@ -192,7 +200,20 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
     font-size: 0.75rem;
     color: var(--color-text-secondary);
   }
+  .post-featured-image {
+      margin: 2rem 0 3rem;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
 
+  .post-featured-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+      max-height: 500px;
+  }
   .post-content {
     font-size: 1.125rem;
     line-height: 1.8;

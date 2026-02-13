@@ -5,6 +5,7 @@ pubDate: 2026-01-01
 author: "domix"
 category: "Community"
 tags: ["Announcement", "Welcome"]
+image: "https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=1200"
 ---
 
 Welcome to the official `dmx-fun` blog! We're excited to have you here and share our journey in bringing functional programming concepts to Java.
