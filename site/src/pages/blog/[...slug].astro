@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
+import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import {site} from "../../config/site.ts";
 const base = import.meta.env.BASE_URL;
 
@@ -14,6 +15,8 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+const readingTime = calculateReadingTime(entry.body);
+const readingTimeText = formatReadingTime(readingTime);
 
 const ogImage = entry.data.image || site.ogImage;
 const ogUrl = `${Astro.site}blog/${entry.id}`;
@@ -76,6 +79,13 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
               )}
           <span>{entry.data.author}</span>
         </div>
+          <div class="meta-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>{readingTimeText}</span>
+          </div>
       </div>
 
       {entry.data.tags.length > 0 && (
@@ -172,6 +182,7 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
 
   .post-meta {
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
     margin-top: 1.5rem;
   }
