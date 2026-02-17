@@ -4,8 +4,8 @@ description: "Immutability is one of those ideas that sounds simple—an object 
 pubDate: 2026-02-17
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
-category: "Best Practices"
-tags: ["Composition", "Functions", "Patterns", "Advanced"]
+category: "Fundamentals"
+tags: ["Immutability"]
 image: "https://images.unsplash.com/photo-1525011268546-bf3f9b007f6a?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 imageCredit:
     author: "Nick Fewings"
