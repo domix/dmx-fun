@@ -7,6 +7,11 @@ authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fb
 category: "Best Practices"
 tags: ["Composition", "Functions", "Patterns", "Advanced"]
 image: "https://images.unsplash.com/photo-1525011268546-bf3f9b007f6a?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+imageCredit:
+    author: "Nick Fewings"
+    authorUrl: "https://unsplash.com/es/@jannerboy62"
+    source: "Unsplash"
+    sourceUrl: "https://unsplash.com/es/fotos/flecha-blanca-pintada-en-pared-de-ladrillo-zF_pTLx_Dkg"
 ---
 
 

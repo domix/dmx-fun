@@ -22,6 +22,12 @@ const blog = defineCollection({
         category: z.enum(['Tutorial', 'Best Practices', 'Release', 'Community', 'Guide', 'Article']),
         tags: z.array(z.string()).default([]),
         image: z.string().url().optional(),
+        imageCredit: z.object({
+            author: z.string(),
+            authorUrl: z.string().optional(),
+            source: z.string().optional(),
+            sourceUrl: z.string().optional(),
+        }).optional(),
     }),
 });
 
