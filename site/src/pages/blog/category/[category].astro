@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { calculateReadingTime, formatReadingTime } from '../../../utils/readingTime';
 const base = import.meta.env.BASE_URL;
 
 export async function getStaticPaths() {
@@ -51,13 +52,16 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   </div>
 
   <div class="posts-grid">
-    {posts.map((post: any) => (
-      <article class="post-card">
-          {post.data.image && (
-              <a href={`${base}blog/${post.id}`} class="post-image-link">
-                  <img src={post.data.image} alt={post.data.title} class="post-image" loading="lazy" />
-              </a>
-          )}
+      {posts.map((post: any) => {
+          const readingTime = calculateReadingTime(post.body);
+          const readingTimeText = formatReadingTime(readingTime);
+          return (
+              <article class="post-card">
+                  {post.data.image && (
+                      <a href={`${base}blog/${post.id}`} class="post-image-link">
+                          <img src={post.data.image} alt={post.data.title} class="post-image" loading="lazy" />
+                      </a>
+                  )}
           <div class="post-content">
               <div class="post-category">{post.data.category}</div>
               <h2 class="post-title">
@@ -65,13 +69,17 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
               </h2>
               <p class="post-description">{post.data.description}</p>
               <div class="post-meta">
-                  <time datetime={post.data.pubDate.toISOString()}>
-                      {post.data.pubDate.toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                      })}
-                  </time>
+                  <div class="meta-group">
+                      <time datetime={post.data.pubDate.toISOString()}>
+                          {post.data.pubDate.toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                          })}
+                      </time>
+                      <span class="meta-separator">•</span>
+                      <span class="reading-time">{readingTimeText}</span>
+                  </div>
                   <span class="post-author">{post.data.author}</span>
               </div>
               {post.data.tags.length > 0 && (
@@ -83,7 +91,8 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
               )}
           </div>
       </article>
-    ))}
+      );
+      })}
   </div>
 </DocsLayout>
 
@@ -240,8 +249,23 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     color: var(--color-text-secondary);
     padding-top: 1rem;
     border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .meta-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
   }
 
+  .meta-separator {
+      opacity: 0.5;
+  }
+
+  .reading-time {
+      display: inline-flex;
+      align-items: center;
+  }
   .post-author {
     font-weight: 500;
   }

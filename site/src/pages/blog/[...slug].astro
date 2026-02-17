@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
+import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import {site} from "../../config/site.ts";
 const base = import.meta.env.BASE_URL;
 
@@ -14,6 +15,8 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+const readingTime = calculateReadingTime(entry.body);
+const readingTimeText = formatReadingTime(readingTime);
 
 const ogImage = entry.data.image || site.ogImage;
 const ogUrl = `${Astro.site}blog/${entry.id}`;
@@ -76,6 +79,13 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
               )}
           <span>{entry.data.author}</span>
         </div>
+          <div class="meta-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>{readingTimeText}</span>
+          </div>
       </div>
 
       {entry.data.tags.length > 0 && (
@@ -90,6 +100,30 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
       {entry.data.image && (
           <div class="post-featured-image">
               <img src={entry.data.image} alt={entry.data.title} loading="eager" />
+              {entry.data.imageCredit && (
+                  <div class="image-credit">
+                      Photo by {' '}
+                      {entry.data.imageCredit.authorUrl ? (
+                          <a href={entry.data.imageCredit.authorUrl} target="_blank" rel="noopener noreferrer">
+                              {entry.data.imageCredit.author}
+                          </a>
+                      ) : (
+                          <span>{entry.data.imageCredit.author}</span>
+                      )}
+                      {entry.data.imageCredit.source && (
+                          <>
+                              {' '} on {' '}
+                              {entry.data.imageCredit.sourceUrl ? (
+                                  <a href={entry.data.imageCredit.sourceUrl} target="_blank" rel="noopener noreferrer">
+                                      {entry.data.imageCredit.source}
+                                  </a>
+                              ) : (
+                                  <span>{entry.data.imageCredit.source}</span>
+                              )}
+                          </>
+                      )}
+                  </div>
+              )}
           </div>
       )}
 
@@ -172,6 +206,7 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
 
   .post-meta {
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
     margin-top: 1.5rem;
   }
@@ -211,9 +246,6 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
   }
   .post-featured-image {
       margin: 2rem 0 3rem;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   }
 
   .post-featured-image img {
@@ -222,6 +254,25 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
       display: block;
       object-fit: cover;
       max-height: 500px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+  .image-credit {
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      text-align: right;
+  }
+
+  .image-credit a {
+      color: var(--color-primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+  }
+
+  .image-credit a:hover {
+      color: var(--color-primary-hover);
+      text-decoration: underline;
   }
   .post-content {
     font-size: 1.125rem;
