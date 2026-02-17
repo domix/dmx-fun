@@ -24,9 +24,9 @@ const blog = defineCollection({
         image: z.string().url().optional(),
         imageCredit: z.object({
             author: z.string(),
-            authorUrl: z.string().optional(),
+            authorUrl: z.string().url().optional(),
             source: z.string().optional(),
-            sourceUrl: z.string().optional(),
+            sourceUrl: z.string().url().optional(),
         }).optional(),
     }),
 });
