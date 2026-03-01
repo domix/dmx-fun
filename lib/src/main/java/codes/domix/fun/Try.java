@@ -120,9 +120,15 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * Executes the provided {@code CheckedRunnable} and returns a {@code Try} instance
      * representing the outcome of the execution.
      *
+     * <p><b>Note on null value:</b> On success the returned {@code Try<Void>} wraps {@code null}
+     * as its value (since {@code Void} has no instances). This means that converting the result
+     * via {@link #toOption()} will always return {@link Option#none()} — use {@link #isSuccess()}
+     * or {@link #fold(java.util.function.Function, java.util.function.Function) fold()} instead
+     * to observe the outcome of a {@code run()} call.
+     *
      * @param runnable the {@code CheckedRunnable} to be executed
      * @return a {@code Try<Void>} representing the success or failure of the execution.
-     * On success, it contains {@code null}, and on failure, it contains the thrown exception.
+     * On success, its value is {@code null}; on failure, it contains the thrown exception.
      */
     static Try<Void> run(CheckedRunnable runnable) {
         try {

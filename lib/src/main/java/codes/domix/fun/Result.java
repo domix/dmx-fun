@@ -65,7 +65,11 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param value             the value to be wrapped in the {@code Ok} instance
      * @param errorClassIgnored the class object of the error type, ignored in this method
      * @return an {@code Ok} instance containing the provided value
+     * @deprecated This overload exists only as a type-inference aid and is no longer needed.
+     * Use {@link #ok(Object)} with an explicit type witness or a typed variable instead:
+     * {@code Result.<Value, Error>ok(value)} or {@code Result<Value, Error> r = Result.ok(value)}
      */
+    @Deprecated(forRemoval = true)
     static <Value, Error> Result<Value, Error> ok(Value value, Class<Error> errorClassIgnored) {
         return new Ok<>(value);
     }
@@ -91,7 +95,11 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param <Value>           The type of the value that would have been contained in a success state.
      * @param <Error>           The type of the error being represented.
      * @return A result instance representing an error state containing the provided error.
+     * @deprecated This overload exists only as a type-inference aid and is no longer needed.
+     * Use {@link #err(Object)} with an explicit type witness or a typed variable instead:
+     * {@code Result.<Value, Error>err(error)} or {@code Result<Value, Error> r = Result.err(error)}
      */
+    @Deprecated(forRemoval = true)
     static <Value, Error> Result<Value, Error> err(Error error, Class<Value> classValueIgnored) {
         return new Err<>(error);
     }
