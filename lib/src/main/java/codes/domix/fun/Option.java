@@ -84,7 +84,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @return an Option containing the provided value if it is non-null, or a None instance if the value is null
      */
     static <V> Option<V> some(V value) {
-        return value == null ? none() : new Some<>(value);
+        return new Some<>(value);
     }
 
     /**
@@ -105,7 +105,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @return an Option containing the provided value if it is non-null, or a None instance if the value is null
      */
     static <V> Option<V> ofNullable(V value) {
-        return some(value);
+        return value == null ? none() : new Some<>(value);
     }
 
     /**
@@ -561,7 +561,10 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      */
     static <V, E> Result<V, E> toResult(Option<? extends V> opt, E errorIfNone) {
         Objects.requireNonNull(opt, "opt");
-        return opt.isDefined() ? Result.ok(((Some<? extends V>) opt).value()) : Result.err(errorIfNone);
+        return switch (opt) {
+            case Some<? extends V> s -> Result.ok(s.value());
+            case None<? extends V> _ -> Result.err(errorIfNone);
+        };
     }
 
     /**
@@ -577,9 +580,10 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     static <V> Try<V> toTry(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
         Objects.requireNonNull(opt, "opt");
         Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
-        return opt.isDefined()
-            ? Try.success(((Some<? extends V>) opt).value())
-            : Try.failure(exceptionSupplier.get());
+        return switch (opt) {
+            case Some<? extends V> s -> Try.success(s.value());
+            case None<? extends V> _ -> Try.failure(exceptionSupplier.get());
+        };
     }
 
     // ---------- zip / map2 ----------

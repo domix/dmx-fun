@@ -486,11 +486,12 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     static <V> Try<V> fromOption(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
         Objects.requireNonNull(opt, "opt");
         Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
-        return opt.isDefined()
-            ? Try.success(((Option.Some<? extends V>) opt).value())
-            : Try.failure(
+        return switch (opt) {
+            case Option.Some<? extends V> s -> Try.success(s.value());
+            case Option.None<? extends V> _ -> Try.failure(
                 Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
             );
+        };
     }
 
 }

@@ -171,8 +171,8 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      */
     default <NewError> Result<Value, NewError> mapError(Function<Error, NewError> mapper) {
         return switch (this) {
-            case Ok<Value, Error> ok -> Result.ok(ok.value);
-            case Err<Value, Error> err -> Result.err(mapper.apply(err.error));
+            case Ok<Value, Error> ok -> Result.ok(ok.value());
+            case Err<Value, Error> err -> Result.err(mapper.apply(err.error()));
         };
     }
 
@@ -401,7 +401,10 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      */
     static <V, E> Result<V, E> fromOption(Option<? extends V> opt, E errorIfNone) {
         Objects.requireNonNull(opt, "opt");
-        return opt.isDefined() ? Result.ok(((Option.Some<? extends V>) opt).value()) : Result.err(errorIfNone);
+        return switch (opt) {
+            case Option.Some<? extends V> s -> Result.ok(s.value());
+            case Option.None<? extends V> _ -> Result.err(errorIfNone);
+        };
     }
 
     /**

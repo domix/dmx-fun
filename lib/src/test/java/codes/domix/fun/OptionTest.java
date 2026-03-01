@@ -19,9 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OptionTest {
     @Test
-    void some_null_shouldReturnNone() {
-        assertTrue(Option.some(null).isEmpty());
-        assertEquals(Option.none(), Option.some(null));
+    void some_null_shouldThrowNPE() {
+        assertThrows(NullPointerException.class, () -> Option.some(null));
     }
 
     @Test
