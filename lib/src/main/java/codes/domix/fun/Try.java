@@ -37,6 +37,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *                computation had succeeded
      */
     record Failure<Value>(Throwable cause) implements Try<Value> {
+        public Failure {
+            Objects.requireNonNull(cause, "Failure cause must not be null");
+        }
     }
 
     /**
@@ -174,8 +177,8 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     default Throwable getCause() {
         return switch (this) {
             case Failure<Value> f -> f.cause();
-            case Success<Value> s -> throw new NoSuchElementException(
-                "No cause present. Try is a Success for value: " + s.value()
+            case Success<Value> _ -> throw new NoSuchElementException(
+                "No cause present. Try is a Success."
             );
         };
     }

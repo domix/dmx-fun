@@ -11,8 +11,8 @@ class OptionZipTest {
 
     @Test
     void zip_shouldCombineTwoSomes() {
-        Option.Tuple2<Integer, String> expected = new Option.Tuple2<>(1, "a");
-        Option<Option.Tuple2<Integer, String>> r = Option.zip(Option.some(1), Option.some("a"));
+        Tuple2<Integer, String> expected = new Tuple2<>(1, "a");
+        Option<Tuple2<Integer, String>> r = Option.zip(Option.some(1), Option.some("a"));
 
         assertEquals(Option.some(expected), r);
     }
@@ -26,8 +26,8 @@ class OptionZipTest {
 
     @Test
     void zip_instanceMethod_shouldWork() {
-        Option<Option.Tuple2<Integer, String>> r = Option.some(1).zip(Option.some("a"));
-        assertEquals(Option.some(new Option.Tuple2<>(1, "a")), r);
+        Option<Tuple2<Integer, String>> r = Option.some(1).zip(Option.some("a"));
+        assertEquals(Option.some(new Tuple2<>(1, "a")), r);
     }
 
     @Test

@@ -59,18 +59,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param <Value> The type of the value that would be held by an {@link Option}, if present.
      */
     record None<Value>() implements Option<Value> {
-    }
-
-    /**
-     * A record representing a tuple with two elements.
-     * The tuple holds two values of potentially different types.
-     *
-     * @param <A> the type of the first element of the tuple
-     * @param <B> the type of the second element of the tuple
-     * @param _1  the first element of the tuple
-     * @param _2  the second element of the tuple
-     */
-    record Tuple2<A, B>(A _1, B _2) {
+        @SuppressWarnings("rawtypes")
+        static final None INSTANCE = new None<>();
     }
 
     // ---------- Factories ----------
@@ -93,8 +83,9 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param <V> the type of the value that would be held by the {@link Option}, if present
      * @return an {@code Option} instance that signifies no value is present
      */
+    @SuppressWarnings("unchecked")
     static <V> Option<V> none() {
-        return new None<>();
+        return (Option<V>) None.INSTANCE;
     }
 
     /**
@@ -558,7 +549,10 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param errorIfNone the error value to be used if the {@code Option} is not defined
      * @return a {@code Result} containing the value of the {@code Option} if defined,
      * or the specified error if the {@code Option} is not defined
+     * @deprecated Use the instance method {@link Option#toResult(Object)} instead:
+     * {@code opt.toResult(errorIfNone)}
      */
+    @Deprecated(forRemoval = true)
     static <V, E> Result<V, E> toResult(Option<? extends V> opt, E errorIfNone) {
         Objects.requireNonNull(opt, "opt");
         return switch (opt) {
@@ -576,7 +570,10 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param opt               the {@code Option} to be converted; must not be null
      * @param exceptionSupplier the {@code Supplier} providing the exception for a failed {@code Try}; must not be null
      * @return a {@code Try} representing either the value from the {@code Option} or a failure with the supplied exception
+     * @deprecated Use the instance method {@link Option#toTry(Supplier)} instead:
+     * {@code opt.toTry(exceptionSupplier)}
      */
+    @Deprecated(forRemoval = true)
     static <V> Try<V> toTry(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
         Objects.requireNonNull(opt, "opt");
         Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
@@ -590,11 +587,11 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
 
     /**
      * Combines the current {@code Option} instance with another {@code Option} instance into a single {@code Option}
-     * containing a {@code Tuple2} of their values, if both options are non-empty.
+     * containing a {@link Tuple2} of their values, if both options are non-empty.
      *
      * @param <B>   the type of the value contained in the other {@code Option}
      * @param other the other {@code Option} to combine with
-     * @return an {@code Option} containing a {@code Tuple2} of the values from both options if both are non-empty,
+     * @return an {@code Option} containing a {@link Tuple2} of the values from both options if both are non-empty,
      * otherwise an empty {@code Option}
      */
     default <B> Option<Tuple2<Value, B>> zip(Option<? extends B> other) {

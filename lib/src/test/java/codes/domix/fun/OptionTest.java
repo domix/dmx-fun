@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,14 +24,14 @@ class OptionTest {
     }
 
     @Test
-    void none_shouldBeEmpty_andSingletonSemanticsNotRequired() {
+    void none_shouldBeEmpty_andReturnSingletonInstance() {
         Option<Integer> a = Option.none();
         Option<Integer> b = Option.none();
 
         assertTrue(a.isEmpty());
         assertTrue(b.isEmpty());
-        assertEquals(a, b);          // records: value-based equality
-        assertNotSame(a, b);         // no singleton obligation
+        assertEquals(a, b);   // value-based equality
+        assertSame(a, b);     // singleton: same instance every time
     }
 
     @Test
