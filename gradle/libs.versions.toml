@@ -4,8 +4,10 @@
 groovy = "4.0.29"
 spock-core = "2.4-M6-groovy-4.0"
 assertj = "3.27.7"
+jspecify = "1.0.0"
 
 [libraries]
 groovy = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock-core" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }

@@ -28,14 +28,6 @@ class InteropTest {
     }
 
     @Test
-    void result_toOption_shouldDropNullOkValue() {
-        Result<String, String> okNull = Result.ok(null);
-        assertEquals(Option.none(), okNull.toOption());
-        Result<String, String> errNull = Result.err(null);
-        assertEquals(Option.none(), errNull.toOption());
-    }
-
-    @Test
     void result_toTry_shouldMapErrToThrowable() {
         Result<Integer, String> err = Result.err("boom");
         Try<Integer> t = err.toTry(RuntimeException::new);

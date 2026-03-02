@@ -6,6 +6,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 
 /**
@@ -14,21 +16,32 @@ import java.util.function.Supplier;
  * This is a common functional programming construct that allows for
  * handling both success and error cases in a unified type.
  *
+ * <p>This interface is {@link NullMarked}: all types are non-null by default.
+ * {@code Ok.value} is guaranteed non-null; use {@link Option} inside the value type
+ * to model an optional successful result.
+ *
  * @param <Value> the type of the value contained in a successful result
  * @param <Error> the type of the error contained in an erroneous result
  */
+@NullMarked
 public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     /**
      * Represents a successful result containing a value of type {@code Value}.
      * <p>
      * This record implements the {@link Result} interface and indicates the "Ok" variant
-     * of a result. It encapsulates a value that represents a successful computation or action.
+     * of a result. It encapsulates a non-null value that represents a successful computation
+     * or action. To model a successful result with no meaningful value use {@code Result<Void, Error>};
+     * for an optional value use {@code Result<Option<Value>, Error>}.
      *
      * @param <Value> the type of the value contained in the successful result
      * @param <Error> the type of the error contained in the erroneous result, unused here
-     * @param value   the value that represents the successful result
+     * @param value   the non-null value that represents the successful result
+     * @throws NullPointerException if {@code value} is {@code null}
      */
     record Ok<Value, Error>(Value value) implements Result<Value, Error> {
+        public Ok {
+            Objects.requireNonNull(value, "Ok value must not be null");
+        }
     }
 
     /**
@@ -39,9 +52,13 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in a successful result, unused here
      * @param <Error> the type of the error contained in the erroneous result
-     * @param error   the error value that represents the erroneous result
+     * @param error   the non-null error value that represents the erroneous result
+     * @throws NullPointerException if {@code error} is {@code null}
      */
     record Err<Value, Error>(Error error) implements Result<Value, Error> {
+        public Err {
+            Objects.requireNonNull(error, "Err error must not be null");
+        }
     }
 
     /**
@@ -50,8 +67,9 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in the successful result
      * @param <Error> the type of the error that would be contained in an erroneous result
-     * @param value   the value to encapsulate in the successful result
+     * @param value   the non-null value to encapsulate in the successful result
      * @return a {@link Result} instance of type {@code Ok<Value, Error>} containing the provided value
+     * @throws NullPointerException if {@code value} is {@code null}
      */
     static <Value, Error> Result<Value, Error> ok(Value value) {
         return new Ok<>(value);
@@ -80,8 +98,9 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value that would be contained in a successful result, unused here
      * @param <Error> the type of the error contained in the erroneous result
-     * @param error   the error value to encapsulate in the erroneous result
+     * @param error   the non-null error value to encapsulate in the erroneous result
      * @return a {@link Result} instance of type {@code Err<Value, Error>} containing the provided error
+     * @throws NullPointerException if {@code error} is {@code null}
      */
     static <Value, Error> Result<Value, Error> err(Error error) {
         return new Err<>(error);
@@ -128,7 +147,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * Retrieves the value contained within this {@code Result} instance if it represents a successful result.
      * If the instance represents an erroneous result, this method throws a {@code NoSuchElementException}.
      *
-     * @return the value contained in the successful result
+     * @return the non-null value contained in the successful result
      * @throws NoSuchElementException if the instance represents an erroneous result
      */
     default Value get() {
@@ -269,7 +288,10 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return the value contained in a successful result, or the value provided by {@code fallbackSupplier} if this instance represents an error
      */
     default Value getOrElseGet(Supplier<Value> fallbackSupplier) {
-        return this instanceof Ok<Value, Error>(Value value) ? value : fallbackSupplier.get();
+        Objects.requireNonNull(fallbackSupplier, "fallbackSupplier");
+        return this instanceof Ok<Value, Error>(Value value)
+            ? value
+            : Objects.requireNonNull(fallbackSupplier.get(), "fallbackSupplier returned null");
     }
 
     /**
@@ -295,7 +317,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return the value contained in the successful result, or {@code null} if this
      * instance represents an error
      */
-    default Value getOrNull() {
+    default @Nullable Value getOrNull() {
         return this instanceof Ok<Value, Error>(Value value) ? value : null;
     }
 
@@ -356,6 +378,106 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         return this;
     }
 
+    // ---------- Recovery and fallback ----------
+
+    /**
+     * Converts an erroneous {@code Result} into a successful one by applying the given rescue function
+     * to the contained error. If this instance is already {@code Ok}, it is returned unchanged.
+     *
+     * @param rescue a function that maps the error value to a recovery value; must not return {@code null}
+     * @return an {@code Ok} result with the recovered value, or the original {@code Ok} if already successful
+     * @throws NullPointerException if {@code rescue} is null or if {@code rescue} returns {@code null}
+     */
+    default Result<Value, Error> recover(Function<Error, Value> rescue) {
+        Objects.requireNonNull(rescue, "rescue");
+        return switch (this) {
+            case Ok<Value, Error> ok -> ok;
+            case Err<Value, Error> err -> Result.ok(Objects.requireNonNull(rescue.apply(err.error()), "rescue returned null"));
+        };
+    }
+
+    /**
+     * Converts an erroneous {@code Result} into a new {@code Result} by applying the given rescue function
+     * to the contained error. Unlike {@link #recover}, the rescue function may itself return an {@code Err}.
+     * If this instance is already {@code Ok}, it is returned as an {@code Ok} of the new error type.
+     *
+     * @param <E2>   the error type of the resulting {@code Result}
+     * @param rescue a function that maps the error to a new {@code Result}; must not return {@code null}
+     * @return the result of applying {@code rescue} to the error, or an {@code Ok} wrapping the original value
+     * @throws NullPointerException if {@code rescue} is null or if {@code rescue} returns {@code null}
+     */
+    default <E2> Result<Value, E2> recoverWith(Function<Error, Result<Value, E2>> rescue) {
+        Objects.requireNonNull(rescue, "rescue");
+        return switch (this) {
+            case Ok<Value, Error> ok -> Result.ok(ok.value());
+            case Err<Value, Error> err -> Objects.requireNonNull(rescue.apply(err.error()), "rescue returned null");
+        };
+    }
+
+    /**
+     * Returns this {@code Result} if it is {@code Ok}; otherwise evaluates the given supplier
+     * and returns its result. The supplier is <em>not</em> called when this instance is {@code Ok}.
+     *
+     * @param fallback a lazy supplier of an alternative {@code Result} evaluated only on {@code Err};
+     *                 must not return {@code null}
+     * @return this instance if {@code Ok}, or the result of {@code fallback.get()} if {@code Err}
+     * @throws NullPointerException if {@code fallback} is null or if {@code fallback} returns {@code null}
+     */
+    default Result<Value, Error> or(Supplier<Result<Value, Error>> fallback) {
+        Objects.requireNonNull(fallback, "fallback");
+        return this instanceof Ok ? this : Objects.requireNonNull(fallback.get(), "fallback returned null");
+    }
+
+    /**
+     * Applies a function to the error of an erroneous result and returns the produced {@code Result}.
+     * If this instance is {@code Ok}, it is propagated unchanged (with a potentially different error type).
+     * This is the dual of {@link #flatMap}: it operates on the error channel instead of the value channel.
+     *
+     * @param <E2>   the error type of the resulting {@code Result}
+     * @param mapper a function that maps the current error to a new {@code Result}; must not return {@code null}
+     * @return the mapped result for {@code Err}, or the original value wrapped as {@code Ok} for {@code Ok}
+     * @throws NullPointerException if {@code mapper} is null or if {@code mapper} returns {@code null}
+     */
+    default <E2> Result<Value, E2> flatMapError(Function<Error, Result<Value, E2>> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
+        return switch (this) {
+            case Ok<Value, Error> ok -> Result.ok(ok.value());
+            case Err<Value, Error> err -> Objects.requireNonNull(mapper.apply(err.error()), "mapper returned null");
+        };
+    }
+
+    /**
+     * Swaps the {@code Ok} and {@code Err} channels of this {@code Result}.
+     * An {@code Ok(value)} becomes {@code Err(value)} and an {@code Err(error)} becomes {@code Ok(error)}.
+     *
+     * @return a {@code Result} with the value and error channels exchanged
+     */
+    default Result<Error, Value> swap() {
+        return switch (this) {
+            case Ok<Value, Error> ok -> Result.err(ok.value());
+            case Err<Value, Error> err -> Result.ok(err.error());
+        };
+    }
+
+    /**
+     * Returns the value of this {@code Ok}, or applies {@code errorMapper} to the contained error
+     * and returns the result. Unlike {@link #getOrElseGet(Supplier)}, the fallback function receives
+     * the error value, which is useful for deriving a default from the error itself.
+     *
+     * <p>This method is intentionally named differently from {@link #getOrElseGet(Supplier)} to avoid
+     * overload ambiguity when passing a null literal or a Groovy/Kotlin closure.
+     *
+     * @param errorMapper a function that maps the error to a fallback value
+     * @return the contained value if {@code Ok}, or the result of {@code errorMapper} if {@code Err}
+     */
+    default Value getOrElseGetWithError(Function<Error, Value> errorMapper) {
+        Objects.requireNonNull(errorMapper, "errorMapper");
+        return switch (this) {
+            case Ok<Value, Error> ok -> ok.value();
+            case Err<Value, Error> err -> Objects.requireNonNull(errorMapper.apply(err.error()), "errorMapper returned null");
+        };
+    }
+
     // ---------- Interoperability: Result <-> Option / Try ----------
 
     /**
@@ -367,7 +489,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      */
     default Option<Value> toOption() {
         return switch (this) {
-            case Ok<Value, Error> ok -> Option.ofNullable(ok.value()); // null => None
+            case Ok<Value, Error> ok -> Option.some(ok.value());
             case Err<Value, Error> _ -> Option.none();
         };
     }

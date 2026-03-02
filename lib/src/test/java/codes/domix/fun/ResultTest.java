@@ -3,6 +3,7 @@ package codes.domix.fun;
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,6 +14,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ResultTest {
 
     // ---------- factories ----------
+
+    @Test
+    void ok_shouldThrowNPE_ifValueIsNull() {
+        assertThatThrownBy(() -> Result.ok(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null");
+    }
+
+    @Test
+    void err_shouldThrowNPE_ifErrorIsNull() {
+        assertThatThrownBy(() -> Result.err(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null");
+    }
 
     @Test
     void of_shouldInferRightTypes() {
@@ -56,6 +71,19 @@ class ResultTest {
     void getOrElse_shouldReturnValueOnOk_andFallbackOnErr() {
         assertThat(Result.ok("real").getOrElse("fallback")).isEqualTo("real");
         assertThat(Result.<String, String>err("e").getOrElse("fallback")).isEqualTo("fallback");
+    }
+
+    @Test
+    void getOrElseGet_shouldThrowNPE_ifSupplierIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGet((Supplier<String>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void getOrElseGet_shouldThrowNPE_ifSupplierReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGet(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fallbackSupplier returned null");
     }
 
     @Test
@@ -241,5 +269,230 @@ class ResultTest {
         Result<String, Throwable> err = Result.fromTry(Try.failure(ex));
         assertThat(err.isError()).isTrue();
         assertThat(err.getError()).isSameAs(ex);
+    }
+
+    // ---------- recover ----------
+
+    @Test
+    void recover_shouldConvertErrToOk_usingErrorValue() {
+        Result<String, String> recovered = Result.<String, String>err("oops")
+            .recover(e -> "recovered:" + e);
+        assertThat(recovered.isOk()).isTrue();
+        assertThat(recovered.get()).isEqualTo("recovered:oops");
+    }
+
+    @Test
+    void recover_shouldLeaveOkUntouched() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, String> ok = Result.ok("value");
+        Result<String, String> result = ok.recover(e -> {
+            called.set(true);
+            return "should-not-appear";
+        });
+        assertThat(result).isSameAs(ok);
+        assertFalse(called.get(), "rescue must not be called for Ok");
+    }
+
+    @Test
+    void recover_shouldThrowNPE_ifRescueIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recover(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void recover_shouldThrowNPE_ifRescueReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recover(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("rescue returned null");
+    }
+
+    // ---------- recoverWith ----------
+
+    @Test
+    void recoverWith_shouldConvertErrToOk_viaMappedResult() {
+        Result<String, Integer> result = Result.<String, String>err("missing")
+            .recoverWith(e -> Result.ok("default"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("default");
+    }
+
+    @Test
+    void recoverWith_shouldAllowErrToRemainErr_withNewErrorType() {
+        Result<String, Integer> result = Result.<String, String>err("oops")
+            .recoverWith(e -> Result.err(e.length()));
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo(4);
+    }
+
+    @Test
+    void recoverWith_shouldLeaveOkUntouched_andChangeErrorType() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, Integer> result = Result.<String, String>ok("hello")
+            .recoverWith(e -> {
+                called.set(true);
+                return Result.err(0);
+            });
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+        assertFalse(called.get(), "rescue must not be called for Ok");
+    }
+
+    @Test
+    void recoverWith_shouldThrowNPE_ifRescueIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recoverWith(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void recoverWith_shouldThrowNPE_ifRescueReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recoverWith(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("rescue returned null");
+    }
+
+    // ---------- or ----------
+
+    @Test
+    void or_shouldReturnSelf_whenOk() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, String> ok = Result.ok("primary");
+        Result<String, String> result = ok.or(() -> {
+            called.set(true);
+            return Result.ok("fallback");
+        });
+        assertThat(result).isSameAs(ok);
+        assertFalse(called.get(), "fallback supplier must not be called for Ok");
+    }
+
+    @Test
+    void or_shouldReturnFallback_whenErr() {
+        Result<String, String> result = Result.<String, String>err("e")
+            .or(() -> Result.ok("fallback"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("fallback");
+    }
+
+    @Test
+    void or_shouldChain_multipleAlternatives() {
+        Result<String, String> result = Result.<String, String>err("e1")
+            .or(() -> Result.err("e2"))
+            .or(() -> Result.ok("found"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("found");
+    }
+
+    @Test
+    void or_shouldThrowNPE_ifFallbackIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").or(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void or_shouldThrowNPE_ifFallbackReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").or(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fallback returned null");
+    }
+
+    // ---------- flatMapError ----------
+
+    @Test
+    void flatMapError_shouldChainErrValues() {
+        Result<String, Integer> result = Result.<String, String>err("oops")
+            .flatMapError(e -> Result.err(e.length()));
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo(4);
+    }
+
+    @Test
+    void flatMapError_shouldAllowConvertingErrToOk() {
+        Result<String, Integer> result = Result.<String, String>err("fallback-value")
+            .flatMapError(e -> Result.ok(e.toUpperCase()));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("FALLBACK-VALUE");
+    }
+
+    @Test
+    void flatMapError_shouldLeaveOkUntouched_andChangeErrorType() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, Integer> result = Result.<String, String>ok("hello")
+            .flatMapError(e -> {
+                called.set(true);
+                return Result.err(0);
+            });
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+        assertFalse(called.get(), "mapper must not be called for Ok");
+    }
+
+    @Test
+    void flatMapError_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").flatMapError(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void flatMapError_shouldThrowNPE_ifMapperReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").flatMapError(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
+    }
+
+    // ---------- swap ----------
+
+    @Test
+    void swap_shouldFlipOkToErr() {
+        // Ok<String, Integer> → swap → Err<Integer, String>
+        Result<Integer, String> swapped = Result.<String, Integer>ok("hello").swap();
+        assertThat(swapped.isError()).isTrue();
+        assertThat(swapped.getError()).isEqualTo("hello");
+    }
+
+    @Test
+    void swap_shouldFlipErrToOk() {
+        // Err<Integer, String> → swap → Ok<String, Integer>
+        Result<String, Integer> swapped = Result.<Integer, String>err("error").swap();
+        assertThat(swapped.isOk()).isTrue();
+        assertThat(swapped.get()).isEqualTo("error");
+    }
+
+    @Test
+    void swap_appliedTwice_shouldReturnEquivalentResult() {
+        Result<String, Integer> original = Result.ok("hello");
+        Result<String, Integer> roundTrip = original.swap().swap();
+        assertThat(roundTrip.isOk()).isTrue();
+        assertThat(roundTrip.get()).isEqualTo("hello");
+    }
+
+    // ---------- getOrElseGetWithError ----------
+
+    @Test
+    void getOrElseGetWithError_shouldReturnValueOnOk() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        String value = Result.<String, String>ok("real").getOrElseGetWithError(e -> {
+            called.set(true);
+            return "from-error:" + e;
+        });
+        assertThat(value).isEqualTo("real");
+        assertFalse(called.get(), "mapper must not be invoked for Ok");
+    }
+
+    @Test
+    void getOrElseGetWithError_shouldMapErrorOnErr() {
+        String value = Result.<String, String>err("boom").getOrElseGetWithError(e -> "from-error:" + e);
+        assertThat(value).isEqualTo("from-error:boom");
+    }
+
+    @Test
+    void getOrElseGetWithError_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGetWithError(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void getOrElseGetWithError_shouldThrowNPE_ifMapperReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGetWithError(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("errorMapper returned null");
     }
 }
