@@ -66,12 +66,13 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     // ---------- Factories ----------
 
     /**
-     * Creates an Option instance that encapsulates a given non-null value. If the value is null,
-     * it returns a None instance instead.
+     * Creates a {@link Some} instance that encapsulates the given non-null value.
+     * Use {@link #ofNullable(Object)} if the value may be {@code null}.
      *
      * @param <V>   the type of the value to encapsulate
-     * @param value the value to be encapsulated; if null, a None instance is returned
-     * @return an Option containing the provided value if it is non-null, or a None instance if the value is null
+     * @param value the non-null value to encapsulate
+     * @return a {@code Some<V>} wrapping the provided value
+     * @throws NullPointerException if {@code value} is {@code null} (enforced by {@link Some#Some(Object)})
      */
     static <V> Option<V> some(V value) {
         return new Some<>(value);
