@@ -288,7 +288,10 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return the value contained in a successful result, or the value provided by {@code fallbackSupplier} if this instance represents an error
      */
     default Value getOrElseGet(Supplier<Value> fallbackSupplier) {
-        return this instanceof Ok<Value, Error>(Value value) ? value : fallbackSupplier.get();
+        Objects.requireNonNull(fallbackSupplier, "fallbackSupplier");
+        return this instanceof Ok<Value, Error>(Value value)
+            ? value
+            : Objects.requireNonNull(fallbackSupplier.get(), "fallbackSupplier returned null");
     }
 
     /**
@@ -470,7 +473,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         Objects.requireNonNull(errorMapper, "errorMapper");
         return switch (this) {
             case Ok<Value, Error> ok -> ok.value();
-            case Err<Value, Error> err -> errorMapper.apply(err.error());
+            case Err<Value, Error> err -> Objects.requireNonNull(errorMapper.apply(err.error()), "errorMapper returned null");
         };
     }
 

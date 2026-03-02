@@ -3,6 +3,7 @@ package codes.domix.fun;
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,6 +71,19 @@ class ResultTest {
     void getOrElse_shouldReturnValueOnOk_andFallbackOnErr() {
         assertThat(Result.ok("real").getOrElse("fallback")).isEqualTo("real");
         assertThat(Result.<String, String>err("e").getOrElse("fallback")).isEqualTo("fallback");
+    }
+
+    @Test
+    void getOrElseGet_shouldThrowNPE_ifSupplierIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGet((Supplier<String>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void getOrElseGet_shouldThrowNPE_ifSupplierReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGet(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fallbackSupplier returned null");
     }
 
     @Test
@@ -466,5 +480,12 @@ class ResultTest {
     void getOrElseGetWithError_shouldThrowNPE_ifMapperIsNull() {
         assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGetWithError(null))
             .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void getOrElseGetWithError_shouldThrowNPE_ifMapperReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGetWithError(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("errorMapper returned null");
     }
 }
