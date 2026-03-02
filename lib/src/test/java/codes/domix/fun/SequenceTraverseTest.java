@@ -240,6 +240,16 @@ class SequenceTraverseTest {
                 .isInstanceOf(NullPointerException.class);
         }
 
+        @Test
+        void sequence_iterable_successWithNullValue_shouldNotThrow() {
+            // Try.run() produces Success(null); sequence must not fail on null values
+            // because List.copyOf() would throw NPE — Collections.unmodifiableList() does not
+            Try<List<Void>> result = Try.sequence(List.of(Try.run(() -> {})));
+            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.get()).hasSize(1);
+            assertThat(result.get().get(0)).isNull();
+        }
+
         // ----- sequence(Stream) -----
 
         @Test

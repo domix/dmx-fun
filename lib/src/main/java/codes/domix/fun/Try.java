@@ -1,6 +1,7 @@
 package codes.domix.fun;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -664,7 +665,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
             }
             out.add(((Success<V>) t).value());
         }
-        return Try.success(List.copyOf(out));
+        return Try.success(Collections.unmodifiableList(out));
     }
 
     /**
@@ -694,7 +695,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
                 out.add(((Success<V>) t).value());
             }
         }
-        return Try.success(List.copyOf(out));
+        return Try.success(Collections.unmodifiableList(out));
     }
 
     /**
@@ -721,7 +722,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
             }
             out.add(((Success<B>) t).value());
         }
-        return Try.success(List.copyOf(out));
+        return Try.success(Collections.unmodifiableList(out));
     }
 
     /**
@@ -753,7 +754,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
                 out.add(((Success<B>) t).value());
             }
         }
-        return Try.success(List.copyOf(out));
+        return Try.success(Collections.unmodifiableList(out));
     }
 
 }
