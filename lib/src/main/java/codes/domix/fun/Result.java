@@ -6,6 +6,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 
 /**
@@ -14,21 +16,29 @@ import java.util.function.Supplier;
  * This is a common functional programming construct that allows for
  * handling both success and error cases in a unified type.
  *
+ * <p>This interface is {@link NullMarked}: all types are non-null by default. The sole exception
+ * is the {@code value} component of {@link Ok}, which is explicitly {@link Nullable} to support
+ * interoperability with {@link Option} (e.g. via {@link #toOption()}).
+ *
  * @param <Value> the type of the value contained in a successful result
  * @param <Error> the type of the error contained in an erroneous result
  */
+@NullMarked
 public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     /**
      * Represents a successful result containing a value of type {@code Value}.
      * <p>
      * This record implements the {@link Result} interface and indicates the "Ok" variant
      * of a result. It encapsulates a value that represents a successful computation or action.
+     * The {@code value} component is {@link Nullable} to allow wrapping of {@code null}
+     * (e.g. a successful computation that produces no meaningful value).
+     * Prefer {@link Option} inside the value type to model optional results explicitly.
      *
      * @param <Value> the type of the value contained in the successful result
      * @param <Error> the type of the error contained in the erroneous result, unused here
-     * @param value   the value that represents the successful result
+     * @param value   the value that represents the successful result; may be {@code null}
      */
-    record Ok<Value, Error>(Value value) implements Result<Value, Error> {
+    record Ok<Value, Error>(@Nullable Value value) implements Result<Value, Error> {
     }
 
     /**
@@ -50,10 +60,10 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in the successful result
      * @param <Error> the type of the error that would be contained in an erroneous result
-     * @param value   the value to encapsulate in the successful result
+     * @param value   the value to encapsulate in the successful result; may be {@code null}
      * @return a {@link Result} instance of type {@code Ok<Value, Error>} containing the provided value
      */
-    static <Value, Error> Result<Value, Error> ok(Value value) {
+    static <Value, Error> Result<Value, Error> ok(@Nullable Value value) {
         return new Ok<>(value);
     }
 
@@ -128,10 +138,10 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * Retrieves the value contained within this {@code Result} instance if it represents a successful result.
      * If the instance represents an erroneous result, this method throws a {@code NoSuchElementException}.
      *
-     * @return the value contained in the successful result
+     * @return the value contained in the successful result; may be {@code null} if {@link Ok} wraps {@code null}
      * @throws NoSuchElementException if the instance represents an erroneous result
      */
-    default Value get() {
+    default @Nullable Value get() {
         return switch (this) {
             case Ok<Value, Error> ok -> ok.value();
             case Err<Value, Error> _ -> throw new NoSuchElementException("No value present. This Result is an Error.");
@@ -157,11 +167,12 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * If the {@code Result} instance represents an error, the error remains unchanged.
      *
      * @param <NewValue> the type of the value after applying the mapping function
-     * @param mapper     the function to apply to the value of the successful result
+     * @param mapper     the function to apply to the value of the successful result;
+     *                   receives a possibly-{@code null} value and may return {@code null}
      * @return a new {@code Result} instance, containing the mapped value if the original instance
      * was successful, or the same error if the original instance was an error
      */
-    default <NewValue> Result<NewValue, Error> map(Function<Value, NewValue> mapper) {
+    default <NewValue> Result<@Nullable NewValue, Error> map(Function<@Nullable Value, @Nullable NewValue> mapper) {
         return switch (this) {
             case Ok<Value, Error> ok -> Result.ok(mapper.apply(ok.value()));
             case Err<Value, Error> err -> Result.err(err.error());
@@ -194,7 +205,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return a new {@code Result} instance returned by applying the mapping function to the value if the original instance
      * was successful, or the same error if the original instance was an error
      */
-    default <NewValue> Result<NewValue, Error> flatMap(Function<Value, Result<NewValue, Error>> mapper) {
+    default <NewValue> Result<NewValue, Error> flatMap(Function<@Nullable Value, Result<NewValue, Error>> mapper) {
         return switch (this) {
             case Ok<Value, Error> ok -> mapper.apply(ok.value());
             case Err<Value, Error> err -> Result.err(err.error());
@@ -211,7 +222,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param onSuccess a {@link Consumer} that accepts the value contained in a successful result
      * @param onError   a {@link Consumer} that accepts the error contained in an erroneous result
      */
-    default void match(Consumer<Value> onSuccess, Consumer<Error> onError) {
+    default void match(Consumer<@Nullable Value> onSuccess, Consumer<Error> onError) {
         switch (this) {
             case Ok<Value, Error> ok -> onSuccess.accept(ok.value());
             case Err<Value, Error> err -> onError.accept(err.error());
@@ -226,7 +237,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param action a {@link Consumer} that accepts the value contained in a successful result
      * @return the original {@code Result} instance
      */
-    default Result<Value, Error> peek(Consumer<Value> action) {
+    default Result<Value, Error> peek(Consumer<@Nullable Value> action) {
         if (this instanceof Ok<Value, Error>(Value value)) {
             action.accept(value);
         }
@@ -257,7 +268,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return the value contained in a successful result, or the fallback value if this
      * instance represents an error
      */
-    default Value getOrElse(Value fallback) {
+    default @Nullable Value getOrElse(@Nullable Value fallback) {
         return this instanceof Ok<Value, Error>(Value value) ? value : fallback;
     }
 
@@ -268,7 +279,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param fallbackSupplier a {@link Supplier} that provides the fallback value to use if this instance represents an error
      * @return the value contained in a successful result, or the value provided by {@code fallbackSupplier} if this instance represents an error
      */
-    default Value getOrElseGet(Supplier<Value> fallbackSupplier) {
+    default @Nullable Value getOrElseGet(Supplier<@Nullable Value> fallbackSupplier) {
         return this instanceof Ok<Value, Error>(Value value) ? value : fallbackSupplier.get();
     }
 
@@ -281,7 +292,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return the value contained in the successful result
      * @throws RuntimeException the exception produced by {@code exceptionMapper} if the instance represents an error
      */
-    default Value getOrThrow(Function<Error, ? extends RuntimeException> exceptionMapper) {
+    default @Nullable Value getOrThrow(Function<Error, ? extends RuntimeException> exceptionMapper) {
         return switch (this) {
             case Ok<Value, Error> ok -> ok.value();
             case Err<Value, Error> err -> throw exceptionMapper.apply(err.error());
@@ -295,7 +306,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return the value contained in the successful result, or {@code null} if this
      * instance represents an error
      */
-    default Value getOrNull() {
+    default @Nullable Value getOrNull() {
         return this instanceof Ok<Value, Error>(Value value) ? value : null;
     }
 
@@ -312,7 +323,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param onError   a function to apply to the error of an erroneous result
      * @return the result of applying the appropriate function, as a value of type {@code Folded}
      */
-    default <Folded> Folded fold(Function<Value, Folded> onSuccess, Function<Error, Folded> onError) {
+    default <Folded> Folded fold(Function<@Nullable Value, Folded> onSuccess, Function<Error, Folded> onError) {
         return switch (this) {
             case Ok<Value, Error> ok -> onSuccess.apply(ok.value());
             case Err<Value, Error> err -> onError.apply(err.error());
@@ -331,7 +342,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return the current result if it is not an Ok instance or the predicate evaluates to true,
      * otherwise a new error result with the specified error value
      */
-    default Result<Value, Error> filter(Predicate<Value> predicate, Error errorIfFalse) {
+    default Result<Value, Error> filter(Predicate<@Nullable Value> predicate, Error errorIfFalse) {
         if (this instanceof Ok<Value, Error>(Value value)) {
             return predicate.test(value) ? this : Result.err(errorIfFalse);
         }
@@ -349,7 +360,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return a filtered result, returning the same instance if the predicate evaluates to true or the result is Err;
      * otherwise, returns an Err with the provided error value.
      */
-    default Result<Value, Error> filter(Predicate<Value> predicate, Function<Value, Error> errorIfFalse) {
+    default Result<Value, Error> filter(Predicate<@Nullable Value> predicate, Function<@Nullable Value, Error> errorIfFalse) {
         if (this instanceof Ok<Value, Error>(Value value)) {
             return predicate.test(value) ? this : Result.err(errorIfFalse.apply(value));
         }
@@ -365,7 +376,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param rescue a function that maps the error value to a recovery value
      * @return an {@code Ok} result with the recovered value, or the original {@code Ok} if already successful
      */
-    default Result<Value, Error> recover(Function<Error, Value> rescue) {
+    default Result<Value, Error> recover(Function<Error, @Nullable Value> rescue) {
         Objects.requireNonNull(rescue, "rescue");
         return switch (this) {
             case Ok<Value, Error> ok -> ok;
@@ -440,7 +451,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param errorMapper a function that maps the error to a fallback value
      * @return the contained value if {@code Ok}, or the result of {@code errorMapper} if {@code Err}
      */
-    default Value getOrElseGet(Function<Error, Value> errorMapper) {
+    default @Nullable Value getOrElseGet(Function<Error, @Nullable Value> errorMapper) {
         Objects.requireNonNull(errorMapper, "errorMapper");
         return switch (this) {
             case Ok<Value, Error> ok -> ok.value();

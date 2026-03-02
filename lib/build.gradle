@@ -15,6 +15,9 @@ repositories {
 }
 
 dependencies {
+    // Null-safety annotations (part of the public API)
+    api libs.jspecify
+
     // Use the latest Groovy version for Spock testing
     testImplementation libs.groovy
 
