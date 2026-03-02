@@ -539,51 +539,6 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         return t.isSuccess() ? Option.ofNullable(t.get()) : Option.none();
     }
 
-    /**
-     * Converts an {@code Option} into a {@code Result}.
-     * If the {@code Option} is defined, the result will contain the value; otherwise,
-     * the result will contain the specified error.
-     *
-     * @param <V>         the type of the success value in the {@code Result}
-     * @param <E>         the type of the error value in the {@code Result}
-     * @param opt         the {@code Option} to be converted; must not be null
-     * @param errorIfNone the error value to be used if the {@code Option} is not defined
-     * @return a {@code Result} containing the value of the {@code Option} if defined,
-     * or the specified error if the {@code Option} is not defined
-     * @deprecated Use the instance method {@link Option#toResult(Object)} instead:
-     * {@code opt.toResult(errorIfNone)}
-     */
-    @Deprecated(forRemoval = true)
-    static <V, E> Result<V, E> toResult(Option<? extends V> opt, E errorIfNone) {
-        Objects.requireNonNull(opt, "opt");
-        return switch (opt) {
-            case Some<? extends V> s -> Result.ok(s.value());
-            case None<? extends V> _ -> Result.err(errorIfNone);
-        };
-    }
-
-    /**
-     * Converts an {@code Option} to a {@code Try}. If the {@code Option} is defined, a successful {@code Try} is returned
-     * containing the value from the {@code Option}. If the {@code Option} is empty, a failed {@code Try} is returned
-     * containing the exception supplied by the given {@code Supplier}.
-     *
-     * @param <V>               the type of the value contained in the {@code Option}
-     * @param opt               the {@code Option} to be converted; must not be null
-     * @param exceptionSupplier the {@code Supplier} providing the exception for a failed {@code Try}; must not be null
-     * @return a {@code Try} representing either the value from the {@code Option} or a failure with the supplied exception
-     * @deprecated Use the instance method {@link Option#toTry(Supplier)} instead:
-     * {@code opt.toTry(exceptionSupplier)}
-     */
-    @Deprecated(forRemoval = true)
-    static <V> Try<V> toTry(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
-        Objects.requireNonNull(opt, "opt");
-        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
-        return switch (opt) {
-            case Some<? extends V> s -> Try.success(s.value());
-            case None<? extends V> _ -> Try.failure(exceptionSupplier.get());
-        };
-    }
-
     // ---------- zip / map2 ----------
 
     /**
