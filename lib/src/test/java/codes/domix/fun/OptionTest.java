@@ -1,5 +1,6 @@
 package codes.domix.fun;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -10,6 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -292,6 +294,20 @@ class OptionTest {
         assertThrows(NullPointerException.class, () ->
             Option.sequence(List.of(Option.some(1), null, Option.some(3)))
         );
+    }
+
+    @Test
+    void sequence_iterable_shouldThrow_withDescriptiveMessage_whenElementIsNull() {
+        // List.of() rejects null before sequence() sees it; use ArrayList to exercise
+        // the null-check branch inside Option.sequence(Iterable) itself.
+        List<Option<Integer>> list = new ArrayList<>();
+        list.add(Option.some(1));
+        list.add(null);
+        list.add(Option.some(3));
+
+        assertThatThrownBy(() -> Option.sequence(list))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null element");
     }
 
     @Test
