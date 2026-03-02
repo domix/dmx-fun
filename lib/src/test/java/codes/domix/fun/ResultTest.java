@@ -15,6 +15,13 @@ class ResultTest {
     // ---------- factories ----------
 
     @Test
+    void ok_shouldThrowNPE_ifValueIsNull() {
+        assertThatThrownBy(() -> Result.ok(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null");
+    }
+
+    @Test
     void of_shouldInferRightTypes() {
         Result<String, RuntimeException> boom = Result.err(new RuntimeException("boom"));
         Result<BigDecimal, String> ok = Result.ok(BigDecimal.ONE);

@@ -28,9 +28,7 @@ class InteropTest {
     }
 
     @Test
-    void result_toOption_shouldDropNullOkValue() {
-        Result<String, String> okNull = Result.ok(null);
-        assertEquals(Option.none(), okNull.toOption());
+    void result_toOption_shouldReturnNone_forErrWithNullError() {
         Result<String, String> errNull = Result.err(null);
         assertEquals(Option.none(), errNull.toOption());
     }
