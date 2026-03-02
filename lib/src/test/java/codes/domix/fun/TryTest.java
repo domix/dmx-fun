@@ -775,6 +775,14 @@ class TryTest {
     }
 
     @Test
+    void stream_shouldReturnSingleElementStreamContainingNull_forSuccessFromRun() {
+        // Try.run() produces Success(null); stream() must return exactly one element (null),
+        // not an empty stream — distinguishing it from Failure
+        Try<Void> t = Try.run(() -> {});
+        assertThat(t.stream().count()).isEqualTo(1L);
+    }
+
+    @Test
     void stream_canBeUsedToFlattenStreamOfTries() {
         List<Integer> result = Stream.<Try<Integer>>of(
             Try.success(1),

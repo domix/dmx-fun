@@ -595,7 +595,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      */
     default Stream<Value> stream() {
         return switch (this) {
-            case Success<Value> s -> Stream.ofNullable(s.value());
+            case Success<Value> s -> Stream.of(s.value());
             case Failure<Value> _ -> Stream.empty();
         };
     }
