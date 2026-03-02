@@ -37,6 +37,11 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *                computation had succeeded
      */
     record Failure<Value>(Throwable cause) implements Try<Value> {
+        /**
+         * Compact canonical constructor — validates that {@code cause} is non-null.
+         *
+         * @throws NullPointerException if {@code cause} is {@code null}
+         */
         public Failure {
             Objects.requireNonNull(cause, "Failure cause must not be null");
         }

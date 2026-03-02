@@ -35,10 +35,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in the successful result
      * @param <Error> the type of the error contained in the erroneous result, unused here
-     * @param value   the non-null value that represents the successful result
-     * @throws NullPointerException if {@code value} is {@code null}
+     * @param value   the non-null value that represents the successful result;
+     *                passing {@code null} throws {@link NullPointerException}
      */
     record Ok<Value, Error>(Value value) implements Result<Value, Error> {
+        /**
+         * Compact canonical constructor — validates that {@code value} is non-null.
+         *
+         * @throws NullPointerException if {@code value} is {@code null}
+         */
         public Ok {
             Objects.requireNonNull(value, "Ok value must not be null");
         }
@@ -52,10 +57,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in a successful result, unused here
      * @param <Error> the type of the error contained in the erroneous result
-     * @param error   the non-null error value that represents the erroneous result
-     * @throws NullPointerException if {@code error} is {@code null}
+     * @param error   the non-null error value that represents the erroneous result;
+     *                passing {@code null} throws {@link NullPointerException}
      */
     record Err<Value, Error>(Error error) implements Result<Value, Error> {
+        /**
+         * Compact canonical constructor — validates that {@code error} is non-null.
+         *
+         * @throws NullPointerException if {@code error} is {@code null}
+         */
         public Err {
             Objects.requireNonNull(error, "Err error must not be null");
         }
