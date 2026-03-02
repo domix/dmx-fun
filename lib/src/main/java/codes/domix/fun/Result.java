@@ -393,14 +393,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * If this instance is already {@code Ok}, it is returned as an {@code Ok} of the new error type.
      *
      * @param <E2>   the error type of the resulting {@code Result}
-     * @param rescue a function that maps the error to a new {@code Result}
+     * @param rescue a function that maps the error to a new {@code Result}; must not return {@code null}
      * @return the result of applying {@code rescue} to the error, or an {@code Ok} wrapping the original value
+     * @throws NullPointerException if {@code rescue} is null or if {@code rescue} returns {@code null}
      */
     default <E2> Result<Value, E2> recoverWith(Function<Error, Result<Value, E2>> rescue) {
         Objects.requireNonNull(rescue, "rescue");
         return switch (this) {
             case Ok<Value, Error> ok -> Result.ok(ok.value());
-            case Err<Value, Error> err -> rescue.apply(err.error());
+            case Err<Value, Error> err -> Objects.requireNonNull(rescue.apply(err.error()), "rescue returned null");
         };
     }
 
@@ -408,12 +409,14 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * Returns this {@code Result} if it is {@code Ok}; otherwise evaluates the given supplier
      * and returns its result. The supplier is <em>not</em> called when this instance is {@code Ok}.
      *
-     * @param fallback a lazy supplier of an alternative {@code Result} evaluated only on {@code Err}
+     * @param fallback a lazy supplier of an alternative {@code Result} evaluated only on {@code Err};
+     *                 must not return {@code null}
      * @return this instance if {@code Ok}, or the result of {@code fallback.get()} if {@code Err}
+     * @throws NullPointerException if {@code fallback} is null or if {@code fallback} returns {@code null}
      */
     default Result<Value, Error> or(Supplier<Result<Value, Error>> fallback) {
         Objects.requireNonNull(fallback, "fallback");
-        return this instanceof Ok ? this : fallback.get();
+        return this instanceof Ok ? this : Objects.requireNonNull(fallback.get(), "fallback returned null");
     }
 
     /**
@@ -422,14 +425,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * This is the dual of {@link #flatMap}: it operates on the error channel instead of the value channel.
      *
      * @param <E2>   the error type of the resulting {@code Result}
-     * @param mapper a function that maps the current error to a new {@code Result}
+     * @param mapper a function that maps the current error to a new {@code Result}; must not return {@code null}
      * @return the mapped result for {@code Err}, or the original value wrapped as {@code Ok} for {@code Ok}
+     * @throws NullPointerException if {@code mapper} is null or if {@code mapper} returns {@code null}
      */
     default <E2> Result<Value, E2> flatMapError(Function<Error, Result<Value, E2>> mapper) {
         Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Ok<Value, Error> ok -> Result.ok(ok.value());
-            case Err<Value, Error> err -> mapper.apply(err.error());
+            case Err<Value, Error> err -> Objects.requireNonNull(mapper.apply(err.error()), "mapper returned null");
         };
     }
 
@@ -451,10 +455,13 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * and returns the result. Unlike {@link #getOrElseGet(Supplier)}, the fallback function receives
      * the error value, which is useful for deriving a default from the error itself.
      *
+     * <p>This method is intentionally named differently from {@link #getOrElseGet(Supplier)} to avoid
+     * overload ambiguity when passing a null literal or a Groovy/Kotlin closure.
+     *
      * @param errorMapper a function that maps the error to a fallback value
      * @return the contained value if {@code Ok}, or the result of {@code errorMapper} if {@code Err}
      */
-    default Value getOrElseGet(Function<Error, Value> errorMapper) {
+    default Value getOrElseGetWithError(Function<Error, Value> errorMapper) {
         Objects.requireNonNull(errorMapper, "errorMapper");
         return switch (this) {
             case Ok<Value, Error> ok -> ok.value();

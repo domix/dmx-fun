@@ -315,6 +315,13 @@ class ResultTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void recoverWith_shouldThrowNPE_ifRescueReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recoverWith(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("rescue returned null");
+    }
+
     // ---------- or ----------
 
     @Test
@@ -350,6 +357,13 @@ class ResultTest {
     void or_shouldThrowNPE_ifFallbackIsNull() {
         assertThatThrownBy(() -> Result.<String, String>err("e").or(null))
             .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void or_shouldThrowNPE_ifFallbackReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").or(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fallback returned null");
     }
 
     // ---------- flatMapError ----------
@@ -389,6 +403,13 @@ class ResultTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void flatMapError_shouldThrowNPE_ifMapperReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").flatMapError(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
+    }
+
     // ---------- swap ----------
 
     @Test
@@ -410,17 +431,17 @@ class ResultTest {
     @Test
     void swap_appliedTwice_shouldReturnEquivalentResult() {
         Result<String, Integer> original = Result.ok("hello");
-        Result<String, Integer> roundTrip = original.<Integer, String>swap().swap();
+        Result<String, Integer> roundTrip = original.swap().swap();
         assertThat(roundTrip.isOk()).isTrue();
         assertThat(roundTrip.get()).isEqualTo("hello");
     }
 
-    // ---------- getOrElseGet(Function) ----------
+    // ---------- getOrElseGetWithError ----------
 
     @Test
-    void getOrElseGet_withFunction_shouldReturnValueOnOk() {
+    void getOrElseGetWithError_shouldReturnValueOnOk() {
         AtomicBoolean called = new AtomicBoolean(false);
-        String value = Result.<String, String>ok("real").getOrElseGet(e -> {
+        String value = Result.<String, String>ok("real").getOrElseGetWithError(e -> {
             called.set(true);
             return "from-error:" + e;
         });
@@ -429,14 +450,14 @@ class ResultTest {
     }
 
     @Test
-    void getOrElseGet_withFunction_shouldMapErrorOnErr() {
-        String value = Result.<String, String>err("boom").getOrElseGet(e -> "from-error:" + e);
+    void getOrElseGetWithError_shouldMapErrorOnErr() {
+        String value = Result.<String, String>err("boom").getOrElseGetWithError(e -> "from-error:" + e);
         assertThat(value).isEqualTo("from-error:boom");
     }
 
     @Test
-    void getOrElseGet_withFunction_shouldThrowNPE_ifMapperIsNull() {
-        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGet((java.util.function.Function<String, String>) null))
+    void getOrElseGetWithError_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGetWithError(null))
             .isInstanceOf(NullPointerException.class);
     }
 }
