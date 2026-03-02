@@ -22,6 +22,13 @@ class ResultTest {
     }
 
     @Test
+    void err_shouldThrowNPE_ifErrorIsNull() {
+        assertThatThrownBy(() -> Result.err(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null");
+    }
+
+    @Test
     void of_shouldInferRightTypes() {
         Result<String, RuntimeException> boom = Result.err(new RuntimeException("boom"));
         Result<BigDecimal, String> ok = Result.ok(BigDecimal.ONE);

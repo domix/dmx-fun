@@ -52,9 +52,13 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value contained in a successful result, unused here
      * @param <Error> the type of the error contained in the erroneous result
-     * @param error   the error value that represents the erroneous result
+     * @param error   the non-null error value that represents the erroneous result
+     * @throws NullPointerException if {@code error} is {@code null}
      */
     record Err<Value, Error>(Error error) implements Result<Value, Error> {
+        public Err {
+            Objects.requireNonNull(error, "Err error must not be null");
+        }
     }
 
     /**
@@ -94,8 +98,9 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <Value> the type of the value that would be contained in a successful result, unused here
      * @param <Error> the type of the error contained in the erroneous result
-     * @param error   the error value to encapsulate in the erroneous result
+     * @param error   the non-null error value to encapsulate in the erroneous result
      * @return a {@link Result} instance of type {@code Err<Value, Error>} containing the provided error
+     * @throws NullPointerException if {@code error} is {@code null}
      */
     static <Value, Error> Result<Value, Error> err(Error error) {
         return new Err<>(error);
