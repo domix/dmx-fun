@@ -1,11 +1,15 @@
 package codes.domix.fun;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 
 /**
@@ -506,6 +510,123 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
                 Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
             );
         };
+    }
+
+    // ---------- sequence / traverse ----------
+
+    /**
+     * Transforms an iterable of {@code Try<V>} into a single {@code Try<List<V>>}.
+     * If any element is a {@code Failure}, that failure is returned immediately (fail-fast).
+     * If all elements are {@code Success}, returns {@code Success} containing an unmodifiable
+     * list of values in encounter order.
+     *
+     * @param <V>   the value type
+     * @param tries the iterable of Try values; must not be {@code null} and must not contain {@code null} elements
+     * @return {@code Success(List<V>)} if all elements succeed, or the first {@code Failure} encountered
+     * @throws NullPointerException if {@code tries} is {@code null} or contains a {@code null} element
+     */
+    static <V> Try<List<V>> sequence(Iterable<Try<V>> tries) {
+        Objects.requireNonNull(tries, "tries");
+        ArrayList<V> out = new ArrayList<>();
+        for (Try<V> t : tries) {
+            if (t == null) {
+                throw new NullPointerException("tries contains null element");
+            }
+            if (t instanceof Failure<V> f) {
+                return Try.failure(f.cause());
+            }
+            out.add(((Success<V>) t).value());
+        }
+        return Try.success(List.copyOf(out));
+    }
+
+    /**
+     * Transforms a stream of {@code Try<V>} into a single {@code Try<List<V>>}.
+     * If any element is a {@code Failure}, that failure is returned immediately (fail-fast) and
+     * the stream is closed. If all elements are {@code Success}, returns {@code Success} containing
+     * an unmodifiable list of values in encounter order.
+     *
+     * @param <V>   the value type
+     * @param tries the stream of Try values; must not be {@code null} and must not contain {@code null} elements
+     * @return {@code Success(List<V>)} if all elements succeed, or the first {@code Failure} encountered
+     * @throws NullPointerException if {@code tries} is {@code null} or contains a {@code null} element
+     */
+    static <V> Try<List<V>> sequence(Stream<Try<V>> tries) {
+        Objects.requireNonNull(tries, "tries");
+        ArrayList<V> out = new ArrayList<>();
+        try (tries) {
+            Iterator<Try<V>> it = tries.iterator();
+            while (it.hasNext()) {
+                Try<V> t = it.next();
+                if (t == null) {
+                    throw new NullPointerException("tries contains null element");
+                }
+                if (t instanceof Failure<V> f) {
+                    return Try.failure(f.cause());
+                }
+                out.add(((Success<V>) t).value());
+            }
+        }
+        return Try.success(List.copyOf(out));
+    }
+
+    /**
+     * Maps each element of an iterable through {@code mapper} and collects the results into a
+     * {@code Try<List<B>>}. Fails fast on the first {@code Failure} returned by the mapper.
+     *
+     * @param <A>    the input element type
+     * @param <B>    the mapped value type
+     * @param values the iterable of input values; must not be {@code null}
+     * @param mapper a function that maps each value to a {@code Try}; must not be {@code null}
+     *               and must not return {@code null}
+     * @return {@code Success(List<B>)} if all mappings succeed, or the first {@code Failure} produced by the mapper
+     * @throws NullPointerException if {@code values} or {@code mapper} is {@code null},
+     *                              or if the mapper returns {@code null}
+     */
+    static <A, B> Try<List<B>> traverse(Iterable<A> values, Function<? super A, Try<B>> mapper) {
+        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(mapper, "mapper");
+        ArrayList<B> out = new ArrayList<>();
+        for (A a : values) {
+            Try<B> t = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
+            if (t instanceof Failure<B> f) {
+                return Try.failure(f.cause());
+            }
+            out.add(((Success<B>) t).value());
+        }
+        return Try.success(List.copyOf(out));
+    }
+
+    /**
+     * Maps each element of a stream through {@code mapper} and collects the results into a
+     * {@code Try<List<B>>}. Fails fast on the first {@code Failure} returned by the mapper;
+     * the stream is closed in all cases.
+     *
+     * @param <A>    the input element type
+     * @param <B>    the mapped value type
+     * @param values the stream of input values; must not be {@code null}
+     * @param mapper a function that maps each value to a {@code Try}; must not be {@code null}
+     *               and must not return {@code null}
+     * @return {@code Success(List<B>)} if all mappings succeed, or the first {@code Failure} produced by the mapper
+     * @throws NullPointerException if {@code values} or {@code mapper} is {@code null},
+     *                              or if the mapper returns {@code null}
+     */
+    static <A, B> Try<List<B>> traverse(Stream<A> values, Function<? super A, Try<B>> mapper) {
+        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(mapper, "mapper");
+        ArrayList<B> out = new ArrayList<>();
+        try (values) {
+            Iterator<A> it = values.iterator();
+            while (it.hasNext()) {
+                A a = it.next();
+                Try<B> t = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
+                if (t instanceof Failure<B> f) {
+                    return Try.failure(f.cause());
+                }
+                out.add(((Success<B>) t).value());
+            }
+        }
+        return Try.success(List.copyOf(out));
     }
 
 }

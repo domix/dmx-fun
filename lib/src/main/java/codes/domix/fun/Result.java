@@ -1,11 +1,15 @@
 package codes.domix.fun;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -557,6 +561,127 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     static <V> Result<V, Throwable> fromTry(Try<V> t) {
         Objects.requireNonNull(t, "t");
         return t.toResult();
+    }
+
+    // ---------- sequence / traverse ----------
+
+    /**
+     * Transforms an iterable of {@code Result<V, E>} into a single {@code Result<List<V>, E>}.
+     * If any element is an {@code Err}, that error is returned immediately (fail-fast).
+     * If all elements are {@code Ok}, returns {@code Ok} containing an unmodifiable list of values
+     * in encounter order.
+     *
+     * @param <V>     the value type
+     * @param <E>     the error type
+     * @param results the iterable of results; must not be {@code null} and must not contain {@code null} elements
+     * @return {@code Ok(List<V>)} if all elements are {@code Ok}, or the first {@code Err} encountered
+     * @throws NullPointerException if {@code results} is {@code null} or contains a {@code null} element
+     */
+    static <V, E> Result<List<V>, E> sequence(Iterable<Result<V, E>> results) {
+        Objects.requireNonNull(results, "results");
+        ArrayList<V> out = new ArrayList<>();
+        for (Result<V, E> r : results) {
+            if (r == null) {
+                throw new NullPointerException("results contains null element");
+            }
+            if (r instanceof Err<V, E> err) {
+                return Result.err(err.error());
+            }
+            out.add(((Ok<V, E>) r).value());
+        }
+        return Result.ok(List.copyOf(out));
+    }
+
+    /**
+     * Transforms a stream of {@code Result<V, E>} into a single {@code Result<List<V>, E>}.
+     * If any element is an {@code Err}, that error is returned immediately (fail-fast) and the
+     * stream is closed. If all elements are {@code Ok}, returns {@code Ok} containing an
+     * unmodifiable list of values in encounter order.
+     *
+     * @param <V>     the value type
+     * @param <E>     the error type
+     * @param results the stream of results; must not be {@code null} and must not contain {@code null} elements
+     * @return {@code Ok(List<V>)} if all elements are {@code Ok}, or the first {@code Err} encountered
+     * @throws NullPointerException if {@code results} is {@code null} or contains a {@code null} element
+     */
+    static <V, E> Result<List<V>, E> sequence(Stream<Result<V, E>> results) {
+        Objects.requireNonNull(results, "results");
+        ArrayList<V> out = new ArrayList<>();
+        try (results) {
+            Iterator<Result<V, E>> it = results.iterator();
+            while (it.hasNext()) {
+                Result<V, E> r = it.next();
+                if (r == null) {
+                    throw new NullPointerException("results contains null element");
+                }
+                if (r instanceof Err<V, E> err) {
+                    return Result.err(err.error());
+                }
+                out.add(((Ok<V, E>) r).value());
+            }
+        }
+        return Result.ok(List.copyOf(out));
+    }
+
+    /**
+     * Maps each element of an iterable through {@code mapper} and collects the results into a
+     * {@code Result<List<B>, E>}. Fails fast on the first {@code Err} returned by the mapper.
+     *
+     * @param <A>    the input element type
+     * @param <B>    the mapped value type
+     * @param <E>    the error type
+     * @param values the iterable of input values; must not be {@code null}
+     * @param mapper a function that maps each value to a {@code Result}; must not be {@code null}
+     *               and must not return {@code null}
+     * @return {@code Ok(List<B>)} if all mappings succeed, or the first {@code Err} produced by the mapper
+     * @throws NullPointerException if {@code values} or {@code mapper} is {@code null},
+     *                              or if the mapper returns {@code null}
+     */
+    static <A, B, E> Result<List<B>, E> traverse(Iterable<A> values, Function<? super A, Result<B, E>> mapper) {
+        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(mapper, "mapper");
+        ArrayList<B> out = new ArrayList<>();
+        for (A a : values) {
+            Result<B, E> r = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
+            if (r instanceof Err<B, E> err) {
+                return Result.err(err.error());
+            }
+            out.add(((Ok<B, E>) r).value());
+        }
+        return Result.ok(List.copyOf(out));
+    }
+
+    /**
+     * Maps each element of a stream through {@code mapper} and collects the results into a
+     * {@code Result<List<B>, E>}. Fails fast on the first {@code Err} returned by the mapper;
+     * the stream is closed in all cases.
+     *
+     * @param <A>    the input element type
+     * @param <B>    the mapped value type
+     * @param <E>    the error type
+     * @param values the stream of input values; must not be {@code null}
+     * @param mapper a function that maps each value to a {@code Result}; must not be {@code null}
+     *               and must not return {@code null}
+     * @return {@code Ok(List<B>)} if all mappings succeed, or the first {@code Err} produced by the mapper
+     * @throws NullPointerException if {@code values} or {@code mapper} is {@code null},
+     *                              or if the mapper returns {@code null}
+     */
+    static <A, B, E> Result<List<B>, E> traverse(Stream<A> values, Function<? super A, Result<B, E>> mapper) {
+        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(mapper, "mapper");
+        ArrayList<B> out = new ArrayList<>();
+        try (values) {
+            Iterator<A> it = values.iterator();
+            while (it.hasNext()) {
+                A a = it.next();
+                Result<B, E> r = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
+                if (r instanceof Err<B, E> err) {
+                    return Result.err(err.error());
+                }
+                out.add(((Ok<B, E>) r).value());
+            }
+        }
+        return Result.ok(List.copyOf(out));
     }
 
 }
