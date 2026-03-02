@@ -614,6 +614,15 @@ class TryTest {
      * Verifies recoverWith throws error when recover function throws
      */
     @Test
+    void recoverWith_shouldReturnFailureWithNPE_ifRecoverFnReturnsNull() {
+        Try<Integer> t = Try.<Integer>failure(new RuntimeException("original"))
+            .recoverWith(_ -> null);
+
+        assertTrue(t.isFailure());
+        assertInstanceOf(NullPointerException.class, t.getCause());
+    }
+
+    @Test
     void recoverWith_shouldReturnFailureIfRecoverFunctionThrowsError() {
         Try<Integer> failure = Try.failure(new RuntimeException("original"));
         AssertionError error = new AssertionError("recoverWith error");

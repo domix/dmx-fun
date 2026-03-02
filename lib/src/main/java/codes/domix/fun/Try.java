@@ -317,7 +317,8 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
             case Success<Value> _ -> this;
             case Failure<Value> f -> {
                 try {
-                    yield recoverFn.apply(f.cause());
+                    Try<Value> recovered = recoverFn.apply(f.cause());
+                    yield Objects.requireNonNull(recovered, "recoverFn returned null");
                 } catch (Throwable t) {
                     yield failure(t);
                 }
