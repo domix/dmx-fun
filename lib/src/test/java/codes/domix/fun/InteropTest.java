@@ -107,18 +107,18 @@ class InteropTest {
 
     @Test
     void option_toResult() {
-        var success = Option.toResult(Option.some(10), "missing");
+        var success = Option.some(10).toResult("missing");
         assertEquals(Result.ok(10), success);
-        var failure = Option.toResult(Option.none(), "missing");
+        var failure = Option.<Integer>none().toResult("missing");
         assertEquals(Result.err("missing"), failure);
     }
 
     @Test
     void option_toTry() {
-        var success = Option.toTry(Option.some(10), () -> new RuntimeException("boom"));
+        var success = Option.some(10).toTry(() -> new RuntimeException("boom"));
         assertTrue(success.isSuccess());
         assertEquals(10, success.get());
-        var failure = Option.toTry(Option.none(), () -> new RuntimeException("boom"));
+        var failure = Option.<Integer>none().toTry(() -> new RuntimeException("boom"));
         assertTrue(failure.isFailure());
     }
 }

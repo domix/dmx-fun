@@ -37,6 +37,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *                computation had succeeded
      */
     record Failure<Value>(Throwable cause) implements Try<Value> {
+        public Failure {
+            Objects.requireNonNull(cause, "Failure cause must not be null");
+        }
     }
 
     /**
@@ -117,9 +120,15 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * Executes the provided {@code CheckedRunnable} and returns a {@code Try} instance
      * representing the outcome of the execution.
      *
+     * <p><b>Note on null value:</b> On success the returned {@code Try<Void>} wraps {@code null}
+     * as its value (since {@code Void} has no instances). This means that converting the result
+     * via {@link #toOption()} will always return {@link Option#none()} — use {@link #isSuccess()}
+     * or {@link #fold(java.util.function.Function, java.util.function.Function) fold()} instead
+     * to observe the outcome of a {@code run()} call.
+     *
      * @param runnable the {@code CheckedRunnable} to be executed
      * @return a {@code Try<Void>} representing the success or failure of the execution.
-     * On success, it contains {@code null}, and on failure, it contains the thrown exception.
+     * On success, its value is {@code null}; on failure, it contains the thrown exception.
      */
     static Try<Void> run(CheckedRunnable runnable) {
         try {
@@ -174,8 +183,8 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     default Throwable getCause() {
         return switch (this) {
             case Failure<Value> f -> f.cause();
-            case Success<Value> s -> throw new NoSuchElementException(
-                "No cause present. Try is a Success for value: " + s.value()
+            case Success<Value> _ -> throw new NoSuchElementException(
+                "No cause present. Try is a Success."
             );
         };
     }
@@ -486,11 +495,12 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     static <V> Try<V> fromOption(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
         Objects.requireNonNull(opt, "opt");
         Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
-        return opt.isDefined()
-            ? Try.success(((Option.Some<? extends V>) opt).value())
-            : Try.failure(
+        return switch (opt) {
+            case Option.Some<? extends V> s -> Try.success(s.value());
+            case Option.None<? extends V> _ -> Try.failure(
                 Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
             );
+        };
     }
 
 }

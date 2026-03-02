@@ -59,32 +59,23 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param <Value> The type of the value that would be held by an {@link Option}, if present.
      */
     record None<Value>() implements Option<Value> {
-    }
-
-    /**
-     * A record representing a tuple with two elements.
-     * The tuple holds two values of potentially different types.
-     *
-     * @param <A> the type of the first element of the tuple
-     * @param <B> the type of the second element of the tuple
-     * @param _1  the first element of the tuple
-     * @param _2  the second element of the tuple
-     */
-    record Tuple2<A, B>(A _1, B _2) {
+        @SuppressWarnings("rawtypes")
+        static final None INSTANCE = new None<>();
     }
 
     // ---------- Factories ----------
 
     /**
-     * Creates an Option instance that encapsulates a given non-null value. If the value is null,
-     * it returns a None instance instead.
+     * Creates a {@link Some} instance that encapsulates the given non-null value.
+     * Use {@link #ofNullable(Object)} if the value may be {@code null}.
      *
      * @param <V>   the type of the value to encapsulate
-     * @param value the value to be encapsulated; if null, a None instance is returned
-     * @return an Option containing the provided value if it is non-null, or a None instance if the value is null
+     * @param value the non-null value to encapsulate
+     * @return a {@code Some<V>} wrapping the provided value
+     * @throws NullPointerException if {@code value} is {@code null} (enforced by {@link Some#Some(Object)})
      */
     static <V> Option<V> some(V value) {
-        return value == null ? none() : new Some<>(value);
+        return new Some<>(value);
     }
 
     /**
@@ -93,8 +84,9 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param <V> the type of the value that would be held by the {@link Option}, if present
      * @return an {@code Option} instance that signifies no value is present
      */
+    @SuppressWarnings("unchecked")
     static <V> Option<V> none() {
-        return new None<>();
+        return (Option<V>) None.INSTANCE;
     }
 
     /**
@@ -105,7 +97,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @return an Option containing the provided value if it is non-null, or a None instance if the value is null
      */
     static <V> Option<V> ofNullable(V value) {
-        return some(value);
+        return value == null ? none() : new Some<>(value);
     }
 
     /**
@@ -512,7 +504,9 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     default Try<Value> toTry(Supplier<? extends Throwable> exceptionSupplier) {
         return switch (this) {
             case Some<Value> s -> Try.success(s.value());
-            case None<Value> _ -> Try.failure(exceptionSupplier.get());
+            case None<Value> _ -> Try.failure(
+                Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
+            );
         };
     }
 
@@ -547,50 +541,15 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         return t.isSuccess() ? Option.ofNullable(t.get()) : Option.none();
     }
 
-    /**
-     * Converts an {@code Option} into a {@code Result}.
-     * If the {@code Option} is defined, the result will contain the value; otherwise,
-     * the result will contain the specified error.
-     *
-     * @param <V>         the type of the success value in the {@code Result}
-     * @param <E>         the type of the error value in the {@code Result}
-     * @param opt         the {@code Option} to be converted; must not be null
-     * @param errorIfNone the error value to be used if the {@code Option} is not defined
-     * @return a {@code Result} containing the value of the {@code Option} if defined,
-     * or the specified error if the {@code Option} is not defined
-     */
-    static <V, E> Result<V, E> toResult(Option<? extends V> opt, E errorIfNone) {
-        Objects.requireNonNull(opt, "opt");
-        return opt.isDefined() ? Result.ok(((Some<? extends V>) opt).value()) : Result.err(errorIfNone);
-    }
-
-    /**
-     * Converts an {@code Option} to a {@code Try}. If the {@code Option} is defined, a successful {@code Try} is returned
-     * containing the value from the {@code Option}. If the {@code Option} is empty, a failed {@code Try} is returned
-     * containing the exception supplied by the given {@code Supplier}.
-     *
-     * @param <V>               the type of the value contained in the {@code Option}
-     * @param opt               the {@code Option} to be converted; must not be null
-     * @param exceptionSupplier the {@code Supplier} providing the exception for a failed {@code Try}; must not be null
-     * @return a {@code Try} representing either the value from the {@code Option} or a failure with the supplied exception
-     */
-    static <V> Try<V> toTry(Option<? extends V> opt, Supplier<? extends Throwable> exceptionSupplier) {
-        Objects.requireNonNull(opt, "opt");
-        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
-        return opt.isDefined()
-            ? Try.success(((Some<? extends V>) opt).value())
-            : Try.failure(exceptionSupplier.get());
-    }
-
     // ---------- zip / map2 ----------
 
     /**
      * Combines the current {@code Option} instance with another {@code Option} instance into a single {@code Option}
-     * containing a {@code Tuple2} of their values, if both options are non-empty.
+     * containing a {@link Tuple2} of their values, if both options are non-empty.
      *
      * @param <B>   the type of the value contained in the other {@code Option}
      * @param other the other {@code Option} to combine with
-     * @return an {@code Option} containing a {@code Tuple2} of the values from both options if both are non-empty,
+     * @return an {@code Option} containing a {@link Tuple2} of the values from both options if both are non-empty,
      * otherwise an empty {@code Option}
      */
     default <B> Option<Tuple2<Value, B>> zip(Option<? extends B> other) {
