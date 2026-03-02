@@ -70,7 +70,7 @@ class ResultSpecs extends Specification {
         given:
             def result = Result.ok('hello')
         expect:
-            result.getOrElseGet { 'fallback' } == 'hello'
+            result.getOrElseGet({ 'fallback' } as java.util.function.Supplier) == 'hello'
     }
 
     /**
@@ -81,7 +81,7 @@ class ResultSpecs extends Specification {
         given:
             def result = Result.err('hello')
         expect:
-            result.getOrElseGet { 'fallback' } == 'fallback'
+            result.getOrElseGet({ 'fallback' } as java.util.function.Supplier) == 'fallback'
     }
 
     /**

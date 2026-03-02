@@ -356,6 +356,98 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         return this;
     }
 
+    // ---------- Recovery and fallback ----------
+
+    /**
+     * Converts an erroneous {@code Result} into a successful one by applying the given rescue function
+     * to the contained error. If this instance is already {@code Ok}, it is returned unchanged.
+     *
+     * @param rescue a function that maps the error value to a recovery value
+     * @return an {@code Ok} result with the recovered value, or the original {@code Ok} if already successful
+     */
+    default Result<Value, Error> recover(Function<Error, Value> rescue) {
+        Objects.requireNonNull(rescue, "rescue");
+        return switch (this) {
+            case Ok<Value, Error> ok -> ok;
+            case Err<Value, Error> err -> Result.ok(rescue.apply(err.error()));
+        };
+    }
+
+    /**
+     * Converts an erroneous {@code Result} into a new {@code Result} by applying the given rescue function
+     * to the contained error. Unlike {@link #recover}, the rescue function may itself return an {@code Err}.
+     * If this instance is already {@code Ok}, it is returned as an {@code Ok} of the new error type.
+     *
+     * @param <E2>   the error type of the resulting {@code Result}
+     * @param rescue a function that maps the error to a new {@code Result}
+     * @return the result of applying {@code rescue} to the error, or an {@code Ok} wrapping the original value
+     */
+    default <E2> Result<Value, E2> recoverWith(Function<Error, Result<Value, E2>> rescue) {
+        Objects.requireNonNull(rescue, "rescue");
+        return switch (this) {
+            case Ok<Value, Error> ok -> Result.ok(ok.value());
+            case Err<Value, Error> err -> rescue.apply(err.error());
+        };
+    }
+
+    /**
+     * Returns this {@code Result} if it is {@code Ok}; otherwise evaluates the given supplier
+     * and returns its result. The supplier is <em>not</em> called when this instance is {@code Ok}.
+     *
+     * @param fallback a lazy supplier of an alternative {@code Result} evaluated only on {@code Err}
+     * @return this instance if {@code Ok}, or the result of {@code fallback.get()} if {@code Err}
+     */
+    default Result<Value, Error> or(Supplier<Result<Value, Error>> fallback) {
+        Objects.requireNonNull(fallback, "fallback");
+        return this instanceof Ok ? this : fallback.get();
+    }
+
+    /**
+     * Applies a function to the error of an erroneous result and returns the produced {@code Result}.
+     * If this instance is {@code Ok}, it is propagated unchanged (with a potentially different error type).
+     * This is the dual of {@link #flatMap}: it operates on the error channel instead of the value channel.
+     *
+     * @param <E2>   the error type of the resulting {@code Result}
+     * @param mapper a function that maps the current error to a new {@code Result}
+     * @return the mapped result for {@code Err}, or the original value wrapped as {@code Ok} for {@code Ok}
+     */
+    default <E2> Result<Value, E2> flatMapError(Function<Error, Result<Value, E2>> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
+        return switch (this) {
+            case Ok<Value, Error> ok -> Result.ok(ok.value());
+            case Err<Value, Error> err -> mapper.apply(err.error());
+        };
+    }
+
+    /**
+     * Swaps the {@code Ok} and {@code Err} channels of this {@code Result}.
+     * An {@code Ok(value)} becomes {@code Err(value)} and an {@code Err(error)} becomes {@code Ok(error)}.
+     *
+     * @return a {@code Result} with the value and error channels exchanged
+     */
+    default Result<Error, Value> swap() {
+        return switch (this) {
+            case Ok<Value, Error> ok -> Result.err(ok.value());
+            case Err<Value, Error> err -> Result.ok(err.error());
+        };
+    }
+
+    /**
+     * Returns the value of this {@code Ok}, or applies {@code errorMapper} to the contained error
+     * and returns the result. Unlike {@link #getOrElseGet(Supplier)}, the fallback function receives
+     * the error value, which is useful for deriving a default from the error itself.
+     *
+     * @param errorMapper a function that maps the error to a fallback value
+     * @return the contained value if {@code Ok}, or the result of {@code errorMapper} if {@code Err}
+     */
+    default Value getOrElseGet(Function<Error, Value> errorMapper) {
+        Objects.requireNonNull(errorMapper, "errorMapper");
+        return switch (this) {
+            case Ok<Value, Error> ok -> ok.value();
+            case Err<Value, Error> err -> errorMapper.apply(err.error());
+        };
+    }
+
     // ---------- Interoperability: Result <-> Option / Try ----------
 
     /**

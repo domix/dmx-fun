@@ -242,4 +242,194 @@ class ResultTest {
         assertThat(err.isError()).isTrue();
         assertThat(err.getError()).isSameAs(ex);
     }
+
+    // ---------- recover ----------
+
+    @Test
+    void recover_shouldConvertErrToOk_usingErrorValue() {
+        Result<String, String> recovered = Result.<String, String>err("oops")
+            .recover(e -> "recovered:" + e);
+        assertThat(recovered.isOk()).isTrue();
+        assertThat(recovered.get()).isEqualTo("recovered:oops");
+    }
+
+    @Test
+    void recover_shouldLeaveOkUntouched() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, String> ok = Result.ok("value");
+        Result<String, String> result = ok.recover(e -> {
+            called.set(true);
+            return "should-not-appear";
+        });
+        assertThat(result).isSameAs(ok);
+        assertFalse(called.get(), "rescue must not be called for Ok");
+    }
+
+    @Test
+    void recover_shouldThrowNPE_ifRescueIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recover(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- recoverWith ----------
+
+    @Test
+    void recoverWith_shouldConvertErrToOk_viaMappedResult() {
+        Result<String, Integer> result = Result.<String, String>err("missing")
+            .recoverWith(e -> Result.ok("default"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("default");
+    }
+
+    @Test
+    void recoverWith_shouldAllowErrToRemainErr_withNewErrorType() {
+        Result<String, Integer> result = Result.<String, String>err("oops")
+            .recoverWith(e -> Result.err(e.length()));
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo(4);
+    }
+
+    @Test
+    void recoverWith_shouldLeaveOkUntouched_andChangeErrorType() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, Integer> result = Result.<String, String>ok("hello")
+            .recoverWith(e -> {
+                called.set(true);
+                return Result.err(0);
+            });
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+        assertFalse(called.get(), "rescue must not be called for Ok");
+    }
+
+    @Test
+    void recoverWith_shouldThrowNPE_ifRescueIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recoverWith(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- or ----------
+
+    @Test
+    void or_shouldReturnSelf_whenOk() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, String> ok = Result.ok("primary");
+        Result<String, String> result = ok.or(() -> {
+            called.set(true);
+            return Result.ok("fallback");
+        });
+        assertThat(result).isSameAs(ok);
+        assertFalse(called.get(), "fallback supplier must not be called for Ok");
+    }
+
+    @Test
+    void or_shouldReturnFallback_whenErr() {
+        Result<String, String> result = Result.<String, String>err("e")
+            .or(() -> Result.ok("fallback"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("fallback");
+    }
+
+    @Test
+    void or_shouldChain_multipleAlternatives() {
+        Result<String, String> result = Result.<String, String>err("e1")
+            .or(() -> Result.err("e2"))
+            .or(() -> Result.ok("found"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("found");
+    }
+
+    @Test
+    void or_shouldThrowNPE_ifFallbackIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").or(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- flatMapError ----------
+
+    @Test
+    void flatMapError_shouldChainErrValues() {
+        Result<String, Integer> result = Result.<String, String>err("oops")
+            .flatMapError(e -> Result.err(e.length()));
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo(4);
+    }
+
+    @Test
+    void flatMapError_shouldAllowConvertingErrToOk() {
+        Result<String, Integer> result = Result.<String, String>err("fallback-value")
+            .flatMapError(e -> Result.ok(e.toUpperCase()));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("FALLBACK-VALUE");
+    }
+
+    @Test
+    void flatMapError_shouldLeaveOkUntouched_andChangeErrorType() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, Integer> result = Result.<String, String>ok("hello")
+            .flatMapError(e -> {
+                called.set(true);
+                return Result.err(0);
+            });
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+        assertFalse(called.get(), "mapper must not be called for Ok");
+    }
+
+    @Test
+    void flatMapError_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").flatMapError(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- swap ----------
+
+    @Test
+    void swap_shouldFlipOkToErr() {
+        // Ok<String, Integer> → swap → Err<Integer, String>
+        Result<Integer, String> swapped = Result.<String, Integer>ok("hello").swap();
+        assertThat(swapped.isError()).isTrue();
+        assertThat(swapped.getError()).isEqualTo("hello");
+    }
+
+    @Test
+    void swap_shouldFlipErrToOk() {
+        // Err<Integer, String> → swap → Ok<String, Integer>
+        Result<String, Integer> swapped = Result.<Integer, String>err("error").swap();
+        assertThat(swapped.isOk()).isTrue();
+        assertThat(swapped.get()).isEqualTo("error");
+    }
+
+    @Test
+    void swap_appliedTwice_shouldReturnEquivalentResult() {
+        Result<String, Integer> original = Result.ok("hello");
+        Result<String, Integer> roundTrip = original.<Integer, String>swap().swap();
+        assertThat(roundTrip.isOk()).isTrue();
+        assertThat(roundTrip.get()).isEqualTo("hello");
+    }
+
+    // ---------- getOrElseGet(Function) ----------
+
+    @Test
+    void getOrElseGet_withFunction_shouldReturnValueOnOk() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        String value = Result.<String, String>ok("real").getOrElseGet(e -> {
+            called.set(true);
+            return "from-error:" + e;
+        });
+        assertThat(value).isEqualTo("real");
+        assertFalse(called.get(), "mapper must not be invoked for Ok");
+    }
+
+    @Test
+    void getOrElseGet_withFunction_shouldMapErrorOnErr() {
+        String value = Result.<String, String>err("boom").getOrElseGet(e -> "from-error:" + e);
+        assertThat(value).isEqualTo("from-error:boom");
+    }
+
+    @Test
+    void getOrElseGet_withFunction_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGet((java.util.function.Function<String, String>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
 }
