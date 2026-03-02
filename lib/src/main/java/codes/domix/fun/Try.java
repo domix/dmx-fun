@@ -17,11 +17,22 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A monadic type that represents a computation that may either result in a value
- * (Success) or throw an exception (Failure).
+ * ({@link Success}) or throw an exception ({@link Failure}).
  *
- * <p>This interface is {@link NullMarked}: all types are non-null by default.
- * The only nullable return value is {@link #getOrNull()}, which explicitly signals
- * the absence of a value on failure.
+ * <p>This interface is {@link NullMarked}: all methods return non-null values by
+ * default. The sole exception is {@link #getOrNull()}, which may return {@code null}
+ * for two distinct reasons:
+ * <ol>
+ *   <li>This instance is a {@link Failure} — no value is present.</li>
+ *   <li>This instance is a {@link Success} whose value is {@code null}, as produced
+ *       by {@link #run(CheckedRunnable) Try.run(...)} which yields
+ *       {@code Success(null)} on a successful void side-effect.</li>
+ * </ol>
+ *
+ * <p>{@code Success(null)} is a valid and intentional state. Callers that need to
+ * distinguish "succeeded with null" from "failed" should use {@link #isSuccess()},
+ * {@link #fold(java.util.function.Function, java.util.function.Function) fold()},
+ * or {@link #get()} rather than {@link #getOrNull()}.
  *
  * @param <Value> the type of the successful value
  */
