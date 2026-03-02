@@ -10,14 +10,21 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 
 /**
  * A monadic type that represents a computation that may either result in a value
  * (Success) or throw an exception (Failure).
  *
+ * <p>This interface is {@link NullMarked}: all types are non-null by default.
+ * The only nullable return value is {@link #getOrNull()}, which explicitly signals
+ * the absence of a value on failure.
+ *
  * @param <Value> the type of the successful value
  */
+@NullMarked
 public sealed interface Try<Value> permits Try.Success, Try.Failure {
 
     /**
@@ -283,6 +290,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * the recovery function, or a new failure resulting from an exception thrown by the recovery function
      */
     default Try<Value> recover(Function<? super Throwable, ? extends Value> recoverFn) {
+        Objects.requireNonNull(recoverFn, "recoverFn");
         return switch (this) {
             case Success<Value> s -> this;
             case Failure<Value> f -> {
@@ -304,6 +312,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * function if this is a failure.
      */
     default Try<Value> recoverWith(Function<? super Throwable, Try<Value>> recoverFn) {
+        Objects.requireNonNull(recoverFn, "recoverFn");
         return switch (this) {
             case Success<Value> _ -> this;
             case Failure<Value> f -> {
@@ -336,6 +345,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * by {@code fallbackSupplier} if it is a {@code Failure}.
      */
     default Value getOrElseGet(Supplier<? extends Value> fallbackSupplier) {
+        Objects.requireNonNull(fallbackSupplier, "fallbackSupplier");
         return this instanceof Success<Value>(Value value) ? value : fallbackSupplier.get();
     }
 
@@ -344,7 +354,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *
      * @return the successful value if this {@code Try} is a {@code Success}, or {@code null} if it is a {@code Failure}.
      */
-    default Value getOrNull() {
+    default @Nullable Value getOrNull() {
         return this instanceof Success<Value>(Value value) ? value : null;
     }
 
@@ -442,6 +452,45 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Filters this {@code Try} using a predicate and a contextual error function that receives
+     * the value that failed the test. If this is a {@code Failure}, it is returned unchanged.
+     * If this is a {@code Success} and the predicate returns {@code false}, a {@code Failure}
+     * is returned with the throwable produced by {@code errorFn} applied to the value.
+     *
+     * <p>Unlike {@link #filter(Predicate, Supplier)}, the error function can produce a message
+     * that includes the offending value:
+     * <pre>{@code
+     * Try.of(() -> parseAge(input))
+     *    .filter(age -> age >= 0, age -> new IllegalArgumentException("negative age: " + age));
+     * }</pre>
+     *
+     * @param predicate the condition to test the value; must not be {@code null}
+     * @param errorFn   a function that produces the throwable when the predicate fails;
+     *                  must not be {@code null} and must not return {@code null}
+     * @return this instance if the predicate holds or this is already a {@code Failure};
+     *         otherwise a new {@code Failure} produced by {@code errorFn}
+     * @throws NullPointerException if {@code predicate} or {@code errorFn} is {@code null},
+     *                              or if {@code errorFn} returns {@code null}
+     */
+    default Try<Value> filter(Predicate<? super Value> predicate, Function<? super Value, ? extends Throwable> errorFn) {
+        Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(errorFn, "errorFn");
+        return switch (this) {
+            case Success<Value> s -> {
+                try {
+                    if (predicate.test(s.value())) {
+                        yield this;
+                    }
+                    yield failure(Objects.requireNonNull(errorFn.apply(s.value()), "errorFn returned null"));
+                } catch (Throwable t) {
+                    yield failure(t);
+                }
+            }
+            case Failure<Value> _ -> this;
+        };
+    }
+
+    /**
      * Converts the current {@code Try} instance into a {@code Result} representation.
      * If this {@code Try} is a {@code Success}, the resulting {@code Result} will be "ok"
      * with the successful value. If this {@code Try} is a {@code Failure}, the resulting
@@ -458,6 +507,32 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Converts this {@code Try} into a {@code Result<Value, E>} using a custom error mapper.
+     * If this is a {@code Success}, returns {@code Ok} with the same value.
+     * If this is a {@code Failure}, applies {@code errorMapper} to the cause and returns {@code Err}.
+     *
+     * <p>This overload is preferred over {@link #toResult()} when a typed error is needed:
+     * <pre>{@code
+     * Result<Config, String> r = Try.of(this::loadConfig)
+     *     .toResult(e -> "load failed: " + e.getMessage());
+     * }</pre>
+     *
+     * @param <E>         the error type of the resulting {@code Result}
+     * @param errorMapper a function that maps the failure cause to the error value; must not return {@code null}
+     * @return {@code Ok(value)} on success, or {@code Err(errorMapper.apply(cause))} on failure
+     * @throws NullPointerException if {@code errorMapper} is {@code null} or returns {@code null}
+     */
+    default <E> Result<Value, E> toResult(Function<? super Throwable, ? extends E> errorMapper) {
+        Objects.requireNonNull(errorMapper, "errorMapper");
+        return switch (this) {
+            case Success<Value> s -> Result.ok(s.value());
+            case Failure<Value> f -> Result.err(
+                Objects.requireNonNull(errorMapper.apply(f.cause()), "errorMapper returned null")
+            );
+        };
+    }
+
+    /**
      * Converts a {@link Result} into a {@link Try} instance.
      * If the {@code Result} is successful (contains a value), a successful {@code Try} is returned.
      * If the {@code Result} contains an error, a failed {@code Try} is returned with the corresponding cause.
@@ -467,12 +542,63 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * @return a {@code Try} representing either the successful value or the failure cause contained in the {@code Result}
      */
     static <V> Try<V> fromResult(Result<V, ? extends Throwable> result) {
+        Objects.requireNonNull(result, "result");
         if (result.isOk()) {
             return Try.success(result.get());
         }
         return Try.failure(result.getError());
     }
 
+
+    /**
+     * Transforms the failure cause using the given function, leaving a {@code Success} unchanged.
+     * If this is a {@code Failure} and {@code mapper} itself throws, the thrown exception becomes
+     * the new cause (mirroring the behaviour of {@link #map} on the success channel).
+     *
+     * <p>Useful for wrapping low-level exceptions into domain exceptions:
+     * <pre>{@code
+     * Try.of(db::query)
+     *    .mapFailure(e -> new RepositoryException("query failed", e));
+     * }</pre>
+     *
+     * @param mapper a function that maps the current cause to a new {@link Throwable}; must not return {@code null}
+     * @return this instance if {@code Success}, or a new {@code Failure} with the mapped cause;
+     *         if {@code mapper} returns {@code null} or throws, the exception is wrapped as a new {@code Failure}
+     * @throws NullPointerException if {@code mapper} itself is {@code null}
+     */
+    default Try<Value> mapFailure(Function<? super Throwable, ? extends Throwable> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
+        return switch (this) {
+            case Success<Value> _ -> this;
+            case Failure<Value> f -> {
+                try {
+                    yield Try.failure(
+                        Objects.requireNonNull(mapper.apply(f.cause()), "mapper returned null")
+                    );
+                } catch (Throwable t) {
+                    yield Try.failure(t);
+                }
+            }
+        };
+    }
+
+    /**
+     * Returns a single-element {@link Stream} containing the success value, or an empty stream on failure.
+     * Mirrors {@link Option#stream()} for consistency.
+     *
+     * <ul>
+     *   <li>{@code Success(v) → Stream.of(v)}</li>
+     *   <li>{@code Failure    → Stream.empty()}</li>
+     * </ul>
+     *
+     * @return a stream containing the value if this is a {@code Success}, or an empty stream otherwise
+     */
+    default Stream<Value> stream() {
+        return switch (this) {
+            case Success<Value> s -> Stream.ofNullable(s.value());
+            case Failure<Value> _ -> Stream.empty();
+        };
+    }
 
     // ---------- Interoperability: Try <-> Option / Result ----------
 
