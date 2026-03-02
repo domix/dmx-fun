@@ -504,7 +504,9 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     default Try<Value> toTry(Supplier<? extends Throwable> exceptionSupplier) {
         return switch (this) {
             case Some<Value> s -> Try.success(s.value());
-            case None<Value> _ -> Try.failure(exceptionSupplier.get());
+            case None<Value> _ -> Try.failure(
+                Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
+            );
         };
     }
 
