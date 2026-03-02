@@ -384,14 +384,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * Converts an erroneous {@code Result} into a successful one by applying the given rescue function
      * to the contained error. If this instance is already {@code Ok}, it is returned unchanged.
      *
-     * @param rescue a function that maps the error value to a recovery value
+     * @param rescue a function that maps the error value to a recovery value; must not return {@code null}
      * @return an {@code Ok} result with the recovered value, or the original {@code Ok} if already successful
+     * @throws NullPointerException if {@code rescue} is null or if {@code rescue} returns {@code null}
      */
     default Result<Value, Error> recover(Function<Error, Value> rescue) {
         Objects.requireNonNull(rescue, "rescue");
         return switch (this) {
             case Ok<Value, Error> ok -> ok;
-            case Err<Value, Error> err -> Result.ok(rescue.apply(err.error()));
+            case Err<Value, Error> err -> Result.ok(Objects.requireNonNull(rescue.apply(err.error()), "rescue returned null"));
         };
     }
 

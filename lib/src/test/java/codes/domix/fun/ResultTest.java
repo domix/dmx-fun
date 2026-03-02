@@ -299,6 +299,13 @@ class ResultTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void recover_shouldThrowNPE_ifRescueReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").recover(e -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("rescue returned null");
+    }
+
     // ---------- recoverWith ----------
 
     @Test
