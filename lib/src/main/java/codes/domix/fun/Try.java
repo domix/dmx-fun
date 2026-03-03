@@ -666,17 +666,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      */
     static <V> Try<List<V>> sequence(Iterable<Try<V>> tries) {
         Objects.requireNonNull(tries, "tries");
-        ArrayList<V> out = new ArrayList<>();
-        for (Try<V> t : tries) {
-            if (t == null) {
-                throw new NullPointerException("tries contains null element");
-            }
-            if (t instanceof Failure<V> f) {
-                return Try.failure(f.cause());
-            }
-            out.add(((Success<V>) t).value());
-        }
-        return Try.success(Collections.unmodifiableList(out));
+        return collectFromIterator(tries.iterator());
     }
 
     /**
@@ -692,21 +682,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      */
     static <V> Try<List<V>> sequence(Stream<Try<V>> tries) {
         Objects.requireNonNull(tries, "tries");
-        ArrayList<V> out = new ArrayList<>();
         try (tries) {
-            Iterator<Try<V>> it = tries.iterator();
-            while (it.hasNext()) {
-                Try<V> t = it.next();
-                if (t == null) {
-                    throw new NullPointerException("tries contains null element");
-                }
-                if (t instanceof Failure<V> f) {
-                    return Try.failure(f.cause());
-                }
-                out.add(((Success<V>) t).value());
-            }
+            return collectFromIterator(tries.iterator());
         }
-        return Try.success(Collections.unmodifiableList(out));
     }
 
     /**
@@ -725,15 +703,14 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     static <A, B> Try<List<B>> traverse(Iterable<A> values, Function<? super A, Try<B>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        ArrayList<B> out = new ArrayList<>();
-        for (A a : values) {
-            Try<B> t = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
-            if (t instanceof Failure<B> f) {
-                return Try.failure(f.cause());
+        Iterator<A> raw = values.iterator();
+        Iterator<Try<B>> it = new Iterator<>() {
+            public boolean hasNext() { return raw.hasNext(); }
+            public Try<B> next() {
+                return Objects.requireNonNull(mapper.apply(raw.next()), "traverse mapper must not return null");
             }
-            out.add(((Success<B>) t).value());
-        }
-        return Try.success(Collections.unmodifiableList(out));
+        };
+        return collectFromIterator(it);
     }
 
     /**
@@ -753,17 +730,22 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     static <A, B> Try<List<B>> traverse(Stream<A> values, Function<? super A, Try<B>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        ArrayList<B> out = new ArrayList<>();
         try (values) {
-            Iterator<A> it = values.iterator();
-            while (it.hasNext()) {
-                A a = it.next();
-                Try<B> t = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
-                if (t instanceof Failure<B> f) {
-                    return Try.failure(f.cause());
-                }
-                out.add(((Success<B>) t).value());
+            Iterator<Try<B>> it = values
+                .map(a -> Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null"))
+                .iterator();
+            return collectFromIterator(it);
+        }
+    }
+
+    private static <V> Try<List<V>> collectFromIterator(Iterator<? extends Try<V>> it) {
+        ArrayList<V> out = new ArrayList<>();
+        while (it.hasNext()) {
+            Try<V> t = Objects.requireNonNull(it.next(), "tries contains a null element");
+            if (t instanceof Failure<V> f) {
+                return Try.failure(f.cause());
             }
+            out.add(((Success<V>) t).value());
         }
         return Try.success(Collections.unmodifiableList(out));
     }
