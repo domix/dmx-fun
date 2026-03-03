@@ -29,6 +29,8 @@ class SequenceTraverseTest {
 
             assertThat(result.isOk()).isTrue();
             assertThat(result.get()).containsExactly(1, 2, 3);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -81,6 +83,8 @@ class SequenceTraverseTest {
             );
             assertThat(result.isOk()).isTrue();
             assertThat(result.get()).containsExactly(10, 20);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -113,6 +117,8 @@ class SequenceTraverseTest {
             });
             assertThat(result.isOk()).isTrue();
             assertThat(result.get()).containsExactly(1, 2, 3);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -159,6 +165,8 @@ class SequenceTraverseTest {
             );
             assertThat(result.isOk()).isTrue();
             assertThat(result.get()).containsExactly(10, 20);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -196,6 +204,8 @@ class SequenceTraverseTest {
 
             assertThat(result.isSuccess()).isTrue();
             assertThat(result.get()).containsExactly(1, 2, 3);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -259,6 +269,8 @@ class SequenceTraverseTest {
             );
             assertThat(result.isSuccess()).isTrue();
             assertThat(result.get()).containsExactly(10, 20);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -288,6 +300,8 @@ class SequenceTraverseTest {
             );
             assertThat(result.isSuccess()).isTrue();
             assertThat(result.get()).containsExactly(1, 2, 3);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -330,6 +344,8 @@ class SequenceTraverseTest {
             );
             assertThat(result.isSuccess()).isTrue();
             assertThat(result.get()).containsExactly(10, 20);
+            assertThatThrownBy(() -> result.get().add(99))
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
