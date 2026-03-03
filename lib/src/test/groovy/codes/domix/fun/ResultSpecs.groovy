@@ -485,9 +485,7 @@ class ResultSpecs extends Specification {
                 {
                     it.length() >= 10
                 },
-                {
-                    new RuntimeException('boom!')
-                }
+                { new RuntimeException('boom!') } as java.util.function.Supplier
             )
         then:
             filteredResult.isFailure()

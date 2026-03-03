@@ -1,19 +1,42 @@
 package codes.domix.fun;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 
 /**
  * A monadic type that represents a computation that may either result in a value
- * (Success) or throw an exception (Failure).
+ * ({@link Success}) or throw an exception ({@link Failure}).
+ *
+ * <p>This interface is {@link NullMarked}: all methods return non-null values by
+ * default. The sole exception is {@link #getOrNull()}, which may return {@code null}
+ * for two distinct reasons:
+ * <ol>
+ *   <li>This instance is a {@link Failure} — no value is present.</li>
+ *   <li>This instance is a {@link Success} whose value is {@code null}, as produced
+ *       by {@link #run(CheckedRunnable) Try.run(...)} which yields
+ *       {@code Success(null)} on a successful void side-effect.</li>
+ * </ol>
+ *
+ * <p>{@code Success(null)} is a valid and intentional state. Callers that need to
+ * distinguish "succeeded with null" from "failed" should use {@link #isSuccess()},
+ * {@link #fold(java.util.function.Function, java.util.function.Function) fold()},
+ * or {@link #get()} rather than {@link #getOrNull()}.
  *
  * @param <Value> the type of the successful value
  */
+@NullMarked
 public sealed interface Try<Value> permits Try.Success, Try.Failure {
 
     /**
@@ -279,6 +302,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * the recovery function, or a new failure resulting from an exception thrown by the recovery function
      */
     default Try<Value> recover(Function<? super Throwable, ? extends Value> recoverFn) {
+        Objects.requireNonNull(recoverFn, "recoverFn");
         return switch (this) {
             case Success<Value> s -> this;
             case Failure<Value> f -> {
@@ -300,11 +324,13 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * function if this is a failure.
      */
     default Try<Value> recoverWith(Function<? super Throwable, Try<Value>> recoverFn) {
+        Objects.requireNonNull(recoverFn, "recoverFn");
         return switch (this) {
             case Success<Value> _ -> this;
             case Failure<Value> f -> {
                 try {
-                    yield recoverFn.apply(f.cause());
+                    Try<Value> recovered = recoverFn.apply(f.cause());
+                    yield Objects.requireNonNull(recovered, "recoverFn returned null");
                 } catch (Throwable t) {
                     yield failure(t);
                 }
@@ -332,6 +358,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * by {@code fallbackSupplier} if it is a {@code Failure}.
      */
     default Value getOrElseGet(Supplier<? extends Value> fallbackSupplier) {
+        Objects.requireNonNull(fallbackSupplier, "fallbackSupplier");
         return this instanceof Success<Value>(Value value) ? value : fallbackSupplier.get();
     }
 
@@ -340,7 +367,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *
      * @return the successful value if this {@code Try} is a {@code Success}, or {@code null} if it is a {@code Failure}.
      */
-    default Value getOrNull() {
+    default @Nullable Value getOrNull() {
         return this instanceof Success<Value>(Value value) ? value : null;
     }
 
@@ -407,6 +434,12 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the predicate evaluates to false, a Failure is returned using an {@link IllegalArgumentException}.
      * If this is already a Failure, the result remains unchanged.
      *
+     * <p>On the Success path, if {@code predicate} is {@code null} or throws, a
+     * {@code Failure(NullPointerException)} or {@code Failure(exception)} is returned rather than
+     * propagating the error. An existing {@code Failure} is returned unchanged without evaluating
+     * the predicate, consistent with the Try philosophy of capturing throwables as values.
+     * See also {@link #filter(Predicate, Supplier)} and {@link #filter(Predicate, java.util.function.Function)}.
+     *
      * @param predicate the condition to evaluate for the value if this is a Success
      * @return a Success if the predicate evaluates to true, or a Failure otherwise
      */
@@ -420,6 +453,14 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the predicate evaluates to false, a Failure is returned using the provided throwable supplier.
      * If this is already a Failure, the result remains unchanged.
      *
+     * <p>On the Success path, if {@code predicate} or {@code throwableSupplier} is {@code null},
+     * or if either throws, a {@code Failure} wrapping the throwable is returned rather than
+     * propagating the error. {@code throwableSupplier} is only invoked when the predicate
+     * evaluates to {@code false}. An existing {@code Failure} is returned unchanged without
+     * evaluating the predicate or the supplier, consistent with the Try philosophy of capturing
+     * throwables as values.
+     * See also {@link #filter(Predicate)} and {@link #filter(Predicate, java.util.function.Function)}.
+     *
      * @param predicate         the condition to evaluate for the value if this is a Success
      * @param throwableSupplier a supplier to provide the throwable for the Failure if the predicate evaluates to false
      * @return a Success if the predicate evaluates to true, or a Failure otherwise
@@ -429,6 +470,54 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
             case Success<Value> s -> {
                 try {
                     yield predicate.test(s.value()) ? this : failure(throwableSupplier.get());
+                } catch (Throwable t) {
+                    yield failure(t);
+                }
+            }
+            case Failure<Value> _ -> this;
+        };
+    }
+
+    /**
+     * Filters this {@code Try} using a predicate and a contextual error function that receives
+     * the value that failed the test. If this is a {@code Failure}, it is returned unchanged.
+     * If this is a {@code Success} and the predicate returns {@code false}, a {@code Failure}
+     * is returned with the throwable produced by {@code errorFn} applied to the value.
+     *
+     * <p>Unlike {@link #filter(Predicate, Supplier)}, the error function can produce a message
+     * that includes the offending value:
+     * <pre>{@code
+     * Try.of(() -> parseAge(input))
+     *    .filter(age -> age >= 0, age -> new IllegalArgumentException("negative age: " + age));
+     * }</pre>
+     *
+     * <p>On the Success path, if {@code predicate} throws, the exception is captured and returned
+     * as a {@code Failure}; if {@code errorFn} returns {@code null}, a
+     * {@code Failure(NullPointerException)} is returned rather than propagating the NPE.
+     * {@code errorFn} is only invoked when the predicate evaluates to {@code false}.
+     * Note that a {@code null} {@code predicate} or {@code errorFn} is detected eagerly
+     * and <em>does</em> throw {@code NullPointerException} before any value is tested, regardless
+     * of whether this instance is a {@code Success} or {@code Failure}.
+     * See also {@link #filter(Predicate)} and {@link #filter(Predicate, Supplier)}.
+     *
+     * @param predicate the condition to test the value; must not be {@code null}
+     * @param errorFn   a function that produces the throwable when the predicate fails;
+     *                  must not be {@code null}; if it returns {@code null}, a
+     *                  {@code Failure(NullPointerException)} is returned
+     * @return this instance if the predicate holds or this is already a {@code Failure};
+     *         otherwise a new {@code Failure} produced by {@code errorFn}
+     * @throws NullPointerException if {@code predicate} or {@code errorFn} is {@code null}
+     */
+    default Try<Value> filter(Predicate<? super Value> predicate, Function<? super Value, ? extends Throwable> errorFn) {
+        Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(errorFn, "errorFn");
+        return switch (this) {
+            case Success<Value> s -> {
+                try {
+                    if (predicate.test(s.value())) {
+                        yield this;
+                    }
+                    yield failure(Objects.requireNonNull(errorFn.apply(s.value()), "errorFn returned null"));
                 } catch (Throwable t) {
                     yield failure(t);
                 }
@@ -454,6 +543,32 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Converts this {@code Try} into a {@code Result<Value, E>} using a custom error mapper.
+     * If this is a {@code Success}, returns {@code Ok} with the same value.
+     * If this is a {@code Failure}, applies {@code errorMapper} to the cause and returns {@code Err}.
+     *
+     * <p>This overload is preferred over {@link #toResult()} when a typed error is needed:
+     * <pre>{@code
+     * Result<Config, String> r = Try.of(this::loadConfig)
+     *     .toResult(e -> "load failed: " + e.getMessage());
+     * }</pre>
+     *
+     * @param <E>         the error type of the resulting {@code Result}
+     * @param errorMapper a function that maps the failure cause to the error value; must not return {@code null}
+     * @return {@code Ok(value)} on success, or {@code Err(errorMapper.apply(cause))} on failure
+     * @throws NullPointerException if {@code errorMapper} is {@code null} or returns {@code null}
+     */
+    default <E> Result<Value, E> toResult(Function<? super Throwable, ? extends E> errorMapper) {
+        Objects.requireNonNull(errorMapper, "errorMapper");
+        return switch (this) {
+            case Success<Value> s -> Result.ok(s.value());
+            case Failure<Value> f -> Result.err(
+                Objects.requireNonNull(errorMapper.apply(f.cause()), "errorMapper returned null")
+            );
+        };
+    }
+
+    /**
      * Converts a {@link Result} into a {@link Try} instance.
      * If the {@code Result} is successful (contains a value), a successful {@code Try} is returned.
      * If the {@code Result} contains an error, a failed {@code Try} is returned with the corresponding cause.
@@ -463,12 +578,63 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * @return a {@code Try} representing either the successful value or the failure cause contained in the {@code Result}
      */
     static <V> Try<V> fromResult(Result<V, ? extends Throwable> result) {
+        Objects.requireNonNull(result, "result");
         if (result.isOk()) {
             return Try.success(result.get());
         }
         return Try.failure(result.getError());
     }
 
+
+    /**
+     * Transforms the failure cause using the given function, leaving a {@code Success} unchanged.
+     * If this is a {@code Failure} and {@code mapper} itself throws, the thrown exception becomes
+     * the new cause (mirroring the behaviour of {@link #map} on the success channel).
+     *
+     * <p>Useful for wrapping low-level exceptions into domain exceptions:
+     * <pre>{@code
+     * Try.of(db::query)
+     *    .mapFailure(e -> new RepositoryException("query failed", e));
+     * }</pre>
+     *
+     * @param mapper a function that maps the current cause to a new {@link Throwable}; must not return {@code null}
+     * @return this instance if {@code Success}, or a new {@code Failure} with the mapped cause;
+     *         if {@code mapper} returns {@code null} or throws, the exception is wrapped as a new {@code Failure}
+     * @throws NullPointerException if {@code mapper} itself is {@code null}
+     */
+    default Try<Value> mapFailure(Function<? super Throwable, ? extends Throwable> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
+        return switch (this) {
+            case Success<Value> _ -> this;
+            case Failure<Value> f -> {
+                try {
+                    yield Try.failure(
+                        Objects.requireNonNull(mapper.apply(f.cause()), "mapper returned null")
+                    );
+                } catch (Throwable t) {
+                    yield Try.failure(t);
+                }
+            }
+        };
+    }
+
+    /**
+     * Returns a single-element {@link Stream} containing the success value, or an empty stream on failure.
+     * Mirrors {@link Option#stream()} for consistency.
+     *
+     * <ul>
+     *   <li>{@code Success(v) → Stream.of(v)}</li>
+     *   <li>{@code Failure    → Stream.empty()}</li>
+     * </ul>
+     *
+     * @return a stream containing the value if this is a {@code Success}, or an empty stream otherwise
+     */
+    default Stream<Value> stream() {
+        return switch (this) {
+            case Success<Value> s -> Stream.of(s.value());
+            case Failure<Value> _ -> Stream.empty();
+        };
+    }
 
     // ---------- Interoperability: Try <-> Option / Result ----------
 
@@ -506,6 +672,105 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
                 Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
             );
         };
+    }
+
+    // ---------- sequence / traverse ----------
+
+    /**
+     * Transforms an iterable of {@code Try<V>} into a single {@code Try<List<V>>}.
+     * If any element is a {@code Failure}, that failure is returned immediately (fail-fast).
+     * If all elements are {@code Success}, returns {@code Success} containing an unmodifiable
+     * list of values in encounter order.
+     *
+     * @param <V>   the value type
+     * @param tries the iterable of Try values; must not be {@code null} and must not contain {@code null} elements
+     * @return {@code Success(List<V>)} if all elements succeed, or the first {@code Failure} encountered
+     * @throws NullPointerException if {@code tries} is {@code null} or contains a {@code null} element
+     */
+    static <V> Try<List<V>> sequence(Iterable<Try<V>> tries) {
+        Objects.requireNonNull(tries, "tries");
+        return collectFromIterator(tries.iterator());
+    }
+
+    /**
+     * Transforms a stream of {@code Try<V>} into a single {@code Try<List<V>>}.
+     * If any element is a {@code Failure}, that failure is returned immediately (fail-fast) and
+     * the stream is closed. If all elements are {@code Success}, returns {@code Success} containing
+     * an unmodifiable list of values in encounter order.
+     *
+     * @param <V>   the value type
+     * @param tries the stream of Try values; must not be {@code null} and must not contain {@code null} elements
+     * @return {@code Success(List<V>)} if all elements succeed, or the first {@code Failure} encountered
+     * @throws NullPointerException if {@code tries} is {@code null} or contains a {@code null} element
+     */
+    static <V> Try<List<V>> sequence(Stream<Try<V>> tries) {
+        Objects.requireNonNull(tries, "tries");
+        try (tries) {
+            return collectFromIterator(tries.iterator());
+        }
+    }
+
+    /**
+     * Maps each element of an iterable through {@code mapper} and collects the results into a
+     * {@code Try<List<B>>}. Fails fast on the first {@code Failure} returned by the mapper.
+     *
+     * @param <A>    the input element type
+     * @param <B>    the mapped value type
+     * @param values the iterable of input values; must not be {@code null}
+     * @param mapper a function that maps each value to a {@code Try}; must not be {@code null}
+     *               and must not return {@code null}
+     * @return {@code Success(List<B>)} if all mappings succeed, or the first {@code Failure} produced by the mapper
+     * @throws NullPointerException if {@code values} or {@code mapper} is {@code null},
+     *                              or if the mapper returns {@code null}
+     */
+    static <A, B> Try<List<B>> traverse(Iterable<A> values, Function<? super A, Try<B>> mapper) {
+        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(mapper, "mapper");
+        Iterator<A> raw = values.iterator();
+        Iterator<Try<B>> it = new Iterator<>() {
+            public boolean hasNext() { return raw.hasNext(); }
+            public Try<B> next() {
+                return Objects.requireNonNull(mapper.apply(raw.next()), "traverse mapper must not return null");
+            }
+        };
+        return collectFromIterator(it);
+    }
+
+    /**
+     * Maps each element of a stream through {@code mapper} and collects the results into a
+     * {@code Try<List<B>>}. Fails fast on the first {@code Failure} returned by the mapper;
+     * the stream is closed in all cases.
+     *
+     * @param <A>    the input element type
+     * @param <B>    the mapped value type
+     * @param values the stream of input values; must not be {@code null}
+     * @param mapper a function that maps each value to a {@code Try}; must not be {@code null}
+     *               and must not return {@code null}
+     * @return {@code Success(List<B>)} if all mappings succeed, or the first {@code Failure} produced by the mapper
+     * @throws NullPointerException if {@code values} or {@code mapper} is {@code null},
+     *                              or if the mapper returns {@code null}
+     */
+    static <A, B> Try<List<B>> traverse(Stream<A> values, Function<? super A, Try<B>> mapper) {
+        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(mapper, "mapper");
+        try (values) {
+            Iterator<Try<B>> it = values
+                .map(a -> Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null"))
+                .iterator();
+            return collectFromIterator(it);
+        }
+    }
+
+    private static <V> Try<List<V>> collectFromIterator(Iterator<? extends Try<V>> it) {
+        ArrayList<V> out = new ArrayList<>();
+        while (it.hasNext()) {
+            Try<V> t = Objects.requireNonNull(it.next(), "tries contains a null element");
+            if (t instanceof Failure<V> f) {
+                return Try.failure(f.cause());
+            }
+            out.add(((Success<V>) t).value());
+        }
+        return Try.success(Collections.unmodifiableList(out));
     }
 
 }
