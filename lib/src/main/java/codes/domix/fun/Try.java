@@ -434,9 +434,10 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the predicate evaluates to false, a Failure is returned using an {@link IllegalArgumentException}.
      * If this is already a Failure, the result remains unchanged.
      *
-     * <p>If {@code predicate} is {@code null} or throws an exception, this method returns
-     * {@code Failure(NullPointerException)} or {@code Failure(exception)} rather than propagating
-     * the error, consistent with the Try philosophy of capturing throwables as values.
+     * <p>On the Success path, if {@code predicate} is {@code null} or throws, a
+     * {@code Failure(NullPointerException)} or {@code Failure(exception)} is returned rather than
+     * propagating the error. An existing {@code Failure} is returned unchanged without evaluating
+     * the predicate, consistent with the Try philosophy of capturing throwables as values.
      * See also {@link #filter(Predicate, Supplier)} and {@link #filter(Predicate, java.util.function.Function)}.
      *
      * @param predicate the condition to evaluate for the value if this is a Success
@@ -452,10 +453,12 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the predicate evaluates to false, a Failure is returned using the provided throwable supplier.
      * If this is already a Failure, the result remains unchanged.
      *
-     * <p>If {@code predicate} or {@code throwableSupplier} is {@code null}, or if either throws
-     * an exception, this method returns {@code Failure(NullPointerException)} or
-     * {@code Failure(exception)} rather than propagating the error, consistent with the Try
-     * philosophy of capturing throwables as values.
+     * <p>On the Success path, if {@code predicate} or {@code throwableSupplier} is {@code null},
+     * or if either throws, a {@code Failure} wrapping the throwable is returned rather than
+     * propagating the error. {@code throwableSupplier} is only invoked when the predicate
+     * evaluates to {@code false}. An existing {@code Failure} is returned unchanged without
+     * evaluating the predicate or the supplier, consistent with the Try philosophy of capturing
+     * throwables as values.
      * See also {@link #filter(Predicate)} and {@link #filter(Predicate, java.util.function.Function)}.
      *
      * @param predicate         the condition to evaluate for the value if this is a Success
@@ -488,11 +491,13 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *    .filter(age -> age >= 0, age -> new IllegalArgumentException("negative age: " + age));
      * }</pre>
      *
-     * <p>If {@code predicate} throws, the exception is captured and returned as a {@code Failure}.
-     * If {@code errorFn} returns {@code null}, a {@code Failure(NullPointerException)} is returned
-     * rather than propagating the NPE, consistent with the Try philosophy of capturing throwables
-     * as values. Note that a {@code null} {@code predicate} or {@code errorFn} is detected eagerly
-     * and <em>does</em> throw {@code NullPointerException} before any value is tested.
+     * <p>On the Success path, if {@code predicate} throws, the exception is captured and returned
+     * as a {@code Failure}; if {@code errorFn} returns {@code null}, a
+     * {@code Failure(NullPointerException)} is returned rather than propagating the NPE.
+     * {@code errorFn} is only invoked when the predicate evaluates to {@code false}.
+     * Note that a {@code null} {@code predicate} or {@code errorFn} is detected eagerly
+     * and <em>does</em> throw {@code NullPointerException} before any value is tested, regardless
+     * of whether this instance is a {@code Success} or {@code Failure}.
      * See also {@link #filter(Predicate)} and {@link #filter(Predicate, Supplier)}.
      *
      * @param predicate the condition to test the value; must not be {@code null}
