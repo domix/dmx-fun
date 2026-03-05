@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -561,6 +562,24 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     static <V> Result<V, Throwable> fromTry(Try<V> t) {
         Objects.requireNonNull(t, "t");
         return t.toResult();
+    }
+
+    /**
+     * Converts a {@link Optional} into a {@link Result}.
+     * If the {@code Optional} contains a value, returns {@code Ok} with that value.
+     * If the {@code Optional} is empty, returns {@code Err} with a {@link NoSuchElementException}.
+     *
+     * @param <V>      the value type
+     * @param optional the {@code Optional} to convert; must not be {@code null}
+     * @return {@code Ok(value)} if the {@code Optional} is present,
+     *         or {@code Err(NoSuchElementException)} if empty
+     * @throws NullPointerException if {@code optional} is {@code null}
+     */
+    static <V> Result<V, NoSuchElementException> fromOptional(Optional<? extends V> optional) {
+        Objects.requireNonNull(optional, "optional");
+        return optional.isPresent()
+            ? Result.ok(optional.get())
+            : Result.err(new NoSuchElementException("Optional is empty"));
     }
 
     // ---------- sequence / traverse ----------
