@@ -15,6 +15,9 @@ repositories {
 }
 
 dependencies {
+    // Null-safety annotations (part of the public API)
+    api libs.jspecify
+
     // Use the latest Groovy version for Spock testing
     testImplementation libs.groovy
 
@@ -39,7 +42,7 @@ test {
     testLogging {
         events "passed", "skipped", "failed"
     }
-    finalizedBy jacocoTestReport // report is always generated after tests run
+    finalizedBy jacocoTestReport, javadoc // report is always generated after tests run
 }
 
 jacocoTestReport {

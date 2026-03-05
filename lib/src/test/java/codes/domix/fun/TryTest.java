@@ -1,12 +1,15 @@
 package codes.domix.fun;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -611,6 +614,15 @@ class TryTest {
      * Verifies recoverWith throws error when recover function throws
      */
     @Test
+    void recoverWith_shouldReturnFailureWithNPE_ifRecoverFnReturnsNull() {
+        Try<Integer> t = Try.<Integer>failure(new RuntimeException("original"))
+            .recoverWith(_ -> null);
+
+        assertTrue(t.isFailure());
+        assertInstanceOf(NullPointerException.class, t.getCause());
+    }
+
+    @Test
     void recoverWith_shouldReturnFailureIfRecoverFunctionThrowsError() {
         Try<Integer> failure = Try.failure(new RuntimeException("original"));
         AssertionError error = new AssertionError("recoverWith error");
@@ -649,5 +661,187 @@ class TryTest {
 
         assertTrue(t.isFailure());
         assertSame(error, t.getCause());
+    }
+
+    // ---------- null-contract validations ----------
+
+    @Test
+    void recover_shouldThrowNPE_ifRecoverFnIsNull() {
+        assertThatThrownBy(() -> Try.success(1).recover(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void recoverWith_shouldThrowNPE_ifRecoverFnIsNull() {
+        assertThatThrownBy(() -> Try.success(1).recoverWith(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void getOrElseGet_shouldThrowNPE_ifFallbackSupplierIsNull() {
+        assertThatThrownBy(() -> Try.success(1).getOrElseGet(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void fromResult_shouldThrowNPE_ifResultIsNull() {
+        assertThatThrownBy(() -> Try.fromResult(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- toResult(Function) ----------
+
+    @Test
+    void toResult_withMapper_shouldConvertSuccessToOk() {
+        Try<Integer> t = Try.success(42);
+        Result<Integer, String> result = t.toResult(Throwable::getMessage);
+
+        assertTrue(result.isOk());
+        assertEquals(42, result.get());
+    }
+
+    @Test
+    void toResult_withMapper_shouldConvertFailureToErrUsingMapper() {
+        Try<Integer> t = Try.failure(new RuntimeException("boom"));
+        Result<Integer, String> result = t.toResult(Throwable::getMessage);
+
+        assertTrue(result.isError());
+        assertEquals("boom", result.getError());
+    }
+
+    @Test
+    void toResult_withMapper_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Try.success(1).toResult(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void toResult_withMapper_shouldThrowNPE_ifMapperReturnsNull() {
+        Try<Integer> t = Try.failure(new RuntimeException("boom"));
+        assertThatThrownBy(() -> t.toResult(_ -> null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- mapFailure ----------
+
+    @Test
+    void mapFailure_shouldTransformCause_onFailure() {
+        RuntimeException original = new RuntimeException("low-level");
+        Try<Integer> t = Try.<Integer>failure(original)
+            .mapFailure(e -> new IllegalStateException("domain error", e));
+
+        assertTrue(t.isFailure());
+        assertInstanceOf(IllegalStateException.class, t.getCause());
+        assertEquals("domain error", t.getCause().getMessage());
+        assertSame(original, t.getCause().getCause());
+    }
+
+    @Test
+    void mapFailure_shouldNotAffectSuccess() {
+        Try<Integer> success = Try.success(10);
+        Try<Integer> result = success.mapFailure(e -> new RuntimeException("should not run"));
+
+        assertSame(success, result);
+        assertEquals(10, result.get());
+    }
+
+    @Test
+    void mapFailure_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Try.success(1).mapFailure(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void mapFailure_shouldReturnFailureWithNPE_ifMapperReturnsNull() {
+        // mapFailure wraps exceptions from the mapper (consistent with map() semantics)
+        Try<Integer> t = Try.<Integer>failure(new RuntimeException()).mapFailure(_ -> null);
+        assertTrue(t.isFailure());
+        assertInstanceOf(NullPointerException.class, t.getCause());
+    }
+
+    @Test
+    void mapFailure_shouldWrapException_ifMapperThrows() {
+        RuntimeException mapperBoom = new RuntimeException("mapper exploded");
+        Try<Integer> t = Try.<Integer>failure(new RuntimeException("original"))
+            .mapFailure(_ -> { throw mapperBoom; });
+
+        assertTrue(t.isFailure());
+        assertSame(mapperBoom, t.getCause());
+    }
+
+    // ---------- stream ----------
+
+    @Test
+    void stream_shouldReturnSingleElementStream_forSuccess() {
+        List<Integer> values = Try.success(42).stream().toList();
+        assertThat(values).containsExactly(42);
+    }
+
+    @Test
+    void stream_shouldReturnEmptyStream_forFailure() {
+        List<Integer> values = Try.<Integer>failure(new RuntimeException()).stream().toList();
+        assertThat(values).isEmpty();
+    }
+
+    @Test
+    void stream_shouldReturnSingleElementStreamContainingNull_forSuccessFromRun() {
+        // Try.run() produces Success(null); stream() must return exactly one element (null),
+        // not an empty stream — distinguishing it from Failure
+        Try<Void> t = Try.run(() -> {});
+        assertThat(t.stream().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void stream_canBeUsedToFlattenStreamOfTries() {
+        List<Integer> result = Stream.<Try<Integer>>of(
+            Try.success(1),
+            Try.failure(new RuntimeException()),
+            Try.success(3)
+        ).flatMap(Try::stream).toList();
+
+        assertThat(result).containsExactly(1, 3);
+    }
+
+    // ---------- filter(Predicate, Function) ----------
+
+    @Test
+    void filter_withFunction_shouldReturnSuccess_whenPredicateHolds() {
+        Try<Integer> t = Try.success(10)
+            .filter(n -> n > 0, n -> new IllegalArgumentException("non-positive: " + n));
+
+        assertTrue(t.isSuccess());
+        assertEquals(10, t.get());
+    }
+
+    @Test
+    void filter_withFunction_shouldReturnFailure_withContextualMessage_whenPredicateFails() {
+        Try<Integer> t = Try.success(-5)
+            .filter(n -> n > 0, n -> new IllegalArgumentException("non-positive: " + n));
+
+        assertTrue(t.isFailure());
+        assertInstanceOf(IllegalArgumentException.class, t.getCause());
+        assertEquals("non-positive: -5", t.getCause().getMessage());
+    }
+
+    @Test
+    void filter_withFunction_shouldNotAffectFailure() {
+        RuntimeException original = new RuntimeException("original");
+        Try<Integer> t = Try.<Integer>failure(original)
+            .filter(n -> n > 0, n -> new IllegalArgumentException("should not run"));
+
+        assertTrue(t.isFailure());
+        assertSame(original, t.getCause());
+    }
+
+    @Test
+    void filter_withFunction_shouldThrowNPE_ifPredicateIsNull() {
+        assertThatThrownBy(() -> Try.success(1).filter(null, n -> new RuntimeException()))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void filter_withFunction_shouldThrowNPE_ifErrorFnIsNull() {
+        assertThatThrownBy(() -> Try.success(1).filter(n -> true, (Function<Integer, Throwable>) null))
+            .isInstanceOf(NullPointerException.class);
     }
 }

@@ -28,14 +28,6 @@ class InteropTest {
     }
 
     @Test
-    void result_toOption_shouldDropNullOkValue() {
-        Result<String, String> okNull = Result.ok(null);
-        assertEquals(Option.none(), okNull.toOption());
-        Result<String, String> errNull = Result.err(null);
-        assertEquals(Option.none(), errNull.toOption());
-    }
-
-    @Test
     void result_toTry_shouldMapErrToThrowable() {
         Result<Integer, String> err = Result.err("boom");
         Try<Integer> t = err.toTry(RuntimeException::new);
@@ -107,18 +99,18 @@ class InteropTest {
 
     @Test
     void option_toResult() {
-        var success = Option.toResult(Option.some(10), "missing");
+        var success = Option.some(10).toResult("missing");
         assertEquals(Result.ok(10), success);
-        var failure = Option.toResult(Option.none(), "missing");
+        var failure = Option.<Integer>none().toResult("missing");
         assertEquals(Result.err("missing"), failure);
     }
 
     @Test
     void option_toTry() {
-        var success = Option.toTry(Option.some(10), () -> new RuntimeException("boom"));
+        var success = Option.some(10).toTry(() -> new RuntimeException("boom"));
         assertTrue(success.isSuccess());
         assertEquals(10, success.get());
-        var failure = Option.toTry(Option.none(), () -> new RuntimeException("boom"));
+        var failure = Option.<Integer>none().toTry(() -> new RuntimeException("boom"));
         assertTrue(failure.isFailure());
     }
 }
