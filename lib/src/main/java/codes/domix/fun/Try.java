@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -672,6 +673,28 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
                 Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
             );
         };
+    }
+
+    /**
+     * Converts a {@link Optional} into a {@link Try}.
+     * If the {@code Optional} contains a value, returns {@code Success} with that value.
+     * If the {@code Optional} is empty, returns {@code Failure} with the exception
+     * provided by {@code exceptionSupplier}.
+     *
+     * @param <V>               the value type
+     * @param optional          the {@code Optional} to convert; must not be {@code null}
+     * @param exceptionSupplier a supplier for the throwable to use when the {@code Optional} is empty;
+     *                          must not be {@code null} and must not return {@code null}
+     * @return {@code Success(value)} if the {@code Optional} is present,
+     *         or {@code Failure(exception)} if empty
+     * @throws NullPointerException if {@code optional} or {@code exceptionSupplier} is {@code null}
+     */
+    static <V> Try<V> fromOptional(Optional<? extends V> optional, Supplier<? extends Throwable> exceptionSupplier) {
+        Objects.requireNonNull(optional, "optional");
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
+        return optional.isPresent()
+            ? Try.success(optional.get())
+            : Try.failure(Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null"));
     }
 
     // ---------- sequence / traverse ----------

@@ -1,10 +1,14 @@
 package codes.domix.fun;
 
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InteropTest {
@@ -112,5 +116,64 @@ class InteropTest {
         assertEquals(10, success.get());
         var failure = Option.<Integer>none().toTry(() -> new RuntimeException("boom"));
         assertTrue(failure.isFailure());
+    }
+
+    // ---------- Optional interop ----------
+
+    @Test
+    void result_fromOptional_present_returnsOk() {
+        Result<Integer, NoSuchElementException> r = Result.fromOptional(Optional.of(42));
+        assertTrue(r.isOk());
+        assertEquals(42, r.get());
+    }
+
+    @Test
+    void result_fromOptional_empty_returnsErrWithNoSuchElementException() {
+        Result<Integer, NoSuchElementException> r = Result.fromOptional(Optional.empty());
+        assertTrue(r.isError());
+        assertInstanceOf(NoSuchElementException.class, r.getError());
+    }
+
+    @Test
+    void result_fromOptional_null_throwsNPE() {
+        assertThrows(NullPointerException.class, () -> Result.fromOptional(null));
+    }
+
+    @Test
+    void try_fromOptional_present_returnsSuccess() {
+        Try<Integer> t = Try.fromOptional(Optional.of(99), () -> new RuntimeException("missing"));
+        assertTrue(t.isSuccess());
+        assertEquals(99, t.get());
+    }
+
+    @Test
+    void try_fromOptional_empty_returnsFailureFromSupplier() {
+        RuntimeException ex = new RuntimeException("missing");
+        Try<Integer> t = Try.fromOptional(Optional.empty(), () -> ex);
+        assertTrue(t.isFailure());
+        assertEquals(ex, t.getCause());
+    }
+
+    @Test
+    void try_fromOptional_supplierNotCalledWhenPresent() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Try<Integer> t = Try.fromOptional(Optional.of(1), () -> {
+            called.set(true);
+            return new RuntimeException("should not be called");
+        });
+        assertTrue(t.isSuccess());
+        assertFalse(called.get(), "supplier must not be called when Optional is present");
+    }
+
+    @Test
+    void try_fromOptional_null_throwsNPE() {
+        assertThrows(NullPointerException.class,
+            () -> Try.fromOptional(null, () -> new RuntimeException("x")));
+    }
+
+    @Test
+    void try_fromOptional_nullSupplier_throwsNPE() {
+        assertThrows(NullPointerException.class,
+            () -> Try.fromOptional(Optional.empty(), null));
     }
 }
