@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -530,12 +531,18 @@ class ResultTest {
     }
 
     @Test
-    void toList_firstErrReturned_skipsRemainingElements() {
+    void toList_firstErrIsReturned() {
+        // A Collector cannot short-circuit: all stream elements are fed to the
+        // accumulator before the finisher runs. The counter confirms all three
+        // elements are consumed even though only the first Err matters.
+        AtomicInteger counter = new AtomicInteger(0);
         Result<List<Integer>, String> r =
             Stream.<Result<Integer, String>>of(Result.ok(1), Result.err("boom"), Result.ok(3))
+                  .peek(__ -> counter.incrementAndGet())
                   .collect(Result.toList());
         assertThat(r.isError()).isTrue();
         assertThat(r.getError()).isEqualTo("boom");
+        assertThat(counter.get()).isEqualTo(3); // all elements processed; no stream short-circuit
     }
 
     @Test
