@@ -96,6 +96,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         }
     }
 
+
     /**
      * Creates a {@link Result} instance representing a successful result with the given value.
      * This method is used to indicate that a computation or action has succeeded.
@@ -801,19 +802,18 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return a collector producing a {@link Partition} of ok-values and errors
      */
     static <V, E> Collector<Result<V, E>, ?, Partition<V, E>> partitioningBy() {
+        class Acc {
+            final ArrayList<V> oks = new ArrayList<>();
+            final ArrayList<E> errors = new ArrayList<>();
+        }
         return Collector.of(
-            () -> new ArrayList<Result<V, E>>(),
-            List::add,
-            (a, b) -> { a.addAll(b); return a; },
-            list -> {
-                List<V> oks = new ArrayList<>();
-                List<E> errors = new ArrayList<>();
-                for (Result<V, E> r : list) {
-                    if (r instanceof Ok<V, E> ok) oks.add(ok.value());
-                    else errors.add(((Err<V, E>) r).error());
-                }
-                return new Partition<>(Collections.unmodifiableList(oks), Collections.unmodifiableList(errors));
-            }
+            Acc::new,
+            (acc, r) -> {
+                if (r instanceof Ok<V, E> ok) acc.oks.add(ok.value());
+                else acc.errors.add(((Err<V, E>) r).error());
+            },
+            (a, b) -> { a.oks.addAll(b.oks); a.errors.addAll(b.errors); return a; },
+            acc -> new Partition<>(acc.oks, acc.errors)
         );
     }
 
