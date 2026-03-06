@@ -1,6 +1,7 @@
 package codes.domix.fun;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -599,5 +600,31 @@ class ResultTest {
             .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> p.errors().add("x"))
             .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void partition_constructor_defensivelyCopiesAndEnforcesImmutability() {
+        ArrayList<Integer> srcOks = new ArrayList<>(List.of(1, 2));
+        ArrayList<String> srcErrors = new ArrayList<>(List.of("a"));
+
+        Result.Partition<Integer, String> p = new Result.Partition<>(srcOks, srcErrors);
+
+        // mutating the source lists must not affect the partition
+        srcOks.add(99);
+        srcErrors.add("z");
+        assertThat(p.oks()).containsExactly(1, 2);
+        assertThat(p.errors()).containsExactly("a");
+
+        // the lists exposed by the partition must be unmodifiable
+        assertThatThrownBy(() -> p.oks().add(99))
+            .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> p.errors().add("z"))
+            .isInstanceOf(UnsupportedOperationException.class);
+
+        // null arguments must be rejected
+        assertThatThrownBy(() -> new Result.Partition<>(null, srcErrors))
+            .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> new Result.Partition<>(srcOks, null))
+            .isInstanceOf(NullPointerException.class);
     }
 }
