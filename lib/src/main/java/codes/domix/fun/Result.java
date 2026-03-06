@@ -735,8 +735,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
 
     /**
      * Returns a {@link Collector} that accumulates a {@code Stream<Result<V, E>>} into a single
-     * {@code Result<List<V>, E>}. The first {@code Err} encountered is returned; if all elements
-     * are {@code Ok}, returns {@code Ok} with an unmodifiable list of values in encounter order.
+     * {@code Result<List<V>, E>}.
+     *
+     * <p><strong>Note:</strong> this Collector is <em>not</em> fail-fast. Because the Java
+     * {@link Collector} API always feeds every stream element to the accumulator before the
+     * finisher runs, <strong>all elements are always consumed</strong> from the stream regardless
+     * of whether any {@code Err} is present. The finisher then scans the accumulated list and
+     * returns the first {@code Err} found, or {@code Ok} with an unmodifiable list of values in
+     * encounter order if none exists. For true fail-fast / short-circuit behaviour use
+     * {@link #sequence(Stream)} instead.
      *
      * <p>Example:
      * <pre>{@code
@@ -747,7 +754,8 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      *
      * @param <V> the value type
      * @param <E> the error type
-     * @return a collector producing {@code Ok(List<V>)} or the first {@code Err} encountered
+     * @return a collector that consumes all stream elements and produces {@code Ok(List<V>)} if
+     *         every element is {@code Ok}, or the first {@code Err} found in encounter order
      */
     static <V, E> Collector<Result<V, E>, ?, Result<List<V>, E>> toList() {
         return Collector.of(
