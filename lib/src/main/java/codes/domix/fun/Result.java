@@ -1,6 +1,7 @@
 package codes.domix.fun;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -10,6 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -75,6 +77,25 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
             Objects.requireNonNull(error, "Err error must not be null");
         }
     }
+
+    /**
+     * A typed container holding the two partitions produced by {@link #partitioningBy()}.
+     *
+     * @param <V>    the value type of the {@code Ok} elements
+     * @param <E>    the error type of the {@code Err} elements
+     * @param oks    an unmodifiable list of values extracted from {@code Ok} elements, in encounter order
+     * @param errors an unmodifiable list of errors extracted from {@code Err} elements, in encounter order
+     */
+    record Partition<V, E>(List<V> oks, List<E> errors) {
+        /** Defensively copies both lists and null-checks them. */
+        public Partition {
+            Objects.requireNonNull(oks, "oks");
+            Objects.requireNonNull(errors, "errors");
+            oks = List.copyOf(oks);
+            errors = List.copyOf(errors);
+        }
+    }
+
 
     /**
      * Creates a {@link Result} instance representing a successful result with the given value.
@@ -334,6 +355,22 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      */
     default @Nullable Value getOrNull() {
         return this instanceof Ok<Value, Error>(Value value) ? value : null;
+    }
+
+    /**
+     * Returns a single-element {@link Stream} containing the value, or an empty stream on error.
+     * Useful for flat-mapping a {@code Stream<Result<V, E>>} to keep only the successful values:
+     * <pre>{@code
+     * Stream<Integer> values = results.stream().flatMap(Result::stream);
+     * }</pre>
+     *
+     * @return a stream containing the value if this is an {@code Ok}, or an empty stream otherwise
+     */
+    default Stream<Value> stream() {
+        return switch (this) {
+            case Ok<Value, Error> ok -> Stream.of(ok.value());
+            case Err<Value, Error> __ -> Stream.empty();
+        };
     }
 
     /**
@@ -701,6 +738,87 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
             }
         }
         return Result.ok(List.copyOf(out));
+    }
+
+    // ---------- Collectors ----------
+
+    /**
+     * Returns a {@link Collector} that accumulates a {@code Stream<Result<V, E>>} into a single
+     * {@code Result<List<V>, E>}.
+     *
+     * <p><strong>Note:</strong> this Collector is <em>not</em> fail-fast. Because the Java
+     * {@link Collector} API always feeds every stream element to the accumulator before the
+     * finisher runs, <strong>all elements are always consumed</strong> from the stream regardless
+     * of whether any {@code Err} is present. The finisher then scans the accumulated list and
+     * returns the first {@code Err} found, or {@code Ok} with an unmodifiable list of values in
+     * encounter order if none exists. For true fail-fast / short-circuit behaviour use
+     * {@link #sequence(Stream)} instead.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Result<List<Integer>, String> r =
+     *     Stream.of(Result.ok(1), Result.ok(2), Result.ok(3))
+     *           .collect(Result.toList());
+     * }</pre>
+     *
+     * @param <V> the value type
+     * @param <E> the error type
+     * @return a collector that consumes all stream elements and produces {@code Ok(List<V>)} if
+     *         every element is {@code Ok}, or the first {@code Err} found in encounter order
+     * @throws NullPointerException if the stream contains a {@code null} element
+     */
+    static <V, E> Collector<Result<V, E>, ?, Result<List<V>, E>> toList() {
+        return Collector.of(
+            () -> new ArrayList<Result<V, E>>(),
+            List::add,
+            (a, b) -> { a.addAll(b); return a; },
+            list -> {
+                List<V> values = new ArrayList<>(list.size());
+                for (Result<V, E> r : list) {
+                    if (r == null) throw new NullPointerException("toList stream contains a null element");
+                    if (r instanceof Err<V, E> err) return Result.err(err.error());
+                    values.add(((Ok<V, E>) r).value());
+                }
+                return Result.ok(Collections.unmodifiableList(values));
+            }
+        );
+    }
+
+    /**
+     * Returns a {@link Collector} that partitions a {@code Stream<Result<V, E>>} into two typed
+     * lists: {@link Partition#oks()} for values from {@code Ok} elements, and
+     * {@link Partition#errors()} for errors from {@code Err} elements. Both lists are unmodifiable
+     * and maintain encounter order.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Result.Partition<Integer, String> p =
+     *     Stream.of(Result.ok(1), Result.err("bad"), Result.ok(3))
+     *           .collect(Result.partitioningBy());
+     * // p.oks()    == [1, 3]
+     * // p.errors() == ["bad"]
+     * }</pre>
+     *
+     * @param <V> the value type of the {@code Ok} elements
+     * @param <E> the error type of the {@code Err} elements
+     * @return a collector producing a {@link Partition} of ok-values and errors
+     * @throws NullPointerException if the stream contains a {@code null} element
+     */
+    static <V, E> Collector<Result<V, E>, ?, Partition<V, E>> partitioningBy() {
+        class Acc {
+            final ArrayList<V> oks = new ArrayList<>();
+            final ArrayList<E> errors = new ArrayList<>();
+        }
+        return Collector.of(
+            Acc::new,
+            (acc, r) -> {
+                if (r == null) throw new NullPointerException("partitioningBy stream contains a null element");
+                if (r instanceof Ok<V, E> ok) acc.oks.add(ok.value());
+                else acc.errors.add(((Err<V, E>) r).error());
+            },
+            (a, b) -> { a.oks.addAll(b.oks); a.errors.addAll(b.errors); return a; },
+            acc -> new Partition<>(acc.oks, acc.errors)
+        );
     }
 
 }
