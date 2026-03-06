@@ -86,7 +86,15 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param oks    an unmodifiable list of values extracted from {@code Ok} elements, in encounter order
      * @param errors an unmodifiable list of errors extracted from {@code Err} elements, in encounter order
      */
-    record Partition<V, E>(List<V> oks, List<E> errors) {}
+    record Partition<V, E>(List<V> oks, List<E> errors) {
+        /** Defensively copies both lists and null-checks them. */
+        public Partition {
+            Objects.requireNonNull(oks, "oks");
+            Objects.requireNonNull(errors, "errors");
+            oks = List.copyOf(oks);
+            errors = List.copyOf(errors);
+        }
+    }
 
     /**
      * Creates a {@link Result} instance representing a successful result with the given value.
