@@ -1,9 +1,11 @@
 package codes.domix.fun;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -494,5 +496,101 @@ class ResultTest {
         assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGetWithError(e -> null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("errorMapper returned null");
+    }
+
+    // ---------- stream() ----------
+
+    @Test
+    void stream_shouldReturnSingleElementStream_forOk() {
+        assertThat(Result.<Integer, String>ok(42).stream()).containsExactly(42);
+    }
+
+    @Test
+    void stream_shouldReturnEmptyStream_forErr() {
+        assertThat(Result.<Integer, String>err("oops").stream()).isEmpty();
+    }
+
+    @Test
+    void stream_canFlatMapToKeepOnlyOkValues() {
+        List<Integer> values = Stream.of(Result.ok(1), Result.<Integer, String>err("x"), Result.ok(3))
+            .flatMap(Result::stream)
+            .toList();
+        assertThat(values).containsExactly(1, 3);
+    }
+
+    // ---------- toList() ----------
+
+    @Test
+    void toList_allOk_returnsOkList() {
+        Result<List<Integer>, String> r =
+            Stream.<Result<Integer, String>>of(Result.ok(1), Result.ok(2), Result.ok(3))
+                  .collect(Result.toList());
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void toList_firstErrReturned_skipsRemainingElements() {
+        Result<List<Integer>, String> r =
+            Stream.<Result<Integer, String>>of(Result.ok(1), Result.err("boom"), Result.ok(3))
+                  .collect(Result.toList());
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("boom");
+    }
+
+    @Test
+    void toList_emptyStream_returnsOkEmptyList() {
+        Result<List<Integer>, String> r =
+            Stream.<Result<Integer, String>>of().collect(Result.toList());
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEmpty();
+    }
+
+    @Test
+    void toList_resultListIsUnmodifiable() {
+        Result<List<Integer>, String> r =
+            Stream.<Result<Integer, String>>of(Result.ok(1)).collect(Result.toList());
+        assertThatThrownBy(() -> r.get().add(99))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    // ---------- partitioningBy() ----------
+
+    @Test
+    void partitioningBy_separatesOksAndErrors() {
+        Result.Partition<Integer, String> p =
+            Stream.<Result<Integer, String>>of(Result.ok(1), Result.err("a"), Result.ok(3), Result.err("b"))
+                  .collect(Result.partitioningBy());
+        assertThat(p.oks()).containsExactly(1, 3);
+        assertThat(p.errors()).containsExactly("a", "b");
+    }
+
+    @Test
+    void partitioningBy_allOk_emptyErrors() {
+        Result.Partition<Integer, String> p =
+            Stream.<Result<Integer, String>>of(Result.ok(1), Result.ok(2))
+                  .collect(Result.partitioningBy());
+        assertThat(p.oks()).containsExactly(1, 2);
+        assertThat(p.errors()).isEmpty();
+    }
+
+    @Test
+    void partitioningBy_allErr_emptyOks() {
+        Result.Partition<Integer, String> p =
+            Stream.<Result<Integer, String>>of(Result.err("x"), Result.err("y"))
+                  .collect(Result.partitioningBy());
+        assertThat(p.oks()).isEmpty();
+        assertThat(p.errors()).containsExactly("x", "y");
+    }
+
+    @Test
+    void partitioningBy_listsAreUnmodifiable() {
+        Result.Partition<Integer, String> p =
+            Stream.<Result<Integer, String>>of(Result.ok(1), Result.err("e"))
+                  .collect(Result.partitioningBy());
+        assertThatThrownBy(() -> p.oks().add(99))
+            .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> p.errors().add("x"))
+            .isInstanceOf(UnsupportedOperationException.class);
     }
 }
