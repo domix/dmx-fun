@@ -765,6 +765,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param <E> the error type
      * @return a collector that consumes all stream elements and produces {@code Ok(List<V>)} if
      *         every element is {@code Ok}, or the first {@code Err} found in encounter order
+     * @throws NullPointerException if the stream contains a {@code null} element
      */
     static <V, E> Collector<Result<V, E>, ?, Result<List<V>, E>> toList() {
         return Collector.of(
@@ -774,6 +775,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
             list -> {
                 List<V> values = new ArrayList<>(list.size());
                 for (Result<V, E> r : list) {
+                    if (r == null) throw new NullPointerException("toList stream contains a null element");
                     if (r instanceof Err<V, E> err) return Result.err(err.error());
                     values.add(((Ok<V, E>) r).value());
                 }
@@ -800,6 +802,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @param <V> the value type of the {@code Ok} elements
      * @param <E> the error type of the {@code Err} elements
      * @return a collector producing a {@link Partition} of ok-values and errors
+     * @throws NullPointerException if the stream contains a {@code null} element
      */
     static <V, E> Collector<Result<V, E>, ?, Partition<V, E>> partitioningBy() {
         class Acc {
@@ -809,6 +812,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         return Collector.of(
             Acc::new,
             (acc, r) -> {
+                if (r == null) throw new NullPointerException("partitioningBy stream contains a null element");
                 if (r instanceof Ok<V, E> ok) acc.oks.add(ok.value());
                 else acc.errors.add(((Err<V, E>) r).error());
             },
