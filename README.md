@@ -54,14 +54,14 @@ This library is available on Maven Central. To use it, include the following dep
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.10</version>
 </dependency>
 ```
 
 #### Gradle
 
 ```groovy
-implementation("codes.domix:fun:0.0.4")
+implementation("codes.domix:fun:0.0.10")
 ```
 ### Usage
 

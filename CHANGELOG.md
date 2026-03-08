@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.10] - 2026-03-08
+
+### Added
+- **`Try` — sequence & traverse combinators:**
+  - `sequence(Iterable<Try<V>>)` and `sequence(Stream<Try<V>>)` — collect a homogeneous
+    set of `Try` values into a single `Try<List<V>>`, failing fast on the first `Failure`.
+  - `traverse(Iterable<A>, Function<A, Try<B>>)` and `traverse(Stream<A>, Function<A, Try<B>>)` —
+    map-then-collect in one pass, failing fast on the first `Failure` produced by the mapper.
+- **`Try` — null-safety hardening:** `@NullMarked` added to the class; null guards added
+  throughout; `recoverWith` now validates that the callback does not return `null`.
+- **`Result` — Stream collectors:**
+  - `stream()` instance method — returns a single-element `Stream<Value>` for `Ok`, empty
+    for `Err`; enables composing `Result` values with the Stream API.
+  - `toList()` static `Collector` — accumulates `Stream<Result<V,E>>` into
+    `Result<List<V>,E>`; returns the first `Err` found after consuming all elements (not
+    fail-fast; use `sequence(Stream)` for short-circuit behaviour).
+  - `partitioningBy()` static `Collector` → `Result.Partition<V,E>` — splits a
+    `Stream<Result<V,E>>` into two unmodifiable lists: `oks` and `errors`, in encounter order.
+  - `Result.Partition<V,E>` nested record — typed container produced by `partitioningBy()`;
+    compact constructor defensively copies both lists via `List.copyOf` and null-checks inputs.
+- **`Result.fromOptional(Optional<V>)`** — converts a present `Optional` to `Ok` and an
+  empty `Optional` to `Err(NoSuchElementException)`.
+- **`Try.fromOptional(Optional<V>, Supplier<Throwable>)`** — converts a present `Optional`
+  to `Success` and an empty `Optional` to `Failure` using the provided exception supplier.
+
+### Changed
+- `Try.sequence` / `Try.traverse` use `Collections.unmodifiableList` instead of
+  `List.copyOf` so that `Success(null)` values (produced by `Try.run()`) are preserved
+  in the collected list.
+- `Result.partitioningBy()` refactored to a single-pass accumulator: each element is
+  routed directly to `oks` or `errors` during accumulation instead of buffering all
+  `Result` elements and partitioning in a second pass at finisher time.
+
+### Fixed
+- `Result.toList()` and `Result.partitioningBy()` now explicitly reject `null` stream
+  elements with `NullPointerException`, matching the contract of `sequence()` and
+  `traverse()`.
+- `Try.filter` Javadocs corrected: null-handling notes are now scoped to the `Success`
+  path; existing `Failure` instances are documented as returned unchanged; the behaviour
+  when `errorFn` returns `null` (wrapped as `Failure(NPE)`) is distinguished from passing
+  a `null` predicate (throws NPE directly).
+- `Result.toList()` Javadoc updated to explicitly state that all stream elements are
+  consumed before the finisher scans for the first `Err`.
+
 ## [0.0.9] - 2026-03-01
 
 ### Added
@@ -68,7 +112,8 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.9...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.10...HEAD
+[0.0.10]: https://github.com/domix/dmx-fun/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/domix/dmx-fun/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/domix/dmx-fun/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/domix/dmx-fun/compare/v0.0.6...v0.0.7
