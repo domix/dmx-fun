@@ -148,14 +148,14 @@ Add the dependency to your build:
 
 ```kotlin
 // Gradle (Kotlin DSL)
-implementation("codes.domix:dmx-fun:0.0.10")
+implementation("codes.domix:fun:0.0.10")
 ```
 
 ```xml
 <!-- Maven -->
 <dependency>
   <groupId>codes.domix</groupId>
-  <artifactId>dmx-fun</artifactId>
+  <artifactId>fun</artifactId>
   <version>0.0.10</version>
 </dependency>
 ```
