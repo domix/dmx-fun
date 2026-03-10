@@ -196,7 +196,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      */
     default <B> Validated<E, B> map(Function<A, B> mapper) {
         return switch (this) {
-            case Valid<E, A> v -> Validated.valid(mapper.apply(v.value()));
+            case Valid<E, A> v -> Validated.valid(Objects.requireNonNull(mapper.apply(v.value()), "map mapper returned null"));
             case Invalid<E, A> inv -> Validated.invalid(inv.error());
         };
     }
@@ -211,7 +211,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
     default <F> Validated<F, A> mapError(Function<E, F> mapper) {
         return switch (this) {
             case Valid<E, A> v -> Validated.valid(v.value());
-            case Invalid<E, A> inv -> Validated.invalid(mapper.apply(inv.error()));
+            case Invalid<E, A> inv -> Validated.invalid(Objects.requireNonNull(mapper.apply(inv.error()), "mapError mapper returned null"));
         };
     }
 
@@ -259,7 +259,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
             };
             case Invalid<E, A> inv -> switch (other) {
                 case Valid<E, B> _ -> Validated.invalid(inv.error());
-                case Invalid<E, B> oi -> Validated.invalid(errMerge.apply(inv.error(), oi.error()));
+                case Invalid<E, B> oi -> Validated.invalid(Objects.requireNonNull(errMerge.apply(inv.error(), oi.error()), "errMerge returned null"));
             };
         };
     }
@@ -293,6 +293,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      * @return this instance
      */
     default Validated<E, A> peek(Consumer<A> action) {
+        Objects.requireNonNull(action, "action");
         if (this instanceof Valid<E, A>(A value)) {
             action.accept(value);
         }
@@ -306,6 +307,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      * @return this instance
      */
     default Validated<E, A> peekError(Consumer<E> action) {
+        Objects.requireNonNull(action, "action");
         if (this instanceof Invalid<E, A>(E error)) {
             action.accept(error);
         }
@@ -319,6 +321,8 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      * @param onInvalid called with the error if {@link Invalid}
      */
     default void match(Consumer<A> onValid, Consumer<E> onInvalid) {
+        Objects.requireNonNull(onValid, "onValid");
+        Objects.requireNonNull(onInvalid, "onInvalid");
         switch (this) {
             case Valid<E, A> v -> onValid.accept(v.value());
             case Invalid<E, A> inv -> onInvalid.accept(inv.error());
@@ -435,6 +439,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      */
     static <E, A> Validated<E, A> fromOption(Option<? extends A> option, E errorIfNone) {
         Objects.requireNonNull(option, "option");
+        Objects.requireNonNull(errorIfNone, "errorIfNone");
         return switch (option) {
             case Option.Some<? extends A> s -> Validated.valid(s.value());
             case Option.None<? extends A> _ -> Validated.invalid(errorIfNone);
