@@ -141,6 +141,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      * @return the value or the fallback
      */
     default A getOrElse(A fallback) {
+        Objects.requireNonNull(fallback, "fallback");
         return this instanceof Valid<E, A>(A value) ? value : fallback;
     }
 
