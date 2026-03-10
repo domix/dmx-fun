@@ -485,7 +485,9 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
             Objects.requireNonNull(v, "validated contains null element");
             switch (v) {
                 case Valid<E, A> ok -> { if (acc == null) values.add(ok.value()); }
-                case Invalid<E, A> err -> acc = (acc == null) ? err.error() : errMerge.apply(acc, err.error());
+                case Invalid<E, A> err -> acc = Objects.requireNonNull(
+                    (acc == null) ? err.error() : errMerge.apply(acc, err.error()),
+                    "errMerge returned null");
             }
         }
         return acc != null ? Validated.invalid(acc) : Validated.valid(List.copyOf(values));
@@ -516,7 +518,9 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
                 Objects.requireNonNull(v, "validated contains null element");
                 switch (v) {
                     case Valid<E, A> ok -> { if (acc == null) values.add(ok.value()); }
-                    case Invalid<E, A> err -> acc = (acc == null) ? err.error() : errMerge.apply(acc, err.error());
+                    case Invalid<E, A> err -> acc = Objects.requireNonNull(
+                    (acc == null) ? err.error() : errMerge.apply(acc, err.error()),
+                    "errMerge returned null");
                 }
             }
         }
@@ -550,7 +554,9 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
             Validated<E, B> v = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
             switch (v) {
                 case Valid<E, B> ok -> { if (acc == null) out.add(ok.value()); }
-                case Invalid<E, B> err -> acc = (acc == null) ? err.error() : errMerge.apply(acc, err.error());
+                case Invalid<E, B> err -> acc = Objects.requireNonNull(
+                    (acc == null) ? err.error() : errMerge.apply(acc, err.error()),
+                    "errMerge returned null");
             }
         }
         return acc != null ? Validated.invalid(acc) : Validated.valid(List.copyOf(out));
