@@ -334,9 +334,11 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      * @return the result of the applied function
      */
     default <R> R fold(Function<A, R> onValid, Function<E, R> onInvalid) {
+        Objects.requireNonNull(onValid, "onValid");
+        Objects.requireNonNull(onInvalid, "onInvalid");
         return switch (this) {
-            case Valid<E, A> v -> onValid.apply(v.value());
-            case Invalid<E, A> inv -> onInvalid.apply(inv.error());
+            case Valid<E, A> v -> Objects.requireNonNull(onValid.apply(v.value()), "onValid returned null");
+            case Invalid<E, A> inv -> Objects.requireNonNull(onInvalid.apply(inv.error()), "onInvalid returned null");
         };
     }
 
