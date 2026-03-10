@@ -175,9 +175,11 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      * @throws RuntimeException the exception produced by {@code exMapper} if invalid
      */
     default A getOrThrow(Function<E, ? extends RuntimeException> exMapper) {
+        Objects.requireNonNull(exMapper, "exMapper");
         return switch (this) {
             case Valid<E, A> v -> v.value();
-            case Invalid<E, A> inv -> throw exMapper.apply(inv.error());
+            case Invalid<E, A> inv -> throw Objects.requireNonNull(
+                exMapper.apply(inv.error()), "exMapper returned null");
         };
     }
 
