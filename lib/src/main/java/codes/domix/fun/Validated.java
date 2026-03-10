@@ -221,7 +221,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      */
     default <B> Validated<E, B> flatMap(Function<A, Validated<E, B>> mapper) {
         return switch (this) {
-            case Valid<E, A> v -> mapper.apply(v.value());
+            case Valid<E, A> v -> Objects.requireNonNull(mapper.apply(v.value()), "flatMap mapper must not return null");
             case Invalid<E, A> inv -> Validated.invalid(inv.error());
         };
     }
