@@ -1,6 +1,7 @@
 package codes.domix.fun;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -484,18 +485,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
     ) {
         Objects.requireNonNull(validated, "validated");
         Objects.requireNonNull(errMerge, "errMerge");
-        ArrayList<A> values = new ArrayList<>();
-        @Nullable E acc = null;
-        for (Validated<E, A> v : validated) {
-            Objects.requireNonNull(v, "validated contains null element");
-            switch (v) {
-                case Valid<E, A> ok -> { if (acc == null) values.add(ok.value()); }
-                case Invalid<E, A> err -> acc = Objects.requireNonNull(
-                    (acc == null) ? err.error() : errMerge.apply(acc, err.error()),
-                    "errMerge returned null");
-            }
-        }
-        return acc != null ? Validated.invalid(acc) : Validated.valid(List.copyOf(values));
+        return accumulate(validated, errMerge);
     }
 
     /**
@@ -516,20 +506,9 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
     ) {
         Objects.requireNonNull(validated, "validated");
         Objects.requireNonNull(errMerge, "errMerge");
-        ArrayList<A> values = new ArrayList<>();
-        @Nullable E acc = null;
         try (validated) {
-            for (Validated<E, A> v : (Iterable<Validated<E, A>>) validated::iterator) {
-                Objects.requireNonNull(v, "validated contains null element");
-                switch (v) {
-                    case Valid<E, A> ok -> { if (acc == null) values.add(ok.value()); }
-                    case Invalid<E, A> err -> acc = Objects.requireNonNull(
-                    (acc == null) ? err.error() : errMerge.apply(acc, err.error()),
-                    "errMerge returned null");
-                }
-            }
+            return accumulate((Iterable<Validated<E, A>>) validated::iterator, errMerge);
         }
-        return acc != null ? Validated.invalid(acc) : Validated.valid(List.copyOf(values));
     }
 
     /**
@@ -553,17 +532,33 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
         Objects.requireNonNull(errMerge, "errMerge");
-        ArrayList<B> out = new ArrayList<>();
+        Iterable<Validated<E, B>> mapped = () -> {
+            Iterator<A> src = values.iterator();
+            return new Iterator<Validated<E, B>>() {
+                public boolean hasNext() { return src.hasNext(); }
+                public Validated<E, B> next() {
+                    return Objects.requireNonNull(mapper.apply(src.next()), "traverse mapper must not return null");
+                }
+            };
+        };
+        return accumulate(mapped, errMerge);
+    }
+
+    private static <E, A> Validated<E, List<A>> accumulate(
+        Iterable<Validated<E, A>> items,
+        BinaryOperator<E> errMerge
+    ) {
+        ArrayList<A> values = new ArrayList<>();
         @Nullable E acc = null;
-        for (A a : values) {
-            Validated<E, B> v = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
+        for (Validated<E, A> v : items) {
+            Objects.requireNonNull(v, "validated contains null element");
             switch (v) {
-                case Valid<E, B> ok -> { if (acc == null) out.add(ok.value()); }
-                case Invalid<E, B> err -> acc = Objects.requireNonNull(
+                case Valid<E, A> ok -> { if (acc == null) values.add(ok.value()); }
+                case Invalid<E, A> err -> acc = Objects.requireNonNull(
                     (acc == null) ? err.error() : errMerge.apply(acc, err.error()),
                     "errMerge returned null");
             }
         }
-        return acc != null ? Validated.invalid(acc) : Validated.valid(List.copyOf(out));
+        return acc != null ? Validated.invalid(acc) : Validated.valid(List.copyOf(values));
     }
 }
