@@ -3,7 +3,9 @@ package codes.domix.fun;
 import org.jspecify.annotations.NullMarked;
 
 /**
- * A functional interface for runnables that can throw checked exceptions.
+ * A functional interface representing a runnable that may throw a checked exception.
+ * This is a variation of the standard {@code Runnable} interface, intended for use in scenarios where
+ * the operation may involve checked exceptions.
  */
 @NullMarked
 @FunctionalInterface
