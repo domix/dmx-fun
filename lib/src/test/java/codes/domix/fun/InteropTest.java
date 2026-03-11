@@ -3,6 +3,7 @@ package codes.domix.fun;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -175,5 +176,100 @@ class InteropTest {
     void try_fromOptional_nullSupplier_throwsNPE() {
         assertThrows(NullPointerException.class,
             () -> Try.fromOptional(Optional.empty(), null));
+    }
+
+    // ---------- Validated interop ----------
+
+    @Nested
+    class ValidatedInterop {
+
+        @Test
+        void validated_toResult_valid() {
+            Validated<String, Integer> v = Validated.valid(42);
+            Result<Integer, String> r = v.toResult();
+            assertTrue(r.isOk());
+            assertEquals(42, r.get());
+        }
+
+        @Test
+        void validated_toResult_invalid() {
+            Validated<String, Integer> v = Validated.invalid("oops");
+            Result<Integer, String> r = v.toResult();
+            assertTrue(r.isError());
+            assertEquals("oops", r.getError());
+        }
+
+        @Test
+        void validated_fromResult_ok() {
+            Result<Integer, String> r = Result.ok(7);
+            Validated<String, Integer> v = Validated.fromResult(r);
+            assertTrue(v.isValid());
+            assertEquals(7, v.get());
+        }
+
+        @Test
+        void validated_fromResult_err() {
+            Result<Integer, String> r = Result.err("bad");
+            Validated<String, Integer> v = Validated.fromResult(r);
+            assertTrue(v.isInvalid());
+            assertEquals("bad", v.getError());
+        }
+
+        @Test
+        void validated_toOption_valid() {
+            Validated<String, Integer> v = Validated.valid(5);
+            assertEquals(Option.some(5), v.toOption());
+        }
+
+        @Test
+        void validated_toOption_invalid() {
+            Validated<String, Integer> v = Validated.invalid("err");
+            assertEquals(Option.none(), v.toOption());
+        }
+
+        @Test
+        void validated_fromOption_some() {
+            Validated<String, Integer> v = Validated.fromOption(Option.some(9), "missing");
+            assertTrue(v.isValid());
+            assertEquals(9, v.get());
+        }
+
+        @Test
+        void validated_fromOption_none() {
+            Validated<String, Integer> v = Validated.fromOption(Option.none(), "missing");
+            assertTrue(v.isInvalid());
+            assertEquals("missing", v.getError());
+        }
+
+        @Test
+        void validated_toTry_valid() {
+            Validated<String, Integer> v = Validated.valid(3);
+            Try<Integer> t = v.toTry(RuntimeException::new);
+            assertTrue(t.isSuccess());
+            assertEquals(3, t.get());
+        }
+
+        @Test
+        void validated_toTry_invalid() {
+            Validated<String, Integer> v = Validated.invalid("fail");
+            Try<Integer> t = v.toTry(RuntimeException::new);
+            assertTrue(t.isFailure());
+            assertEquals("fail", t.getCause().getMessage());
+        }
+
+        @Test
+        void validated_fromTry_success() {
+            Validated<String, Integer> v = Validated.fromTry(Try.success(10), Throwable::getMessage);
+            assertTrue(v.isValid());
+            assertEquals(10, v.get());
+        }
+
+        @Test
+        void validated_fromTry_failure() {
+            Validated<String, Integer> v = Validated.fromTry(
+                Try.failure(new RuntimeException("boom")), Throwable::getMessage);
+            assertTrue(v.isInvalid());
+            assertEquals("boom", v.getError());
+        }
     }
 }
