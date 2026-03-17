@@ -77,7 +77,7 @@
 56. Is functional programming overrated?
 57. Common mistakes when learning functional programming
 58. Why so many developers reject functional programming
-59. Pragmatic functional programming vs academic purism
+59. Pragmatic functional programming vs academic purism [74]
 60. The problem with explaining monads too early
 61. When “making it functional” actually makes the code worse
 62. FP in real teams: resistance, adoption, and learning
@@ -93,3 +93,6 @@
 * **Option, Result, and Try explained pragmatically**
 * **Functional programming in Java without losing pragmatism**
 * **Functional core, imperative shell applied to a real service**
+
+
+[74]: https://github.com/domix/dmx-fun/pull/74
