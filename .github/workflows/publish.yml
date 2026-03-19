@@ -46,7 +46,7 @@ jobs:
         if: steps.tag_check.outputs.exists == 'false'
         uses: actions/setup-java@v4
         with:
-          java-version: '24'
+          java-version: '25'
           distribution: 'temurin'
 
       - name: Setup Gradle
