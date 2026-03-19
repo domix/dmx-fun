@@ -18,16 +18,28 @@ on:
       - '.github/workflows/gradle.yml'
   pull_request:
     branches: [ "main" ]
-    paths:
-      - 'lib/**'
-      - 'settings.gradle'
-      - 'gradle.properties'
-      - 'gradle/**'
-      - '.github/workflows/gradle.yml'
 
 jobs:
-  build:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            relevant:
+              - 'lib/**'
+              - 'settings.gradle'
+              - 'gradle.properties'
+              - 'gradle/**'
+              - '.github/workflows/gradle.yml'
 
+  build:
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -71,7 +83,8 @@ jobs:
     #   run: gradle build
 
   dependency-submission:
-
+    needs: changes
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
