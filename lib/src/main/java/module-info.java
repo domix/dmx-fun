@@ -12,6 +12,10 @@
  *   <li>{@link codes.domix.fun.CheckedRunnable}  — runnable that may throw checked exceptions</li>
  *   <li>{@link codes.domix.fun.CheckedFunction}  — function that may throw checked exceptions</li>
  *   <li>{@link codes.domix.fun.CheckedConsumer}  — consumer that may throw checked exceptions</li>
+ *   <li>{@link codes.domix.fun.Tuple3}       — immutable triple of three values</li>
+ *   <li>{@link codes.domix.fun.Tuple4}       — immutable quadruple of four values</li>
+ *   <li>{@link codes.domix.fun.TriFunction}  — function accepting three arguments</li>
+ *   <li>{@link codes.domix.fun.QuadFunction} — function accepting four arguments</li>
  * </ul>
  *
  * <p>The entire module is {@code @NullMarked}: all API types are non-null by default.
