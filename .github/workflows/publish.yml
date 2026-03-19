@@ -8,6 +8,8 @@ on:
       - 'settings.gradle'
       - 'gradle.properties'
       - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
       - '.github/workflows/publish.yml'
 
 jobs:
