@@ -3,6 +3,14 @@ name: Publish to Maven Central
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'lib/**'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/publish.yml'
 
 jobs:
   publish:
