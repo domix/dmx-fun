@@ -54,7 +54,7 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
-        java-version: '24'
+        java-version: '25'
         distribution: 'temurin'
 
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
@@ -98,7 +98,7 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
-        java-version: '24'
+        java-version: '25'
         distribution: 'temurin'
 
     # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.

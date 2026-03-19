@@ -28,7 +28,7 @@ Examples and implementations may include:
 
 ## 🛠 Technologies
 
-- Java 24+  
+- Java 25+
 - Gradle
 - Spock for testing  
 - [Vavr](https://www.vavr.io/) or similar libraries for functional data types (optional)  

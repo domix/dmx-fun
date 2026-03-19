@@ -42,11 +42,11 @@ jobs:
             echo "Tag $TAG not found — will publish."
           fi
 
-      - name: Set up JDK 24
+      - name: Set up JDK
         if: steps.tag_check.outputs.exists == 'false'
         uses: actions/setup-java@v4
         with:
-          java-version: '24'
+          java-version: '25'
           distribution: 'temurin'
 
       - name: Setup Gradle
