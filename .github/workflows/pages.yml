@@ -7,6 +7,7 @@ on:
       - 'site/**'
       - 'lib/src/test/java/codes/domix/fun/example/**'
       - 'lib/src/main/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:

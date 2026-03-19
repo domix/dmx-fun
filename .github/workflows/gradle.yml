@@ -10,8 +10,20 @@ name: Java CI with Gradle
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'lib/**'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/**'
+      - '.github/workflows/gradle.yml'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'lib/**'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/**'
+      - '.github/workflows/gradle.yml'
 
 jobs:
   build:
