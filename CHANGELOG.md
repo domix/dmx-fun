@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.11] - 2026-03-20
+
+### Added
+
+- **`Validated<E, A>` — applicative error-accumulating validation type (#47):**
+  - Sealed interface with two implementations: `Valid<E, A>` and `Invalid<E, A>`.
+  - `Validated.valid(A)` / `Validated.invalid(E)` factory methods.
+  - `map(Function)`, `mapError(Function)`, `flatMap(Function)` — standard functor / monad
+    operations on the success channel.
+  - `combine(Validated, BiFunction, BinaryOperator)` — merges two `Validated` values
+    applicatively, accumulating errors from both sides when both are `Invalid`.
+  - `fold(Function, Function)` — collapses either branch to a single value.
+  - `getOrElse(A)` / `getOrElseGet(Supplier)` / `getOrThrow(Function)` — terminal extractors.
+  - `peek(Consumer)` / `peekError(Consumer)` — side-effect hooks without altering the value.
+  - `toOption()` / `toResult(Supplier)` — interop with `Option` and `Result`.
+  - `sequence(Iterable)` / `traverse(Iterable, Function)` — collect a set of `Validated`
+    values into a single `Validated<E, List<A>>`, accumulating all errors.
+  - `fromOption(Option, Supplier)` — lifts an `Option` into `Validated`.
+  - Full `@NullMarked` coverage; null guards on all callbacks and their return values.
+- **Checked functional interfaces promoted to top-level types (#48):**
+  - `CheckedFunction<T, R>` — `Function`-like interface whose `apply` method declares
+    `throws Exception`; enables wrapping legacy checked-exception APIs.
+  - `CheckedSupplier<T>` — `Supplier`-like with `throws Exception`.
+  - `CheckedConsumer<T>` — `Consumer`-like with `throws Exception`.
+  - `CheckedRunnable` — `Runnable`-like with `throws Exception`.
+  - All four interfaces are `@NullMarked` and `@FunctionalInterface`.
+- **`Tuple3<A, B, C>` and `Tuple4<A, B, C, D>` (#50):**
+  - Immutable `@NullMarked` records with null-guarded compact constructors.
+  - `of(...)` static factory methods.
+  - `mapFirst` / `mapSecond` / `mapThird` (/ `mapFourth` for `Tuple4`) — apply a function
+    to a single slot and return a new tuple with the remaining slots unchanged.
+  - `map(TriFunction)` / `map(QuadFunction)` — collapse all elements into a single value.
+- **`TriFunction<A, B, C, R>` and `QuadFunction<A, B, C, D, R>` (#50):**
+  - `@NullMarked @FunctionalInterface` types required by `Tuple3.map` and `Tuple4.map`.
+  - Also serve as building blocks for the planned `zip3` / `zip4` combinators (#69, #70).
+
+### Changed
+
+- **Java toolchain upgraded from 24 to 25 (#78):** `lib/build.gradle` toolchain and all
+  three CI workflow files (`gradle.yml`, `publish.yml`, `pages.yml`) updated to
+  `java-version: '25'`.
+- **CI workflow triggers optimized (#56):**
+  - `gradle.yml`: top-level `paths` filter removed from the `pull_request` trigger; a
+    preliminary `changes` job using `dorny/paths-filter@v3` was added so that the `build`
+    and `dependency-submission` jobs skip via `if:` conditions instead of the workflow not
+    running at all — this keeps required status checks satisfied on PRs that touch
+    unrelated files.
+  - `publish.yml` and `pages.yml`: `paths` filters added / completed; `gradlew` and
+    `gradlew.bat` included as trigger paths in both `gradle.yml` and `publish.yml`.
+
 ## [0.0.10] - 2026-03-08
 
 ### Added
@@ -112,7 +162,8 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.10...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.11...HEAD
+[0.0.11]: https://github.com/domix/dmx-fun/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/domix/dmx-fun/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/domix/dmx-fun/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/domix/dmx-fun/compare/v0.0.7...v0.0.8
