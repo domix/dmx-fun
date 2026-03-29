@@ -11,6 +11,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -621,6 +624,21 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Converts this {@code Try} into an already-completed {@link CompletableFuture}.
+     *
+     * <p>If this is a {@code Success}, returns a future completed normally with the value.
+     * If this is a {@code Failure}, returns a future completed exceptionally with the cause.
+     *
+     * @return a completed {@code CompletableFuture<Value>}
+     */
+    default CompletableFuture<Value> toFuture() {
+        return switch (this) {
+            case Success<Value> s -> CompletableFuture.completedFuture(s.value());
+            case Failure<Value> f -> CompletableFuture.failedFuture(f.cause());
+        };
+    }
+
+    /**
      * Converts an {@link Option} to a {@link Try}. If the {@link Option} contains a value, a successful {@link Try}
      * is returned with that value. Otherwise, a failed {@link Try} is created using the supplied exception.
      *
@@ -661,6 +679,34 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         return optional.isPresent()
             ? Try.success(optional.get())
             : Try.failure(Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null"));
+    }
+
+    // ---------- CompletableFuture interop ----------
+
+    /**
+     * Converts a {@link CompletableFuture} into a {@code Try} by blocking until the future
+     * completes.
+     *
+     * <p>If the future completes normally, returns {@code Success(value)}.
+     * If the future completes exceptionally, the {@link CompletionException} wrapper is
+     * unwrapped and the original cause is stored as {@code Failure(cause)}.
+     * If the future was cancelled, returns {@code Failure(CancellationException)}.
+     *
+     * @param <V>    the type of the future's value
+     * @param future the {@code CompletableFuture} to convert; must not be {@code null}
+     * @return {@code Success(value)} on normal completion, or {@code Failure(cause)} otherwise
+     * @throws NullPointerException if {@code future} is {@code null}
+     */
+    static <V> Try<V> fromFuture(CompletableFuture<? extends V> future) {
+        Objects.requireNonNull(future, "future must not be null");
+        try {
+            return Try.success(future.join());
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause();
+            return Try.failure(cause != null ? cause : e);
+        } catch (CancellationException e) {
+            return Try.failure(e);
+        }
     }
 
     // ---------- sequence / traverse ----------
