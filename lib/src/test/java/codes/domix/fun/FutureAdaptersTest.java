@@ -1,5 +1,6 @@
 package codes.domix.fun;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -119,5 +120,54 @@ class FutureAdaptersTest {
     @Test
     void resultFromFuture_nullFuture_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> Result.fromFuture(null));
+    }
+
+    // ── Result.toFuture ───────────────────────────────────────────────────────
+
+    @Test
+    void resultToFuture_ok_returnsCompletedFuture() throws Exception {
+        var future = Result.ok("value").toFuture();
+        assertTrue(future.isDone());
+        assertEquals("value", future.get());
+    }
+
+    @Test
+    void resultToFuture_err_returnsExceptionallyCompletedFutureWithNoSuchElementException() {
+        var future = Result.<String, String>err("something went wrong").toFuture();
+        assertTrue(future.isCompletedExceptionally());
+        var ex = assertThrows(Exception.class, future::get);
+        assertInstanceOf(NoSuchElementException.class, ex.getCause());
+        assertTrue(ex.getCause().getMessage().contains("something went wrong"));
+    }
+
+    @Test
+    void resultToFuture_withMapper_ok_returnsCompletedFuture() throws Exception {
+        var future = Result.<Integer, String>ok(42)
+            .toFuture(msg -> new IllegalArgumentException(msg));
+        assertEquals(42, future.get());
+    }
+
+    @Test
+    void resultToFuture_withMapper_err_usesMapperException() {
+        var future = Result.<Integer, String>err("bad input")
+            .toFuture(IllegalArgumentException::new);
+        assertTrue(future.isCompletedExceptionally());
+        var ex = assertThrows(Exception.class, future::get);
+        assertInstanceOf(IllegalArgumentException.class, ex.getCause());
+        assertEquals("bad input", ex.getCause().getMessage());
+    }
+
+    @Test
+    void resultToFuture_withMapper_nullMapper_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Result.ok("x").toFuture(null));
+    }
+
+    @Test
+    void resultToFuture_roundtrip_okPreservesValue() {
+        var original = Result.<String, String>ok("round-trip");
+        var recovered = Result.fromFuture(original.toFuture());
+        assertTrue(recovered.isOk());
+        assertEquals("round-trip", recovered.get());
     }
 }
