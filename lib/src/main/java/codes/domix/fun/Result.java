@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
@@ -572,6 +573,51 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     }
 
     /**
+     * Converts this {@code Result} into an already-completed {@link CompletableFuture}.
+     *
+     * <p>If this is {@code Ok}, returns a future completed normally with the value.
+     * If this is {@code Err}, returns a future completed exceptionally with a
+     * {@link NoSuchElementException} whose message includes the string representation
+     * of the error — consistent with the behaviour of {@link #get()}.
+     *
+     * <p>Use {@link #toFuture(Function)} when you need full control over the exception type.
+     *
+     * @return a completed {@code CompletableFuture<Value>}
+     */
+    default CompletableFuture<Value> toFuture() {
+        return switch (this) {
+            case Ok<Value, Error>  ok  -> CompletableFuture.completedFuture(ok.value());
+            case Err<Value, Error> err -> CompletableFuture.failedFuture(
+                new NoSuchElementException("Result is Err: " + err.error())
+            );
+        };
+    }
+
+    /**
+     * Converts this {@code Result} into an already-completed {@link CompletableFuture},
+     * using {@code errorMapper} to convert the error value into a {@link Throwable} when
+     * this is {@code Err}.
+     *
+     * <p>If this is {@code Ok}, returns a future completed normally with the value.
+     * If this is {@code Err}, applies {@code errorMapper} to the error and returns a
+     * future completed exceptionally with the result.
+     *
+     * @param errorMapper a function that converts the error value to a {@link Throwable};
+     *                    must not be {@code null} and must not return {@code null}
+     * @return a completed {@code CompletableFuture<Value>}
+     * @throws NullPointerException if {@code errorMapper} is {@code null} or returns {@code null}
+     */
+    default CompletableFuture<Value> toFuture(Function<? super Error, ? extends Throwable> errorMapper) {
+        Objects.requireNonNull(errorMapper, "errorMapper");
+        return switch (this) {
+            case Ok<Value, Error>  ok  -> CompletableFuture.completedFuture(ok.value());
+            case Err<Value, Error> err -> CompletableFuture.failedFuture(
+                Objects.requireNonNull(errorMapper.apply(err.error()), "errorMapper returned null")
+            );
+        };
+    }
+
+    /**
      * Converts an {@link Option} to a {@link Result}.
      *
      * @param <V>         The type of the value contained in the {@link Option}.
@@ -617,6 +663,26 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         return optional.isPresent()
             ? Result.ok(optional.get())
             : Result.err(new NoSuchElementException("Optional is empty"));
+    }
+
+    // ---------- CompletableFuture interop ----------
+
+    /**
+     * Converts a {@link CompletableFuture} into a {@code Result} by blocking until the future
+     * completes.
+     *
+     * <p>If the future completes normally, returns {@code Ok(value)}.
+     * If the future completes exceptionally, the {@link java.util.concurrent.CompletionException} wrapper is
+     * unwrapped and the original cause is stored as {@code Err(cause)}.
+     * If the future was cancelled, returns {@code Err(CancellationException)}.
+     *
+     * @param <V>    the type of the future's value
+     * @param future the {@code CompletableFuture} to convert; must not be {@code null}
+     * @return {@code Ok(value)} on normal completion, or {@code Err(cause)} otherwise
+     * @throws NullPointerException if {@code future} is {@code null}
+     */
+    static <V> Result<V, Throwable> fromFuture(CompletableFuture<? extends V> future) {
+        return Try.<V>fromFuture(future).toResult();
     }
 
     // ---------- sequence / traverse ----------
