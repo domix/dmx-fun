@@ -2,6 +2,7 @@ package codes.domix.fun;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +30,15 @@ class FutureAdaptersTest {
         assertTrue(result.isFailure());
         assertInstanceOf(IllegalStateException.class, result.getCause());
         assertEquals("boom", result.getCause().getMessage());
+    }
+
+    @Test
+    void tryFromFuture_completionExceptionWithNullCause_preservesCompletionException() {
+        var future = new CompletableFuture<String>();
+        future.completeExceptionally(new CompletionException(null));
+        var result = Try.fromFuture(future);
+        assertTrue(result.isFailure());
+        assertInstanceOf(CompletionException.class, result.getCause());
     }
 
     @Test
