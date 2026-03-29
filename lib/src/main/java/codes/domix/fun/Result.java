@@ -11,9 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
@@ -674,7 +672,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * completes.
      *
      * <p>If the future completes normally, returns {@code Ok(value)}.
-     * If the future completes exceptionally, the {@link CompletionException} wrapper is
+     * If the future completes exceptionally, the {@link java.util.concurrent.CompletionException} wrapper is
      * unwrapped and the original cause is stored as {@code Err(cause)}.
      * If the future was cancelled, returns {@code Err(CancellationException)}.
      *
@@ -684,15 +682,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @throws NullPointerException if {@code future} is {@code null}
      */
     static <V> Result<V, Throwable> fromFuture(CompletableFuture<? extends V> future) {
-        Objects.requireNonNull(future, "future must not be null");
-        try {
-            return Result.ok(future.join());
-        } catch (CompletionException e) {
-            Throwable cause = e.getCause();
-            return Result.err(cause != null ? cause : e);
-        } catch (CancellationException e) {
-            return Result.err(e);
-        }
+        return Try.<V>fromFuture(future).toResult();
     }
 
     // ---------- sequence / traverse ----------
