@@ -16,6 +16,7 @@
  *   <li>{@link codes.domix.fun.Tuple4}       — immutable quadruple of four values</li>
  *   <li>{@link codes.domix.fun.TriFunction}  — function accepting three arguments</li>
  *   <li>{@link codes.domix.fun.QuadFunction} — function accepting four arguments</li>
+ *   <li>{@link codes.domix.fun.Lazy}         — lazily evaluated, memoized value</li>
  * </ul>
  *
  * <p>The entire module is {@code @NullMarked}: all API types are non-null by default.
