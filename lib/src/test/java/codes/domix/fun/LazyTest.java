@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,6 +50,38 @@ class LazyTest {
         assertThrows(NullPointerException.class, lazy::get);
     }
 
+    @Test
+    void get_throwingSupplier_supplierCalledExactlyOnce() {
+        var calls = new AtomicInteger(0);
+        var lazy = Lazy.<String>of(() -> { calls.incrementAndGet(); throw new IllegalStateException("boom"); });
+        assertThrows(IllegalStateException.class, lazy::get);
+        assertThrows(IllegalStateException.class, lazy::get);
+        assertEquals(1, calls.get());
+    }
+
+    @Test
+    void get_throwingSupplier_sameExceptionRethrownOnSubsequentCalls() {
+        var ex = new IllegalStateException("boom");
+        var lazy = Lazy.<String>of(() -> { throw ex; });
+        assertSame(ex, assertThrows(IllegalStateException.class, lazy::get));
+        assertSame(ex, assertThrows(IllegalStateException.class, lazy::get));
+    }
+
+    @Test
+    void get_nullReturningSupplier_supplierCalledExactlyOnce() {
+        var calls = new AtomicInteger(0);
+        var lazy = Lazy.of(() -> { calls.incrementAndGet(); return null; });
+        assertThrows(NullPointerException.class, lazy::get);
+        assertThrows(NullPointerException.class, lazy::get);
+        assertEquals(1, calls.get());
+    }
+
+    @Test
+    void get_throwingError_propagatesErrorWithoutWrapping() {
+        var lazy = Lazy.<String>of(() -> { throw new OutOfMemoryError("oom"); });
+        assertThrows(OutOfMemoryError.class, lazy::get);
+    }
+
     // ── isEvaluated ───────────────────────────────────────────────────────────
 
     @Test
@@ -61,6 +94,13 @@ class LazyTest {
     void isEvaluated_trueAfterGet() {
         var lazy = Lazy.of(() -> 42);
         lazy.get();
+        assertTrue(lazy.isEvaluated());
+    }
+
+    @Test
+    void isEvaluated_trueAfterThrowingGet() {
+        var lazy = Lazy.<String>of(() -> { throw new RuntimeException("x"); });
+        assertThrows(RuntimeException.class, lazy::get);
         assertTrue(lazy.isEvaluated());
     }
 
@@ -117,6 +157,12 @@ class LazyTest {
         assertThrows(NullPointerException.class, () -> Lazy.of(() -> "x").flatMap(null));
     }
 
+    @Test
+    void flatMap_nullReturningFunction_throwsNullPointerException() {
+        var lazy = Lazy.of(() -> "x").flatMap(s -> null);
+        assertThrows(NullPointerException.class, lazy::get);
+    }
+
     // ── toOption ──────────────────────────────────────────────────────────────
 
     @Test
@@ -141,6 +187,21 @@ class LazyTest {
         var t = lazy.toTry();
         assertTrue(t.isFailure());
         assertEquals("boom", t.getCause().getMessage());
+    }
+
+    @Test
+    void toTry_calledMultipleTimes_returnsSameCachedInstance() {
+        var lazy = Lazy.of(() -> "v");
+        assertSame(lazy.toTry(), lazy.toTry());
+    }
+
+    @Test
+    void toTry_throwingSupplier_calledMultipleTimes_supplierCalledExactlyOnce() {
+        var calls = new AtomicInteger(0);
+        var lazy = Lazy.<String>of(() -> { calls.incrementAndGet(); throw new RuntimeException("x"); });
+        lazy.toTry();
+        lazy.toTry();
+        assertEquals(1, calls.get());
     }
 
     // ── toResult ──────────────────────────────────────────────────────────────
@@ -225,6 +286,13 @@ class LazyTest {
     }
 
     @Test
+    void toFuture_alreadyEvaluatedFailure_returnsFailedFuture() {
+        var lazy = Lazy.<String>of(() -> { throw new RuntimeException("x"); });
+        assertThrows(RuntimeException.class, lazy::get);
+        assertTrue(lazy.toFuture().isCompletedExceptionally());
+    }
+
+    @Test
     void toFuture_supplierCalledOnceAcrossGetAndToFuture() throws Exception {
         var calls = new AtomicInteger(0);
         var lazy = Lazy.of(() -> { calls.incrementAndGet(); return "x"; });
@@ -245,5 +313,12 @@ class LazyTest {
         var lazy = Lazy.of(() -> "hello");
         lazy.get();
         assertEquals("Lazy[hello]", lazy.toString());
+    }
+
+    @Test
+    void toString_afterFailure_returnsFailurePlaceholder() {
+        var lazy = Lazy.<String>of(() -> { throw new RuntimeException("x"); });
+        assertThrows(RuntimeException.class, lazy::get);
+        assertEquals("Lazy[!]", lazy.toString());
     }
 }
