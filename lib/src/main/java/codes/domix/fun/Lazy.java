@@ -218,7 +218,6 @@ public final class Lazy<T> {
 
     // ── internals ─────────────────────────────────────────────────────────────
 
-    @Nullable
     private Try<T> evaluate() {
         if (state == null) {
             synchronized (this) {
