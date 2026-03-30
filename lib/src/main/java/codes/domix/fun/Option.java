@@ -575,6 +575,46 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     /**
+     * Combines this {@code Option} with two others into an {@code Option<Tuple3>}.
+     * Returns {@link Option#none()} if any of the three is empty.
+     *
+     * @param <B> type of the value in {@code b}
+     * @param <C> type of the value in {@code c}
+     * @param b   second option; must not be {@code null}
+     * @param c   third option; must not be {@code null}
+     * @return {@code Some(Tuple3(v1, v2, v3))} if all three are non-empty, otherwise {@code None}
+     * @throws NullPointerException if {@code b} or {@code c} is {@code null}
+     */
+    default <B, C> Option<Tuple3<Value, B, C>> zip3(Option<? extends B> b, Option<? extends C> c) {
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        return zip3(this, b, c);
+    }
+
+    /**
+     * Combines this {@code Option} with two others using a {@link TriFunction}.
+     * Returns {@link Option#none()} if any of the three is empty.
+     *
+     * @param <B>      type of the value in {@code b}
+     * @param <C>      type of the value in {@code c}
+     * @param <R>      result type
+     * @param b        second option; must not be {@code null}
+     * @param c        third option; must not be {@code null}
+     * @param combiner function applied to the three values; must not be {@code null}
+     * @return {@code Some(combiner(v1, v2, v3))} if all three are non-empty, otherwise {@code None}
+     * @throws NullPointerException if {@code b}, {@code c}, or {@code combiner} is {@code null}
+     */
+    default <B, C, R> Option<R> zipWith3(
+            Option<? extends B> b,
+            Option<? extends C> c,
+            TriFunction<? super Value, ? super B, ? super C, ? extends R> combiner) {
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        Objects.requireNonNull(combiner, "combiner");
+        return map3(this, b, c, combiner);
+    }
+
+    /**
      * Combines two {@link Option} instances into a single {@link Option} containing a {@link Tuple2} of the values
      * if both options are non-empty. If either option is empty, returns an empty {@link Option}.
      * <p>
@@ -631,6 +671,70 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         A av = ((Some<? extends A>) a).value();
         B bv = ((Some<? extends B>) b).value();
         return Option.ofNullable(combiner.apply(av, bv));
+    }
+
+    // ---------- zip3 / map3 ----------
+
+    /**
+     * Combines three {@link Option} instances into a single {@link Option} containing a {@link Tuple3}.
+     * Returns {@link Option#none()} if any of the three is empty.
+     *
+     * @param <A> type of the value in {@code a}
+     * @param <B> type of the value in {@code b}
+     * @param <C> type of the value in {@code c}
+     * @param a   first option; must not be {@code null}
+     * @param b   second option; must not be {@code null}
+     * @param c   third option; must not be {@code null}
+     * @return {@code Some(Tuple3(av, bv, cv))} when all three are non-empty, otherwise {@code None}
+     * @throws NullPointerException if {@code a}, {@code b}, or {@code c} is {@code null}
+     */
+    static <A, B, C> Option<Tuple3<A, B, C>> zip3(
+            Option<? extends A> a,
+            Option<? extends B> b,
+            Option<? extends C> c) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?>) {
+            return Option.none();
+        }
+        A av = ((Some<? extends A>) a).value();
+        B bv = ((Some<? extends B>) b).value();
+        C cv = ((Some<? extends C>) c).value();
+        return Option.some(new Tuple3<>(av, bv, cv));
+    }
+
+    /**
+     * Combines the values of three {@link Option} instances using the provided {@link TriFunction}.
+     * Returns {@link Option#none()} if any of the three is empty.
+     *
+     * @param <A>      type of the value in {@code a}
+     * @param <B>      type of the value in {@code b}
+     * @param <C>      type of the value in {@code c}
+     * @param <R>      result type
+     * @param a        first option; must not be {@code null}
+     * @param b        second option; must not be {@code null}
+     * @param c        third option; must not be {@code null}
+     * @param combiner function applied to the three values; must not be {@code null}
+     * @return {@code Some(combiner(av, bv, cv))} when all three are non-empty, otherwise {@code None}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <A, B, C, R> Option<R> map3(
+            Option<? extends A> a,
+            Option<? extends B> b,
+            Option<? extends C> c,
+            TriFunction<? super A, ? super B, ? super C, ? extends R> combiner) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        Objects.requireNonNull(combiner, "combiner");
+        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?>) {
+            return Option.none();
+        }
+        A av = ((Some<? extends A>) a).value();
+        B bv = ((Some<? extends B>) b).value();
+        C cv = ((Some<? extends C>) c).value();
+        return Option.ofNullable(combiner.apply(av, bv, cv));
     }
 
 }

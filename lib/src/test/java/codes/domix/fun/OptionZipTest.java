@@ -82,5 +82,107 @@ class OptionZipTest {
     void zip_shouldThrowNPE_ifOtherIsNull() {
         assertThrows(NullPointerException.class, () -> Option.some(1).zip(null));
     }
+
+    // ── zip3 / zipWith3 / map3 ────────────────────────────────────────────────
+
+    @Test
+    void zip3_static_allSome_returnsSomeTuple3() {
+        var result = Option.zip3(Option.some(1), Option.some("a"), Option.some(true));
+        assertEquals(Option.some(new Tuple3<>(1, "a", true)), result);
+    }
+
+    @Test
+    void zip3_static_firstIsNone_returnsNone() {
+        assertEquals(Option.none(), Option.zip3(Option.none(), Option.some("a"), Option.some(true)));
+    }
+
+    @Test
+    void zip3_static_secondIsNone_returnsNone() {
+        assertEquals(Option.none(), Option.zip3(Option.some(1), Option.none(), Option.some(true)));
+    }
+
+    @Test
+    void zip3_static_thirdIsNone_returnsNone() {
+        assertEquals(Option.none(), Option.zip3(Option.some(1), Option.some("a"), Option.none()));
+    }
+
+    @Test
+    void zip3_static_allNone_returnsNone() {
+        assertEquals(Option.none(), Option.zip3(Option.none(), Option.none(), Option.none()));
+    }
+
+    @Test
+    void zip3_static_nullArgument_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> Option.zip3(null, Option.some("a"), Option.some(1)));
+        assertThrows(NullPointerException.class, () -> Option.zip3(Option.some(1), null, Option.some(1)));
+        assertThrows(NullPointerException.class, () -> Option.zip3(Option.some(1), Option.some("a"), null));
+    }
+
+    @Test
+    void zip3_instanceMethod_allSome_returnsSomeTuple3() {
+        var result = Option.some(1).zip3(Option.some("a"), Option.some(true));
+        assertEquals(Option.some(new Tuple3<>(1, "a", true)), result);
+    }
+
+    @Test
+    void zip3_instanceMethod_anyNone_returnsNone() {
+        assertEquals(Option.none(), Option.some(1).zip3(Option.none(), Option.some(true)));
+    }
+
+    @Test
+    void map3_static_allSome_appliesCombiner() {
+        var result = Option.map3(Option.some(1), Option.some(2), Option.some(3),
+            (a, b, c) -> a + b + c);
+        assertEquals(Option.some(6), result);
+    }
+
+    @Test
+    void map3_static_anyNone_returnsNone() {
+        var result = Option.<Integer, Integer, Integer, Integer>map3(
+            Option.some(1), Option.none(), Option.some(3),
+            (a, b, c) -> a + b + c);
+        assertEquals(Option.none(), result);
+    }
+
+    @Test
+    void map3_static_combinerNotCalledWhenAnyNone() {
+        var called = new java.util.concurrent.atomic.AtomicBoolean(false);
+        Option.map3(Option.none(), Option.some(2), Option.some(3),
+            (a, b, c) -> { called.set(true); return 0; });
+        assertFalse(called.get(), "combiner must not be called when any option is None");
+    }
+
+    @Test
+    void map3_static_nullResultTreatedAsNone() {
+        var result = Option.map3(Option.some(1), Option.some(2), Option.some(3),
+            (a, b, c) -> null);
+        assertEquals(Option.none(), result);
+    }
+
+    @Test
+    void map3_static_nullCombiner_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.map3(Option.some(1), Option.some(2), Option.some(3), null));
+    }
+
+    @Test
+    void zipWith3_instanceMethod_allSome_appliesCombiner() {
+        var result = Option.some(1).zipWith3(Option.some(2), Option.some(3),
+            (a, b, c) -> "sum=" + (a + b + c));
+        assertEquals(Option.some("sum=6"), result);
+    }
+
+    @Test
+    void zipWith3_instanceMethod_anyNone_returnsNone() {
+        var result = Option.some(1).<Integer, Integer, Integer>zipWith3(Option.none(), Option.some(3),
+            (a, b, c) -> a + b + c);
+        assertEquals(Option.none(), result);
+    }
+
+    @Test
+    void zipWith3_instanceMethod_nullCombiner_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.some(1).zipWith3(Option.some(2), Option.some(3), null));
+    }
 }
 

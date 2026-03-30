@@ -887,4 +887,94 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         );
     }
 
+    // ---------- zip / zip3 ----------
+
+    /**
+     * Combines two {@code Result} values into a single {@code Result} containing a {@link Tuple2}.
+     * Fail-fast: returns the first {@code Err} encountered.
+     *
+     * @param <V1> value type of the first result
+     * @param <V2> value type of the second result
+     * @param <E>  shared error type
+     * @param r1   first result; must not be {@code null}
+     * @param r2   second result; must not be {@code null}
+     * @return {@code Ok(Tuple2(v1, v2))} if both are {@code Ok}, otherwise the first {@code Err}
+     * @throws NullPointerException if {@code r1} or {@code r2} is {@code null}
+     */
+    static <V1, V2, E> Result<Tuple2<V1, V2>, E> zip(
+            Result<? extends V1, ? extends E> r1,
+            Result<? extends V2, ? extends E> r2) {
+        Objects.requireNonNull(r1, "r1");
+        Objects.requireNonNull(r2, "r2");
+        if (r1 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r2 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
+        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
+        return Result.ok(new Tuple2<>(v1, v2));
+    }
+
+    /**
+     * Combines three {@code Result} values into a single {@code Result} containing a {@link Tuple3}.
+     * Fail-fast: returns the first {@code Err} encountered.
+     *
+     * @param <V1> value type of the first result
+     * @param <V2> value type of the second result
+     * @param <V3> value type of the third result
+     * @param <E>  shared error type
+     * @param r1   first result; must not be {@code null}
+     * @param r2   second result; must not be {@code null}
+     * @param r3   third result; must not be {@code null}
+     * @return {@code Ok(Tuple3(v1, v2, v3))} if all three are {@code Ok}, otherwise the first {@code Err}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3, E> Result<Tuple3<V1, V2, V3>, E> zip3(
+            Result<? extends V1, ? extends E> r1,
+            Result<? extends V2, ? extends E> r2,
+            Result<? extends V3, ? extends E> r3) {
+        Objects.requireNonNull(r1, "r1");
+        Objects.requireNonNull(r2, "r2");
+        Objects.requireNonNull(r3, "r3");
+        if (r1 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r2 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r3 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
+        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
+        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
+        return Result.ok(new Tuple3<>(v1, v2, v3));
+    }
+
+    /**
+     * Combines three {@code Result} values using a {@link TriFunction}.
+     * Fail-fast: returns the first {@code Err} encountered.
+     *
+     * @param <V1>     value type of the first result
+     * @param <V2>     value type of the second result
+     * @param <V3>     value type of the third result
+     * @param <R>      result value type
+     * @param <E>      shared error type
+     * @param r1       first result; must not be {@code null}
+     * @param r2       second result; must not be {@code null}
+     * @param r3       third result; must not be {@code null}
+     * @param combiner function applied to the three values; must not be {@code null}
+     * @return {@code Ok(combiner(v1, v2, v3))} if all three are {@code Ok}, otherwise the first {@code Err}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3, R, E> Result<R, E> zipWith3(
+            Result<? extends V1, ? extends E> r1,
+            Result<? extends V2, ? extends E> r2,
+            Result<? extends V3, ? extends E> r3,
+            TriFunction<? super V1, ? super V2, ? super V3, ? extends R> combiner) {
+        Objects.requireNonNull(r1, "r1");
+        Objects.requireNonNull(r2, "r2");
+        Objects.requireNonNull(r3, "r3");
+        Objects.requireNonNull(combiner, "combiner");
+        if (r1 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r2 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r3 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
+        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
+        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
+        return Result.ok(Objects.requireNonNull(combiner.apply(v1, v2, v3), "combiner returned null"));
+    }
+
 }
