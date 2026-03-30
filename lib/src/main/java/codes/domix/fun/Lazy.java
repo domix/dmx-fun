@@ -24,8 +24,8 @@ import org.jspecify.annotations.Nullable;
 public final class Lazy<T> {
 
     private final Supplier<? extends T> supplier;
-    private volatile boolean evaluated = false;
-    private @Nullable T value = null;
+    /** {@code null} means unevaluated; non-null holds the cached {@link Try} (success or failure). */
+    private volatile @Nullable Try<T> state = null;
 
     private Lazy(Supplier<? extends T> supplier) {
         this.supplier = supplier;
@@ -55,15 +55,18 @@ public final class Lazy<T> {
      * @throws NullPointerException if the supplier returns {@code null}
      */
     public T get() {
-        if (!evaluated) {
-            synchronized (this) {
-                if (!evaluated) {
-                    value = Objects.requireNonNull(supplier.get(), "supplier returned null");
-                    evaluated = true;
-                }
-            }
+        Try<T> s = evaluate();
+        if (s.isSuccess()) {
+            return s.get();
         }
-        return Objects.requireNonNull(value);
+        Throwable cause = s.getCause();
+        if (cause instanceof RuntimeException re) {
+            throw re;
+        }
+        if (cause instanceof Error e) {
+            throw e;
+        }
+        throw new RuntimeException(cause);
     }
 
     /**
@@ -72,7 +75,7 @@ public final class Lazy<T> {
      * @return {@code true} after the first call to {@link #get()}, {@code false} before
      */
     public boolean isEvaluated() {
-        return evaluated;
+        return state != null;
     }
 
     /**
@@ -120,11 +123,14 @@ public final class Lazy<T> {
      * Evaluates this {@code Lazy} inside a {@link Try}, capturing any exception thrown by the
      * supplier as a {@code Failure}.
      *
+     * <p>The result is memoized: the supplier is called at most once regardless of how many
+     * times this method is invoked.
+     *
      * @return {@code Success(value)} if the supplier completes normally,
      *         or {@code Failure(exception)} if it throws
      */
     public Try<T> toTry() {
-        return Try.of(this::get);
+        return evaluate();
     }
 
     /**
@@ -156,7 +162,13 @@ public final class Lazy<T> {
      * @return a {@code CompletableFuture<T>} that completes with this lazy's value
      */
     public CompletableFuture<T> toFuture() {
-        if (evaluated) return CompletableFuture.completedFuture(value);
+        Try<T> s = state;
+        if (s != null) {
+            if (s.isFailure()) {
+                return CompletableFuture.failedFuture(s.getCause());
+            }
+            return CompletableFuture.completedFuture(s.get());
+        }
         return CompletableFuture.supplyAsync(this::get);
     }
 
@@ -189,10 +201,37 @@ public final class Lazy<T> {
     /**
      * Returns a string representation of this {@code Lazy}.
      *
-     * @return {@code "Lazy[?]"} if not yet evaluated, or {@code "Lazy[value]"} if evaluated
+     * @return {@code "Lazy[?]"} if not yet evaluated, {@code "Lazy[value]"} if evaluated
+     *         successfully, or {@code "Lazy[!]"} if evaluation failed
      */
     @Override
     public String toString() {
-        return evaluated ? "Lazy[" + value + "]" : "Lazy[?]";
+        Try<T> s = state;
+        if (s == null) {
+            return "Lazy[?]";
+        }
+        if (s.isFailure()) {
+            return "Lazy[!]";
+        }
+        return "Lazy[" + s.get() + "]";
+    }
+
+    // ── internals ─────────────────────────────────────────────────────────────
+
+    @Nullable
+    private Try<T> evaluate() {
+        if (state == null) {
+            synchronized (this) {
+                if (state == null) {
+                    state = Try.of(
+                        () -> Objects.requireNonNull(
+                            supplier.get(),
+                            "supplier returned null"
+                        )
+                    );
+                }
+            }
+        }
+        return state;
     }
 }
