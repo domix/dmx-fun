@@ -43,7 +43,7 @@
 31. Functional programming applied to hexagonal architecture
 32. Functional core, imperative shell
 33. How to model side effects in a controlled way
-34. Event-driven architecture from a functional perspective
+34. Event-driven architecture from a functional perspective [111]
 35. Domain-driven design and functional programming: allies or rivals?
 36. How to design business flows with types instead of if statements
 37. Lazy evaluation: when it helps and when it complicates things
@@ -97,3 +97,4 @@
 
 [74]: https://github.com/domix/dmx-fun/pull/74
 [94]: https://github.com/domix/dmx-fun/pull/94
+[111]: https://github.com/domix/dmx-fun/pull/111
