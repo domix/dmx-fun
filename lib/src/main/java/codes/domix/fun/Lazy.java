@@ -141,8 +141,8 @@ public final class Lazy<T> {
      *
      * <p>The future's result is obtained via {@link Try#fromFuture(CompletableFuture)}, which
      * unwraps {@link java.util.concurrent.CompletionException} transparently. If the future
-     * completed exceptionally, {@link #get()} will throw the unwrapped cause wrapped in a
-     * {@link RuntimeException} (via {@link Try#getOrThrow()}).
+     * completed exceptionally, {@link #get()} rethrows the original {@link RuntimeException} or
+     * {@link Error} as-is, and wraps checked exceptions in a new {@link RuntimeException}.
      *
      * @param <T>    the type of the future's value
      * @param future the {@code CompletableFuture} to wrap; must not be {@code null}
@@ -151,7 +151,19 @@ public final class Lazy<T> {
      */
     public static <T> Lazy<T> fromFuture(CompletableFuture<? extends T> future) {
         Objects.requireNonNull(future, "future must not be null");
-        return Lazy.of(() -> Try.<T>fromFuture(future).getOrThrow(RuntimeException::new));
+        return Lazy.of(
+            () -> Try.<T>fromFuture(future)
+                .getOrThrow(cause -> {
+                        if (cause instanceof RuntimeException re) {
+                            return re;
+                        }
+                        if (cause instanceof Error e) {
+                            throw e;
+                        }
+                        return new RuntimeException(cause);
+                    }
+                )
+        );
     }
 
     /**
