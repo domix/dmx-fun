@@ -1,5 +1,6 @@
 package codes.domix.fun;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -264,6 +265,53 @@ class LazyTest {
         var future = CompletableFuture.<String>failedFuture(new IllegalStateException("fail"));
         var lazy = Lazy.fromFuture(future);
         assertThrows(RuntimeException.class, lazy::get);
+    }
+
+    @Test
+    void fromFuture_failedFuture_runtimeExceptionPreservedAsIs() {
+        var cause = new IllegalStateException("fail");
+        var lazy = Lazy.fromFuture(CompletableFuture.<String>failedFuture(cause));
+        assertSame(cause, assertThrows(IllegalStateException.class, lazy::get));
+    }
+
+    @Test
+    void fromFuture_failedFuture_sameExceptionRethrownOnSubsequentCalls() {
+        var cause = new IllegalStateException("fail");
+        var lazy = Lazy.fromFuture(CompletableFuture.<String>failedFuture(cause));
+        assertSame(cause, assertThrows(IllegalStateException.class, lazy::get));
+        assertSame(cause, assertThrows(IllegalStateException.class, lazy::get));
+    }
+
+    @Test
+    void fromFuture_failedFutureWithError_propagatesErrorWithoutWrapping() {
+        var error = new OutOfMemoryError("oom");
+        var lazy = Lazy.fromFuture(CompletableFuture.<String>failedFuture(error));
+        assertThrows(OutOfMemoryError.class, lazy::get);
+    }
+
+    @Test
+    void fromFuture_failedFutureWithCheckedException_wrapsInRuntimeException() {
+        var cause = new Exception("checked");
+        var future = new CompletableFuture<String>();
+        future.completeExceptionally(cause);
+        var lazy = Lazy.fromFuture(future);
+        var thrown = assertThrows(RuntimeException.class, lazy::get);
+        assertSame(cause, thrown.getCause());
+    }
+
+    @Test
+    void fromFuture_cancelledFuture_throwsCancellationException() {
+        var future = new CompletableFuture<String>();
+        future.cancel(true);
+        var lazy = Lazy.fromFuture(future);
+        assertThrows(CancellationException.class, lazy::get);
+    }
+
+    @Test
+    void fromFuture_failedFuture_isEvaluatedTrueAfterGet() {
+        var lazy = Lazy.fromFuture(CompletableFuture.<String>failedFuture(new RuntimeException("x")));
+        assertThrows(RuntimeException.class, lazy::get);
+        assertTrue(lazy.isEvaluated());
     }
 
     // ── toFuture ──────────────────────────────────────────────────────────────
