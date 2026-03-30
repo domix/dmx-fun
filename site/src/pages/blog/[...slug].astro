@@ -336,6 +336,66 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
     color: var(--color-primary-hover);
   }
 
+  /* ── Tables ──────────────────────────────────────────────────────────────── */
+
+  .post-content :global(table) {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 2rem 0;
+    font-size: 0.925rem;
+    line-height: 1.6;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px var(--color-shadow);
+  }
+
+  .post-content :global(thead tr) {
+    background-color: var(--color-surface);
+  }
+
+  .post-content :global(th) {
+    padding: 0.75rem 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+
+  .post-content :global(th:last-child) {
+    border-right: none;
+  }
+
+  .post-content :global(td) {
+    padding: 0.75rem 1.25rem;
+    vertical-align: top;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+
+  .post-content :global(td:last-child) {
+    border-right: none;
+  }
+
+  .post-content :global(tbody tr:last-child td) {
+    border-bottom: none;
+  }
+
+  .post-content :global(tbody tr:nth-child(even)) {
+    background-color: var(--color-surface);
+  }
+
+  .post-content :global(tbody tr:hover) {
+    background-color: var(--color-code-bg);
+    transition: background-color 0.15s ease;
+  }
+
   .post-footer {
     margin-top: 4rem;
     padding-top: 2rem;
@@ -379,6 +439,12 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
     .post-meta {
       flex-direction: column;
       gap: 0.75rem;
+    }
+
+    .post-content :global(table) {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 </style>
