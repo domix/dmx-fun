@@ -6,7 +6,7 @@
 3. Immutability: the foundation of functional programming
 4. Pure functions and side effects
 5. What referential transparency really means
-6. Declarative vs imperative: how the mindset changes
+6. Declarative vs imperative: how the mindset changes [94]
 7. First steps with function composition
 8. Higher-order functions explained with real examples
 9. map, filter, and reduce beyond the basic tutorial
@@ -43,7 +43,7 @@
 31. Functional programming applied to hexagonal architecture
 32. Functional core, imperative shell
 33. How to model side effects in a controlled way
-34. Event-driven architecture from a functional perspective
+34. Event-driven architecture from a functional perspective [111]
 35. Domain-driven design and functional programming: allies or rivals?
 36. How to design business flows with types instead of if statements
 37. Lazy evaluation: when it helps and when it complicates things
@@ -96,3 +96,5 @@
 
 
 [74]: https://github.com/domix/dmx-fun/pull/74
+[94]: https://github.com/domix/dmx-fun/pull/94
+[111]: https://github.com/domix/dmx-fun/pull/111
