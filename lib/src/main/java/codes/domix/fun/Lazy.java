@@ -24,7 +24,9 @@ import org.jspecify.annotations.Nullable;
 public final class Lazy<T> {
 
     private final Supplier<? extends T> supplier;
-    /** {@code null} means unevaluated; non-null holds the cached {@link Try} (success or failure). */
+    /**
+     * {@code null} means unevaluated; non-null holds the cached {@link Try} (success or failure).
+     */
     private volatile @Nullable Try<T> state = null;
 
     private Lazy(Supplier<? extends T> supplier) {
@@ -127,7 +129,7 @@ public final class Lazy<T> {
      * times this method is invoked.
      *
      * @return {@code Success(value)} if the supplier completes normally,
-     *         or {@code Failure(exception)} if it throws
+     * or {@code Failure(exception)} if it throws
      */
     public Try<T> toTry() {
         return evaluate();
@@ -177,7 +179,7 @@ public final class Lazy<T> {
      * supplier as {@code Err(Throwable)}.
      *
      * @return {@code Ok(value)} if the supplier completes normally,
-     *         or {@code Err(exception)} if it throws
+     * or {@code Err(exception)} if it throws
      */
     public Result<T, Throwable> toResult() {
         return toTry().toResult();
@@ -191,7 +193,7 @@ public final class Lazy<T> {
      * @param errorMapper a function that converts the thrown exception to the error value;
      *                    must not be {@code null} and must not return {@code null}
      * @return {@code Ok(value)} if the supplier completes normally,
-     *         or {@code Err(errorMapper.apply(exception))} if it throws
+     * or {@code Err(errorMapper.apply(exception))} if it throws
      * @throws NullPointerException if {@code errorMapper} is {@code null} or returns {@code null}
      */
     public <E> Result<T, E> toResult(Function<? super Throwable, ? extends E> errorMapper) {
@@ -202,7 +204,7 @@ public final class Lazy<T> {
      * Returns a string representation of this {@code Lazy}.
      *
      * @return {@code "Lazy[?]"} if not yet evaluated, {@code "Lazy[value]"} if evaluated
-     *         successfully, or {@code "Lazy[!]"} if evaluation failed
+     * successfully, or {@code "Lazy[!]"} if evaluation failed
      */
     @Override
     public String toString() {
@@ -219,18 +221,26 @@ public final class Lazy<T> {
     // ── internals ─────────────────────────────────────────────────────────────
 
     private Try<T> evaluate() {
-        if (state == null) {
-            synchronized (this) {
-                if (state == null) {
-                    state = Try.of(
-                        () -> Objects.requireNonNull(
-                            supplier.get(),
-                            "supplier returned null"
-                        )
-                    );
-                }
+        // Using a local variable throughout
+        // would make the non-null guarantee
+        // explicit and prevents warnings
+        // from static analysis tools
+        Try<T> s = state;
+        if (s != null) {
+            return s;
+        }
+        synchronized (this) {
+            s = state;
+            if (s == null) {
+                s = Try.of(
+                    () -> Objects.requireNonNull(
+                        supplier.get(),
+                        "supplier returned null"
+                    )
+                );
+                state = s;
             }
         }
-        return state;
+        return s;
     }
 }
