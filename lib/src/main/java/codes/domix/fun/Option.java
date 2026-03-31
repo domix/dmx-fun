@@ -615,6 +615,54 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     /**
+     * Combines this {@code Option} with three others into an {@code Option<Tuple4>}.
+     * Returns {@link Option#none()} if any of the four is empty.
+     *
+     * @param <B> type of the value in {@code b}
+     * @param <C> type of the value in {@code c}
+     * @param <D> type of the value in {@code d}
+     * @param b   second option; must not be {@code null}
+     * @param c   third option; must not be {@code null}
+     * @param d   fourth option; must not be {@code null}
+     * @return {@code Some(Tuple4(v1, v2, v3, v4))} if all four are non-empty, otherwise {@code None}
+     * @throws NullPointerException if {@code b}, {@code c}, or {@code d} is {@code null}
+     */
+    default <B, C, D> Option<Tuple4<Value, B, C, D>> zip4(
+            Option<? extends B> b, Option<? extends C> c, Option<? extends D> d) {
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        Objects.requireNonNull(d, "d");
+        return zip4(this, b, c, d);
+    }
+
+    /**
+     * Combines this {@code Option} with three others using a {@link QuadFunction}.
+     * Returns {@link Option#none()} if any of the four is empty.
+     *
+     * @param <B>      type of the value in {@code b}
+     * @param <C>      type of the value in {@code c}
+     * @param <D>      type of the value in {@code d}
+     * @param <R>      result type
+     * @param b        second option; must not be {@code null}
+     * @param c        third option; must not be {@code null}
+     * @param d        fourth option; must not be {@code null}
+     * @param combiner function applied to the four values; must not be {@code null}
+     * @return {@code Some(combiner(v1, v2, v3, v4))} if all four are non-empty, otherwise {@code None}
+     * @throws NullPointerException if {@code b}, {@code c}, {@code d}, or {@code combiner} is {@code null}
+     */
+    default <B, C, D, R> Option<R> zipWith4(
+            Option<? extends B> b,
+            Option<? extends C> c,
+            Option<? extends D> d,
+            QuadFunction<? super Value, ? super B, ? super C, ? super D, ? extends R> combiner) {
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        Objects.requireNonNull(d, "d");
+        Objects.requireNonNull(combiner, "combiner");
+        return map4(this, b, c, d, combiner);
+    }
+
+    /**
      * Combines two {@link Option} instances into a single {@link Option} containing a {@link Tuple2} of the values
      * if both options are non-empty. If either option is empty, returns an empty {@link Option}.
      * <p>
@@ -735,6 +783,80 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         B bv = ((Some<? extends B>) b).value();
         C cv = ((Some<? extends C>) c).value();
         return Option.ofNullable(combiner.apply(av, bv, cv));
+    }
+
+    // ---------- zip4 / map4 ----------
+
+    /**
+     * Combines four {@link Option} instances into a single {@link Option} containing a {@link Tuple4}.
+     * Returns {@link Option#none()} if any of the four is empty.
+     *
+     * @param <A> type of the value in {@code a}
+     * @param <B> type of the value in {@code b}
+     * @param <C> type of the value in {@code c}
+     * @param <D> type of the value in {@code d}
+     * @param a   first option; must not be {@code null}
+     * @param b   second option; must not be {@code null}
+     * @param c   third option; must not be {@code null}
+     * @param d   fourth option; must not be {@code null}
+     * @return {@code Some(Tuple4(av, bv, cv, dv))} when all four are non-empty, otherwise {@code None}
+     * @throws NullPointerException if {@code a}, {@code b}, {@code c}, or {@code d} is {@code null}
+     */
+    static <A, B, C, D> Option<Tuple4<A, B, C, D>> zip4(
+            Option<? extends A> a,
+            Option<? extends B> b,
+            Option<? extends C> c,
+            Option<? extends D> d) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        Objects.requireNonNull(d, "d");
+        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?> || d instanceof None<?>) {
+            return Option.none();
+        }
+        A av = ((Some<? extends A>) a).value();
+        B bv = ((Some<? extends B>) b).value();
+        C cv = ((Some<? extends C>) c).value();
+        D dv = ((Some<? extends D>) d).value();
+        return Option.some(new Tuple4<>(av, bv, cv, dv));
+    }
+
+    /**
+     * Combines the values of four {@link Option} instances using the provided {@link QuadFunction}.
+     * Returns {@link Option#none()} if any of the four is empty.
+     *
+     * @param <A>      type of the value in {@code a}
+     * @param <B>      type of the value in {@code b}
+     * @param <C>      type of the value in {@code c}
+     * @param <D>      type of the value in {@code d}
+     * @param <R>      result type
+     * @param a        first option; must not be {@code null}
+     * @param b        second option; must not be {@code null}
+     * @param c        third option; must not be {@code null}
+     * @param d        fourth option; must not be {@code null}
+     * @param combiner function applied to the four values; must not be {@code null}
+     * @return {@code Some(combiner(av, bv, cv, dv))} when all four are non-empty, otherwise {@code None}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <A, B, C, D, R> Option<R> map4(
+            Option<? extends A> a,
+            Option<? extends B> b,
+            Option<? extends C> c,
+            Option<? extends D> d,
+            QuadFunction<? super A, ? super B, ? super C, ? super D, ? extends R> combiner) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+        Objects.requireNonNull(c, "c");
+        Objects.requireNonNull(d, "d");
+        Objects.requireNonNull(combiner, "combiner");
+        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?> || d instanceof None<?>) {
+            return Option.none();
+        }
+        A av = ((Some<? extends A>) a).value();
+        B bv = ((Some<? extends B>) b).value();
+        C cv = ((Some<? extends C>) c).value();
+        D dv = ((Some<? extends D>) d).value();
+        return Option.ofNullable(combiner.apply(av, bv, cv, dv));
     }
 
 }
