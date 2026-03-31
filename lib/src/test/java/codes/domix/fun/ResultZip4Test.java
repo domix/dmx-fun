@@ -111,4 +111,11 @@ class ResultZip4Test {
         assertThrows(NullPointerException.class,
             () -> Result.zipWith4(Result.ok(0), Result.ok(1), Result.ok(2), null, (a, b, c, d) -> a));
     }
+
+    @Test
+    void zipWith4_combinerReturnsNull_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Result.zipWith4(Result.ok(1), Result.ok(2), Result.ok(3), Result.ok(4),
+                (a, b, c, d) -> null));
+    }
 }
