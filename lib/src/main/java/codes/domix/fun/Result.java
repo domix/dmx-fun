@@ -977,4 +977,98 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
         return Result.ok(Objects.requireNonNull(combiner.apply(v1, v2, v3), "combiner returned null"));
     }
 
+    // ---------- zip4 ----------
+
+    /**
+     * Combines four {@code Result} values into a single {@code Result} containing a {@link Tuple4}.
+     * Fail-fast: returns the first {@code Err} encountered.
+     *
+     * @param <V1> value type of the first result
+     * @param <V2> value type of the second result
+     * @param <V3> value type of the third result
+     * @param <V4> value type of the fourth result
+     * @param <E>  shared error type
+     * @param r1   first result; must not be {@code null}
+     * @param r2   second result; must not be {@code null}
+     * @param r3   third result; must not be {@code null}
+     * @param r4   fourth result; must not be {@code null}
+     * @return {@code Ok(Tuple4(v1,v2,v3,v4))} if all four are {@code Ok}, otherwise the first {@code Err}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3, V4, E> Result<Tuple4<V1, V2, V3, V4>, E> zip4(
+            Result<? extends V1, ? extends E> r1,
+            Result<? extends V2, ? extends E> r2,
+            Result<? extends V3, ? extends E> r3,
+            Result<? extends V4, ? extends E> r4) {
+        Objects.requireNonNull(r1, "r1");
+        Objects.requireNonNull(r2, "r2");
+        Objects.requireNonNull(r3, "r3");
+        Objects.requireNonNull(r4, "r4");
+        if (r1 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r2 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r3 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r4 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
+        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
+        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
+        V4 v4 = ((Ok<? extends V4, ?>) r4).value();
+        return Result.ok(new Tuple4<>(v1, v2, v3, v4));
+    }
+
+    /**
+     * Combines four {@code Result} values using a {@link QuadFunction}.
+     * Fail-fast: returns the first {@code Err} encountered.
+     *
+     * @param <V1>     value type of the first result
+     * @param <V2>     value type of the second result
+     * @param <V3>     value type of the third result
+     * @param <V4>     value type of the fourth result
+     * @param <R>      result value type
+     * @param <E>      shared error type
+     * @param r1       first result; must not be {@code null}
+     * @param r2       second result; must not be {@code null}
+     * @param r3       third result; must not be {@code null}
+     * @param r4       fourth result; must not be {@code null}
+     * @param combiner function applied to the four values; must not be {@code null}
+     * @return {@code Ok(combiner(v1,v2,v3,v4))} if all four are {@code Ok}, otherwise the first {@code Err}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3, V4, R, E> Result<R, E> zipWith4(
+            Result<? extends V1, ? extends E> r1,
+            Result<? extends V2, ? extends E> r2,
+            Result<? extends V3, ? extends E> r3,
+            Result<? extends V4, ? extends E> r4,
+            QuadFunction<? super V1, ? super V2, ? super V3, ? super V4, ? extends R> combiner) {
+        Objects.requireNonNull(r1, "r1");
+        Objects.requireNonNull(r2, "r2");
+        Objects.requireNonNull(r3, "r3");
+        Objects.requireNonNull(r4, "r4");
+        Objects.requireNonNull(combiner, "combiner");
+        if (r1 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r2 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r3 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r4 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
+        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
+        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
+        V4 v4 = ((Ok<? extends V4, ?>) r4).value();
+        return Result.ok(Objects.requireNonNull(combiner.apply(v1, v2, v3, v4), "combiner returned null"));
+    }
+
 }

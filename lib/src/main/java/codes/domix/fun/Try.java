@@ -899,4 +899,103 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         return Try.success(result);
     }
 
+    // ---------- zip4 ----------
+
+    /**
+     * Combines four {@code Try} values into a single {@code Try} containing a {@link Tuple4}.
+     * Fail-fast: returns the first {@code Failure} encountered.
+     *
+     * @param <V1> value type of the first try
+     * @param <V2> value type of the second try
+     * @param <V3> value type of the third try
+     * @param <V4> value type of the fourth try
+     * @param t1   first try; must not be {@code null}
+     * @param t2   second try; must not be {@code null}
+     * @param t3   third try; must not be {@code null}
+     * @param t4   fourth try; must not be {@code null}
+     * @return {@code Success(Tuple4(v1,v2,v3,v4))} if all four succeed, otherwise the first {@code Failure}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3, V4> Try<Tuple4<V1, V2, V3, V4>> zip4(
+            Try<? extends V1> t1,
+            Try<? extends V2> t2,
+            Try<? extends V3> t3,
+            Try<? extends V4> t4) {
+        Objects.requireNonNull(t1, "t1");
+        Objects.requireNonNull(t2, "t2");
+        Objects.requireNonNull(t3, "t3");
+        Objects.requireNonNull(t4, "t4");
+        if (t1 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        if (t2 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        if (t3 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        if (t4 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        V1 v1 = ((Success<? extends V1>) t1).value();
+        V2 v2 = ((Success<? extends V2>) t2).value();
+        V3 v3 = ((Success<? extends V3>) t3).value();
+        V4 v4 = ((Success<? extends V4>) t4).value();
+        return Try.success(new Tuple4<>(v1, v2, v3, v4));
+    }
+
+    /**
+     * Combines four {@code Try} values using a {@link QuadFunction}.
+     * Fail-fast: returns the first {@code Failure} encountered.
+     * If the combiner throws, the exception is captured as a {@code Failure}.
+     *
+     * @param <V1>     value type of the first try
+     * @param <V2>     value type of the second try
+     * @param <V3>     value type of the third try
+     * @param <V4>     value type of the fourth try
+     * @param <R>      result value type
+     * @param t1       first try; must not be {@code null}
+     * @param t2       second try; must not be {@code null}
+     * @param t3       third try; must not be {@code null}
+     * @param t4       fourth try; must not be {@code null}
+     * @param combiner function applied to the four values; must not be {@code null}
+     * @return {@code Success(combiner(v1,v2,v3,v4))} if all succeed, otherwise the first {@code Failure}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3, V4, R> Try<R> zipWith4(
+            Try<? extends V1> t1,
+            Try<? extends V2> t2,
+            Try<? extends V3> t3,
+            Try<? extends V4> t4,
+            QuadFunction<? super V1, ? super V2, ? super V3, ? super V4, ? extends R> combiner) {
+        Objects.requireNonNull(t1, "t1");
+        Objects.requireNonNull(t2, "t2");
+        Objects.requireNonNull(t3, "t3");
+        Objects.requireNonNull(t4, "t4");
+        Objects.requireNonNull(combiner, "combiner");
+        if (t1 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        if (t2 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        if (t3 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        if (t4 instanceof Failure<?> f) {
+            return Try.failure(f.cause());
+        }
+        V1 v1 = ((Success<? extends V1>) t1).value();
+        V2 v2 = ((Success<? extends V2>) t2).value();
+        V3 v3 = ((Success<? extends V3>) t3).value();
+        V4 v4 = ((Success<? extends V4>) t4).value();
+        R result;
+        try {
+            result = combiner.apply(v1, v2, v3, v4);
+        } catch (Throwable t) {
+            return Try.failure(t);
+        }
+        return Try.success(result);
+    }
+
 }
