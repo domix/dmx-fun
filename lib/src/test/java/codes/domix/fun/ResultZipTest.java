@@ -139,5 +139,9 @@ class ResultZipTest {
     void zipWith3_nullArgument_throwsNullPointerException() {
         assertThrows(NullPointerException.class,
             () -> Result.zipWith3(null, Result.ok(1), Result.ok(2), (a, b, c) -> a));
+        assertThrows(NullPointerException.class,
+            () -> Result.zipWith3(Result.ok(0), null, Result.ok(2), (a, b, c) -> a));
+        assertThrows(NullPointerException.class,
+            () -> Result.zipWith3(Result.ok(0), Result.ok(1), null, (a, b, c) -> a));
     }
 }

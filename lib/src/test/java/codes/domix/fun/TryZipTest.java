@@ -139,4 +139,23 @@ class TryZipTest {
         assertThrows(NullPointerException.class,
             () -> Try.zipWith3(null, Try.success(1), Try.success(2), (a, b, c) -> a));
     }
+
+    @Test
+    void zipWith3_combinerThrows_returnsFailureWithCause() {
+        var cause = new RuntimeException("combiner");
+        var result = Try.<Integer, Integer, Integer, String>zipWith3(
+            Try.success(1), Try.success(2), Try.success(3),
+            (a, b, c) -> { throw cause; });
+        assertTrue(result.isFailure());
+        assertEquals(cause, result.getCause());
+    }
+
+    @Test
+    void zipWith3_combinerReturnsNull_returnsSuccessWithNull() {
+        var result = Try.<Integer, Integer, Integer, String>zipWith3(
+            Try.success(1), Try.success(2), Try.success(3),
+            (a, b, c) -> null);
+        assertTrue(result.isSuccess());
+        assertEquals(Try.success(null), result);
+    }
 }

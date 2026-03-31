@@ -184,5 +184,29 @@ class OptionZipTest {
         assertThrows(NullPointerException.class,
             () -> Option.some(1).zipWith3(Option.some(2), Option.some(3), null));
     }
+
+    @Test
+    void zipWith3_instanceMethod_nullB_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.some(1).zipWith3(null, Option.some(3), (a, b, c) -> a));
+    }
+
+    @Test
+    void zipWith3_instanceMethod_nullC_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.some(1).zipWith3(Option.some(2), null, (a, b, c) -> a));
+    }
+
+    @Test
+    void zip3_instanceMethod_nullB_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.some(1).zip3(null, Option.some(true)));
+    }
+
+    @Test
+    void zip3_instanceMethod_nullC_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.some(1).zip3(Option.some("a"), null));
+    }
 }
 

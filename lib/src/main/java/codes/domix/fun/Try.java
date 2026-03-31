@@ -890,7 +890,13 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         V1 v1 = ((Success<? extends V1>) t1).value();
         V2 v2 = ((Success<? extends V2>) t2).value();
         V3 v3 = ((Success<? extends V3>) t3).value();
-        return Try.success(Objects.requireNonNull(combiner.apply(v1, v2, v3), "combiner returned null"));
+        R result;
+        try {
+            result = combiner.apply(v1, v2, v3);
+        } catch (Throwable t) {
+            return Try.failure(t);
+        }
+        return Try.success(result);
     }
 
 }
