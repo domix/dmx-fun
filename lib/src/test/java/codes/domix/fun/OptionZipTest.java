@@ -166,6 +166,24 @@ class OptionZipTest {
     }
 
     @Test
+    void map3_static_nullA_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.map3(null, Option.some(2), Option.some(3), (a, b, c) -> a));
+    }
+
+    @Test
+    void map3_static_nullB_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.map3(Option.some(1), null, Option.some(3), (a, b, c) -> a));
+    }
+
+    @Test
+    void map3_static_nullC_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+            () -> Option.map3(Option.some(1), Option.some(2), null, (a, b, c) -> a));
+    }
+
+    @Test
     void zipWith3_instanceMethod_allSome_appliesCombiner() {
         var result = Option.some(1).zipWith3(Option.some(2), Option.some(3),
             (a, b, c) -> "sum=" + (a + b + c));
