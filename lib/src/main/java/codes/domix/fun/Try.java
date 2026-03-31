@@ -808,4 +808,95 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         return Try.success(Collections.unmodifiableList(out));
     }
 
+    // ---------- zip / zip3 ----------
+
+    /**
+     * Combines two {@code Try} values into a single {@code Try} containing a {@link Tuple2}.
+     * Fail-fast: returns the first {@code Failure} encountered.
+     *
+     * @param <V1> value type of the first try
+     * @param <V2> value type of the second try
+     * @param t1   first try; must not be {@code null}
+     * @param t2   second try; must not be {@code null}
+     * @return {@code Success(Tuple2(v1, v2))} if both succeed, otherwise the first {@code Failure}
+     * @throws NullPointerException if {@code t1} or {@code t2} is {@code null}
+     */
+    static <V1, V2> Try<Tuple2<V1, V2>> zip(Try<? extends V1> t1, Try<? extends V2> t2) {
+        Objects.requireNonNull(t1, "t1");
+        Objects.requireNonNull(t2, "t2");
+        if (t1 instanceof Failure<?> f) return Try.failure(f.cause());
+        if (t2 instanceof Failure<?> f) return Try.failure(f.cause());
+        V1 v1 = ((Success<? extends V1>) t1).value();
+        V2 v2 = ((Success<? extends V2>) t2).value();
+        return Try.success(new Tuple2<>(v1, v2));
+    }
+
+    /**
+     * Combines three {@code Try} values into a single {@code Try} containing a {@link Tuple3}.
+     * Fail-fast: returns the first {@code Failure} encountered.
+     *
+     * @param <V1> value type of the first try
+     * @param <V2> value type of the second try
+     * @param <V3> value type of the third try
+     * @param t1   first try; must not be {@code null}
+     * @param t2   second try; must not be {@code null}
+     * @param t3   third try; must not be {@code null}
+     * @return {@code Success(Tuple3(v1, v2, v3))} if all three succeed, otherwise the first {@code Failure}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3> Try<Tuple3<V1, V2, V3>> zip3(
+            Try<? extends V1> t1,
+            Try<? extends V2> t2,
+            Try<? extends V3> t3) {
+        Objects.requireNonNull(t1, "t1");
+        Objects.requireNonNull(t2, "t2");
+        Objects.requireNonNull(t3, "t3");
+        if (t1 instanceof Failure<?> f) return Try.failure(f.cause());
+        if (t2 instanceof Failure<?> f) return Try.failure(f.cause());
+        if (t3 instanceof Failure<?> f) return Try.failure(f.cause());
+        V1 v1 = ((Success<? extends V1>) t1).value();
+        V2 v2 = ((Success<? extends V2>) t2).value();
+        V3 v3 = ((Success<? extends V3>) t3).value();
+        return Try.success(new Tuple3<>(v1, v2, v3));
+    }
+
+    /**
+     * Combines three {@code Try} values using a {@link TriFunction}.
+     * Fail-fast: returns the first {@code Failure} encountered.
+     *
+     * @param <V1>     value type of the first try
+     * @param <V2>     value type of the second try
+     * @param <V3>     value type of the third try
+     * @param <R>      result value type
+     * @param t1       first try; must not be {@code null}
+     * @param t2       second try; must not be {@code null}
+     * @param t3       third try; must not be {@code null}
+     * @param combiner function applied to the three values; must not be {@code null}
+     * @return {@code Success(combiner(v1, v2, v3))} if all succeed, otherwise the first {@code Failure}
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <V1, V2, V3, R> Try<R> zipWith3(
+            Try<? extends V1> t1,
+            Try<? extends V2> t2,
+            Try<? extends V3> t3,
+            TriFunction<? super V1, ? super V2, ? super V3, ? extends R> combiner) {
+        Objects.requireNonNull(t1, "t1");
+        Objects.requireNonNull(t2, "t2");
+        Objects.requireNonNull(t3, "t3");
+        Objects.requireNonNull(combiner, "combiner");
+        if (t1 instanceof Failure<?> f) return Try.failure(f.cause());
+        if (t2 instanceof Failure<?> f) return Try.failure(f.cause());
+        if (t3 instanceof Failure<?> f) return Try.failure(f.cause());
+        V1 v1 = ((Success<? extends V1>) t1).value();
+        V2 v2 = ((Success<? extends V2>) t2).value();
+        V3 v3 = ((Success<? extends V3>) t3).value();
+        R result;
+        try {
+            result = combiner.apply(v1, v2, v3);
+        } catch (Throwable t) {
+            return Try.failure(t);
+        }
+        return Try.success(result);
+    }
+
 }
