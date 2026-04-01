@@ -87,7 +87,7 @@ class ResultTest {
     void getOrElseGet_shouldThrowNPE_ifSupplierReturnsNull() {
         assertThatThrownBy(() -> Result.<String, String>err("e").getOrElseGet(() -> null))
             .isInstanceOf(NullPointerException.class)
-            .hasMessageContaining("fallbackSupplier returned null");
+            .hasMessageContaining("supplier returned null");
     }
 
     @Test

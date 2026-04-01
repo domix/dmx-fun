@@ -9,7 +9,6 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -29,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  * @param <A> the type of the value contained in a valid result
  */
 @NullMarked
-public sealed interface Validated<E, A> permits Validated.Valid, Validated.Invalid {
+public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Validated.Valid, Validated.Invalid {
 
     /**
      * Represents a valid result containing a value of type {@code A}.
@@ -89,13 +88,19 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
 
     // ---------- Predicates ----------
 
+    /** Returns {@code true} if this instance is the success ({@link Valid}) variant. */
+    @Override
+    default boolean isSuccess() {
+        return this instanceof Valid<?, ?>;
+    }
+
     /**
      * Returns {@code true} if this instance is {@link Valid}.
      *
      * @return {@code true} for {@code Valid}, {@code false} for {@code Invalid}
      */
     default boolean isValid() {
-        return this instanceof Valid<?, ?>;
+        return isSuccess();
     }
 
     /**
@@ -104,7 +109,7 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
      * @return {@code true} for {@code Invalid}, {@code false} for {@code Valid}
      */
     default boolean isInvalid() {
-        return this instanceof Invalid<?, ?>;
+        return !isSuccess();
     }
 
     // ---------- Accessors ----------
@@ -132,56 +137,6 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
         return switch (this) {
             case Invalid<E, A> inv -> inv.error();
             case Valid<E, A> _ -> throw new NoSuchElementException("No error present. This Validated is Valid.");
-        };
-    }
-
-    /**
-     * Returns the value if {@link Valid}, or the given fallback otherwise.
-     *
-     * @param fallback the fallback value
-     * @return the value or the fallback
-     */
-    default A getOrElse(A fallback) {
-        Objects.requireNonNull(fallback, "fallback");
-        return this instanceof Valid<E, A>(A value) ? value : fallback;
-    }
-
-    /**
-     * Returns the value if {@link Valid}, or the value supplied by {@code supplier} otherwise.
-     *
-     * @param supplier a supplier of the fallback value; must not return {@code null}
-     * @return the value or the supplied fallback
-     * @throws NullPointerException if {@code supplier} is null or returns null
-     */
-    default A getOrElseGet(Supplier<A> supplier) {
-        Objects.requireNonNull(supplier, "supplier");
-        return this instanceof Valid<E, A>(A value)
-            ? value
-            : Objects.requireNonNull(supplier.get(), "supplier returned null");
-    }
-
-    /**
-     * Returns the value if {@link Valid}, or {@code null} if {@link Invalid}.
-     *
-     * @return the value or {@code null}
-     */
-    default @Nullable A getOrNull() {
-        return this instanceof Valid<E, A>(A value) ? value : null;
-    }
-
-    /**
-     * Returns the value if {@link Valid}, or throws an exception mapped from the error.
-     *
-     * @param exMapper a function that maps the error to a {@link RuntimeException}
-     * @return the contained value
-     * @throws RuntimeException the exception produced by {@code exMapper} if invalid
-     */
-    default A getOrThrow(Function<E, ? extends RuntimeException> exMapper) {
-        Objects.requireNonNull(exMapper, "exMapper");
-        return switch (this) {
-            case Valid<E, A> v -> v.value();
-            case Invalid<E, A> inv -> throw Objects.requireNonNull(
-                exMapper.apply(inv.error()), "exMapper returned null");
         };
     }
 
@@ -314,52 +269,6 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
         return this;
     }
 
-    /**
-     * Executes one of the provided consumers based on the state.
-     *
-     * @param onValid   called with the value if {@link Valid}
-     * @param onInvalid called with the error if {@link Invalid}
-     */
-    default void match(Consumer<A> onValid, Consumer<E> onInvalid) {
-        Objects.requireNonNull(onValid, "onValid");
-        Objects.requireNonNull(onInvalid, "onInvalid");
-        switch (this) {
-            case Valid<E, A> v -> onValid.accept(v.value());
-            case Invalid<E, A> inv -> onInvalid.accept(inv.error());
-        }
-    }
-
-    // ---------- Folding / Stream ----------
-
-    /**
-     * Folds this {@code Validated} to a single value by applying the appropriate function.
-     *
-     * @param <R>       the result type
-     * @param onValid   applied to the value if {@link Valid}
-     * @param onInvalid applied to the error if {@link Invalid}
-     * @return the result of the applied function
-     */
-    default <R> R fold(Function<A, R> onValid, Function<E, R> onInvalid) {
-        Objects.requireNonNull(onValid, "onValid");
-        Objects.requireNonNull(onInvalid, "onInvalid");
-        return switch (this) {
-            case Valid<E, A> v -> Objects.requireNonNull(onValid.apply(v.value()), "onValid returned null");
-            case Invalid<E, A> inv -> Objects.requireNonNull(onInvalid.apply(inv.error()), "onInvalid returned null");
-        };
-    }
-
-    /**
-     * Returns a single-element stream of the value if {@link Valid}, or an empty stream.
-     *
-     * @return a stream of the value or empty
-     */
-    default Stream<A> stream() {
-        return switch (this) {
-            case Valid<E, A> v -> Stream.of(v.value());
-            case Invalid<E, A> _ -> Stream.empty();
-        };
-    }
-
     // ---------- Interop ----------
 
     /**
@@ -372,19 +281,6 @@ public sealed interface Validated<E, A> permits Validated.Valid, Validated.Inval
         return switch (this) {
             case Valid<E, A> v -> Result.ok(v.value());
             case Invalid<E, A> inv -> Result.err(inv.error());
-        };
-    }
-
-    /**
-     * Converts this {@code Validated} to an {@link Option}.
-     * {@link Valid} maps to {@link Option.Some}; {@link Invalid} maps to {@link Option#none()}.
-     *
-     * @return an {@code Option} containing the value, or empty
-     */
-    default Option<A> toOption() {
-        return switch (this) {
-            case Valid<E, A> v -> Option.some(v.value());
-            case Invalid<E, A> _ -> Option.none();
         };
     }
 
