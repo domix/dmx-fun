@@ -52,6 +52,7 @@ interface Bicontainer<V, E> {
      * Returns the success value if present, or {@code fallback} otherwise.
      *
      * @param fallback the non-null fallback value
+     * @return the success value, or {@code fallback} if this is the error variant
      * @throws NullPointerException if {@code fallback} is {@code null}
      */
     default V getOrElse(V fallback) {
@@ -63,6 +64,7 @@ interface Bicontainer<V, E> {
      * Returns the success value if present, or the value produced by {@code supplier} otherwise.
      *
      * @param supplier supplier of the fallback value; must not return {@code null}
+     * @return the success value, or the value produced by {@code supplier}
      * @throws NullPointerException if {@code supplier} is {@code null} or returns {@code null}
      */
     default V getOrElseGet(Supplier<V> supplier) {
@@ -83,6 +85,7 @@ interface Bicontainer<V, E> {
      * Returns the success value if present, or throws an exception mapped from the error.
      *
      * @param exMapper maps the error to a {@link RuntimeException}; must not return {@code null}
+     * @return the success value
      * @throws NullPointerException if {@code exMapper} is {@code null} or returns {@code null}
      * @throws RuntimeException     the exception produced by {@code exMapper} on the error variant
      */
@@ -109,6 +112,7 @@ interface Bicontainer<V, E> {
      * @param <R>       the result type
      * @param onSuccess applied to the success value; must not return {@code null}
      * @param onError   applied to the error value; must not return {@code null}
+     * @return the result of the applied function
      * @throws NullPointerException if either function is {@code null} or returns {@code null}
      */
     default <R> R fold(Function<V, R> onSuccess, Function<E, R> onError) {

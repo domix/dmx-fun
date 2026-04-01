@@ -171,6 +171,11 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         return this instanceof Ok;
     }
 
+    /**
+     * Returns {@code true} if this instance is the error ({@link Err}) variant.
+     *
+     * @return {@code true} for {@code Err}, {@code false} for {@code Ok}
+     */
     default boolean isError() {
         return !isSuccess();
     }
