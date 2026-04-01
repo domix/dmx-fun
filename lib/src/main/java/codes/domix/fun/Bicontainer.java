@@ -69,7 +69,7 @@ interface Bicontainer<V, E> {
      */
     default V getOrElseGet(Supplier<V> supplier) {
         Objects.requireNonNull(supplier, "supplier");
-        return isSuccess() ? get() : Objects.requireNonNull(supplier.get(), "supplier returned null");
+        return isSuccess() ? get() : Containers.requireNonNullResult(supplier.get(), "supplier");
     }
 
     /**
@@ -92,7 +92,7 @@ interface Bicontainer<V, E> {
     default V getOrThrow(Function<E, ? extends RuntimeException> exMapper) {
         Objects.requireNonNull(exMapper, "exMapper");
         if (isSuccess()) return get();
-        throw Objects.requireNonNull(exMapper.apply(getError()), "exMapper returned null");
+        throw Containers.requireNonNullResult(exMapper.apply(getError()), "exMapper");
     }
 
     // ---------- Stream / fold / match ----------
@@ -119,8 +119,8 @@ interface Bicontainer<V, E> {
         Objects.requireNonNull(onSuccess, "onSuccess");
         Objects.requireNonNull(onError, "onError");
         return isSuccess()
-            ? Objects.requireNonNull(onSuccess.apply(get()), "onSuccess returned null")
-            : Objects.requireNonNull(onError.apply(getError()), "onError returned null");
+            ? Containers.requireNonNullResult(onSuccess.apply(get()), "onSuccess")
+            : Containers.requireNonNullResult(onError.apply(getError()), "onError");
     }
 
     /**

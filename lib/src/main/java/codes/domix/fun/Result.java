@@ -159,12 +159,6 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         return new Err<>(error);
     }
 
-    /**
-     * Checks if the current instance represents an erroneous result.
-     *
-     * @return {@code true} if the current instance is of type {@code Err}, indicating an error;
-     * {@code false} otherwise.
-     */
     /** Returns {@code true} if this instance is the success ({@link Ok}) variant. */
     @Override
     default boolean isSuccess() {
