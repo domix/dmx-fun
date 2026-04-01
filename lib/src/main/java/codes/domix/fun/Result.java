@@ -15,7 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 
 /**
@@ -32,7 +31,7 @@ import org.jspecify.annotations.Nullable;
  * @param <Error> the type of the error contained in an erroneous result
  */
 @NullMarked
-public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
+public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> permits Result.Ok, Result.Err {
     /**
      * Represents a successful result containing a value of type {@code Value}.
      * <p>
@@ -166,8 +165,14 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * @return {@code true} if the current instance is of type {@code Err}, indicating an error;
      * {@code false} otherwise.
      */
+    /** Returns {@code true} if this instance is the success ({@link Ok}) variant. */
+    @Override
+    default boolean isSuccess() {
+        return this instanceof Ok;
+    }
+
     default boolean isError() {
-        return this instanceof Err;
+        return !isSuccess();
     }
 
     /**
@@ -177,7 +182,7 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
      * {@code false} otherwise.
      */
     default boolean isOk() {
-        return this instanceof Ok;
+        return isSuccess();
     }
 
     /**
@@ -258,23 +263,6 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     }
 
     /**
-     * Executes one of the provided {@link Consumer} functions based on the state of the {@code Result}.
-     * If this instance represents a successful result (of type {@code Ok}), the {@code onSuccess}
-     * function will be executed with the value contained in the result. If this instance represents
-     * an erroneous result (of type {@code Err}), the {@code onError} function will be executed with
-     * the error contained in the result.
-     *
-     * @param onSuccess a {@link Consumer} that accepts the value contained in a successful result
-     * @param onError   a {@link Consumer} that accepts the error contained in an erroneous result
-     */
-    default void match(Consumer<Value> onSuccess, Consumer<Error> onError) {
-        switch (this) {
-            case Ok<Value, Error> ok -> onSuccess.accept(ok.value());
-            case Err<Value, Error> err -> onError.accept(err.error());
-        }
-    }
-
-    /**
      * Executes the given action if the current {@code Result} instance represents a successful result.
      * If the instance is of type {@code Ok}, the provided action is applied to the contained value.
      * In both cases, the original {@code Result} instance is returned unchanged.
@@ -302,96 +290,6 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
             action.accept(error);
         }
         return this;
-    }
-
-    /**
-     * Returns the value contained in this {@code Result} instance if it represents
-     * a successful result. If the instance represents an erroneous result, the provided
-     * fallback value is returned instead.
-     *
-     * @param fallback the fallback value to return if this instance is an erroneous result
-     * @return the value contained in a successful result, or the fallback value if this
-     * instance represents an error
-     */
-    default Value getOrElse(Value fallback) {
-        return this instanceof Ok<Value, Error>(Value value) ? value : fallback;
-    }
-
-    /**
-     * Retrieves the value contained within this {@code Result} instance if it represents a successful result.
-     * If the instance represents an erroneous result, the value provided by the given {@link Supplier} is returned instead.
-     *
-     * @param fallbackSupplier a {@link Supplier} that provides the fallback value to use if this instance represents an error
-     * @return the value contained in a successful result, or the value provided by {@code fallbackSupplier} if this instance represents an error
-     */
-    default Value getOrElseGet(Supplier<Value> fallbackSupplier) {
-        Objects.requireNonNull(fallbackSupplier, "fallbackSupplier");
-        return this instanceof Ok<Value, Error>(Value value)
-            ? value
-            : Objects.requireNonNull(fallbackSupplier.get(), "fallbackSupplier returned null");
-    }
-
-    /**
-     * Retrieves the value of the current {@code Result} instance if it represents a successful result,
-     * or throws a custom exception mapped from the contained error if it represents an erroneous result.
-     *
-     * @param exceptionMapper a function that maps the error value of an erroneous result to a
-     *                        {@code RuntimeException} to be thrown
-     * @return the value contained in the successful result
-     * @throws RuntimeException the exception produced by {@code exceptionMapper} if the instance represents an error
-     */
-    default Value getOrThrow(Function<Error, ? extends RuntimeException> exceptionMapper) {
-        return switch (this) {
-            case Ok<Value, Error> ok -> ok.value();
-            case Err<Value, Error> err -> throw exceptionMapper.apply(err.error());
-        };
-    }
-
-    /**
-     * Retrieves the value contained within this {@code Result} instance if it represents
-     * a successful result, or returns {@code null} if it represents an erroneous result.
-     *
-     * @return the value contained in the successful result, or {@code null} if this
-     * instance represents an error
-     */
-    default @Nullable Value getOrNull() {
-        return this instanceof Ok<Value, Error>(Value value) ? value : null;
-    }
-
-    /**
-     * Returns a single-element {@link Stream} containing the value, or an empty stream on error.
-     * Useful for flat-mapping a {@code Stream<Result<V, E>>} to keep only the successful values:
-     * <pre>{@code
-     * Stream<Integer> values = results.stream().flatMap(Result::stream);
-     * }</pre>
-     *
-     * @return a stream containing the value if this is an {@code Ok}, or an empty stream otherwise
-     */
-    default Stream<Value> stream() {
-        return switch (this) {
-            case Ok<Value, Error> ok -> Stream.of(ok.value());
-            case Err<Value, Error> __ -> Stream.empty();
-        };
-    }
-
-    /**
-     * Transforms the current {@code Result} instance into a value of type {@code Folded}
-     * by applying one of the provided functions based on the state of the instance.
-     * If the current instance represents a successful result (of type {@code Ok}),
-     * the {@code onSuccess} function is applied to the contained value. If the current instance
-     * represents an erroneous result (of type {@code Err}), the {@code onError} function is
-     * applied to the contained error.
-     *
-     * @param <Folded>  the type of the value returned by the provided functions
-     * @param onSuccess a function to apply to the value of a successful result
-     * @param onError   a function to apply to the error of an erroneous result
-     * @return the result of applying the appropriate function, as a value of type {@code Folded}
-     */
-    default <Folded> Folded fold(Function<Value, Folded> onSuccess, Function<Error, Folded> onError) {
-        return switch (this) {
-            case Ok<Value, Error> ok -> onSuccess.apply(ok.value());
-            case Err<Value, Error> err -> onError.apply(err.error());
-        };
     }
 
     /**
@@ -532,20 +430,6 @@ public sealed interface Result<Value, Error> permits Result.Ok, Result.Err {
     }
 
     // ---------- Interoperability: Result <-> Option / Try ----------
-
-    /**
-     * Converts the current instance into an {@code Option<Value>}.
-     * If the instance represents a successful result ({@code Ok}), the contained value is wrapped in an {@code Option}.
-     * If the instance represents an error ({@code Err}), an empty {@code Option} is returned.
-     *
-     * @return an {@code Option<Value>} containing the value if the instance is {@code Ok}, or an empty {@code Option} if the instance is {@code Err}.
-     */
-    default Option<Value> toOption() {
-        return switch (this) {
-            case Ok<Value, Error> ok -> Option.some(ok.value());
-            case Err<Value, Error> _ -> Option.none();
-        };
-    }
 
     /**
      * Converts the current result into a {@code Try} instance. If the current
