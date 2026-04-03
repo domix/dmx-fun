@@ -2,7 +2,6 @@ package codes.domix.fun;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -14,7 +13,9 @@ import java.util.function.Supplier;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.stream.Gatherer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -724,7 +725,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      */
     static <V> Try<List<V>> sequence(Iterable<Try<V>> tries) {
         Objects.requireNonNull(tries, "tries");
-        return collectFromIterator(tries.iterator());
+        return sequence(StreamSupport.stream(tries.spliterator(), false));
     }
 
     /**
@@ -740,8 +741,20 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      */
     static <V> Try<List<V>> sequence(Stream<Try<V>> tries) {
         Objects.requireNonNull(tries, "tries");
-        try (tries) {
-            return collectFromIterator(tries.iterator());
+        try (var gathered = tries.gather(Gatherer.<Try<V>, ArrayList<V>, Try<List<V>>>ofSequential(
+                ArrayList::new,
+                (state, element, downstream) -> {
+                    Objects.requireNonNull(element, "tries contains a null element");
+                    if (element instanceof Failure<V> f) {
+                        downstream.push(Try.failure(f.cause()));
+                        return false;
+                    }
+                    state.add(((Success<V>) element).value());
+                    return true;
+                },
+                (state, downstream) -> downstream.push(Try.success(Collections.unmodifiableList(state)))
+        ))) {
+            return gathered.findFirst().orElseThrow();
         }
     }
 
@@ -761,14 +774,7 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     static <A, B> Try<List<B>> traverse(Iterable<A> values, Function<? super A, Try<B>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        Iterator<A> raw = values.iterator();
-        Iterator<Try<B>> it = new Iterator<>() {
-            public boolean hasNext() { return raw.hasNext(); }
-            public Try<B> next() {
-                return Objects.requireNonNull(mapper.apply(raw.next()), "traverse mapper must not return null");
-            }
-        };
-        return collectFromIterator(it);
+        return traverse(StreamSupport.stream(values.spliterator(), false), mapper);
     }
 
     /**
@@ -788,24 +794,21 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     static <A, B> Try<List<B>> traverse(Stream<A> values, Function<? super A, Try<B>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        try (values) {
-            Iterator<Try<B>> it = values
-                .map(a -> Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null"))
-                .iterator();
-            return collectFromIterator(it);
+        try (var gathered = values.gather(Gatherer.<A, ArrayList<B>, Try<List<B>>>ofSequential(
+                ArrayList::new,
+                (state, element, downstream) -> {
+                    Try<B> t = Objects.requireNonNull(mapper.apply(element), "traverse mapper must not return null");
+                    if (t instanceof Failure<B> f) {
+                        downstream.push(Try.failure(f.cause()));
+                        return false;
+                    }
+                    state.add(((Success<B>) t).value());
+                    return true;
+                },
+                (state, downstream) -> downstream.push(Try.success(Collections.unmodifiableList(state)))
+        ))) {
+            return gathered.findFirst().orElseThrow();
         }
-    }
-
-    private static <V> Try<List<V>> collectFromIterator(Iterator<? extends Try<V>> it) {
-        ArrayList<V> out = new ArrayList<>();
-        while (it.hasNext()) {
-            Try<V> t = Objects.requireNonNull(it.next(), "tries contains a null element");
-            if (t instanceof Failure<V> f) {
-                return Try.failure(f.cause());
-            }
-            out.add(((Success<V>) t).value());
-        }
-        return Try.success(Collections.unmodifiableList(out));
     }
 
     // ---------- zip / zip3 ----------

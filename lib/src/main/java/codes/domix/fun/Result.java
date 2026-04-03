@@ -2,7 +2,6 @@ package codes.domix.fun;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -13,7 +12,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
+import java.util.stream.Gatherer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.jspecify.annotations.NullMarked;
 
 
@@ -584,17 +585,7 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      */
     static <V, E> Result<List<V>, E> sequence(Iterable<Result<V, E>> results) {
         Objects.requireNonNull(results, "results");
-        ArrayList<V> out = new ArrayList<>();
-        for (Result<V, E> r : results) {
-            if (r == null) {
-                throw new NullPointerException("results contains null element");
-            }
-            if (r instanceof Err<V, E> err) {
-                return Result.err(err.error());
-            }
-            out.add(((Ok<V, E>) r).value());
-        }
-        return Result.ok(List.copyOf(out));
+        return sequence(StreamSupport.stream(results.spliterator(), false));
     }
 
     /**
@@ -611,21 +602,21 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      */
     static <V, E> Result<List<V>, E> sequence(Stream<Result<V, E>> results) {
         Objects.requireNonNull(results, "results");
-        ArrayList<V> out = new ArrayList<>();
-        try (results) {
-            Iterator<Result<V, E>> it = results.iterator();
-            while (it.hasNext()) {
-                Result<V, E> r = it.next();
-                if (r == null) {
-                    throw new NullPointerException("results contains null element");
-                }
-                if (r instanceof Err<V, E> err) {
-                    return Result.err(err.error());
-                }
-                out.add(((Ok<V, E>) r).value());
-            }
+        try (var gathered = results.gather(Gatherer.<Result<V, E>, ArrayList<V>, Result<List<V>, E>>ofSequential(
+                ArrayList::new,
+                (state, element, downstream) -> {
+                    Objects.requireNonNull(element, "results contains null element");
+                    if (element instanceof Err<V, E> err) {
+                        downstream.push(Result.err(err.error()));
+                        return false;
+                    }
+                    state.add(((Ok<V, E>) element).value());
+                    return true;
+                },
+                (state, downstream) -> downstream.push(Result.ok(List.copyOf(state)))
+        ))) {
+            return gathered.findFirst().orElseThrow();
         }
-        return Result.ok(List.copyOf(out));
     }
 
     /**
@@ -645,15 +636,7 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     static <A, B, E> Result<List<B>, E> traverse(Iterable<A> values, Function<? super A, Result<B, E>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        ArrayList<B> out = new ArrayList<>();
-        for (A a : values) {
-            Result<B, E> r = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
-            if (r instanceof Err<B, E> err) {
-                return Result.err(err.error());
-            }
-            out.add(((Ok<B, E>) r).value());
-        }
-        return Result.ok(List.copyOf(out));
+        return traverse(StreamSupport.stream(values.spliterator(), false), mapper);
     }
 
     /**
@@ -674,19 +657,21 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     static <A, B, E> Result<List<B>, E> traverse(Stream<A> values, Function<? super A, Result<B, E>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        ArrayList<B> out = new ArrayList<>();
-        try (values) {
-            Iterator<A> it = values.iterator();
-            while (it.hasNext()) {
-                A a = it.next();
-                Result<B, E> r = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
-                if (r instanceof Err<B, E> err) {
-                    return Result.err(err.error());
-                }
-                out.add(((Ok<B, E>) r).value());
-            }
+        try (var gathered = values.gather(Gatherer.<A, ArrayList<B>, Result<List<B>, E>>ofSequential(
+                ArrayList::new,
+                (state, element, downstream) -> {
+                    Result<B, E> r = Objects.requireNonNull(mapper.apply(element), "traverse mapper must not return null");
+                    if (r instanceof Err<B, E> err) {
+                        downstream.push(Result.err(err.error()));
+                        return false;
+                    }
+                    state.add(((Ok<B, E>) r).value());
+                    return true;
+                },
+                (state, downstream) -> downstream.push(Result.ok(List.copyOf(state)))
+        ))) {
+            return gathered.findFirst().orElseThrow();
         }
-        return Result.ok(List.copyOf(out));
     }
 
     // ---------- Collectors ----------
