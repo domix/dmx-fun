@@ -276,18 +276,13 @@ class InteropTest {
         @Test
         @Disabled("just sample code")
         void foo() {
+            // shows how the Option type can be used to represent a nullable value (invalid)
             var user2 = new Foo.User2();
-            var user = new Foo.User();
-            Optional<String> name2 = Optional.of(user2)
-                .map(Foo.User2::getProfile)      // getProfile() can return null...
-                .map(Foo.Profile::getDisplayName); //
-            System.out.printf("name: %s%n", name2.orElse("no name"));
-
-
-           String name = user.getProfile()
-               .flatMap(profile -> Option.ofNullable(profile.getDisplayName()))
-               .getOrElse("no name");
-            System.out.printf("name 2: %s%n", name2.orElse("no name"));
+            String name2 = Option.some(user2)
+                .flatMap(Foo.User2::getProfile)
+                .map(Foo.Profile::getDisplayName)
+                .getOrElse("no name");
+            System.out.printf("name 2: %s%n", name2);
         }
     }
 }

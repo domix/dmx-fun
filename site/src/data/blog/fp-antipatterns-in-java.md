@@ -42,21 +42,21 @@ The fix is to model the possibility of absence in the return type of each step, 
 
 ```java
 // Each step is honest about what it might not have
-String name = user.getProfile()
-        .flatMap(profile -> Option.ofNullable(profile.getDisplayName()))
+String name = Option.some(new User())
+        .flatMap(User::getProfile)
+        .map(Profile::getDisplayName)
         .getOrElse("no name");
+
 ```
 
 If `getProfile()` can return null, its return type should be `Option<Profile>`, not `Profile`. Push the optionality into the type, not into null checks scattered downstream.
 
-```
-Cannot invoke "codes.domix.fun.Option.flatMap(java.util.function.Function)" 
-because the return value of "codes.domix.fun.Foo$User.getProfile()" is null
-java.lang.NullPointerException: 
-Cannot invoke "codes.domix.fun.Option.flatMap(java.util.function.Function)" 
-because the return value of "codes.domix.fun.Foo$User.getProfile()" 
-is null
-at codes.domix.fun.SampleTest$ValidatedInterop.foo(SampleTest.java:10)
+```text
+flatMap mapper must not return null
+java.lang.NullPointerException: flatMap mapper must not return null
+	at java.base/java.util.Objects.requireNonNull(Objects.java:246)
+	at codes.domix.fun.Option.flatMap(Option.java:237)
+	at codes.domix.fun.InteropTest$ValidatedInterop.foo(InteropTest.java:288)
 ```
 
 ---
