@@ -207,15 +207,14 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
     default <B> Validated<E, Tuple2<A, B>> product(Validated<E, B> other, BinaryOperator<E> errMerge) {
         Objects.requireNonNull(other, "other");
         Objects.requireNonNull(errMerge, "errMerge");
-        return switch (this) {
-            case Valid<E, A> v -> switch (other) {
-                case Valid<E, B> ob -> Validated.valid(new Tuple2<>(v.value(), ob.value()));
-                case Invalid<E, B> oi -> Validated.invalid(oi.error());
-            };
-            case Invalid<E, A> inv -> switch (other) {
-                case Valid<E, B> _ -> Validated.invalid(inv.error());
-                case Invalid<E, B> oi -> Validated.invalid(Objects.requireNonNull(errMerge.apply(inv.error(), oi.error()), "errMerge returned null"));
-            };
+        record Pair<X, Y>(X left, Y right) {}
+        return switch (new Pair<>(this, other)) {
+            case Pair(Valid<E, A> v,     Valid<E, B>   ob) -> Validated.valid(new Tuple2<>(v.value(), ob.value()));
+            case Pair(Valid<E, A> _,     Invalid<E, B> oi) -> Validated.invalid(oi.error());
+            case Pair(Invalid<E, A> inv, Valid<E, B>   _ ) -> Validated.invalid(inv.error());
+            case Pair(Invalid<E, A> inv, Invalid<E, B> oi) -> Validated.invalid(
+                Objects.requireNonNull(errMerge.apply(inv.error(), oi.error()), "errMerge returned null")
+            );
         };
     }
 
