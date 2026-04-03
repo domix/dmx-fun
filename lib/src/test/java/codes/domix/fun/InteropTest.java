@@ -3,6 +3,7 @@ package codes.domix.fun;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -273,6 +274,7 @@ class InteropTest {
         }
 
         @Test
+        @Disabled("just sample code")
         void foo() {
             var user2 = new Foo.User2();
             var user = new Foo.User();
