@@ -1,7 +1,6 @@
 package codes.domix.fun;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -13,7 +12,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * A sealed interface representing an optional value with two possible states:
@@ -374,17 +375,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      */
     static <V> Option<List<V>> sequence(Iterable<Option<V>> options) {
         Objects.requireNonNull(options, "options");
-        ArrayList<V> out = new ArrayList<>();
-        for (Option<V> opt : options) {
-            if (opt == null) {
-                throw new NullPointerException("options contains null element (use Option.none() instead)");
-            }
-            if (opt instanceof None<V>) {
-                return Option.none();
-            }
-            out.add(((Some<V>) opt).value());
-        }
-        return Option.some(List.copyOf(out));
+        return sequence(StreamSupport.stream(options.spliterator(), false));
     }
 
     /**
@@ -400,21 +391,21 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      */
     static <V> Option<List<V>> sequence(Stream<Option<V>> options) {
         Objects.requireNonNull(options, "options");
-        ArrayList<V> out = new ArrayList<>();
-        try (options) {
-            Iterator<Option<V>> it = options.iterator();
-            while (it.hasNext()) {
-                Option<V> opt = it.next();
-                if (opt == null) {
-                    throw new NullPointerException("options contains null element (use Option.none() instead)");
-                }
-                if (opt instanceof None<V>) {
-                    return Option.none();
-                }
-                out.add(((Some<V>) opt).value());
-            }
+        try (var gathered = options.gather(Gatherer.<Option<V>, ArrayList<V>, Option<List<V>>>ofSequential(
+                ArrayList::new,
+                (state, element, downstream) -> {
+                    Objects.requireNonNull(element, "options contains null element (use Option.none() instead)");
+                    if (element instanceof None<V>) {
+                        downstream.push(Option.none());
+                        return false;
+                    }
+                    state.add(((Some<V>) element).value());
+                    return true;
+                },
+                (state, downstream) -> downstream.push(Option.some(List.copyOf(state)))
+        ))) {
+            return gathered.findFirst().orElseThrow();
         }
-        return Option.some(List.copyOf(out));
     }
 
     /**
@@ -434,15 +425,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     static <A, B> Option<List<B>> traverse(Iterable<A> values, Function<? super A, Option<B>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        ArrayList<B> out = new ArrayList<>();
-        for (A a : values) {
-            Option<B> ob = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
-            if (ob instanceof None<B>) {
-                return Option.none();
-            }
-            out.add(((Some<B>) ob).value());
-        }
-        return Option.some(List.copyOf(out));
+        return traverse(StreamSupport.stream(values.spliterator(), false), mapper);
     }
 
     /**
@@ -461,19 +444,21 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     static <A, B> Option<List<B>> traverse(Stream<A> values, Function<? super A, Option<B>> mapper) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
-        ArrayList<B> out = new ArrayList<>();
-        try (values) {
-            Iterator<A> it = values.iterator();
-            while (it.hasNext()) {
-                A a = it.next();
-                Option<B> ob = Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null");
-                if (ob instanceof None<B>) {
-                    return Option.none();
-                }
-                out.add(((Some<B>) ob).value());
-            }
+        try (var gathered = values.gather(Gatherer.<A, ArrayList<B>, Option<List<B>>>ofSequential(
+                ArrayList::new,
+                (state, element, downstream) -> {
+                    Option<B> ob = Objects.requireNonNull(mapper.apply(element), "traverse mapper must not return null");
+                    if (ob instanceof None<B>) {
+                        downstream.push(Option.none());
+                        return false;
+                    }
+                    state.add(((Some<B>) ob).value());
+                    return true;
+                },
+                (state, downstream) -> downstream.push(Option.some(List.copyOf(state)))
+        ))) {
+            return gathered.findFirst().orElseThrow();
         }
-        return Option.some(List.copyOf(out));
     }
 
     // ---------- Interoperability: Option <-> Result / Try ----------

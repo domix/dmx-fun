@@ -184,6 +184,37 @@ class SequenceTraverseTest {
             assertThat(result.isError()).isTrue();
             assertThat(result.getError()).isEqualTo("invalid: bad");
         }
+
+        @Test
+        void sequence_stream_shortCircuitsAfterFirstErr() {
+            AtomicInteger seen = new AtomicInteger(0);
+            Stream<Result<Integer, String>> base = Stream.of(
+                Result.ok(1), Result.<Integer, String>err("stop"), Result.ok(3)
+            );
+            Result<List<Integer>, String> result = Result.sequence(base.peek(r -> seen.incrementAndGet()));
+            assertThat(result.isError()).isTrue();
+            assertThat(result.getError()).isEqualTo("stop");
+            assertThat(seen.get()).isLessThan(3);
+        }
+
+        @Test
+        void traverse_stream_shortCircuitsAfterFirstErr() {
+            AtomicInteger calls = new AtomicInteger(0);
+            Result<List<Integer>, String> result = Result.traverse(
+                Stream.of("1", "bad", "3"),
+                s -> {
+                    calls.incrementAndGet();
+                    try {
+                        return Result.ok(Integer.parseInt(s));
+                    } catch (NumberFormatException e) {
+                        return Result.err("invalid: " + s);
+                    }
+                }
+            );
+            assertThat(result.isError()).isTrue();
+            assertThat(result.getError()).isEqualTo("invalid: bad");
+            assertThat(calls.get()).isEqualTo(2);
+        }
     }
 
     // =========================================================================
@@ -356,6 +387,34 @@ class SequenceTraverseTest {
             );
             assertThat(result.isFailure()).isTrue();
             assertThat(result.getCause()).isInstanceOf(NumberFormatException.class);
+        }
+
+        @Test
+        void sequence_stream_shortCircuitsAfterFirstFailure() {
+            RuntimeException boom = new RuntimeException("boom");
+            AtomicInteger seen = new AtomicInteger(0);
+            Try<List<Integer>> result = Try.sequence(
+                Stream.of(Try.success(1), Try.<Integer>failure(boom), Try.success(3))
+                      .peek(t -> seen.incrementAndGet())
+            );
+            assertThat(result.isFailure()).isTrue();
+            assertThat(result.getCause()).isSameAs(boom);
+            assertThat(seen.get()).isLessThan(3);
+        }
+
+        @Test
+        void traverse_stream_shortCircuitsAfterFirstFailure() {
+            AtomicInteger calls = new AtomicInteger(0);
+            Try<List<Integer>> result = Try.traverse(
+                Stream.of("1", "bad", "3"),
+                s -> {
+                    calls.incrementAndGet();
+                    return Try.of(() -> Integer.parseInt(s));
+                }
+            );
+            assertThat(result.isFailure()).isTrue();
+            assertThat(result.getCause()).isInstanceOf(NumberFormatException.class);
+            assertThat(calls.get()).isEqualTo(2);
         }
     }
 }
