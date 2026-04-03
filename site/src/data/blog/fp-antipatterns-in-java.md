@@ -25,23 +25,39 @@ The anti-patterns below are not beginner mistakes — they are the kind of thing
 `map` is a contract: given a non-empty container, apply a transformation and produce a new non-empty container. The moment the transformation returns `null`, that contract is broken.
 
 ```java
-// Looks functional, hides a null bomb
+// Looks functional, hides a null bug
 Optional<String> name = Optional.of(user)
-    .map(u -> u.getProfile())   // Profile could be null
-    .map(p -> p.getDisplayName()); // NullPointerException waiting to happen
+    .map(u -> u.getProfile())      // getProfile() can return null...
+    .map(p -> p.getDisplayName())  // ...second map is never called;
+                                   // name is silently Optional.empty()
+    .orElse("no name");
+    // No NPE — the null was swallowed.
+    // You see "no name" when the real
+    // problem is a missing profile.
 ```
 
-The problem: `Optional.map` wraps the result of the function in an `Optional`. But it does not defend against the function returning `null` — in the standard JDK, `Optional.map(f)` will return `Optional.empty()` if `f` returns `null`, silently turning an error into an absent value. With stricter null-marked types like `Option<T>` from `dmx-fun`, this is a compile-time constraint — but the underlying design mistake is the same.
+The problem: `Optional.map(f)` in the standard JDK returns `Optional.empty()` if `f` returns `null`, silently turning a bug into an absent value. The caller has no way to distinguish "user has no display name" from "getProfile() returned null unexpectedly." With stricter null-marked types like `Option<T>` from `dmx-fun`, a mapper that returns `null` throws `NullPointerException` immediately — the bug surfaces at the source rather than disappearing downstream.
 
 The fix is to model the possibility of absence in the return type of each step, and chain with `flatMap` instead:
 
 ```java
 // Each step is honest about what it might not have
-Option<String> name = Option.ofNullable(user.getProfile())
-    .flatMap(p -> Option.ofNullable(p.getDisplayName()));
+String name = Option.some(new User())
+        .flatMap(User::getProfile)
+        .map(Profile::getDisplayName)
+        .getOrElse("no name");
+
 ```
 
 If `getProfile()` can return null, its return type should be `Option<Profile>`, not `Profile`. Push the optionality into the type, not into null checks scattered downstream.
+
+```text
+flatMap mapper must not return null
+java.lang.NullPointerException: flatMap mapper must not return null
+	at java.base/java.util.Objects.requireNonNull(Objects.java:246)
+	at codes.domix.fun.Option.flatMap(Option.java:237)
+	at codes.domix.fun.InteropTest$ValidatedInterop.foo(InteropTest.java:288)
+```
 
 ---
 

@@ -3,6 +3,7 @@ package codes.domix.fun;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -270,6 +271,18 @@ class InteropTest {
                 Try.failure(new RuntimeException("boom")), Throwable::getMessage);
             assertTrue(v.isInvalid());
             assertEquals("boom", v.getError());
+        }
+
+        @Test
+        @Disabled("just sample code")
+        void foo() {
+            // shows how the Option type can be used to represent a nullable value (invalid)
+            var user2 = new Foo.User2();
+            String name2 = Option.some(user2)
+                .flatMap(Foo.User2::getProfile)
+                .map(Foo.Profile::getDisplayName)
+                .getOrElse("no name");
+            System.out.printf("name 2: %s%n", name2);
         }
     }
 }
