@@ -235,12 +235,14 @@ The right carrier depends on what callers need:
 // Failure is a first-class typed value
 public Result<UserProfile, ProfileError> loadProfile(UserId id) {
     return Try.of(() -> profileService.load(id))
-        .map(Result::<UserProfile, ProfileError>ok)
-        .getOrElse(cause -> switch (cause) {
-            case ProfileNotFoundException e -> Result.err(ProfileError.notFound(id));
-            case ServiceUnavailableException e -> Result.err(ProfileError.serviceDown());
-            default -> Result.err(ProfileError.unexpected(cause));
-        });
+        .fold(
+            profile -> Result.<UserProfile, ProfileError>ok(profile),
+            cause -> switch (cause) {
+                case ProfileNotFoundException e   -> Result.err(ProfileError.notFound(id));
+                case ServiceUnavailableException e -> Result.err(ProfileError.serviceDown());
+                default                           -> Result.err(ProfileError.unexpected(cause));
+            }
+        );
 }
 ```
 
@@ -377,14 +379,30 @@ This returns the *first* error. A user who submits a form with a blank name, an 
 ```java
 // All validation errors collected in one pass
 public Validated<List<String>, RegistrationRequest> validate(RegistrationRequest req) {
-    return Validated.<List<String>, String>valid(req.email())
-        .combine(
-            Validated.valid(req.password()),
-            (email, password) -> req,
-            (e1, e2) -> { var l = new ArrayList<>(e1); l.addAll(e2); return l; }
-        );
-    // ... add more fields
+    // Each field validated independently — each can be Valid or Invalid
+    Validated<List<String>, String> emailV = req.email().isBlank()
+        ? Validated.invalid(List.of("email is required"))
+        : Validated.valid(req.email());
+
+    Validated<List<String>, String> passwordV = req.password().length() < 8
+        ? Validated.invalid(List.of("password too short"))
+        : Validated.valid(req.password());
+
+    Validated<List<String>, String> nameV = req.name().isBlank()
+        ? Validated.invalid(List.of("name is required"))
+        : Validated.valid(req.name());
+
+    BinaryOperator<List<String>> merge =
+        (a, b) -> Stream.concat(a.stream(), b.stream()).toList();
+
+    // combine(other, errMerge, valueMerge): errors accumulate, values compose
+    return emailV
+        .combine(passwordV, merge, (e, p) -> e)
+        .combine(nameV,     merge, (ep, n) -> req);
 }
+// Submit with blank email + short password + blank name:
+// → Invalid(["email is required", "password too short", "name is required"])
+// All three errors at once — no resubmit loop.
 ```
 
 The distinction matters:
