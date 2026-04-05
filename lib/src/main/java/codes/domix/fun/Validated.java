@@ -1,7 +1,6 @@
 package codes.domix.fun;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -10,6 +9,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -432,15 +432,10 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mapper, "mapper");
         Objects.requireNonNull(errMerge, "errMerge");
-        Iterable<Validated<E, B>> mapped = () -> {
-            Iterator<A> src = values.iterator();
-            return new Iterator<Validated<E, B>>() {
-                public boolean hasNext() { return src.hasNext(); }
-                public Validated<E, B> next() {
-                    return Objects.requireNonNull(mapper.apply(src.next()), "traverse mapper must not return null");
-                }
-            };
-        };
+        Iterable<Validated<E, B>> mapped = () ->
+            StreamSupport.stream(values.spliterator(), false)
+                .map(a -> Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null"))
+                .iterator();
         return accumulate(mapped, errMerge);
     }
 
