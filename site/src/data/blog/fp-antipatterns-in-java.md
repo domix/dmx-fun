@@ -26,7 +26,7 @@ The anti-patterns below are not beginner mistakes — they are the kind of thing
 
 ```java
 // Looks functional, hides a null bug
-Optional<String> name = Optional.of(user)
+String name = Optional.of(user)
     .map(u -> u.getProfile())      // getProfile() can return null...
     .map(p -> p.getDisplayName())  // ...second map is never called;
                                    // name is silently Optional.empty()
