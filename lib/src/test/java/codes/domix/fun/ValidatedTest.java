@@ -1,306 +1,305 @@
 package codes.domix.fun;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ValidatedTest {
 
     // ---------- Factories ----------
 
     @Test
-    void valid_wraps_value() {
+    void valid_shouldWrapValue() {
         Validated<String, Integer> v = Validated.valid(42);
-        assertTrue(v.isValid());
-        assertFalse(v.isInvalid());
-        assertEquals(42, v.get());
+        assertThat(v.isValid()).isTrue();
+        assertThat(v.isInvalid()).isFalse();
+        assertThat(v.get()).isEqualTo(42);
     }
 
     @Test
-    void invalid_wraps_error() {
+    void invalid_shouldWrapError() {
         Validated<String, Integer> v = Validated.invalid("bad");
-        assertFalse(v.isValid());
-        assertTrue(v.isInvalid());
-        assertEquals("bad", v.getError());
+        assertThat(v.isValid()).isFalse();
+        assertThat(v.isInvalid()).isTrue();
+        assertThat(v.getError()).isEqualTo("bad");
     }
 
     @Test
-    void valid_rejects_null() {
-        assertThrows(NullPointerException.class, () -> Validated.valid(null));
+    void valid_shouldThrowNPE_ifValueIsNull() {
+        assertThatThrownBy(() -> Validated.valid(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
-    void invalid_rejects_null() {
-        assertThrows(NullPointerException.class, () -> Validated.invalid(null));
+    void invalid_shouldThrowNPE_ifErrorIsNull() {
+        assertThatThrownBy(() -> Validated.invalid(null)).isInstanceOf(NullPointerException.class);
     }
 
     // ---------- Accessors ----------
 
     @Test
-    void get_on_invalid_throws() {
-        assertThrows(NoSuchElementException.class, () -> Validated.invalid("err").get());
+    void get_onInvalid_shouldThrowNoSuchElementException() {
+        assertThatThrownBy(() -> Validated.invalid("err").get())
+            .isInstanceOf(java.util.NoSuchElementException.class);
     }
 
     @Test
-    void getError_on_valid_throws() {
-        assertThrows(NoSuchElementException.class, () -> Validated.valid(1).getError());
+    void getError_onValid_shouldThrowNoSuchElementException() {
+        assertThatThrownBy(() -> Validated.valid(1).getError())
+            .isInstanceOf(java.util.NoSuchElementException.class);
     }
 
     @Test
-    void getOrElse_valid_returns_value() {
-        assertEquals(42, Validated.<String, Integer>valid(42).getOrElse(0));
+    void getOrElse_onValid_shouldReturnValue() {
+        assertThat(Validated.<String, Integer>valid(42).getOrElse(0)).isEqualTo(42);
     }
 
     @Test
-    void getOrElse_invalid_returns_fallback() {
-        assertEquals(0, Validated.<String, Integer>invalid("err").getOrElse(0));
+    void getOrElse_onInvalid_shouldReturnFallback() {
+        assertThat(Validated.<String, Integer>invalid("err").getOrElse(0)).isEqualTo(0);
     }
 
     @Test
-    void getOrElseGet_valid_returns_value() {
-        assertEquals(42, Validated.<String, Integer>valid(42).getOrElseGet(() -> 0));
+    void getOrElseGet_onValid_shouldReturnValue() {
+        assertThat(Validated.<String, Integer>valid(42).getOrElseGet(() -> 0)).isEqualTo(42);
     }
 
     @Test
-    void getOrElseGet_invalid_returns_supplied() {
-        assertEquals(0, Validated.<String, Integer>invalid("err").getOrElseGet(() -> 0));
+    void getOrElseGet_onInvalid_shouldReturnSuppliedValue() {
+        assertThat(Validated.<String, Integer>invalid("err").getOrElseGet(() -> 0)).isEqualTo(0);
     }
 
     @Test
-    void getOrNull_valid_returns_value() {
-        assertEquals(42, Validated.<String, Integer>valid(42).getOrNull());
+    void getOrNull_onValid_shouldReturnValue() {
+        assertThat(Validated.<String, Integer>valid(42).getOrNull()).isEqualTo(42);
     }
 
     @Test
-    void getOrNull_invalid_returns_null() {
-        assertNull(Validated.<String, Integer>invalid("err").getOrNull());
+    void getOrNull_onInvalid_shouldReturnNull() {
+        assertThat(Validated.<String, Integer>invalid("err").getOrNull()).isNull();
     }
 
     @Test
-    void getOrThrow_valid_returns_value() {
-        assertEquals(42, Validated.<String, Integer>valid(42)
-            .getOrThrow(e -> new RuntimeException(e)));
+    void getOrThrow_onValid_shouldReturnValue() {
+        assertThat(Validated.<String, Integer>valid(42)
+            .getOrThrow(e -> new RuntimeException(e))).isEqualTo(42);
     }
 
     @Test
-    void getOrThrow_invalid_throws_mapped_exception() {
-        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+    void getOrThrow_onInvalid_shouldThrowMappedException() {
+        assertThatThrownBy(() ->
             Validated.<String, Integer>invalid("oops")
-                .getOrThrow(e -> new RuntimeException(e)));
-        assertEquals("oops", ex.getMessage());
+                .getOrThrow(e -> new RuntimeException(e)))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("oops");
     }
 
     // ---------- Transformations ----------
 
     @Test
-    void map_valid_applies_function() {
+    void map_onValid_shouldApplyFunction() {
         Validated<String, Integer> result = Validated.<String, Integer>valid(5).map(n -> n * 2);
-        assertEquals(10, result.get());
+        assertThat(result.get()).isEqualTo(10);
     }
 
     @Test
-    void map_invalid_preserves_error() {
+    void map_onInvalid_shouldPreserveError() {
         Validated<String, Integer> result = Validated.<String, Integer>invalid("err").map(n -> n * 2);
-        assertTrue(result.isInvalid());
-        assertEquals("err", result.getError());
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("err");
     }
 
     @Test
-    void mapError_invalid_applies_function() {
+    void mapError_onInvalid_shouldApplyFunction() {
         Validated<Integer, String> result = Validated.<String, String>invalid("err").mapError(String::length);
-        assertEquals(3, result.getError());
+        assertThat(result.getError()).isEqualTo(3);
     }
 
     @Test
-    void mapError_valid_preserves_value() {
+    void mapError_onValid_shouldPreserveValue() {
         Validated<Integer, String> result = Validated.<String, String>valid("ok").mapError(String::length);
-        assertTrue(result.isValid());
-        assertEquals("ok", result.get());
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo("ok");
     }
 
     @Test
-    void flatMap_valid_chains() {
+    void flatMap_onValid_shouldChain() {
         Validated<String, Integer> result = Validated.<String, Integer>valid(5)
             .flatMap(n -> Validated.valid(n + 1));
-        assertEquals(6, result.get());
+        assertThat(result.get()).isEqualTo(6);
     }
 
     @Test
-    void flatMap_valid_can_produce_invalid() {
+    void flatMap_onValid_canProduceInvalid() {
         Validated<String, Integer> result = Validated.<String, Integer>valid(5)
             .flatMap(n -> Validated.invalid("nope"));
-        assertTrue(result.isInvalid());
-        assertEquals("nope", result.getError());
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("nope");
     }
 
     @Test
-    void flatMap_invalid_short_circuits() {
+    void flatMap_onInvalid_shouldShortCircuit() {
         AtomicBoolean called = new AtomicBoolean(false);
         Validated<String, Integer> result = Validated.<String, Integer>invalid("err")
             .flatMap(n -> { called.set(true); return Validated.valid(n); });
-        assertFalse(called.get());
-        assertTrue(result.isInvalid());
+        assertThat(called.get()).isFalse();
+        assertThat(result.isInvalid()).isTrue();
     }
 
     // ---------- Side effects ----------
 
     @Test
-    void peek_valid_executes_action() {
+    void peek_onValid_shouldExecuteAction() {
         AtomicReference<Integer> captured = new AtomicReference<>();
         Validated<String, Integer> v = Validated.<String, Integer>valid(42).peek(captured::set);
-        assertEquals(42, captured.get());
-        assertTrue(v.isValid());
+        assertThat(captured.get()).isEqualTo(42);
+        assertThat(v.isValid()).isTrue();
     }
 
     @Test
-    void peek_invalid_does_not_execute() {
+    void peek_onInvalid_shouldNotExecuteAction() {
         AtomicBoolean called = new AtomicBoolean(false);
         Validated.<String, Integer>invalid("err").peek(n -> called.set(true));
-        assertFalse(called.get());
+        assertThat(called.get()).isFalse();
     }
 
     @Test
-    void peekError_invalid_executes_action() {
+    void peekError_onInvalid_shouldExecuteAction() {
         AtomicReference<String> captured = new AtomicReference<>();
         Validated.<String, Integer>invalid("err").peekError(captured::set);
-        assertEquals("err", captured.get());
+        assertThat(captured.get()).isEqualTo("err");
     }
 
     @Test
-    void peekError_valid_does_not_execute() {
+    void peekError_onValid_shouldNotExecuteAction() {
         AtomicBoolean called = new AtomicBoolean(false);
         Validated.<String, Integer>valid(1).peekError(e -> called.set(true));
-        assertFalse(called.get());
+        assertThat(called.get()).isFalse();
     }
 
     @Test
-    void match_valid_calls_onValid() {
+    void match_onValid_shouldCallOnValidConsumer() {
         AtomicReference<Integer> val = new AtomicReference<>();
         AtomicBoolean errCalled = new AtomicBoolean(false);
         Validated.<String, Integer>valid(7).match(val::set, e -> errCalled.set(true));
-        assertEquals(7, val.get());
-        assertFalse(errCalled.get());
+        assertThat(val.get()).isEqualTo(7);
+        assertThat(errCalled.get()).isFalse();
     }
 
     @Test
-    void match_invalid_calls_onInvalid() {
+    void match_onInvalid_shouldCallOnInvalidConsumer() {
         AtomicReference<String> err = new AtomicReference<>();
         AtomicBoolean valCalled = new AtomicBoolean(false);
         Validated.<String, Integer>invalid("boom").match(v -> valCalled.set(true), err::set);
-        assertEquals("boom", err.get());
-        assertFalse(valCalled.get());
+        assertThat(err.get()).isEqualTo("boom");
+        assertThat(valCalled.get()).isFalse();
     }
 
     // ---------- fold / stream ----------
 
     @Test
-    void fold_valid_applies_onValid() {
+    void fold_onValid_shouldApplyOnValidFunction() {
         String result = Validated.<String, Integer>valid(5).fold(
             v -> "value:" + v,
             e -> "error:" + e
         );
-        assertEquals("value:5", result);
+        assertThat(result).isEqualTo("value:5");
     }
 
     @Test
-    void fold_invalid_applies_onInvalid() {
+    void fold_onInvalid_shouldApplyOnInvalidFunction() {
         String result = Validated.<String, Integer>invalid("bad").fold(
             v -> "value:" + v,
             e -> "error:" + e
         );
-        assertEquals("error:bad", result);
+        assertThat(result).isEqualTo("error:bad");
     }
 
     @Test
-    void stream_valid_returns_single_element() {
+    void stream_onValid_shouldReturnSingleElement() {
         List<Integer> list = Validated.<String, Integer>valid(42).stream().toList();
-        assertEquals(List.of(42), list);
+        assertThat(list).isEqualTo(List.of(42));
     }
 
     @Test
-    void stream_invalid_returns_empty() {
+    void stream_onInvalid_shouldReturnEmptyStream() {
         List<Integer> list = Validated.<String, Integer>invalid("err").stream().toList();
-        assertTrue(list.isEmpty());
+        assertThat(list).isEmpty();
     }
 
     // ---------- sequence / traverse ----------
 
     @Test
-    void sequence_all_valid_returns_valid_list() {
+    void sequence_allValid_shouldReturnValidList() {
         List<Validated<String, Integer>> items = List.of(
             Validated.valid(1), Validated.valid(2), Validated.valid(3));
         Validated<String, List<Integer>> result = Validated.sequence(items, (a, b) -> a + "; " + b);
-        assertTrue(result.isValid());
-        assertEquals(List.of(1, 2, 3), result.get());
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo(List.of(1, 2, 3));
     }
 
     @Test
-    void sequence_with_one_invalid_returns_invalid() {
+    void sequence_withOneInvalid_shouldReturnInvalid() {
         List<Validated<String, Integer>> items = List.of(
             Validated.valid(1), Validated.invalid("err1"), Validated.valid(3));
         Validated<String, List<Integer>> result = Validated.sequence(items, (a, b) -> a + "; " + b);
-        assertTrue(result.isInvalid());
-        assertEquals("err1", result.getError());
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("err1");
     }
 
     @Test
-    void sequence_with_multiple_invalid_accumulates_errors() {
+    void sequence_withMultipleInvalid_shouldAccumulateErrors() {
         List<Validated<String, Integer>> items = List.of(
             Validated.invalid("e1"), Validated.valid(2), Validated.invalid("e2"));
         Validated<String, List<Integer>> result = Validated.sequence(items, (a, b) -> a + "; " + b);
-        assertTrue(result.isInvalid());
-        assertEquals("e1; e2", result.getError());
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("e1; e2");
     }
 
     @Test
-    void sequence_stream_all_valid() {
+    void sequence_stream_allValid_shouldReturnValidList() {
         Stream<Validated<String, Integer>> stream = Stream.of(
             Validated.valid(1), Validated.valid(2));
         Validated<String, List<Integer>> result = Validated.sequence(stream, (a, b) -> a + "; " + b);
-        assertTrue(result.isValid());
-        assertEquals(List.of(1, 2), result.get());
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo(List.of(1, 2));
     }
 
     @Test
-    void sequence_stream_accumulates_errors() {
+    void sequence_stream_shouldAccumulateErrors() {
         Stream<Validated<String, Integer>> stream = Stream.of(
             Validated.invalid("e1"), Validated.invalid("e2"));
         Validated<String, List<Integer>> result = Validated.sequence(stream, (a, b) -> a + "; " + b);
-        assertTrue(result.isInvalid());
-        assertEquals("e1; e2", result.getError());
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("e1; e2");
     }
 
     @Test
-    void traverse_all_valid() {
+    void traverse_allValid_shouldReturnValidList() {
         List<Integer> inputs = List.of(1, 2, 3);
         Validated<String, List<String>> result = Validated.traverse(
             inputs,
             n -> Validated.valid("v" + n),
             (a, b) -> a + "; " + b
         );
-        assertTrue(result.isValid());
-        assertEquals(List.of("v1", "v2", "v3"), result.get());
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo(List.of("v1", "v2", "v3"));
     }
 
     @Test
-    void traverse_accumulates_errors() {
+    void traverse_shouldAccumulateErrors() {
         List<Integer> inputs = List.of(1, 2, 3);
         Validated<String, List<String>> result = Validated.traverse(
             inputs,
             n -> n % 2 == 0 ? Validated.invalid("bad:" + n) : Validated.valid("ok:" + n),
             (a, b) -> a + "; " + b
         );
-        assertTrue(result.isInvalid());
-        assertEquals("bad:2", result.getError());
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("bad:2");
     }
 }

@@ -11,18 +11,14 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OptionTest {
+
     @Test
     void some_null_shouldThrowNPE() {
-        assertThrows(NullPointerException.class, () -> Option.some(null));
+        assertThatThrownBy(() -> Option.some(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -30,37 +26,37 @@ class OptionTest {
         Option<Integer> a = Option.none();
         Option<Integer> b = Option.none();
 
-        assertTrue(a.isEmpty());
-        assertTrue(b.isEmpty());
-        assertEquals(a, b);   // value-based equality
-        assertSame(a, b);     // singleton: same instance every time
+        assertThat(a.isEmpty()).isTrue();
+        assertThat(b.isEmpty()).isTrue();
+        assertThat(a).isEqualTo(b);   // value-based equality
+        assertThat(a).isSameAs(b);    // singleton: same instance every time
     }
 
     @Test
     void fromOptional_nullOptional_shouldThrowNPE() {
-        assertThrows(NullPointerException.class, () -> Option.fromOptional(null));
+        assertThatThrownBy(() -> Option.fromOptional(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void some_recordConstructor_shouldRejectNull_whenDirectlyConstructed() {
-        assertThrows(NullPointerException.class, () -> new Option.Some<>(null));
+        assertThatThrownBy(() -> new Option.Some<>(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void ofNullable_shouldMapNullToNone() {
-        assertTrue(Option.ofNullable(null).isEmpty());
-        assertEquals(10, Option.ofNullable(10).get());
+        assertThat(Option.ofNullable(null).isEmpty()).isTrue();
+        assertThat(Option.ofNullable(10).get()).isEqualTo(10);
     }
 
     @Test
     void get_onNone_shouldThrow() {
-        assertThrows(NoSuchElementException.class, () -> Option.none().get());
+        assertThatThrownBy(() -> Option.none().get()).isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
     void getOrElse_shouldReturnValueForSome_orFallbackForNone() {
-        assertEquals(10, Option.some(10).getOrElse(99));
-        assertEquals(99, Option.<Integer>none().getOrElse(99));
+        assertThat(Option.some(10).getOrElse(99)).isEqualTo(10);
+        assertThat(Option.<Integer>none().getOrElse(99)).isEqualTo(99);
     }
 
     @Test
@@ -71,55 +67,53 @@ class OptionTest {
             called.set(true);
             return 99;
         });
-        assertEquals(10, a);
-        assertFalse(called.get(), "fallback supplier must not be called for Some");
+        assertThat(a).isEqualTo(10);
+        assertThat(called.get()).as("fallback supplier must not be called for Some").isFalse();
 
         int b = Option.<Integer>none().getOrElseGet(() -> {
             called.set(true);
             return 99;
         });
-        assertEquals(99, b);
-        assertTrue(called.get(), "fallback supplier must be called for None");
+        assertThat(b).isEqualTo(99);
+        assertThat(called.get()).as("fallback supplier must be called for None").isTrue();
     }
 
     @Test
     void getOrNull_shouldReturnValueOrNull() {
-        assertEquals(10, Option.some(10).getOrNull());
-        assertNull(Option.<Integer>none().getOrNull());
+        assertThat(Option.some(10).getOrNull()).isEqualTo(10);
+        assertThat(Option.<Integer>none().getOrNull()).isNull();
     }
 
     @Test
     void getOrThrow_shouldReturnValueForSome_orThrowCustomExceptionForNone() {
-        assertEquals(10, Option.some(10).getOrThrow(() -> new IllegalStateException("boom")));
-        IllegalStateException ex = assertThrows(
-            IllegalStateException.class,
-            () -> Option.<Integer>none().getOrThrow(() -> new IllegalStateException("boom"))
-        );
-        assertEquals("boom", ex.getMessage());
+        assertThat(Option.some(10).getOrThrow(() -> new IllegalStateException("boom"))).isEqualTo(10);
+        assertThatThrownBy(() -> Option.<Integer>none().getOrThrow(() -> new IllegalStateException("boom")))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("boom");
     }
 
     @Test
     void get_onNone_shouldThrow_NoSuchElementException_messageShouldMentionNone() {
-        NoSuchElementException ex = assertThrows(NoSuchElementException.class, () -> Option.none().get());
-        assertTrue(ex.getMessage().toLowerCase().contains("none"));
+        assertThatThrownBy(() -> Option.none().get())
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessageMatching("(?i).*none.*");
     }
 
     @Test
     void map_shouldTransformSome_andPropagateNone() {
-        assertEquals(Option.some("v:2"), Option.some(2).map(v -> "v:" + v));
-        assertEquals(Option.none(), Option.<Integer>none().map(v -> v + 1));
+        assertThat(Option.some(2).map(v -> "v:" + v)).isEqualTo(Option.some("v:2"));
+        assertThat(Option.<Integer>none().map(v -> v + 1)).isEqualTo(Option.none());
     }
 
     @Test
     void map_shouldTurnNullIntoNone() {
-        assertEquals(Option.none(), Option.some(1).map(v -> null));
+        assertThat(Option.some(1).map(v -> null)).isEqualTo(Option.none());
     }
 
     @Test
     void flatMap_mapperReturningNull_shouldThrowNPE() {
-        assertThrows(NullPointerException.class, () ->
-            Option.some(1).flatMap(v -> null)
-        );
+        assertThatThrownBy(() -> Option.some(1).flatMap(v -> null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -131,33 +125,33 @@ class OptionTest {
             return true;
         });
 
-        assertEquals(Option.none(), r);
-        assertFalse(called.get(), "predicate must not be called for None");
+        assertThat(r).isEqualTo(Option.none());
+        assertThat(called.get()).as("predicate must not be called for None").isFalse();
     }
 
     @Test
     void isDefined_isEmpty_shouldBeComplementary() {
-        assertTrue(Option.some(1).isDefined());
-        assertFalse(Option.some(1).isEmpty());
+        assertThat(Option.some(1).isDefined()).isTrue();
+        assertThat(Option.some(1).isEmpty()).isFalse();
 
-        assertFalse(Option.<Integer>none().isDefined());
-        assertTrue(Option.<Integer>none().isEmpty());
+        assertThat(Option.<Integer>none().isDefined()).isFalse();
+        assertThat(Option.<Integer>none().isEmpty()).isTrue();
     }
 
     @Test
     void flatMap_shouldChainSome_andPropagateNone() {
         Option<Integer> res = Option.some(2).flatMap(v -> Option.some(v * 10));
-        assertEquals(Option.some(20), res);
+        assertThat(res).isEqualTo(Option.some(20));
 
         Option<Integer> none = Option.<Integer>none().flatMap(v -> Option.some(v * 10));
-        assertEquals(Option.none(), none);
+        assertThat(none).isEqualTo(Option.none());
     }
 
     @Test
     void filter_shouldKeepOrDropValue() {
-        assertEquals(Option.some(10), Option.some(10).filter(v -> v > 0));
-        assertEquals(Option.none(), Option.some(10).filter(v -> v < 0));
-        assertEquals(Option.none(), Option.<Integer>none().filter(v -> true));
+        assertThat(Option.some(10).filter(v -> v > 0)).isEqualTo(Option.some(10));
+        assertThat(Option.some(10).filter(v -> v < 0)).isEqualTo(Option.none());
+        assertThat(Option.<Integer>none().filter(v -> true)).isEqualTo(Option.none());
     }
 
     @Test
@@ -165,10 +159,10 @@ class OptionTest {
         AtomicInteger sum = new AtomicInteger(0);
 
         Option.some(7).peek(sum::addAndGet);
-        assertEquals(7, sum.get());
+        assertThat(sum.get()).isEqualTo(7);
 
         Option.<Integer>none().peek(sum::addAndGet);
-        assertEquals(7, sum.get(), "peek must not run for None");
+        assertThat(sum.get()).as("peek must not run for None").isEqualTo(7);
     }
 
     @Test
@@ -181,8 +175,8 @@ class OptionTest {
             v -> someBranch.set(true)
         );
 
-        assertFalse(noneBranch.get());
-        assertTrue(someBranch.get());
+        assertThat(noneBranch.get()).isFalse();
+        assertThat(someBranch.get()).isTrue();
 
         noneBranch.set(false);
         someBranch.set(false);
@@ -192,8 +186,8 @@ class OptionTest {
             v -> someBranch.set(true)
         );
 
-        assertTrue(noneBranch.get());
-        assertFalse(someBranch.get());
+        assertThat(noneBranch.get()).isTrue();
+        assertThat(someBranch.get()).isFalse();
     }
 
     @Test
@@ -201,14 +195,14 @@ class OptionTest {
         String a = Option.some(5).fold(() -> "none", v -> "some:" + v);
         String b = Option.<Integer>none().fold(() -> "none", v -> "some:" + v);
 
-        assertEquals("some:5", a);
-        assertEquals("none", b);
+        assertThat(a).isEqualTo("some:5");
+        assertThat(b).isEqualTo("none");
     }
 
     @Test
     void stream_shouldExposeSomeAsSingleElementStream_andNoneAsEmpty() {
-        assertEquals(List.of(7), Option.some(7).stream().toList());
-        assertEquals(List.of(), Option.<Integer>none().stream().toList());
+        assertThat(Option.some(7).stream().toList()).isEqualTo(List.of(7));
+        assertThat(Option.<Integer>none().stream().toList()).isEqualTo(List.of());
     }
 
     @Test
@@ -219,7 +213,7 @@ class OptionTest {
             Option.some(3)
         ));
 
-        assertEquals(List.of(1, 3), values);
+        assertThat(values).isEqualTo(List.of(1, 3));
     }
 
     @Test
@@ -230,19 +224,19 @@ class OptionTest {
             Option.some(3)
         ).collect(Option.presentValuesToList());
 
-        assertEquals(List.of(1, 3), values);
+        assertThat(values).isEqualTo(List.of(1, 3));
     }
 
     @Test
     void collectPresent_shouldThrow_ifStreamContainsNullElements() {
         // flatMap(Option::stream) exploit with NPE if null in the stream
-        assertThrows(NullPointerException.class, () ->
+        assertThatThrownBy(() ->
             Option.collectPresent(java.util.stream.Stream.of(
                 Option.some(1),
                 null,
                 Option.some(3)
             ))
-        );
+        ).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -250,8 +244,8 @@ class OptionTest {
         Option<Integer> a = Option.fromOptional(Optional.of(10));
         Option<Integer> b = Option.fromOptional(Optional.empty());
 
-        assertEquals(Optional.of(10), a.toOptional());
-        assertEquals(Optional.empty(), b.toOptional());
+        assertThat(a.toOptional()).isEqualTo(Optional.of(10));
+        assertThat(b.toOptional()).isEqualTo(Optional.empty());
     }
 
     // ---------- sequence / traverse ----------
@@ -264,8 +258,8 @@ class OptionTest {
             Option.some(3)
         ));
 
-        assertTrue(r.isDefined());
-        assertEquals(List.of(1, 2, 3), r.get());
+        assertThat(r.isDefined()).isTrue();
+        assertThat(r.get()).isEqualTo(List.of(1, 2, 3));
     }
 
     @Test
@@ -276,7 +270,7 @@ class OptionTest {
             Option.some(3)
         ));
 
-        assertTrue(r.isEmpty());
+        assertThat(r.isEmpty()).isTrue();
     }
 
     @Test
@@ -286,14 +280,14 @@ class OptionTest {
             Option.some(2)
         ));
 
-        assertEquals(Option.some(List.of(1, 2)), r);
+        assertThat(r).isEqualTo(Option.some(List.of(1, 2)));
     }
 
     @Test
     void sequence_iterable_shouldThrow_ifIterableContainsNullElement() {
-        assertThrows(NullPointerException.class, () ->
+        assertThatThrownBy(() ->
             Option.sequence(List.of(Option.some(1), null, Option.some(3)))
-        );
+        ).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -312,9 +306,9 @@ class OptionTest {
 
     @Test
     void sequence_stream_shouldThrow_ifStreamContainsNullElement() {
-        assertThrows(NullPointerException.class, () ->
+        assertThatThrownBy(() ->
             Option.sequence(java.util.stream.Stream.of(Option.some(1), null, Option.some(3)))
-        );
+        ).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -330,8 +324,8 @@ class OptionTest {
             Option.some(3)
         ));
 
-        assertTrue(r.isEmpty());
-        assertFalse(shouldNotReach.get());
+        assertThat(r.isEmpty()).isTrue();
+        assertThat(shouldNotReach.get()).isFalse();
     }
 
     @Test
@@ -358,54 +352,54 @@ class OptionTest {
         };
 
         Option<List<Integer>> r = Option.sequence(java.util.stream.Stream.generate(it::next).limit(4));
-        assertEquals(Option.none(), r);
-        assertFalse(pulledAfterNone.get(), "sequence(stream) must short-circuit after None");
+        assertThat(r).isEqualTo(Option.none());
+        assertThat(pulledAfterNone.get()).as("sequence(stream) must short-circuit after None").isFalse();
     }
 
     @Test
     void traverse_iterable_shouldThrow_ifMapperReturnsNull() {
-        assertThrows(NullPointerException.class, () ->
+        assertThatThrownBy(() ->
             Option.traverse(List.of(1, 2, 3), i -> null)
-        );
+        ).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void traverse_stream_shouldThrow_ifMapperReturnsNull() {
-        assertThrows(NullPointerException.class, () ->
+        assertThatThrownBy(() ->
             Option.traverse(java.util.stream.Stream.of(1, 2, 3), i -> null)
-        );
+        ).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void traverse_iterable_shouldThrow_ifValuesIterableIsNull() {
-        assertThrows(NullPointerException.class, () ->
+        assertThatThrownBy(() ->
             Option.traverse((Iterable<Integer>) null, Option::some)
-        );
+        ).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void traverse_stream_shouldThrow_ifValuesStreamIsNull() {
-        assertThrows(NullPointerException.class, () ->
+        assertThatThrownBy(() ->
             Option.traverse((java.util.stream.Stream<Integer>) null, i -> Option.some(i))
-        );
+        ).isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void toOptional_shouldBePresentForSome_emptyForNone() {
-        assertEquals(Optional.of(1), Option.some(1).toOptional());
-        assertEquals(Optional.empty(), Option.<Integer>none().toOptional());
+        assertThat(Option.some(1).toOptional()).isEqualTo(Optional.of(1));
+        assertThat(Option.<Integer>none().toOptional()).isEqualTo(Optional.empty());
     }
 
     @Test
     void fromOptional_shouldCreateSomeOrNone() {
-        assertEquals(Option.some(10), Option.fromOptional(Optional.of(10)));
-        assertEquals(Option.none(), Option.fromOptional(Optional.empty()));
+        assertThat(Option.fromOptional(Optional.of(10))).isEqualTo(Option.some(10));
+        assertThat(Option.fromOptional(Optional.empty())).isEqualTo(Option.none());
     }
 
     @Test
     void traverse_iterable_shouldMapAndAccumulate() {
         Option<List<Integer>> r = Option.traverse(List.of("1", "2", "3"), s -> Option.some(Integer.parseInt(s)));
-        assertEquals(Option.some(List.of(1, 2, 3)), r);
+        assertThat(r).isEqualTo(Option.some(List.of(1, 2, 3)));
     }
 
     @Test
@@ -414,13 +408,13 @@ class OptionTest {
             if ("x".equals(s)) return Option.none();
             return Option.some(Integer.parseInt(s));
         });
-        assertEquals(Option.none(), r);
+        assertThat(r).isEqualTo(Option.none());
     }
 
     @Test
     void traverse_stream_shouldWork() {
         Option<List<Integer>> r = Option.traverse(Stream.of(1, 2, 3), i -> Option.some(i * 10));
-        assertEquals(Option.some(List.of(10, 20, 30)), r);
+        assertThat(r).isEqualTo(Option.some(List.of(10, 20, 30)));
     }
 
     @Test
@@ -433,9 +427,9 @@ class OptionTest {
             return Option.some(i);
         });
 
-        assertEquals(Option.none(), r);
+        assertThat(r).isEqualTo(Option.none());
         // Note: Since we implemented traverse with iterator + loop, it returns as soon as it sees None.
-        assertFalse(mapperCalledAfterNone.get());
+        assertThat(mapperCalledAfterNone.get()).isFalse();
     }
 
     @Test
@@ -443,11 +437,11 @@ class OptionTest {
         Result<Integer, String> ok = Option.some(10).toResult("nope");
         Result<Integer, String> err = Option.<Integer>none().toResult("nope");
 
-        assertTrue(ok.isOk());
-        assertEquals(10, ok.get());
+        assertThat(ok.isOk()).isTrue();
+        assertThat(ok.get()).isEqualTo(10);
 
-        assertTrue(err.isError());
-        assertEquals("nope", err.getError());
+        assertThat(err.isError()).isTrue();
+        assertThat(err.getError()).isEqualTo("nope");
     }
 
     @Test
@@ -455,11 +449,11 @@ class OptionTest {
         Try<Integer> a = Option.some(10).toTry(() -> new RuntimeException("boom"));
         Try<Integer> b = Option.<Integer>none().toTry(() -> new RuntimeException("boom"));
 
-        assertTrue(a.isSuccess());
-        assertEquals(10, a.get());
+        assertThat(a.isSuccess()).isTrue();
+        assertThat(a.get()).isEqualTo(10);
 
-        assertTrue(b.isFailure());
-        assertEquals("boom", b.getCause().getMessage());
+        assertThat(b.isFailure()).isTrue();
+        assertThat(b.getCause().getMessage()).isEqualTo("boom");
     }
 
     // ---------- Laws (Functor + Monad) ----------
@@ -469,8 +463,8 @@ class OptionTest {
         Option<Integer> a = Option.some(42);
         Option<Integer> b = Option.<Integer>none();
 
-        assertEquals(a, a.map(Function.identity()));
-        assertEquals(b, b.map(Function.identity()));
+        assertThat(a.map(Function.identity())).isEqualTo(a);
+        assertThat(b.map(Function.identity())).isEqualTo(b);
     }
 
     @Test
@@ -483,7 +477,7 @@ class OptionTest {
         Option<Integer> left = m.map(f).map(g);
         Option<Integer> right = m.map(f.andThen(g));
 
-        assertEquals(right, left);
+        assertThat(left).isEqualTo(right);
     }
 
     @Test
@@ -494,7 +488,7 @@ class OptionTest {
         Option<String> left = Option.some(a).flatMap(f);
         Option<String> right = f.apply(a);
 
-        assertEquals(right, left);
+        assertThat(left).isEqualTo(right);
     }
 
     @Test
@@ -502,8 +496,8 @@ class OptionTest {
         Option<Integer> m1 = Option.some(7);
         Option<Integer> m2 = Option.none();
 
-        assertEquals(m1, m1.flatMap(Option::some));
-        assertEquals(m2, m2.flatMap(Option::some));
+        assertThat(m1.flatMap(Option::some)).isEqualTo(m1);
+        assertThat(m2.flatMap(Option::some)).isEqualTo(m2);
     }
 
     @Test
@@ -516,6 +510,6 @@ class OptionTest {
         Option<Integer> left = m.flatMap(f).flatMap(g);
         Option<Integer> right = m.flatMap(x -> f.apply(x).flatMap(g));
 
-        assertEquals(right, left);
+        assertThat(left).isEqualTo(right);
     }
 }

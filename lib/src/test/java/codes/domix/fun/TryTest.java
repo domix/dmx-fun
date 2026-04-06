@@ -10,13 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TryTest {
 
@@ -27,10 +20,10 @@ class TryTest {
     void of_shouldReturnSuccessWhenComputationDoesNotThrow() {
         var t = Try.of(() -> 42);
 
-        assertTrue(t.isSuccess());
-        assertFalse(t.isFailure());
-        assertEquals(42, t.get());
-        assertThrows(NoSuchElementException.class, t::getCause);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.isFailure()).isFalse();
+        assertThat(t.get()).isEqualTo(42);
+        assertThatThrownBy(t::getCause).isInstanceOf(NoSuchElementException.class);
     }
 
     /**
@@ -42,12 +35,12 @@ class TryTest {
             throw new IOException("boom");
         });
 
-        assertTrue(t.isFailure());
-        assertFalse(t.isSuccess());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.isSuccess()).isFalse();
         var cause = t.getCause();
-        assertInstanceOf(IOException.class, cause);
-        assertEquals("boom", cause.getMessage());
-        assertThrows(NoSuchElementException.class, t::get);
+        assertThat(cause).isInstanceOf(IOException.class);
+        assertThat(cause.getMessage()).isEqualTo("boom");
+        assertThatThrownBy(t::get).isInstanceOf(NoSuchElementException.class);
     }
 
     /**
@@ -59,8 +52,8 @@ class TryTest {
 
         var t = Try.run(() -> executed.set(true));
 
-        assertTrue(t.isSuccess());
-        assertTrue(executed.get());
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(executed.get()).isTrue();
     }
 
     @Test
@@ -69,8 +62,8 @@ class TryTest {
             throw new IllegalStateException("side-effect failed");
         });
 
-        assertTrue(t.isFailure());
-        assertInstanceOf(IllegalStateException.class, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isInstanceOf(IllegalStateException.class);
     }
 
     /**
@@ -82,8 +75,8 @@ class TryTest {
 
         var mapped = t.map(v -> "value:" + v);
 
-        assertTrue(mapped.isSuccess());
-        assertEquals("value:10", mapped.get());
+        assertThat(mapped.isSuccess()).isTrue();
+        assertThat(mapped.get()).isEqualTo("value:10");
     }
 
     /**
@@ -94,7 +87,7 @@ class TryTest {
         var t = Try.failure(new RuntimeException("boom"));
         var mapped = t.map(v -> "value:" + v);
 
-        assertTrue(mapped.isFailure());
+        assertThat(mapped.isFailure()).isTrue();
         assertThat(mapped.getCause())
             .isInstanceOf(RuntimeException.class)
             .hasMessage("boom");
@@ -111,8 +104,8 @@ class TryTest {
             throw new RuntimeException("mapper failed");
         });
 
-        assertTrue(mapped.isFailure());
-        assertEquals("mapper failed", mapped.getCause().getMessage());
+        assertThat(mapped.isFailure()).isTrue();
+        assertThat(mapped.getCause().getMessage()).isEqualTo("mapper failed");
     }
 
     /**
@@ -126,8 +119,8 @@ class TryTest {
             .flatMap(v -> Try.of(() -> v * 10))
             .flatMap(v -> Try.success("result:" + v));
 
-        assertTrue(result.isSuccess());
-        assertEquals("result:20", result.get());
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("result:20");
     }
 
     /**
@@ -139,9 +132,9 @@ class TryTest {
 
         var result = t.flatMap(_ -> Try.failure(new IllegalArgumentException("bad")));
 
-        assertTrue(result.isFailure());
-        assertInstanceOf(IllegalArgumentException.class, result.getCause());
-        assertEquals("bad", result.getCause().getMessage());
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(result.getCause().getMessage()).isEqualTo("bad");
     }
 
     /**
@@ -152,7 +145,7 @@ class TryTest {
         var t = Try.failure(new IllegalArgumentException("bad"));
 
         var result = t.flatMap(_ -> Try.failure(new IllegalArgumentException("BAD")));
-        assertThat(result.isFailure());
+        assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause())
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("bad");
@@ -172,8 +165,8 @@ class TryTest {
             .onSuccess(_ -> successCalled.set(true))
             .onFailure(_ -> failureCalled.set(true));
 
-        assertTrue(successCalled.get());
-        assertFalse(failureCalled.get());
+        assertThat(successCalled.get()).isTrue();
+        assertThat(failureCalled.get()).isFalse();
     }
 
     /**
@@ -190,8 +183,8 @@ class TryTest {
             .onSuccess(_ -> successCalled.set(true))
             .onFailure(_ -> failureCalled.set(true));
 
-        assertFalse(successCalled.get());
-        assertTrue(failureCalled.get());
+        assertThat(successCalled.get()).isFalse();
+        assertThat(failureCalled.get()).isTrue();
     }
 
     /**
@@ -203,8 +196,8 @@ class TryTest {
 
         var recovered = success.recover(_ -> 99);
 
-        assertSame(success, recovered); // same instance
-        assertEquals(10, recovered.get());
+        assertThat(recovered).isSameAs(success);
+        assertThat(recovered.get()).isEqualTo(10);
     }
 
     /**
@@ -216,8 +209,8 @@ class TryTest {
 
         var recovered = failure.recover(_ -> 99);
 
-        assertTrue(recovered.isSuccess());
-        assertEquals(99, recovered.get());
+        assertThat(recovered.isSuccess()).isTrue();
+        assertThat(recovered.get()).isEqualTo(99);
     }
 
     @Test
@@ -226,8 +219,8 @@ class TryTest {
 
         var recovered = success.recoverWith(_ -> Try.success(99));
 
-        assertSame(success, recovered);
-        assertEquals(10, recovered.get());
+        assertThat(recovered).isSameAs(success);
+        assertThat(recovered.get()).isEqualTo(10);
     }
 
     /**
@@ -239,8 +232,8 @@ class TryTest {
 
         var recovered = failure.recoverWith(_ -> Try.success(123));
 
-        assertTrue(recovered.isSuccess());
-        assertEquals(123, recovered.get());
+        assertThat(recovered.isSuccess()).isTrue();
+        assertThat(recovered.get()).isEqualTo(123);
     }
 
     /**
@@ -251,8 +244,8 @@ class TryTest {
         var success = Try.success(5);
         var failure = Try.failure(new RuntimeException("err"));
 
-        assertEquals(5, success.getOrElse(99));
-        assertEquals(99, failure.getOrElse(99));
+        assertThat(success.getOrElse(99)).isEqualTo(5);
+        assertThat(failure.getOrElse(99)).isEqualTo(99);
     }
 
     /**
@@ -269,15 +262,15 @@ class TryTest {
             supplierCalled.set(true);
             return 99;
         });
-        assertFalse(supplierCalled.get(), "Supplier should not be called on success");
+        assertThat(supplierCalled.get()).as("Supplier should not be called on success").isFalse();
         int value2 = failure.getOrElseGet(() -> {
             supplierCalled.set(true);
             return 100;
         });
 
-        assertEquals(5, value1);
-        assertEquals(100, value2);
-        assertTrue(supplierCalled.get());
+        assertThat(value1).isEqualTo(5);
+        assertThat(value2).isEqualTo(100);
+        assertThat(supplierCalled.get()).isTrue();
     }
 
     /**
@@ -288,18 +281,19 @@ class TryTest {
         var success = Try.success(5);
         var failure = Try.failure(new RuntimeException("err"));
 
-        assertEquals(5, success.getOrNull());
-        assertNull(failure.getOrNull());
+        assertThat(success.getOrNull()).isEqualTo(5);
+        assertThat(failure.getOrNull()).isNull();
     }
 
     @Test
-    void getOrThrow_withoutMapper_shouldThrowOriginalExceptionIfException() throws Exception {
+    void getOrThrow_withoutMapper_shouldThrowOriginalExceptionIfException() {
         var failure = Try.of(() -> {
             throw new IOException("io boom");
         });
 
-        var ex = assertThrows(IOException.class, failure::getOrThrow);
-        assertEquals("io boom", ex.getMessage());
+        assertThatThrownBy(failure::getOrThrow)
+            .isInstanceOf(IOException.class)
+            .hasMessage("io boom");
     }
 
     /**
@@ -309,12 +303,9 @@ class TryTest {
     void getOrThrow_withMapper_shouldThrowMappedRuntimeException() {
         var failure = Try.<Integer>failure(new IllegalStateException("illegal"));
 
-        var ex = assertThrows(
-            RuntimeException.class,
-            () -> failure.getOrThrow(cause -> new RuntimeException("wrapped: " + cause.getMessage()))
-        );
-
-        assertEquals("wrapped: illegal", ex.getMessage());
+        assertThatThrownBy(() -> failure.getOrThrow(cause -> new RuntimeException("wrapped: " + cause.getMessage())))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("wrapped: illegal");
     }
 
     /**
@@ -335,8 +326,8 @@ class TryTest {
             t -> "error:" + t.getMessage()
         );
 
-        assertEquals("value:10", foldedSuccess);
-        assertEquals("error:err", foldedFailure);
+        assertThat(foldedSuccess).isEqualTo("value:10");
+        assertThat(foldedFailure).isEqualTo("error:err");
     }
 
     // --- Basic monadic laws for Try ---
@@ -349,7 +340,7 @@ class TryTest {
         var left = Try.of(() -> a).flatMap(f);
         var right = f.apply(a);
 
-        assertEquals(right, left);
+        assertThat(left).isEqualTo(right);
     }
 
     @Test
@@ -359,7 +350,7 @@ class TryTest {
         var left = m.flatMap(Try::success);
         var right = m;
 
-        assertEquals(right, left);
+        assertThat(left).isEqualTo(right);
     }
 
     /**
@@ -375,7 +366,7 @@ class TryTest {
         var left = m.flatMap(f).flatMap(g);
         Try<Integer> right = m.flatMap(x -> f.apply(x).flatMap(g));
 
-        assertEquals(right, left);
+        assertThat(left).isEqualTo(right);
     }
 
     // --- Integration with Result<Value, Throwable> ---
@@ -386,8 +377,8 @@ class TryTest {
 
         Result<String, Throwable> result = t.toResult();
 
-        assertTrue(result.isOk());
-        assertEquals("ok", result.get());
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("ok");
     }
 
     /**
@@ -399,8 +390,8 @@ class TryTest {
 
         Result<String, Throwable> result = t.toResult();
 
-        assertTrue(result.isError());
-        assertEquals("err", result.getError().getMessage());
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError().getMessage()).isEqualTo("err");
     }
 
     @Test
@@ -409,8 +400,8 @@ class TryTest {
 
         Try<String> t = Try.fromResult(result);
 
-        assertTrue(t.isSuccess());
-        assertEquals("hello", t.get());
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo("hello");
     }
 
     /**
@@ -423,8 +414,8 @@ class TryTest {
 
         Try<String> t = Try.fromResult(result);
 
-        assertTrue(t.isFailure());
-        assertSame(ex, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(ex);
     }
 
     // --------------------------------------------------------
@@ -439,8 +430,8 @@ class TryTest {
             throw error;
         });
 
-        assertTrue(t.isFailure());
-        assertSame(error, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(error);
     }
 
     @Test
@@ -451,8 +442,8 @@ class TryTest {
             throw error;
         });
 
-        assertTrue(t.isFailure());
-        assertSame(error, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(error);
     }
 
     /**
@@ -463,11 +454,9 @@ class TryTest {
         AssertionError error = new AssertionError("assert failed");
         Try<Integer> t = Try.failure(error);
 
-        // no mapper
-        RuntimeException ex = assertThrows(RuntimeException.class, t::getOrThrow);
-
-        assertSame(error, ex.getCause());
-        assertEquals("assert failed", ex.getCause().getMessage());
+        assertThatThrownBy(t::getOrThrow)
+            .isInstanceOf(RuntimeException.class)
+            .hasCause(error);
     }
 
     /**
@@ -478,12 +467,12 @@ class TryTest {
         var aTry = Try.success(1);
         var result = aTry
             .getOrThrow();
-        assertEquals(1, result);
+        assertThat(result).isEqualTo(1);
 
         var result2 = aTry
             .getOrThrow(cause -> new RuntimeException("wrapped: " + cause.getMessage()));
 
-        assertEquals(1, result2);
+        assertThat(result2).isEqualTo(1);
     }
 
     /**
@@ -502,8 +491,8 @@ class TryTest {
         });
 
         assertThat(mapped.isFailure()).isTrue();
-        assertInstanceOf(RuntimeException.class, mapped.getCause());
-        assertInstanceOf(IOException.class, mapped.getCause().getCause());
+        assertThat(mapped.getCause()).isInstanceOf(RuntimeException.class);
+        assertThat(mapped.getCause().getCause()).isInstanceOf(IOException.class);
         assertThat(mapped.getCause().getMessage()).contains("checked");
     }
 
@@ -519,8 +508,8 @@ class TryTest {
             throw error;
         });
 
-        assertTrue(mapped.isFailure());
-        assertSame(error, mapped.getCause());
+        assertThat(mapped.isFailure()).isTrue();
+        assertThat(mapped.getCause()).isSameAs(error);
     }
 
     /**
@@ -538,7 +527,7 @@ class TryTest {
             }
         });
 
-        assertTrue(mapped.isFailure());
+        assertThat(mapped.isFailure()).isTrue();
         assertThat(mapped.getCause())
             .isInstanceOf(RuntimeException.class);
         assertThat(mapped.getCause().getCause())
@@ -558,8 +547,8 @@ class TryTest {
             throw error;
         });
 
-        assertTrue(mapped.isFailure());
-        assertSame(error, mapped.getCause());
+        assertThat(mapped.isFailure()).isTrue();
+        assertThat(mapped.getCause()).isSameAs(error);
     }
 
     /**
@@ -577,7 +566,7 @@ class TryTest {
             }
         });
 
-        assertTrue(recovered.isFailure());
+        assertThat(recovered.isFailure()).isTrue();
         assertThat(recovered.getCause())
             .isInstanceOf(RuntimeException.class);
         assertThat(recovered.getCause().getCause())
@@ -601,7 +590,7 @@ class TryTest {
             }
         });
 
-        assertTrue(recovered.isFailure());
+        assertThat(recovered.isFailure()).isTrue();
         assertThat(recovered.getCause())
             .isInstanceOf(RuntimeException.class);
         assertThat(recovered.getCause().getCause())
@@ -618,8 +607,8 @@ class TryTest {
         Try<Integer> t = Try.<Integer>failure(new RuntimeException("original"))
             .recoverWith(_ -> null);
 
-        assertTrue(t.isFailure());
-        assertInstanceOf(NullPointerException.class, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -631,8 +620,8 @@ class TryTest {
             throw error;
         });
 
-        assertTrue(recovered.isFailure());
-        assertSame(error, recovered.getCause());
+        assertThat(recovered.isFailure()).isTrue();
+        assertThat(recovered.getCause()).isSameAs(error);
     }
 
     /**
@@ -645,8 +634,8 @@ class TryTest {
 
         Result<Integer, Throwable> result = t.toResult();
 
-        assertTrue(result.isError());
-        assertSame(error, result.getError());
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isSameAs(error);
     }
 
     /**
@@ -659,8 +648,8 @@ class TryTest {
 
         Try<Integer> t = Try.fromResult(result);
 
-        assertTrue(t.isFailure());
-        assertSame(error, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(error);
     }
 
     // ---------- null-contract validations ----------
@@ -696,8 +685,8 @@ class TryTest {
         Try<Integer> t = Try.success(42);
         Result<Integer, String> result = t.toResult(Throwable::getMessage);
 
-        assertTrue(result.isOk());
-        assertEquals(42, result.get());
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo(42);
     }
 
     @Test
@@ -705,8 +694,8 @@ class TryTest {
         Try<Integer> t = Try.failure(new RuntimeException("boom"));
         Result<Integer, String> result = t.toResult(Throwable::getMessage);
 
-        assertTrue(result.isError());
-        assertEquals("boom", result.getError());
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("boom");
     }
 
     @Test
@@ -730,10 +719,10 @@ class TryTest {
         Try<Integer> t = Try.<Integer>failure(original)
             .mapFailure(e -> new IllegalStateException("domain error", e));
 
-        assertTrue(t.isFailure());
-        assertInstanceOf(IllegalStateException.class, t.getCause());
-        assertEquals("domain error", t.getCause().getMessage());
-        assertSame(original, t.getCause().getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isInstanceOf(IllegalStateException.class);
+        assertThat(t.getCause().getMessage()).isEqualTo("domain error");
+        assertThat(t.getCause().getCause()).isSameAs(original);
     }
 
     @Test
@@ -741,8 +730,8 @@ class TryTest {
         Try<Integer> success = Try.success(10);
         Try<Integer> result = success.mapFailure(e -> new RuntimeException("should not run"));
 
-        assertSame(success, result);
-        assertEquals(10, result.get());
+        assertThat(result).isSameAs(success);
+        assertThat(result.get()).isEqualTo(10);
     }
 
     @Test
@@ -755,8 +744,8 @@ class TryTest {
     void mapFailure_shouldReturnFailureWithNPE_ifMapperReturnsNull() {
         // mapFailure wraps exceptions from the mapper (consistent with map() semantics)
         Try<Integer> t = Try.<Integer>failure(new RuntimeException()).mapFailure(_ -> null);
-        assertTrue(t.isFailure());
-        assertInstanceOf(NullPointerException.class, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -765,8 +754,8 @@ class TryTest {
         Try<Integer> t = Try.<Integer>failure(new RuntimeException("original"))
             .mapFailure(_ -> { throw mapperBoom; });
 
-        assertTrue(t.isFailure());
-        assertSame(mapperBoom, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(mapperBoom);
     }
 
     // ---------- stream ----------
@@ -802,6 +791,66 @@ class TryTest {
         assertThat(result).containsExactly(1, 3);
     }
 
+    // ---------- filter(Predicate) — default overload ----------
+
+    @Test
+    void filter_default_shouldReturnFailureWithIAE_whenPredicateFails() {
+        Try<String> result = Try.success("hello").filter(s -> s.length() >= 10);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void filter_default_shouldReturnSuccess_whenPredicatePasses() {
+        Try<String> result = Try.success("hello").filter(s -> s.equals("hello"));
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void filter_default_shouldNotAffectFailure() {
+        RuntimeException original = new RuntimeException("Boom!");
+        Try<String> result = Try.<String>failure(original).filter(s -> true);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(original);
+    }
+
+    @Test
+    void filter_default_shouldCapturePredicateException_asFailure() {
+        Try<String> result = Try.success("hello").filter(s -> {
+            throw new RuntimeException("predicate failed");
+        });
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause())
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("predicate failed");
+    }
+
+    // ---------- filter(Predicate, Supplier) ----------
+
+    @Test
+    void filter_withSupplier_shouldReturnFailure_withCustomException_whenPredicateFails() {
+        Try<String> result = Try.success("hello")
+            .filter(s -> s.length() >= 10, () -> new RuntimeException("boom!"));
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause())
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom!");
+    }
+
+    @Test
+    void filter_withSupplier_shouldReturnSuccess_andNotInvokeSupplier_whenPredicatePasses() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Try<String> result = Try.success("hello")
+            .filter(s -> s.equals("hello"), () -> {
+                called.set(true);
+                return new RuntimeException("should not run");
+            });
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+        assertThat(called.get()).as("exception supplier must not be called when predicate passes").isFalse();
+    }
+
     // ---------- filter(Predicate, Function) ----------
 
     @Test
@@ -809,8 +858,8 @@ class TryTest {
         Try<Integer> t = Try.success(10)
             .filter(n -> n > 0, n -> new IllegalArgumentException("non-positive: " + n));
 
-        assertTrue(t.isSuccess());
-        assertEquals(10, t.get());
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo(10);
     }
 
     @Test
@@ -818,9 +867,9 @@ class TryTest {
         Try<Integer> t = Try.success(-5)
             .filter(n -> n > 0, n -> new IllegalArgumentException("non-positive: " + n));
 
-        assertTrue(t.isFailure());
-        assertInstanceOf(IllegalArgumentException.class, t.getCause());
-        assertEquals("non-positive: -5", t.getCause().getMessage());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(t.getCause().getMessage()).isEqualTo("non-positive: -5");
     }
 
     @Test
@@ -829,8 +878,8 @@ class TryTest {
         Try<Integer> t = Try.<Integer>failure(original)
             .filter(n -> n > 0, n -> new IllegalArgumentException("should not run"));
 
-        assertTrue(t.isFailure());
-        assertSame(original, t.getCause());
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(original);
     }
 
     @Test
@@ -852,16 +901,16 @@ class TryTest {
         RuntimeException recovered = new RuntimeException("recovered");
         Try<String> result = Try.<String>failure(new RuntimeException("original"))
             .flatMapError(ex -> Try.failure(recovered));
-        assertTrue(result.isFailure());
-        assertSame(recovered, result.getCause());
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(recovered);
     }
 
     @Test
     void flatMapError_shouldAllowConvertingFailureToSuccess() {
         Try<String> result = Try.<String>failure(new RuntimeException("oops"))
             .flatMapError(ex -> Try.success("fallback"));
-        assertTrue(result.isSuccess());
-        assertEquals("fallback", result.get());
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("fallback");
     }
 
     @Test
@@ -872,9 +921,9 @@ class TryTest {
                 called.set(true);
                 return Try.failure(ex);
             });
-        assertTrue(result.isSuccess());
-        assertEquals("hello", result.get());
-        assertFalse(called.get(), "mapper must not be called for Success");
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+        assertThat(called.get()).as("mapper must not be called for Success").isFalse();
     }
 
     @Test
@@ -886,7 +935,7 @@ class TryTest {
     @Test
     void flatMapError_shouldReturnFailureWithNPE_ifMapperReturnsNull() {
         Try<String> result = Try.<String>failure(new RuntimeException()).flatMapError(ex -> null);
-        assertTrue(result.isFailure());
+        assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause())
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("mapper returned null");
@@ -897,7 +946,7 @@ class TryTest {
         RuntimeException thrown = new RuntimeException("mapper blew up");
         Try<String> result = Try.<String>failure(new RuntimeException("original"))
             .flatMapError(ex -> { throw thrown; });
-        assertTrue(result.isFailure());
-        assertSame(thrown, result.getCause());
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(thrown);
     }
 }
