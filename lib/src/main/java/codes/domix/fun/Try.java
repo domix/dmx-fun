@@ -249,7 +249,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * @return the mapped {@code Try} for {@code Failure}, or this instance unchanged for {@code Success}
      * @throws NullPointerException if {@code mapper} itself is {@code null}
      */
-    default Try<Value> flatMapError(Function<? super Throwable, Try<Value>> mapper) {
+    default Try<Value> flatMapError(
+        Function<? super Throwable, ? extends Try<? extends Value>> mapper
+    ) {
         Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Success<Value> _ -> this;
