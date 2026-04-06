@@ -839,11 +839,16 @@ class TryTest {
     }
 
     @Test
-    void filter_withSupplier_shouldReturnSuccess_whenPredicatePasses() {
+    void filter_withSupplier_shouldReturnSuccess_andNotInvokeSupplier_whenPredicatePasses() {
+        AtomicBoolean called = new AtomicBoolean(false);
         Try<String> result = Try.success("hello")
-            .filter(s -> s.equals("hello"), () -> new RuntimeException("should not run"));
+            .filter(s -> s.equals("hello"), () -> {
+                called.set(true);
+                return new RuntimeException("should not run");
+            });
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.get()).isEqualTo("hello");
+        assertThat(called.get()).as("exception supplier must not be called when predicate passes").isFalse();
     }
 
     // ---------- filter(Predicate, Function) ----------
