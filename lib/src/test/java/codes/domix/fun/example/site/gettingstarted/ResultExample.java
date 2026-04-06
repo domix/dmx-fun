@@ -1,6 +1,6 @@
 package codes.domix.fun.example.site.gettingstarted;
 
-import codes.domix.fun.Result;
+import module codes.domix.fun;
 
 class ResultExample {
     void main() {

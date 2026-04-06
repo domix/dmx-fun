@@ -29,6 +29,24 @@ java {
     }
 }
 
+compileTestJava {
+    def mainClassesDirs = sourceSets.main.output.classesDirs
+    def apiDeps = configurations.compileClasspath   // api-scoped deps (jspecify)
+    def testSrcPath = files(sourceSets.test.java.srcDirs).asPath
+
+    // Move main output + api deps off the classpath → module-path to avoid split-package conflict
+    classpath = classpath.filter { f -> !mainClassesDirs.contains(f) && !apiDeps.contains(f) }
+
+    def modulePath = (mainClassesDirs + apiDeps).asPath
+    options.compilerArgs += [
+        '--module-path', modulePath,
+        '--add-modules', 'codes.domix.fun,java.net.http',
+        '--patch-module', "codes.domix.fun=${testSrcPath}",
+        '--add-reads', 'codes.domix.fun=ALL-UNNAMED',
+        '--add-reads', 'codes.domix.fun=java.net.http'
+    ]
+}
+
 test {
     useJUnitPlatform()
     testLogging {

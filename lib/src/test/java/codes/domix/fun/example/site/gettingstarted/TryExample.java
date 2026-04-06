@@ -1,6 +1,6 @@
 package codes.domix.fun.example.site.gettingstarted;
 
-import codes.domix.fun.Try;
+import module codes.domix.fun;
 
 class TryExample {
     void main() {

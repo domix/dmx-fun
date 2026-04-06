@@ -1,6 +1,6 @@
 package codes.domix.fun.example.site.examples;
 
-import codes.domix.fun.Result;
+import module codes.domix.fun;
 
 public class UserValidator {
     public record User(String email, String password) {

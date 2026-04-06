@@ -1,7 +1,6 @@
 package codes.domix.fun.example.site.examples;
 
-import codes.domix.fun.Option;
-import codes.domix.fun.Try;
+import module codes.domix.fun;
 import java.util.Properties;
 
 public class ConfigLoader {
