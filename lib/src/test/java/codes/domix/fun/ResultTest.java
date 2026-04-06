@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ResultTest {
 
@@ -38,10 +36,10 @@ class ResultTest {
         Result<String, RuntimeException> boom = Result.err(new RuntimeException("boom"));
         Result<BigDecimal, String> ok = Result.ok(BigDecimal.ONE);
 
-        assertTrue(boom.isError());
-        assertFalse(boom.isOk());
-        assertTrue(ok.isOk());
-        assertFalse(ok.isError());
+        assertThat(boom.isError()).isTrue();
+        assertThat(boom.isOk()).isFalse();
+        assertThat(ok.isOk()).isTrue();
+        assertThat(ok.isError()).isFalse();
     }
 
     // ---------- get / getError ----------
@@ -98,7 +96,7 @@ class ResultTest {
             return "fallback";
         });
         assertThat(value).isEqualTo("real");
-        assertFalse(called.get(), "supplier must not be invoked for Ok");
+        assertThat(called.get()).as("supplier must not be invoked for Ok").isFalse();
     }
 
     @Test
@@ -151,7 +149,7 @@ class ResultTest {
                 return Result.ok(s.length());
             });
         assertThat(result.isError()).isTrue();
-        assertFalse(secondCalled.get(), "mapper must not be called for Err");
+        assertThat(secondCalled.get()).as("mapper must not be called for Err").isFalse();
     }
 
     // ---------- filter ----------
@@ -206,15 +204,15 @@ class ResultTest {
         AtomicBoolean errTouched = new AtomicBoolean(false);
 
         Result.ok("v").match(_ -> okTouched.set(true), _ -> errTouched.set(true));
-        assertTrue(okTouched.get());
-        assertFalse(errTouched.get());
+        assertThat(okTouched.get()).isTrue();
+        assertThat(errTouched.get()).isFalse();
 
         okTouched.set(false);
         errTouched.set(false);
 
         Result.err("e").match(_ -> okTouched.set(true), _ -> errTouched.set(true));
-        assertFalse(okTouched.get());
-        assertTrue(errTouched.get());
+        assertThat(okTouched.get()).isFalse();
+        assertThat(errTouched.get()).isTrue();
     }
 
     // ---------- peek / peekError ----------
@@ -225,12 +223,12 @@ class ResultTest {
         Result<String, String> ok = Result.ok("v");
         Result<String, String> returned = ok.peek(_ -> touched.set(true));
 
-        assertTrue(touched.get());
+        assertThat(touched.get()).isTrue();
         assertThat(returned).isSameAs(ok);
 
         touched.set(false);
         Result.<String, String>err("e").peek(_ -> touched.set(true));
-        assertFalse(touched.get());
+        assertThat(touched.get()).isFalse();
     }
 
     @Test
@@ -239,12 +237,12 @@ class ResultTest {
         Result<String, String> err = Result.err("e");
         Result<String, String> returned = err.peekError(_ -> touched.set(true));
 
-        assertTrue(touched.get());
+        assertThat(touched.get()).isTrue();
         assertThat(returned).isSameAs(err);
 
         touched.set(false);
         Result.<String, String>ok("v").peekError(_ -> touched.set(true));
-        assertFalse(touched.get());
+        assertThat(touched.get()).isFalse();
     }
 
     // ---------- interop: toOption / toTry ----------
@@ -308,7 +306,7 @@ class ResultTest {
             return "should-not-appear";
         });
         assertThat(result).isSameAs(ok);
-        assertFalse(called.get(), "rescue must not be called for Ok");
+        assertThat(called.get()).as("rescue must not be called for Ok").isFalse();
     }
 
     @Test
@@ -352,7 +350,7 @@ class ResultTest {
             });
         assertThat(result.isOk()).isTrue();
         assertThat(result.get()).isEqualTo("hello");
-        assertFalse(called.get(), "rescue must not be called for Ok");
+        assertThat(called.get()).as("rescue must not be called for Ok").isFalse();
     }
 
     @Test
@@ -379,7 +377,7 @@ class ResultTest {
             return Result.ok("fallback");
         });
         assertThat(result).isSameAs(ok);
-        assertFalse(called.get(), "fallback supplier must not be called for Ok");
+        assertThat(called.get()).as("fallback supplier must not be called for Ok").isFalse();
     }
 
     @Test
@@ -440,7 +438,7 @@ class ResultTest {
             });
         assertThat(result.isOk()).isTrue();
         assertThat(result.get()).isEqualTo("hello");
-        assertFalse(called.get(), "mapper must not be called for Ok");
+        assertThat(called.get()).as("mapper must not be called for Ok").isFalse();
     }
 
     @Test
@@ -492,7 +490,7 @@ class ResultTest {
             return "from-error:" + e;
         });
         assertThat(value).isEqualTo("real");
-        assertFalse(called.get(), "mapper must not be invoked for Ok");
+        assertThat(called.get()).as("mapper must not be invoked for Ok").isFalse();
     }
 
     @Test
