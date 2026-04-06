@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`CompletableFuture` adapters for `Try` and `Result` (#49):**
   - `Try.fromFuture(CompletableFuture<V>)` — wraps a future outcome as `Try<V>`;
-    `CancellationException` and `CompletionException` are unwrapped to their cause where
-    possible.
+    `CompletionException` is unwrapped to its cause where possible; `CancellationException`
+    is captured as a failure as-is.
   - `Result.fromFuture(CompletableFuture<V>)` — wraps as `Result<V, Throwable>`.
   - `toFuture()` on both `Try` and `Result` — converts to an already-completed
     `CompletableFuture`; failures become exceptionally-completed futures.
