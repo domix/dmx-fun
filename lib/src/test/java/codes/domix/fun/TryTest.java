@@ -884,9 +884,20 @@ class TryTest {
     }
 
     @Test
-    void flatMapError_shouldThrowNPE_ifMapperReturnsNull() {
-        assertThatThrownBy(() -> Try.<String>failure(new RuntimeException()).flatMapError(ex -> null))
+    void flatMapError_shouldReturnFailureWithNPE_ifMapperReturnsNull() {
+        Try<String> result = Try.<String>failure(new RuntimeException()).flatMapError(ex -> null);
+        assertTrue(result.isFailure());
+        assertThat(result.getCause())
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("mapper returned null");
+    }
+
+    @Test
+    void flatMapError_shouldReturnFailure_ifMapperThrows() {
+        RuntimeException thrown = new RuntimeException("mapper blew up");
+        Try<String> result = Try.<String>failure(new RuntimeException("original"))
+            .flatMapError(ex -> { throw thrown; });
+        assertTrue(result.isFailure());
+        assertSame(thrown, result.getCause());
     }
 }

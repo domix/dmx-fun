@@ -242,17 +242,24 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *
      * <p>This is the dual of {@link #flatMap}: it operates on the failure channel instead of
      * the value channel, allowing recovery from a known failure by running another fallible
-     * computation.
+     * computation. If the mapper itself throws or returns {@code null}, the exception is
+     * captured and returned as a new {@code Failure}.
      *
-     * @param mapper a function that maps the current cause to a new {@code Try}; must not return {@code null}
+     * @param mapper a function that maps the current cause to a new {@code Try}; must not be {@code null}
      * @return the mapped {@code Try} for {@code Failure}, or this instance unchanged for {@code Success}
-     * @throws NullPointerException if {@code mapper} is null or if {@code mapper} returns {@code null}
+     * @throws NullPointerException if {@code mapper} itself is {@code null}
      */
-    default Try<Value> flatMapError(Function<Throwable, Try<Value>> mapper) {
+    default Try<Value> flatMapError(Function<? super Throwable, Try<Value>> mapper) {
         Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Success<Value> s -> this;
-            case Failure<Value> f -> Objects.requireNonNull(mapper.apply(f.cause()), "mapper returned null");
+            case Failure<Value> f -> {
+                try {
+                    yield Objects.requireNonNull(mapper.apply(f.cause()), "mapper returned null");
+                } catch (Throwable t) {
+                    yield failure(t);
+                }
+            }
         };
     }
 
