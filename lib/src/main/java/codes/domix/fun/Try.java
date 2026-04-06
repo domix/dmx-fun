@@ -252,10 +252,14 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     default Try<Value> flatMapError(Function<? super Throwable, Try<Value>> mapper) {
         Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
-            case Success<Value> s -> this;
+            case Success<Value> _ -> this;
             case Failure<Value> f -> {
                 try {
-                    yield Objects.requireNonNull(mapper.apply(f.cause()), "mapper returned null");
+                    Try<? extends Value> mapped = Objects.requireNonNull(
+                        mapper.apply(f.cause()),
+                        "mapper returned null"
+                    );
+                    yield mapped.fold(Try::success, Try::failure);
                 } catch (Throwable t) {
                     yield failure(t);
                 }
