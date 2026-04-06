@@ -1,6 +1,6 @@
 package codes.domix.fun.example.site.examples;
 
-import codes.domix.fun.Option;
+import module codes.domix.fun;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 

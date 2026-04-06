@@ -1,6 +1,6 @@
 package codes.domix.fun.example.site.examples;
 
-import codes.domix.fun.Try;
+import module codes.domix.fun;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
