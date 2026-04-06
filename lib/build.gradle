@@ -1,7 +1,4 @@
 plugins {
-    // Apply the groovy plugin to also add support for Groovy (needed for Spock)
-    id 'groovy'
-
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
     id 'jacoco'
@@ -18,11 +15,6 @@ dependencies {
     // Null-safety annotations (part of the public API)
     api libs.jspecify
 
-    // Use the latest Groovy version for Spock testing
-    testImplementation libs.groovy
-
-    // Use the awesome Spock testing and specification framework even with Java
-    testImplementation libs.spock.core
     testImplementation libs.assertj.core
 
     testImplementation(platform('org.junit:junit-bom:6.0.1'))

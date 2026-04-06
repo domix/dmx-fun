@@ -171,6 +171,20 @@ class ResultTest {
     }
 
     @Test
+    void filter_withValue_shouldReturnOk_whenPredicatePasses() {
+        Result<String, String> filtered = Result.<String, String>ok("hello world!")
+            .filter(s -> s.length() > 10, "too short");
+        assertThat(filtered.get()).isEqualTo("hello world!");
+    }
+
+    @Test
+    void filter_withFunction_shouldReturnOk_whenPredicatePasses() {
+        Result<String, String> filtered = Result.<String, String>ok("hello world!")
+            .filter(s -> s.length() > 10, s -> "value '" + s + "' is too short");
+        assertThat(filtered.get()).isEqualTo("hello world!");
+    }
+
+    @Test
     void filter_shouldLeaveErrUntouched() {
         Result<String, String> err = Result.err("original");
         assertThat(err.filter(s -> false, "new error")).isSameAs(err);

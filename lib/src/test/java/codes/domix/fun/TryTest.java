@@ -802,6 +802,61 @@ class TryTest {
         assertThat(result).containsExactly(1, 3);
     }
 
+    // ---------- filter(Predicate) — default overload ----------
+
+    @Test
+    void filter_default_shouldReturnFailureWithIAE_whenPredicateFails() {
+        Try<String> result = Try.success("hello").filter(s -> s.length() >= 10);
+        assertTrue(result.isFailure());
+        assertThat(result.getCause()).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void filter_default_shouldReturnSuccess_whenPredicatePasses() {
+        Try<String> result = Try.success("hello").filter(s -> s.equals("hello"));
+        assertTrue(result.isSuccess());
+        assertEquals("hello", result.get());
+    }
+
+    @Test
+    void filter_default_shouldNotAffectFailure() {
+        RuntimeException original = new RuntimeException("Boom!");
+        Try<String> result = Try.<String>failure(original).filter(s -> true);
+        assertTrue(result.isFailure());
+        assertSame(original, result.getCause());
+    }
+
+    @Test
+    void filter_default_shouldCapturePredicateException_asFailure() {
+        Try<String> result = Try.success("hello").filter(s -> {
+            throw new RuntimeException("predicate failed");
+        });
+        assertTrue(result.isFailure());
+        assertThat(result.getCause())
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("predicate failed");
+    }
+
+    // ---------- filter(Predicate, Supplier) ----------
+
+    @Test
+    void filter_withSupplier_shouldReturnFailure_withCustomException_whenPredicateFails() {
+        Try<String> result = Try.success("hello")
+            .filter(s -> s.length() >= 10, () -> new RuntimeException("boom!"));
+        assertTrue(result.isFailure());
+        assertThat(result.getCause())
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom!");
+    }
+
+    @Test
+    void filter_withSupplier_shouldReturnSuccess_whenPredicatePasses() {
+        Try<String> result = Try.success("hello")
+            .filter(s -> s.equals("hello"), () -> new RuntimeException("should not run"));
+        assertTrue(result.isSuccess());
+        assertEquals("hello", result.get());
+    }
+
     // ---------- filter(Predicate, Function) ----------
 
     @Test
