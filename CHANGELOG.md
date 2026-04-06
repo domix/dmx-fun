@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.12] - 2026-04-06
+
+### Added
+
+- **`CompletableFuture` adapters for `Try` and `Result` (#49):**
+  - `Try.fromFuture(CompletableFuture<V>)` — wraps a future outcome as `Try<V>`;
+    `CancellationException` and `CompletionException` are unwrapped to their cause where
+    possible.
+  - `Result.fromFuture(CompletableFuture<V>)` — wraps as `Result<V, Throwable>`.
+  - `toFuture()` on both `Try` and `Result` — converts to an already-completed
+    `CompletableFuture`; failures become exceptionally-completed futures.
+  - Duplicated future-unwrapping logic consolidated via shared helper.
+- **`Lazy<T>` — lazily evaluated, memoized value (#51):**
+  - `Lazy.of(Supplier<T>)` — defers evaluation until first access.
+  - `get()` — evaluates the supplier exactly once and caches the result; if the supplier
+    throws, the exception is captured and rethrown on every subsequent call.
+  - `map(Function<T, R>)` — transforms the deferred value without forcing evaluation.
+  - `fromFuture(CompletableFuture<T>)` — wraps a future as a `Lazy<Try<T>>`.
+  - Fully `@NullMarked`; memoization is exception-safe using an internal `Try` state.
+- **`zip3` / `zipWith3` / `map3` on `Option`, `Result`, and `Try` (#69):**
+  - `zip3(a, b, c)` — combines three containers into a `Tuple3` if all are present/successful.
+  - `zipWith3(a, b, c, TriFunction)` — combines three containers using a custom combiner.
+  - `Option.map3` / `Result.map3` / `Try.map3` static variants.
+  - `TriFunction<A, B, C, R>` top-level `@FunctionalInterface` added as a prerequisite.
+- **`zip4` / `zipWith4` / `map4` on `Option`, `Result`, and `Try` (#70):**
+  - `zip4(a, b, c, d)` — combines four containers into a `Tuple4`.
+  - `zipWith4(a, b, c, d, QuadFunction)` — combines four containers using a custom combiner.
+  - `QuadFunction<A, B, C, D, R>` top-level `@FunctionalInterface` added as a prerequisite.
+- **`Try.flatMapError` (#114):**
+  - `flatMapError(Function<? super Throwable, ? extends Try<? extends Value>>)` — dual of
+    `flatMap`, operating on the failure channel; allows recovery from a `Failure` by running
+    another fallible computation.
+  - If the mapper itself throws or returns `null`, the exception is captured as a new
+    `Failure` (mirrors `recoverWith` behaviour).
+
+### Changed
+
+- **`Bicontainer<Value, Error>` shared interface (#72):**
+  - Common combinators (`fold`, `getOrElse`, `getOrElseGet`, `getOrThrow`, `peek`,
+    `peekError`, `toOption`, `toResult`) extracted from `Result` and `Validated` into
+    `Bicontainer`, eliminating duplicated implementations.
+  - `Containers.requireNonNullResult` utility wired internally to guard callback return
+    values consistently across both types.
+- **`sequence` and `traverse` migrated to Stream Gatherers (#81):**
+  - `Gatherer.ofSequential()` replaces `Collector.of()` and manual iterator loops in
+    `Option`, `Result`, and `Try`.
+  - Short-circuit semantics on first `None` / `Err` / `Failure` are preserved via the
+    integrator returning `false`.
+  - `Iterable` overloads delegate to their `Stream` counterparts via
+    `StreamSupport.stream(iterable.spliterator(), false)`.
+  - `Try.sequence` retains `Collections.unmodifiableList` (not `List.copyOf`) to preserve
+    `null` elements produced by `Try.run()`.
+
+### Refactored
+
+- **`Validated.product()` — record-pattern switch (#82):**
+  - Double-nested `switch` replaced with a local `record Pair<X, Y>` and a single
+    exhaustive pattern-matching `switch`; improves readability and eliminates one level of
+    indentation.
+- **`Validated.traverse(Iterable)` — stream pipeline (#83):**
+  - Anonymous `Iterator` inner class replaced with a
+    `StreamSupport.stream(...).map(...).iterator()` pipeline; removes the manual
+    `Iterator` import.
+
+### Fixed
+
+- Orphaned Javadoc block for the removed `isError()` method deleted from `Result`.
+
 ## [0.0.11] - 2026-03-20
 
 ### Added
@@ -162,7 +230,8 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.11...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.12...HEAD
+[0.0.12]: https://github.com/domix/dmx-fun/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/domix/dmx-fun/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/domix/dmx-fun/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/domix/dmx-fun/compare/v0.0.8...v0.0.9
