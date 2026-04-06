@@ -844,4 +844,49 @@ class TryTest {
         assertThatThrownBy(() -> Try.success(1).filter(n -> true, (Function<Integer, Throwable>) null))
             .isInstanceOf(NullPointerException.class);
     }
+
+    // ---------- flatMapError ----------
+
+    @Test
+    void flatMapError_shouldChainFailureCauses() {
+        RuntimeException recovered = new RuntimeException("recovered");
+        Try<String> result = Try.<String>failure(new RuntimeException("original"))
+            .flatMapError(ex -> Try.failure(recovered));
+        assertTrue(result.isFailure());
+        assertSame(recovered, result.getCause());
+    }
+
+    @Test
+    void flatMapError_shouldAllowConvertingFailureToSuccess() {
+        Try<String> result = Try.<String>failure(new RuntimeException("oops"))
+            .flatMapError(ex -> Try.success("fallback"));
+        assertTrue(result.isSuccess());
+        assertEquals("fallback", result.get());
+    }
+
+    @Test
+    void flatMapError_shouldLeaveSuccessUntouched() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Try<String> result = Try.success("hello")
+            .flatMapError(ex -> {
+                called.set(true);
+                return Try.failure(ex);
+            });
+        assertTrue(result.isSuccess());
+        assertEquals("hello", result.get());
+        assertFalse(called.get(), "mapper must not be called for Success");
+    }
+
+    @Test
+    void flatMapError_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Try.<String>failure(new RuntimeException()).flatMapError(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void flatMapError_shouldThrowNPE_ifMapperReturnsNull() {
+        assertThatThrownBy(() -> Try.<String>failure(new RuntimeException()).flatMapError(ex -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
+    }
 }
