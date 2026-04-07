@@ -344,6 +344,75 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Recovers from a failure if — and only if — the exception is an instance of
+     * {@code exceptionType}, applying the recovery function to produce a new success value.
+     *
+     * <p>If this is a {@code Success}, or if the exception does not match
+     * {@code exceptionType}, this instance is returned unchanged.
+     * If the recovery function throws, the exception is captured as a new {@code Failure}.
+     *
+     * @param <X>           the exception type to match
+     * @param exceptionType the class of the exception to recover from
+     * @param recovery      function that maps the matched exception to a recovery value
+     * @return a {@code Success} with the recovered value, or this instance if the exception
+     *         did not match or if this is already a {@code Success}
+     */
+    default <X extends Throwable> Try<Value> recover(
+        Class<X> exceptionType,
+        Function<? super X, ? extends Value> recovery) {
+        Objects.requireNonNull(exceptionType, "exceptionType");
+        Objects.requireNonNull(recovery, "recovery");
+        return switch (this) {
+            case Success<Value> _ -> this;
+            case Failure<Value> f -> {
+                if (!exceptionType.isInstance(f.cause())) yield this;
+                try {
+                    yield success(Objects.requireNonNull(
+                        recovery.apply(exceptionType.cast(f.cause())), "recovery returned null"));
+                } catch (Throwable t) {
+                    yield failure(t);
+                }
+            }
+        };
+    }
+
+    /**
+     * Recovers from a failure if — and only if — the exception is an instance of
+     * {@code exceptionType}, by applying the recovery function which returns a new
+     * {@code Try<Value>} for chaining further fallible computations.
+     *
+     * <p>If this is a {@code Success}, or if the exception does not match
+     * {@code exceptionType}, this instance is returned unchanged.
+     * If the recovery function throws or returns {@code null}, the exception is captured
+     * as a new {@code Failure}.
+     *
+     * @param <X>           the exception type to match
+     * @param exceptionType the class of the exception to recover from
+     * @param recovery      function that maps the matched exception to a new {@code Try}
+     * @return the result of the recovery function, or this instance if the exception
+     *         did not match or if this is already a {@code Success}
+     */
+    @SuppressWarnings("unchecked")
+    default <X extends Throwable> Try<Value> recoverWith(
+        Class<X> exceptionType,
+        Function<? super X, ? extends Try<? extends Value>> recovery) {
+        Objects.requireNonNull(exceptionType, "exceptionType");
+        Objects.requireNonNull(recovery, "recovery");
+        return switch (this) {
+            case Success<Value> _ -> this;
+            case Failure<Value> f -> {
+                if (!exceptionType.isInstance(f.cause())) yield this;
+                try {
+                    yield (Try<Value>) Objects.requireNonNull(
+                        recovery.apply(exceptionType.cast(f.cause())), "recovery returned null");
+                } catch (Throwable t) {
+                    yield failure(t);
+                }
+            }
+        };
+    }
+
+    /**
      * Returns the value if this instance is a {@code Success}, or the specified fallback value if it is a {@code Failure}.
      *
      * @param fallback the value to return if this instance is a {@code Failure}.
