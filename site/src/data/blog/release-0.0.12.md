@@ -1,7 +1,7 @@
 ---
 title: "dmx-fun 0.0.12 Released"
 description: "Version 0.0.12 brings CompletableFuture adapters, Lazy<T>, zip3/zip4, Try.flatMapError, and a sweeping set of internal refactors powered by Stream Gatherers and Java record patterns."
-pubDate: 2026-04-06
+pubDate: 2026-04-05
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Release"
