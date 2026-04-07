@@ -1,9 +1,6 @@
----
-fileName: 'DataPipeline.java'
----
+package dmx.fun.example.site.examples;
 
-```java title="DataPipeline.java"
-import dmx.fun.Try;
+import module dmx.fun;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -84,4 +81,3 @@ public class DataPipeline {
         );
     }
 }
-```

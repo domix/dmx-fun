@@ -1,9 +1,6 @@
----
-fileName: 'UserValidation.java'
----
+package dmx.fun.example.site.examples;
 
-```java title="UserValidation.java"
-import dmx.fun.Result;
+import module dmx.fun;
 
 public class UserValidator {
     public record User(String email, String password) {
@@ -53,4 +50,3 @@ public class UserValidator {
     }
 
 }
-```

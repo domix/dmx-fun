@@ -1,10 +1,6 @@
----
-fileName: 'QuickExample.java'
----
+package dmx.fun.example.site;
 
-```java title="QuickExample.java"
-import dmx.fun.Option;
-import dmx.fun.Try;
+import module dmx.fun;
 import java.util.function.Function;
 
 public class QuickExample {
@@ -31,4 +27,3 @@ public class QuickExample {
             .onSuccess(System.out::println);
     }
 }
-```

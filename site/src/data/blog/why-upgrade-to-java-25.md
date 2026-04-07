@@ -141,7 +141,7 @@ Java 25 finalizes module import declarations, which let you import all the expor
 
 ```java
 import module java.base;
-import module codes.domix.fun;
+import module dmx.fun;
 
 // All exported types from both modules are now directly available
 Option<String> value = Option.some("hello");

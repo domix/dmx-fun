@@ -1,21 +1,17 @@
----
-fileName: 'ResultExample.java'
----
+package dmx.fun.example.site.gettingstarted;
 
-```java title="ResultExample.java"
-import dmx.fun.Result;
+import module dmx.fun;
 
 class ResultExample {
     void main() {
         Result<Integer, String> result = Result.ok(123);
-        result.map(i -> i + 1);        // Result.ok(124)
+        result.map(i -> i + 1);  // Result.ok(124)
         result.isOk();                 // true
         result.get();                  // 124
 
         Result<Integer, String> failure = Result.err("error");
-        failure.map(i -> i + 1);        // Result.err("error")
+        failure.map(i -> i + 1);  // Result.err("error")
         failure.isError();              // true
         failure.getError();             // "error"
     }
 }
-```

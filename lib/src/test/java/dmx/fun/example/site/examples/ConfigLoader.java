@@ -1,10 +1,6 @@
----
-fileName: 'ConfigLoader.java'
----
+package dmx.fun.example.site.examples;
 
-```java title="ConfigLoader.java"
-import dmx.fun.Option;
-import dmx.fun.Try;
+import module dmx.fun;
 import java.util.Properties;
 
 public class ConfigLoader {
@@ -47,4 +43,3 @@ public class ConfigLoader {
         System.out.printf("Server is running on %s:%d%n", host, port);
     }
 }
-```

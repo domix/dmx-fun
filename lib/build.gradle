@@ -40,10 +40,10 @@ compileTestJava {
     def modulePath = (mainClassesDirs + apiDeps).asPath
     options.compilerArgs += [
         '--module-path', modulePath,
-        '--add-modules', 'codes.domix.fun,java.net.http',
-        '--patch-module', "codes.domix.fun=${testSrcPath}",
-        '--add-reads', 'codes.domix.fun=ALL-UNNAMED',
-        '--add-reads', 'codes.domix.fun=java.net.http'
+        '--add-modules', 'dmx.fun,java.net.http',
+        '--patch-module', "dmx.fun=${testSrcPath}",
+        '--add-reads', 'dmx.fun=ALL-UNNAMED',
+        '--add-reads', 'dmx.fun=java.net.http'
     ]
 }
 
