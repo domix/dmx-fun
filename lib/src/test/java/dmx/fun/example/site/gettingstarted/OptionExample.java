@@ -1,9 +1,6 @@
----
-fileName: 'OptionExample.java'
----
+package dmx.fun.example.site.gettingstarted;
 
-```java title="OptionExample.java"
-import dmx.fun.Option;
+import module dmx.fun;
 
  class OptionExample {
     void main() {
@@ -23,4 +20,3 @@ import dmx.fun.Option;
             .map(String::toUpperCase); // Some("HELLO")
     }
 }
-```

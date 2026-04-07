@@ -1,9 +1,6 @@
----
-fileName: 'APIResponseHandling.java'
----
+package dmx.fun.example.site.examples;
 
-```java title="APIResponseHandling.java"
-import dmx.fun.Try;
+import module dmx.fun;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -59,4 +56,3 @@ public class APIResponseHandling {
             .get();
     }
 }
-```

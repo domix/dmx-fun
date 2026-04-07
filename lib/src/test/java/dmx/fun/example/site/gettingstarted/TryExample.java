@@ -1,9 +1,6 @@
----
-fileName: 'TryExample.java'
----
+package dmx.fun.example.site.gettingstarted;
 
-```java title="TryExample.java"
-import dmx.fun.Try;
+import module dmx.fun;
 
 class TryExample {
     void main() {
@@ -22,4 +19,3 @@ class TryExample {
             .map(i -> i * 2); // Success(84)
     }
 }
-```

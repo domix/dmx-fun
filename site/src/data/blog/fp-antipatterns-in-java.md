@@ -55,8 +55,8 @@ If `getProfile()` can return null, its return type should be `Option<Profile>`, 
 flatMap mapper must not return null
 java.lang.NullPointerException: flatMap mapper must not return null
 	at java.base/java.util.Objects.requireNonNull(Objects.java:246)
-	at codes.domix.fun.Option.flatMap(Option.java:237)
-	at codes.domix.fun.InteropTest$ValidatedInterop.foo(InteropTest.java:288)
+	at dmx.fun.Option.flatMap(Option.java:237)
+	at dmx.fun.InteropTest$ValidatedInterop.foo(InteropTest.java:288)
 ```
 
 ---

@@ -1,9 +1,6 @@
----
-fileName: 'Caching.java'
----
+package dmx.fun.example.site.examples;
 
-```java title="Caching.java"
-import dmx.fun.Option;
+import module dmx.fun;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -63,4 +60,3 @@ public class Caching<K, V> {
         maybeUser.peek(userData -> System.out.printf("Found %s%n", userData.name()));
     }
 }
-```

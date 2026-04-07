@@ -1,10 +1,6 @@
----
-fileName: 'OrderProcessor.java'
----
+package dmx.fun.example.site.examples;
 
-```java title="OrderProcessor.java"
-import dmx.fun.Option;
-import dmx.fun.Try;
+import module dmx.fun;
 
 public class OrderProcessor {
     private final ProductRepo productRepo = new ProductRepo();
@@ -113,4 +109,3 @@ public class OrderProcessor {
             .onFailure(processor::handleError);
     }
 }
-```
