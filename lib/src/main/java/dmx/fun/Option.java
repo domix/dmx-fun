@@ -178,6 +178,35 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     /**
+     * Returns this {@code Option} if it is {@code Some}, otherwise returns {@code alternative}.
+     *
+     * @param alternative the fallback {@code Option} to return when this is {@code None};
+     *                    must not be {@code null}
+     * @return this instance if {@code Some}, otherwise {@code alternative}
+     * @throws NullPointerException if {@code alternative} is null
+     */
+    @SuppressWarnings("unchecked")
+    default Option<Value> orElse(Option<? extends Value> alternative) {
+        Objects.requireNonNull(alternative, "alternative");
+        return isDefined() ? this : (Option<Value>) alternative;
+    }
+
+    /**
+     * Returns this {@code Option} if it is {@code Some}, otherwise evaluates and returns
+     * the supplier's result. The supplier is <em>not</em> called when this is {@code Some}.
+     *
+     * @param alternative a lazy supplier of a fallback {@code Option}; must not return {@code null}
+     * @return this instance if {@code Some}, or the result of {@code alternative.get()} if {@code None}
+     * @throws NullPointerException if {@code alternative} is null or returns {@code null}
+     */
+    @SuppressWarnings("unchecked")
+    default Option<Value> orElse(Supplier<? extends Option<? extends Value>> alternative) {
+        Objects.requireNonNull(alternative, "alternative");
+        if (isDefined()) return this;
+        return (Option<Value>) Objects.requireNonNull(alternative.get(), "alternative returned null");
+    }
+
+    /**
      * Retrieves the encapsulated value if this {@code Option} instance is of type {@code Some},
      * or returns {@code null} if this instance is of type {@code None}.
      *

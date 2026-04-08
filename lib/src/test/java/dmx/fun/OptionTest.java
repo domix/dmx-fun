@@ -78,6 +78,68 @@ class OptionTest {
         assertThat(called.get()).as("fallback supplier must be called for None").isTrue();
     }
 
+    // ---------- orElse ----------
+
+    @Test
+    void orElse_eager_shouldReturnSelf_forSome() {
+        Option<Integer> some = Option.some(10);
+        Option<Integer> result = some.orElse(Option.some(99));
+        assertThat(result).isSameAs(some);
+    }
+
+    @Test
+    void orElse_eager_shouldReturnAlternative_forNone() {
+        Option<Integer> result = Option.<Integer>none().orElse(Option.some(99));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get()).isEqualTo(99);
+    }
+
+    @Test
+    void orElse_eager_shouldChainMultipleAlternatives() {
+        Option<Integer> result = Option.<Integer>none()
+            .orElse(Option.none())
+            .orElse(Option.some(42));
+        assertThat(result.get()).isEqualTo(42);
+    }
+
+    @Test
+    void orElse_eager_shouldThrowNPE_ifAlternativeIsNull() {
+        assertThatThrownBy(() -> Option.<Integer>none().orElse((Option<Integer>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void orElse_lazy_shouldReturnSelf_forSome_andNotCallSupplier() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Option<Integer> some = Option.some(10);
+        Option<Integer> result = some.orElse(() -> {
+            called.set(true);
+            return Option.some(99);
+        });
+        assertThat(result).isSameAs(some);
+        assertThat(called.get()).as("supplier must not be called for Some").isFalse();
+    }
+
+    @Test
+    void orElse_lazy_shouldReturnAlternative_forNone() {
+        Option<Integer> result = Option.<Integer>none().orElse(() -> Option.some(99));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get()).isEqualTo(99);
+    }
+
+    @Test
+    void orElse_lazy_shouldThrowNPE_ifSupplierIsNull() {
+        assertThatThrownBy(() -> Option.<Integer>none().orElse((java.util.function.Supplier<Option<Integer>>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void orElse_lazy_shouldThrowNPE_ifSupplierReturnsNull() {
+        assertThatThrownBy(() -> Option.<Integer>none().orElse(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("alternative returned null");
+    }
+
     @Test
     void getOrNull_shouldReturnValueOrNull() {
         assertThat(Option.some(10).getOrNull()).isEqualTo(10);

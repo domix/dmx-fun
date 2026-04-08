@@ -366,6 +366,35 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     }
 
     /**
+     * Returns this {@code Result} if it is {@code Ok}, otherwise returns {@code alternative}.
+     *
+     * @param alternative the fallback {@code Result} to return when this is {@code Err};
+     *                    must not be {@code null}
+     * @return this instance if {@code Ok}, otherwise {@code alternative}
+     * @throws NullPointerException if {@code alternative} is null
+     */
+    @SuppressWarnings("unchecked")
+    default Result<Value, Error> orElse(Result<? extends Value, ? extends Error> alternative) {
+        Objects.requireNonNull(alternative, "alternative");
+        return isOk() ? this : (Result<Value, Error>) alternative;
+    }
+
+    /**
+     * Returns this {@code Result} if it is {@code Ok}, otherwise evaluates and returns
+     * the supplier's result. The supplier is <em>not</em> called when this instance is {@code Ok}.
+     *
+     * @param alternative a lazy supplier of a fallback {@code Result}; must not return {@code null}
+     * @return this instance if {@code Ok}, or the result of {@code alternative.get()} if {@code Err}
+     * @throws NullPointerException if {@code alternative} is null or returns {@code null}
+     */
+    @SuppressWarnings("unchecked")
+    default Result<Value, Error> orElse(Supplier<? extends Result<? extends Value, ? extends Error>> alternative) {
+        Objects.requireNonNull(alternative, "alternative");
+        if (isOk()) return this;
+        return (Result<Value, Error>) Objects.requireNonNull(alternative.get(), "alternative returned null");
+    }
+
+    /**
      * Returns this {@code Result} if it is {@code Ok}; otherwise evaluates the given supplier
      * and returns its result. The supplier is <em>not</em> called when this instance is {@code Ok}.
      *
