@@ -405,6 +405,7 @@ class ValidatedTest {
                 n -> n % 2 == 0 ? Validated.invalid("bad:" + n) : Validated.valid("ok:" + n),
                 (a, b) -> a + "; " + b));
         assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).contains("bad:2");
     }
 
     @Test
