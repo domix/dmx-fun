@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jspecify.annotations.NullMarked;
@@ -437,6 +438,66 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
                 .map(a -> Objects.requireNonNull(mapper.apply(a), "traverse mapper must not return null"))
                 .iterator();
         return accumulate(mapped, errMerge);
+    }
+
+    // ---------- collector / traverseCollector ----------
+
+    /**
+     * Returns a {@link Collector} that accumulates a stream of {@code Validated<E, A>} into a
+     * single {@code Validated<E, List<A>>}, collecting all valid values and merging all errors
+     * left-to-right using {@code errMerge}.
+     *
+     * <p>Compatible with parallel streams: partial results from each split are combined via
+     * {@code errMerge} on errors and list concatenation on values.
+     *
+     * @param <E>      the error type
+     * @param <A>      the value type
+     * @param errMerge a function to merge two errors; must not return {@code null}
+     * @return a {@code Collector} producing {@code Valid(List<A>)} if all elements are valid,
+     *         or {@code Invalid(accumulatedError)} otherwise
+     * @throws NullPointerException if {@code errMerge} is null
+     */
+    static <E, A> Collector<Validated<E, A>, ?, Validated<E, List<A>>> collector(
+        BinaryOperator<E> errMerge
+    ) {
+        Objects.requireNonNull(errMerge, "errMerge");
+        return Collector.of(
+            () -> new ArrayList<Validated<E, A>>(),
+            ArrayList::add,
+            (left, right) -> { left.addAll(right); return left; },
+            list -> accumulate(list, errMerge)
+        );
+    }
+
+    /**
+     * Returns a {@link Collector} that maps each input element through {@code mapper} and
+     * accumulates the results into a single {@code Validated<E, List<B>>}, collecting all valid
+     * values and merging all errors left-to-right using {@code errMerge}.
+     *
+     * <p>The mapper is applied eagerly during accumulation, so parallel streams benefit from
+     * parallel mapping. Compatible with parallel streams.
+     *
+     * @param <E>      the error type
+     * @param <A>      the input element type
+     * @param <B>      the mapped value type
+     * @param mapper   a function mapping each element to a {@code Validated}; must not return {@code null}
+     * @param errMerge a function to merge two errors; must not return {@code null}
+     * @return a {@code Collector} producing {@code Valid(List<B>)} if all mappings succeed,
+     *         or {@code Invalid(accumulatedError)} otherwise
+     * @throws NullPointerException if {@code mapper} or {@code errMerge} is null
+     */
+    static <E, A, B> Collector<A, ?, Validated<E, List<B>>> traverseCollector(
+        Function<? super A, Validated<E, B>> mapper,
+        BinaryOperator<E> errMerge
+    ) {
+        Objects.requireNonNull(mapper, "mapper");
+        Objects.requireNonNull(errMerge, "errMerge");
+        return Collector.of(
+            () -> new ArrayList<Validated<E, B>>(),
+            (list, a) -> list.add(Objects.requireNonNull(mapper.apply(a), "traverseCollector mapper must not return null")),
+            (left, right) -> { left.addAll(right); return left; },
+            list -> accumulate(list, errMerge)
+        );
     }
 
     private static <E, A> Validated<E, List<A>> accumulate(

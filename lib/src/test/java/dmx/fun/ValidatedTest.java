@@ -302,4 +302,120 @@ class ValidatedTest {
         assertThat(result.isInvalid()).isTrue();
         assertThat(result.getError()).isEqualTo("bad:2");
     }
+
+    // ---------- collector / traverseCollector ----------
+
+    @Test
+    void collector_allValid_shouldReturnValidList() {
+        Validated<String, List<Integer>> result = Stream.<Validated<String, Integer>>of(
+                Validated.valid(1), Validated.valid(2), Validated.valid(3))
+            .collect(Validated.collector((a, b) -> a + "; " + b));
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo(List.of(1, 2, 3));
+    }
+
+    @Test
+    void collector_mixedValidAndInvalid_shouldReturnAccumulatedError() {
+        Validated<String, List<Integer>> result = Stream.<Validated<String, Integer>>of(
+                Validated.valid(1), Validated.invalid("e1"), Validated.valid(3), Validated.invalid("e2"))
+            .collect(Validated.collector((a, b) -> a + "; " + b));
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("e1; e2");
+    }
+
+    @Test
+    void collector_allInvalid_shouldAccumulateAllErrors() {
+        Validated<String, List<Integer>> result = Stream.<Validated<String, Integer>>of(
+                Validated.invalid("e1"), Validated.invalid("e2"), Validated.invalid("e3"))
+            .collect(Validated.collector((a, b) -> a + "; " + b));
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("e1; e2; e3");
+    }
+
+    @Test
+    void collector_emptyStream_shouldReturnValidEmptyList() {
+        Validated<String, List<Integer>> result = Stream.<Validated<String, Integer>>of()
+            .collect(Validated.collector((a, b) -> a + "; " + b));
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEmpty();
+    }
+
+    @Test
+    void collector_parallelStream_shouldReturnValidList() {
+        Validated<String, List<Integer>> result = Stream.<Validated<String, Integer>>of(
+                Validated.valid(1), Validated.valid(2), Validated.valid(3),
+                Validated.valid(4), Validated.valid(5))
+            .parallel()
+            .collect(Validated.collector((a, b) -> a + "; " + b));
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).containsExactlyInAnyOrder(1, 2, 3, 4, 5);
+    }
+
+    @Test
+    void collector_shouldThrowNPE_ifErrMergeIsNull() {
+        assertThatThrownBy(() -> Validated.collector(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void traverseCollector_allValid_shouldReturnValidList() {
+        Validated<String, List<String>> result = Stream.of(1, 2, 3)
+            .collect(Validated.traverseCollector(
+                n -> Validated.valid("v" + n),
+                (a, b) -> a + "; " + b));
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo(List.of("v1", "v2", "v3"));
+    }
+
+    @Test
+    void traverseCollector_mixedValidAndInvalid_shouldAccumulateErrors() {
+        Validated<String, List<String>> result = Stream.of(1, 2, 3)
+            .collect(Validated.traverseCollector(
+                n -> n % 2 == 0 ? Validated.invalid("bad:" + n) : Validated.valid("ok:" + n),
+                (a, b) -> a + "; " + b));
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("bad:2");
+    }
+
+    @Test
+    void traverseCollector_allInvalid_shouldAccumulateAllErrors() {
+        Validated<String, List<String>> result = Stream.of(1, 2, 3)
+            .collect(Validated.traverseCollector(
+                n -> Validated.invalid("e" + n),
+                (a, b) -> a + "; " + b));
+        assertThat(result.isInvalid()).isTrue();
+        assertThat(result.getError()).isEqualTo("e1; e2; e3");
+    }
+
+    @Test
+    void traverseCollector_emptyStream_shouldReturnValidEmptyList() {
+        Validated<String, List<String>> result = Stream.<Integer>of()
+            .collect(Validated.traverseCollector(
+                n -> Validated.valid("v" + n),
+                (a, b) -> a + "; " + b));
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEmpty();
+    }
+
+    @Test
+    void traverseCollector_parallelStream_shouldAccumulateErrors() {
+        Validated<String, List<String>> result = Stream.of(1, 2, 3, 4, 5)
+            .parallel()
+            .collect(Validated.traverseCollector(
+                n -> n % 2 == 0 ? Validated.invalid("bad:" + n) : Validated.valid("ok:" + n),
+                (a, b) -> a + "; " + b));
+        assertThat(result.isInvalid()).isTrue();
+    }
+
+    @Test
+    void traverseCollector_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Validated.traverseCollector(null, (a, b) -> a + "; " + b))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void traverseCollector_shouldThrowNPE_ifErrMergeIsNull() {
+        assertThatThrownBy(() -> Validated.traverseCollector(n -> Validated.valid(n), null))
+            .isInstanceOf(NullPointerException.class);
+    }
 }
