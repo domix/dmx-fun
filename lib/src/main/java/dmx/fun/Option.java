@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * A sealed interface representing an optional value with two possible states:
@@ -24,8 +25,11 @@ import java.util.stream.StreamSupport;
  * integrating functional-style operations for working with optional values in a more
  * expressive and composable manner.
  *
+ * <p>This interface is {@link NullMarked}: all types are non-null by default.
+ *
  * @param <Value> The type of the optional value.
  */
+@NullMarked
 public sealed interface Option<Value> permits Option.Some, Option.None {
 
     /**
