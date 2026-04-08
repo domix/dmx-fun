@@ -293,6 +293,16 @@ class TryTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void recover_withExceptionType_shouldReturnFailureIfRecoveryReturnsNull() {
+        var failure = Try.<String>failure(new IllegalArgumentException("oops"));
+
+        var result = failure.recover(IllegalArgumentException.class, _ -> null);
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(NullPointerException.class);
+    }
+
     // ---------- recoverWith(Class, Function) ----------
 
     @Test
