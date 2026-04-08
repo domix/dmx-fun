@@ -366,6 +366,71 @@ class ResultTest {
             .hasMessageContaining("rescue returned null");
     }
 
+    // ---------- orElse ----------
+
+    @Test
+    void orElse_eager_shouldReturnSelf_whenOk() {
+        Result<String, String> ok = Result.ok("primary");
+        Result<String, String> result = ok.orElse(Result.ok("fallback"));
+        assertThat(result).isSameAs(ok);
+    }
+
+    @Test
+    void orElse_eager_shouldReturnAlternative_whenErr() {
+        Result<String, String> result = Result.<String, String>err("e")
+            .orElse(Result.ok("fallback"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("fallback");
+    }
+
+    @Test
+    void orElse_eager_shouldChainMultipleAlternatives() {
+        Result<String, String> result = Result.<String, String>err("e1")
+            .orElse(Result.err("e2"))
+            .orElse(Result.ok("found"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("found");
+    }
+
+    @Test
+    void orElse_eager_shouldThrowNPE_ifAlternativeIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").orElse((Result<String, String>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void orElse_lazy_shouldReturnSelf_whenOk_andNotCallSupplier() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        Result<String, String> ok = Result.ok("primary");
+        Result<String, String> result = ok.orElse(() -> {
+            called.set(true);
+            return Result.ok("fallback");
+        });
+        assertThat(result).isSameAs(ok);
+        assertThat(called.get()).as("supplier must not be called for Ok").isFalse();
+    }
+
+    @Test
+    void orElse_lazy_shouldReturnAlternative_whenErr() {
+        Result<String, String> result = Result.<String, String>err("e")
+            .orElse(() -> Result.ok("fallback"));
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo("fallback");
+    }
+
+    @Test
+    void orElse_lazy_shouldThrowNPE_ifSupplierIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").orElse((Supplier<Result<String, String>>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void orElse_lazy_shouldThrowNPE_ifSupplierReturnsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").orElse(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("alternative returned null");
+    }
+
     // ---------- or ----------
 
     @Test

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * A sealed interface representing an optional value with two possible states:
@@ -24,8 +25,11 @@ import java.util.stream.StreamSupport;
  * integrating functional-style operations for working with optional values in a more
  * expressive and composable manner.
  *
+ * <p>This interface is {@link NullMarked}: all types are non-null by default.
+ *
  * @param <Value> The type of the optional value.
  */
+@NullMarked
 public sealed interface Option<Value> permits Option.Some, Option.None {
 
     /**
@@ -175,6 +179,35 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      */
     default Value getOrElseGet(Supplier<? extends Value> fallbackSupplier) {
         return this instanceof Some<Value>(Value v) ? v : fallbackSupplier.get();
+    }
+
+    /**
+     * Returns this {@code Option} if it is {@code Some}, otherwise returns {@code alternative}.
+     *
+     * @param alternative the fallback {@code Option} to return when this is {@code None};
+     *                    must not be {@code null}
+     * @return this instance if {@code Some}, otherwise {@code alternative}
+     * @throws NullPointerException if {@code alternative} is null
+     */
+    @SuppressWarnings("unchecked")
+    default Option<Value> orElse(Option<? extends Value> alternative) {
+        Objects.requireNonNull(alternative, "alternative");
+        return isDefined() ? this : (Option<Value>) alternative;
+    }
+
+    /**
+     * Returns this {@code Option} if it is {@code Some}, otherwise evaluates and returns
+     * the supplier's result. The supplier is <em>not</em> called when this is {@code Some}.
+     *
+     * @param alternative a lazy supplier of a fallback {@code Option}; must not return {@code null}
+     * @return this instance if {@code Some}, or the result of {@code alternative.get()} if {@code None}
+     * @throws NullPointerException if {@code alternative} is null or returns {@code null}
+     */
+    @SuppressWarnings("unchecked")
+    default Option<Value> orElse(Supplier<? extends Option<? extends Value>> alternative) {
+        Objects.requireNonNull(alternative, "alternative");
+        if (isDefined()) return this;
+        return (Option<Value>) Objects.requireNonNull(alternative.get(), "alternative returned null");
     }
 
     /**
