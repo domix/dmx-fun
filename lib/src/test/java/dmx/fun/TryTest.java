@@ -236,6 +236,140 @@ class TryTest {
         assertThat(recovered.get()).isEqualTo(123);
     }
 
+    // ---------- recover(Class, Function) ----------
+
+    @Test
+    void recover_withExceptionType_shouldReturnSameSuccess() {
+        var success = Try.success(10);
+
+        var result = success.recover(RuntimeException.class, _ -> 99);
+
+        assertThat(result).isSameAs(success);
+    }
+
+    @Test
+    void recover_withExceptionType_shouldRecoverWhenExceptionMatches() {
+        var failure = Try.<Integer>failure(new IllegalArgumentException("bad arg"));
+
+        var result = failure.recover(IllegalArgumentException.class, ex -> ex.getMessage().length());
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("bad arg".length());
+    }
+
+    @Test
+    void recover_withExceptionType_shouldPassThroughWhenExceptionDoesNotMatch() {
+        var cause = new IllegalArgumentException("bad arg");
+        var failure = Try.<Integer>failure(cause);
+
+        var result = failure.recover(IllegalStateException.class, _ -> 99);
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(cause);
+    }
+
+    @Test
+    void recover_withExceptionType_shouldReturnFailureIfRecoveryThrows() {
+        var failure = Try.<Integer>failure(new IllegalArgumentException("oops"));
+
+        var result = failure.recover(IllegalArgumentException.class, _ -> {
+            throw new RuntimeException("recovery blew up");
+        });
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(RuntimeException.class);
+        assertThat(result.getCause().getMessage()).isEqualTo("recovery blew up");
+    }
+
+    @Test
+    void recover_withExceptionType_shouldThrowNPE_ifExceptionTypeIsNull() {
+        assertThatThrownBy(() -> Try.success(1).recover(null, _ -> 99))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void recover_withExceptionType_shouldThrowNPE_ifRecoveryIsNull() {
+        assertThatThrownBy(() -> Try.success(1).recover(RuntimeException.class, null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void recover_withExceptionType_shouldReturnFailureIfRecoveryReturnsNull() {
+        var failure = Try.<String>failure(new IllegalArgumentException("oops"));
+
+        var result = failure.recover(IllegalArgumentException.class, _ -> null);
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- recoverWith(Class, Function) ----------
+
+    @Test
+    void recoverWith_withExceptionType_shouldReturnSameSuccess() {
+        var success = Try.success(10);
+
+        var result = success.recoverWith(RuntimeException.class, _ -> Try.success(99));
+
+        assertThat(result).isSameAs(success);
+    }
+
+    @Test
+    void recoverWith_withExceptionType_shouldRecoverWhenExceptionMatches() {
+        var failure = Try.<Integer>failure(new IllegalArgumentException("bad arg"));
+
+        var result = failure.recoverWith(IllegalArgumentException.class, _ -> Try.success(42));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo(42);
+    }
+
+    @Test
+    void recoverWith_withExceptionType_shouldPassThroughWhenExceptionDoesNotMatch() {
+        var cause = new IllegalArgumentException("bad arg");
+        var failure = Try.<Integer>failure(cause);
+
+        var result = failure.recoverWith(IllegalStateException.class, _ -> Try.success(99));
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(cause);
+    }
+
+    @Test
+    void recoverWith_withExceptionType_shouldReturnFailureIfRecoveryThrows() {
+        var failure = Try.<Integer>failure(new IllegalArgumentException("oops"));
+
+        var result = failure.recoverWith(IllegalArgumentException.class, _ -> {
+            throw new RuntimeException("recoverWith blew up");
+        });
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(RuntimeException.class);
+        assertThat(result.getCause().getMessage()).isEqualTo("recoverWith blew up");
+    }
+
+    @Test
+    void recoverWith_withExceptionType_shouldReturnFailureIfRecoveryReturnsNull() {
+        var failure = Try.<Integer>failure(new IllegalArgumentException("oops"));
+
+        var result = failure.recoverWith(IllegalArgumentException.class, _ -> null);
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void recoverWith_withExceptionType_shouldThrowNPE_ifExceptionTypeIsNull() {
+        assertThatThrownBy(() -> Try.success(1).recoverWith(null, _ -> Try.success(99)))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void recoverWith_withExceptionType_shouldThrowNPE_ifRecoveryIsNull() {
+        assertThatThrownBy(() -> Try.success(1).recoverWith(RuntimeException.class, null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
     /**
      * Demonstrates `getOrElse` returns value or fallback
      */
