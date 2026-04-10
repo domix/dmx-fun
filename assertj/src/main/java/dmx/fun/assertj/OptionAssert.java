@@ -4,6 +4,8 @@ import dmx.fun.Option;
 import java.util.Objects;
 import java.util.function.Consumer;
 import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.error.BasicErrorMessageFactory;
+import org.assertj.core.internal.Failures;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -28,7 +30,8 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
     public OptionAssert<V> isSome() {
         isNotNull();
         if (!actual.isDefined()) {
-            failWithMessage("Expected Option to be Some but was None");
+            throw Failures.instance().failure(info,
+                new BasicErrorMessageFactory("Expected Option to be Some but was None"));
         }
         return this;
     }
@@ -41,7 +44,8 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
     public OptionAssert<V> isNone() {
         isNotNull();
         if (!actual.isEmpty()) {
-            failWithMessage("Expected Option to be None but was Some<%s>", actual.get());
+            throw Failures.instance().failure(info,
+                new BasicErrorMessageFactory("Expected Option to be None but was Some<%s>", actual.get()));
         }
         return this;
     }
@@ -55,7 +59,8 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
     public OptionAssert<V> containsValue(V expected) {
         isSome();
         if (!Objects.equals(actual.get(), expected)) {
-            failWithMessage("Expected Option to contain <%s> but contained <%s>", expected, actual.get());
+            throw Failures.instance().failure(info,
+                new BasicErrorMessageFactory("Expected Option to contain <%s> but contained <%s>", expected, actual.get()));
         }
         return this;
     }
@@ -67,6 +72,7 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
      * @return this assertion for chaining
      */
     public OptionAssert<V> hasValueSatisfying(Consumer<V> requirement) {
+        Objects.requireNonNull(requirement, "requirement must not be null");
         isSome();
         requirement.accept(actual.get());
         return this;
