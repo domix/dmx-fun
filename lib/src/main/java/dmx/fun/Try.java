@@ -728,6 +728,22 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Converts this {@code Try} to an {@link Either}.
+     *
+     * <p>{@code Success(v)} maps to {@link Either#right(Object)}; {@code Failure(t)} maps to
+     * {@link Either#left(Object)}. This reflects the natural equivalence between
+     * {@code Try<V>} and {@code Either<Throwable, V>}.
+     *
+     * @return an {@code Either<Throwable, Value>} equivalent of this {@code Try}
+     */
+    default Either<Throwable, Value> toEither() {
+        return switch (this) {
+            case Success<Value> s -> Either.right(s.value());
+            case Failure<Value> f -> Either.left(f.cause());
+        };
+    }
+
+    /**
      * Converts this {@code Try} into an already-completed {@link CompletableFuture}.
      *
      * <p>If this is a {@code Success}, returns a future completed normally with the value.

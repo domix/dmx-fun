@@ -18,6 +18,7 @@
  *   <li>{@link dmx.fun.QuadFunction} — function accepting four arguments</li>
  *   <li>{@link dmx.fun.Lazy}         — lazily evaluated, memoized value</li>
  *   <li>{@link dmx.fun.NonEmptyList} — list guaranteed to contain at least one element</li>
+ *   <li>{@link dmx.fun.Either}       — neutral disjoint union of two value types</li>
  * </ul>
  *
  * <p>The entire module is {@code @NullMarked}: all API types are non-null by default.
