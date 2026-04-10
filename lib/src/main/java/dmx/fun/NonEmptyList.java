@@ -31,9 +31,14 @@ public final class NonEmptyList<T> implements Iterable<T> {
     private final T head;
     private final List<T> tail;
 
-    private NonEmptyList(T head, List<T> tail) {
+    /**
+     * Trusted internal constructor: stores {@code tail} as-is without copying.
+     * Callers must pass an already-unmodifiable or freshly-built list that will
+     * not be shared with any other code after this call.
+     */
+    private NonEmptyList(T head, List<T> tail, boolean trusted) {
         this.head = head;
-        this.tail = List.copyOf(tail);
+        this.tail = tail;
     }
 
     // -------------------------------------------------------------------------
@@ -53,7 +58,7 @@ public final class NonEmptyList<T> implements Iterable<T> {
         Objects.requireNonNull(head, "head must not be null");
         Objects.requireNonNull(tail, "tail must not be null");
         tail.forEach(e -> Objects.requireNonNull(e, "tail elements must not be null"));
-        return new NonEmptyList<>(head, new ArrayList<>(tail));
+        return new NonEmptyList<>(head, List.copyOf(tail), true);
     }
 
     /**
@@ -66,7 +71,7 @@ public final class NonEmptyList<T> implements Iterable<T> {
      */
     public static <T> NonEmptyList<T> singleton(T head) {
         Objects.requireNonNull(head, "head must not be null");
-        return new NonEmptyList<>(head, List.of());
+        return new NonEmptyList<>(head, List.of(), true);
     }
 
     /**
@@ -85,8 +90,8 @@ public final class NonEmptyList<T> implements Iterable<T> {
         }
         list.forEach(e -> Objects.requireNonNull(e, "list elements must not be null"));
         T head = list.get(0);
-        List<T> tail = new ArrayList<>(list.subList(1, list.size()));
-        return Option.some(new NonEmptyList<>(head, tail));
+        List<T> tail = List.copyOf(list.subList(1, list.size()));
+        return Option.some(new NonEmptyList<>(head, tail, true));
     }
 
     // -------------------------------------------------------------------------
@@ -153,7 +158,7 @@ public final class NonEmptyList<T> implements Iterable<T> {
         for (T element : tail) {
             newTail.add(Objects.requireNonNull(mapper.apply(element), "mapper must not return null"));
         }
-        return new NonEmptyList<>(newHead, newTail);
+        return new NonEmptyList<>(newHead, Collections.unmodifiableList(newTail), true);
     }
 
     /**
@@ -168,7 +173,7 @@ public final class NonEmptyList<T> implements Iterable<T> {
         List<T> newTail = new ArrayList<>(tail.size() + 1);
         newTail.addAll(tail);
         newTail.add(element);
-        return new NonEmptyList<>(head, newTail);
+        return new NonEmptyList<>(head, Collections.unmodifiableList(newTail), true);
     }
 
     /**
@@ -183,7 +188,7 @@ public final class NonEmptyList<T> implements Iterable<T> {
         List<T> newTail = new ArrayList<>(1 + tail.size());
         newTail.add(head);
         newTail.addAll(tail);
-        return new NonEmptyList<>(element, newTail);
+        return new NonEmptyList<>(element, Collections.unmodifiableList(newTail), true);
     }
 
     /**
@@ -199,7 +204,7 @@ public final class NonEmptyList<T> implements Iterable<T> {
         newTail.addAll(tail);
         newTail.add(other.head);
         newTail.addAll(other.tail);
-        return new NonEmptyList<>(head, newTail);
+        return new NonEmptyList<>(head, Collections.unmodifiableList(newTail), true);
     }
 
     // -------------------------------------------------------------------------

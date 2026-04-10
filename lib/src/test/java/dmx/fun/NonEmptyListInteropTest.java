@@ -67,6 +67,15 @@ class NonEmptyListInteropTest {
 
             assertThat(result.get().toList()).containsExactly("c", "a", "b");
         }
+
+        @Test
+        void collector_shouldWork_withParallelStream() {
+            Option<NonEmptyList<Integer>> result =
+                Stream.of(1, 2, 3, 4, 5).parallel().collect(NonEmptyList.collector());
+
+            assertThat(result.isDefined()).isTrue();
+            assertThat(result.get().toList()).containsExactlyInAnyOrder(1, 2, 3, 4, 5);
+        }
     }
 
     // =========================================================================
@@ -159,7 +168,7 @@ class NonEmptyListInteropTest {
                 .combine(name,     NonEmptyList::concat, (ep, n) -> ep);
 
             assertThat(combined.isInvalid()).isTrue();
-            assertThat(combined.getError().toList()).containsExactlyInAnyOrder(
+            assertThat(combined.getError().toList()).containsExactly(
                 "email is required",
                 "password too short",
                 "name is required"
@@ -221,6 +230,12 @@ class NonEmptyListInteropTest {
             assertThat(result.isValid()).isTrue();
             assertThat(result.get()).isEmpty();
         }
+
+        @Test
+        void sequenceNel_shouldThrowNPE_whenIterableIsNull() {
+            assertThatThrownBy(() -> Validated.<String, Integer>sequenceNel(null))
+                .isInstanceOf(NullPointerException.class);
+        }
     }
 
     // =========================================================================
@@ -274,6 +289,18 @@ class NonEmptyListInteropTest {
 
             assertThat(result.isValid()).isTrue();
             assertThat(result.get()).isEmpty();
+        }
+
+        @Test
+        void traverseNel_shouldThrowNPE_whenIterableIsNull() {
+            assertThatThrownBy(() -> Validated.<String, String, Integer>traverseNel(null, s -> Validated.valid(1)))
+                .isInstanceOf(NullPointerException.class);
+        }
+
+        @Test
+        void traverseNel_shouldThrowNPE_whenMapperIsNull() {
+            assertThatThrownBy(() -> Validated.<String, String, Integer>traverseNel(List.of("a"), null))
+                .isInstanceOf(NullPointerException.class);
         }
     }
 }
