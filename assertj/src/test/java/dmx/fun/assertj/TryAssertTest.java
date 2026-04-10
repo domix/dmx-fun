@@ -67,6 +67,13 @@ class TryAssertTest {
     }
 
     @Test
+    void failsWith_shouldFail_whenTryIsSuccess() {
+        assertThatThrownBy(() ->
+            assertThat(Try.success(1)).failsWith(RuntimeException.class))
+            .isInstanceOf(AssertionError.class);
+    }
+
+    @Test
     void isFluent_shouldChain() {
         assertThat(Try.success("ok")).isSuccess().containsValue("ok");
     }

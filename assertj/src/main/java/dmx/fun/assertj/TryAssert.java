@@ -1,10 +1,9 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Try;
+import java.util.Objects;
 import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * AssertJ assertions for {@link Try}.
@@ -27,9 +26,9 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
      */
     public TryAssert<V> isSuccess() {
         isNotNull();
-        assertThat(actual.isSuccess())
-            .withFailMessage(() -> String.format("Expected Try to be Success but was Failure<%s>", actual.getCause()))
-            .isTrue();
+        if (!actual.isSuccess()) {
+            failWithMessage("Expected Try to be Success but was Failure<%s>", actual.getCause());
+        }
         return this;
     }
 
@@ -40,9 +39,9 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
      */
     public TryAssert<V> isFailure() {
         isNotNull();
-        assertThat(actual.isFailure())
-            .withFailMessage(() -> String.format("Expected Try to be Failure but was Success<%s>", actual.get()))
-            .isTrue();
+        if (!actual.isFailure()) {
+            failWithMessage("Expected Try to be Failure but was Success<%s>", actual.get());
+        }
         return this;
     }
 
@@ -54,9 +53,9 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
      */
     public TryAssert<V> containsValue(V expected) {
         isSuccess();
-        assertThat(actual.get())
-            .withFailMessage(() -> String.format("Expected Try to contain <%s> but contained <%s>", expected, actual.get()))
-            .isEqualTo(expected);
+        if (!Objects.equals(actual.get(), expected)) {
+            failWithMessage("Expected Try to contain <%s> but contained <%s>", expected, actual.get());
+        }
         return this;
     }
 
@@ -68,10 +67,10 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
      */
     public TryAssert<V> failsWith(Class<? extends Throwable> exceptionType) {
         isFailure();
-        assertThat(actual.getCause())
-            .withFailMessage(() -> String.format("Expected Try to fail with <%s> but failed with <%s>",
-                exceptionType.getName(), actual.getCause().getClass().getName()))
-            .isInstanceOf(exceptionType);
+        if (!exceptionType.isInstance(actual.getCause())) {
+            failWithMessage("Expected Try to fail with <%s> but failed with <%s>",
+                exceptionType.getName(), actual.getCause().getClass().getName());
+        }
         return this;
     }
 }

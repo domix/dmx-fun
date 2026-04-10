@@ -1,10 +1,9 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Result;
+import java.util.Objects;
 import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * AssertJ assertions for {@link Result}.
@@ -28,9 +27,9 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
      */
     public ResultAssert<V, E> isOk() {
         isNotNull();
-        assertThat(actual.isOk())
-            .withFailMessage(() -> String.format("Expected Result to be Ok but was Err<%s>", actual.getError()))
-            .isTrue();
+        if (!actual.isOk()) {
+            failWithMessage("Expected Result to be Ok but was Err<%s>", actual.getError());
+        }
         return this;
     }
 
@@ -41,9 +40,9 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
      */
     public ResultAssert<V, E> isErr() {
         isNotNull();
-        assertThat(actual.isError())
-            .withFailMessage(() -> String.format("Expected Result to be Err but was Ok<%s>", actual.get()))
-            .isTrue();
+        if (!actual.isError()) {
+            failWithMessage("Expected Result to be Err but was Ok<%s>", actual.get());
+        }
         return this;
     }
 
@@ -55,9 +54,9 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
      */
     public ResultAssert<V, E> containsValue(V expected) {
         isOk();
-        assertThat(actual.get())
-            .withFailMessage(() -> String.format("Expected Result to contain value <%s> but contained <%s>", expected, actual.get()))
-            .isEqualTo(expected);
+        if (!Objects.equals(actual.get(), expected)) {
+            failWithMessage("Expected Result to contain value <%s> but contained <%s>", expected, actual.get());
+        }
         return this;
     }
 
@@ -69,9 +68,9 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
      */
     public ResultAssert<V, E> containsError(E expected) {
         isErr();
-        assertThat(actual.getError())
-            .withFailMessage(() -> String.format("Expected Result to contain error <%s> but contained <%s>", expected, actual.getError()))
-            .isEqualTo(expected);
+        if (!Objects.equals(actual.getError(), expected)) {
+            failWithMessage("Expected Result to contain error <%s> but contained <%s>", expected, actual.getError());
+        }
         return this;
     }
 }

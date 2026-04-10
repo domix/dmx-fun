@@ -1,6 +1,7 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Option;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
@@ -51,8 +52,14 @@ class OptionAssertTest {
 
     @Test
     void hasValueSatisfying_shouldPass_whenRequirementHolds() {
-        assertThat(Option.some(42)).hasValueSatisfying(v ->
-            assertThat(Option.some(v)).containsValue(42));
+        AtomicBoolean invoked = new AtomicBoolean(false);
+        assertThat(Option.some(42)).hasValueSatisfying(v -> {
+            invoked.set(true);
+            org.assertj.core.api.Assertions.assertThat(v).isEqualTo(42);
+        });
+        org.assertj.core.api.Assertions.assertThat(invoked.get())
+            .as("consumer must be invoked")
+            .isTrue();
     }
 
     @Test

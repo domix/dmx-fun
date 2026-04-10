@@ -1,11 +1,10 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Option;
+import java.util.Objects;
 import java.util.function.Consumer;
 import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * AssertJ assertions for {@link Option}.
@@ -28,9 +27,9 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
      */
     public OptionAssert<V> isSome() {
         isNotNull();
-        assertThat(actual.isDefined())
-            .withFailMessage("Expected Option to be Some but was None")
-            .isTrue();
+        if (!actual.isDefined()) {
+            failWithMessage("Expected Option to be Some but was None");
+        }
         return this;
     }
 
@@ -41,9 +40,9 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
      */
     public OptionAssert<V> isNone() {
         isNotNull();
-        assertThat(actual.isEmpty())
-            .withFailMessage(() -> String.format("Expected Option to be None but was Some<%s>", actual.get()))
-            .isTrue();
+        if (!actual.isEmpty()) {
+            failWithMessage("Expected Option to be None but was Some<%s>", actual.get());
+        }
         return this;
     }
 
@@ -55,9 +54,9 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
      */
     public OptionAssert<V> containsValue(V expected) {
         isSome();
-        assertThat(actual.get())
-            .withFailMessage(() -> String.format("Expected Option to contain <%s> but contained <%s>", expected, actual.get()))
-            .isEqualTo(expected);
+        if (!Objects.equals(actual.get(), expected)) {
+            failWithMessage("Expected Option to contain <%s> but contained <%s>", expected, actual.get());
+        }
         return this;
     }
 

@@ -1,10 +1,9 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Validated;
+import java.util.Objects;
 import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * AssertJ assertions for {@link Validated}.
@@ -28,9 +27,9 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
      */
     public ValidatedAssert<E, A> isValid() {
         isNotNull();
-        assertThat(actual.isValid())
-            .withFailMessage(() -> String.format("Expected Validated to be Valid but was Invalid<%s>", actual.getError()))
-            .isTrue();
+        if (!actual.isValid()) {
+            failWithMessage("Expected Validated to be Valid but was Invalid<%s>", actual.getError());
+        }
         return this;
     }
 
@@ -41,9 +40,9 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
      */
     public ValidatedAssert<E, A> isInvalid() {
         isNotNull();
-        assertThat(actual.isInvalid())
-            .withFailMessage(() -> String.format("Expected Validated to be Invalid but was Valid<%s>", actual.get()))
-            .isTrue();
+        if (!actual.isInvalid()) {
+            failWithMessage("Expected Validated to be Invalid but was Valid<%s>", actual.get());
+        }
         return this;
     }
 
@@ -55,9 +54,9 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
      */
     public ValidatedAssert<E, A> containsValue(A expected) {
         isValid();
-        assertThat(actual.get())
-            .withFailMessage(() -> String.format("Expected Validated to contain <%s> but contained <%s>", expected, actual.get()))
-            .isEqualTo(expected);
+        if (!Objects.equals(actual.get(), expected)) {
+            failWithMessage("Expected Validated to contain <%s> but contained <%s>", expected, actual.get());
+        }
         return this;
     }
 
@@ -69,9 +68,9 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
      */
     public ValidatedAssert<E, A> hasError(E expected) {
         isInvalid();
-        assertThat(actual.getError())
-            .withFailMessage(() -> String.format("Expected Validated to have error <%s> but had <%s>", expected, actual.getError()))
-            .isEqualTo(expected);
+        if (!Objects.equals(actual.getError(), expected)) {
+            failWithMessage("Expected Validated to have error <%s> but had <%s>", expected, actual.getError());
+        }
         return this;
     }
 }
