@@ -500,6 +500,84 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
         );
     }
 
+    // ---------- NonEmptyList (NEL) convenience ----------
+
+    /**
+     * Creates an {@link Invalid} {@code Validated} whose error is a singleton
+     * {@link NonEmptyList} containing {@code error}.
+     *
+     * <p>This is the canonical way to start error accumulation with {@code NonEmptyList} errors:
+     * multiple {@code invalidNel} results can be combined with
+     * {@link #combine(Validated, BinaryOperator, BiFunction)} using
+     * {@link NonEmptyList#concat} as the merger, and the resulting error list is always non-empty.
+     *
+     * <pre>{@code
+     * Validated<NonEmptyList<String>, String> v1 = Validated.invalidNel("email is required");
+     * Validated<NonEmptyList<String>, String> v2 = Validated.invalidNel("name is required");
+     * Validated<NonEmptyList<String>, Form> combined =
+     *     v1.combine(v2, NonEmptyList::concat, (e, n) -> new Form(e, n));
+     * // combined.getError() → NonEmptyList["email is required", "name is required"]
+     * }</pre>
+     *
+     * @param <E>   the error element type
+     * @param <A>   the value type
+     * @param error the single error to wrap; must not be {@code null}
+     * @return an {@code Invalid<NonEmptyList<E>, A>}
+     * @throws NullPointerException if {@code error} is {@code null}
+     */
+    static <E, A> Validated<NonEmptyList<E>, A> invalidNel(E error) {
+        Objects.requireNonNull(error, "error must not be null");
+        return Validated.invalid(NonEmptyList.singleton(error));
+    }
+
+    /**
+     * Sequences an {@link Iterable} of {@code Validated<NonEmptyList<E>, A>} into a single
+     * {@code Validated<NonEmptyList<E>, List<A>>}, accumulating all errors using
+     * {@link NonEmptyList#concat}.
+     *
+     * <p>Convenience wrapper around {@link #sequence(Iterable, BinaryOperator)} that supplies
+     * the NEL merger automatically.
+     *
+     * @param <E>       the error element type
+     * @param <A>       the value type
+     * @param validated the iterable of validated values; must not be null or contain null elements
+     * @return {@code Valid(List<A>)} if all elements are valid,
+     *         or {@code Invalid(NonEmptyList<E>)} with all accumulated errors
+     * @throws NullPointerException if {@code validated} is null or contains a null element
+     */
+    static <E, A> Validated<NonEmptyList<E>, List<A>> sequenceNel(
+        Iterable<Validated<NonEmptyList<E>, A>> validated
+    ) {
+        Objects.requireNonNull(validated, "validated must not be null");
+        return Validated.sequence(validated, NonEmptyList::concat);
+    }
+
+    /**
+     * Maps each element of {@code values} through {@code mapper} and accumulates the results into
+     * a {@code Validated<NonEmptyList<E>, List<B>>}, accumulating all errors using
+     * {@link NonEmptyList#concat}.
+     *
+     * <p>Convenience wrapper around {@link #traverse(Iterable, Function, BinaryOperator)} that
+     * supplies the NEL merger automatically.
+     *
+     * @param <E>    the error element type
+     * @param <A>    the input element type
+     * @param <B>    the mapped value type
+     * @param values the iterable of input values; must not be null
+     * @param mapper a function mapping each value to a {@code Validated}; must not return null
+     * @return {@code Valid(List<B>)} if all mappings succeed,
+     *         or {@code Invalid(NonEmptyList<E>)} with all accumulated errors
+     * @throws NullPointerException if any argument is null or if the mapper returns null
+     */
+    static <E, A, B> Validated<NonEmptyList<E>, List<B>> traverseNel(
+        Iterable<A> values,
+        Function<? super A, Validated<NonEmptyList<E>, B>> mapper
+    ) {
+        Objects.requireNonNull(values, "values must not be null");
+        Objects.requireNonNull(mapper, "mapper must not be null");
+        return Validated.traverse(values, mapper, NonEmptyList::concat);
+    }
+
     private static <E, A> Validated<E, List<A>> accumulate(
         Iterable<Validated<E, A>> items,
         BinaryOperator<E> errMerge
