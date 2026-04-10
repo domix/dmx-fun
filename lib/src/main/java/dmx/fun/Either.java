@@ -208,7 +208,7 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
             case Right<L, R> right -> {
                 @SuppressWarnings("unchecked")
                 Either<L, R2> result = (Either<L, R2>) mapper.apply(right.value());
-                yield result;
+                yield Objects.requireNonNull(result, "mapper returned null");
             }
         };
     }

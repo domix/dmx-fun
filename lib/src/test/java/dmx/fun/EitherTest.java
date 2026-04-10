@@ -47,7 +47,7 @@ class EitherTest {
 
     @Test
     void getLeft_shouldReturnValue_whenLeft() {
-        assertThat(Either.left("error").<String, Integer>getLeft()).isEqualTo("error");
+        assertThat(Either.<String, Integer>left("error").getLeft()).isEqualTo("error");
     }
 
     @Test
@@ -188,6 +188,14 @@ class EitherTest {
         Either<String, Integer> e = Either.right(1);
         assertThatThrownBy(() -> e.flatMap(null))
             .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void flatMap_shouldThrowNPE_whenMapperReturnsNull() {
+        Either<String, Integer> e = Either.right(1);
+        assertThatThrownBy(() -> e.flatMap(v -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
     }
 
     // -------------------------------------------------------------------------
