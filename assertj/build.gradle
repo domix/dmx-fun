@@ -1,0 +1,33 @@
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    api project(':lib')
+    api libs.assertj.core
+}
+
+compileTestJava {
+    def mainClassesDirs = sourceSets.main.output.classesDirs
+    def apiDeps = configurations.compileClasspath
+    def testSrcPath = files(sourceSets.test.java.srcDirs).asPath
+
+    classpath = classpath.filter { f -> !mainClassesDirs.contains(f) && !apiDeps.contains(f) }
+
+    def modulePath = (mainClassesDirs + apiDeps).asPath
+    options.compilerArgs += [
+        '--module-path', modulePath,
+        '--add-modules', 'dmx.fun.assertj',
+        '--patch-module', "dmx.fun.assertj=${testSrcPath}",
+        '--add-reads', 'dmx.fun.assertj=ALL-UNNAMED',
+    ]
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-assertj", "${project.version}")
+
+    pom {
+        name = 'AssertJ custom assertions for dmx-fun types.'
+        description = 'Fluent AssertJ custom assertions for Option, Result, Try, Validated, Tuple2, Tuple3, and Tuple4.'
+    }
+}
