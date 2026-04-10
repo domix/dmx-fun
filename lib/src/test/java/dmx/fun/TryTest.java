@@ -1100,4 +1100,12 @@ class TryTest {
         assertThat(e.isLeft()).isTrue();
         assertThat(e.getLeft()).isSameAs(ex);
     }
+
+    @Test
+    void toEither_shouldThrowNPE_whenSuccessValueIsNull() {
+        Try<String> nullSuccess = Try.success(null);
+        assertThatThrownBy(nullSuccess::toEither)
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null");
+    }
 }

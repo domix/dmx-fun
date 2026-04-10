@@ -734,11 +734,19 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * {@link Either#left(Object)}. This reflects the natural equivalence between
      * {@code Try<V>} and {@code Either<Throwable, V>}.
      *
+     * <p><strong>Note:</strong> unlike {@link #toOption()}, this method does not tolerate a
+     * {@code null} success value, because {@link Either} enforces non-null values on both
+     * tracks. If this {@code Try} is a {@code Success} wrapping {@code null} (e.g. a
+     * {@code Try<Void>}), a {@link NullPointerException} will be thrown.
+     *
      * @return an {@code Either<Throwable, Value>} equivalent of this {@code Try}
+     * @throws NullPointerException if this is a {@code Success} whose value is {@code null}
      */
     default Either<Throwable, Value> toEither() {
         return switch (this) {
-            case Success<Value> s -> Either.right(s.value());
+            case Success<Value> s -> Either.right(
+                Objects.requireNonNull(s.value(), "Cannot convert Success(null) to Either; Either does not allow null values")
+            );
             case Failure<Value> f -> Either.left(f.cause());
         };
     }
