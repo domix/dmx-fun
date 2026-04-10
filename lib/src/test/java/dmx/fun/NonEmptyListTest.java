@@ -335,9 +335,8 @@ class NonEmptyListTest {
     }
 
     @Test
-    void toString_shouldContainAllElements() {
+    void toString_shouldMatchListFormat() {
         NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
-        assertThat(nel.toString()).contains("1", "2", "3");
-        assertThat(nel.toString()).startsWith("NonEmptyList");
+        assertThat(nel.toString()).isEqualTo("[1, 2, 3]");
     }
 }
