@@ -4,4 +4,5 @@ plugins {
 }
 
 rootProject.name = 'dmx-fun'
+includeBuild('build-logic')
 include('lib')
