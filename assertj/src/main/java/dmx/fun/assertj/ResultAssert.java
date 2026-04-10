@@ -3,8 +3,6 @@ package dmx.fun.assertj;
 import dmx.fun.Result;
 import java.util.Objects;
 import org.assertj.core.api.AbstractAssert;
-import org.assertj.core.error.BasicErrorMessageFactory;
-import org.assertj.core.internal.Failures;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -30,8 +28,7 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
     public ResultAssert<V, E> isOk() {
         isNotNull();
         if (!actual.isOk()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Result to be Ok but was Err<%s>", actual.getError()));
+            throw buildError("Expected Result to be Ok but was Err<%s>", actual.getError());
         }
         return this;
     }
@@ -44,8 +41,7 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
     public ResultAssert<V, E> isErr() {
         isNotNull();
         if (!actual.isError()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Result to be Err but was Ok<%s>", actual.get()));
+            throw buildError("Expected Result to be Err but was Ok<%s>", actual.get());
         }
         return this;
     }
@@ -59,8 +55,7 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
     public ResultAssert<V, E> containsValue(V expected) {
         isOk();
         if (!Objects.equals(actual.get(), expected)) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Result to contain value <%s> but contained <%s>", expected, actual.get()));
+            throw buildError("Expected Result to contain value <%s> but contained <%s>", expected, actual.get());
         }
         return this;
     }
@@ -74,9 +69,14 @@ public final class ResultAssert<V, E> extends AbstractAssert<ResultAssert<V, E>,
     public ResultAssert<V, E> containsError(E expected) {
         isErr();
         if (!Objects.equals(actual.getError(), expected)) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Result to contain error <%s> but contained <%s>", expected, actual.getError()));
+            throw buildError("Expected Result to contain error <%s> but contained <%s>", expected, actual.getError());
         }
         return this;
+    }
+
+    private AssertionError buildError(String template, Object... args) {
+        String message = String.format(template.replace("<%s>", "%s"), args);
+        String description = info.descriptionText();
+        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
     }
 }

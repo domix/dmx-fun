@@ -70,4 +70,11 @@ class ValidatedAssertTest {
     void isFluent_shouldChain() {
         assertThat(Validated.<String, String>invalid("bad")).isInvalid().hasError("bad");
     }
+
+    @Test
+    void isValid_shouldIncludeDescription_inFailureMessage() {
+        assertThatThrownBy(() -> assertThat(Validated.invalid("err")).as("my validated").isValid())
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("[my validated]");
+    }
 }

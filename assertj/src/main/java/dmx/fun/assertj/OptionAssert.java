@@ -4,8 +4,6 @@ import dmx.fun.Option;
 import java.util.Objects;
 import java.util.function.Consumer;
 import org.assertj.core.api.AbstractAssert;
-import org.assertj.core.error.BasicErrorMessageFactory;
-import org.assertj.core.internal.Failures;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -30,8 +28,7 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
     public OptionAssert<V> isSome() {
         isNotNull();
         if (!actual.isDefined()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Option to be Some but was None"));
+            throw buildError("Expected Option to be Some but was None");
         }
         return this;
     }
@@ -44,8 +41,7 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
     public OptionAssert<V> isNone() {
         isNotNull();
         if (!actual.isEmpty()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Option to be None but was Some<%s>", actual.get()));
+            throw buildError("Expected Option to be None but was Some<%s>", actual.get());
         }
         return this;
     }
@@ -59,8 +55,7 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
     public OptionAssert<V> containsValue(V expected) {
         isSome();
         if (!Objects.equals(actual.get(), expected)) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Option to contain <%s> but contained <%s>", expected, actual.get()));
+            throw buildError("Expected Option to contain <%s> but contained <%s>", expected, actual.get());
         }
         return this;
     }
@@ -76,5 +71,11 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
         isSome();
         requirement.accept(actual.get());
         return this;
+    }
+
+    private AssertionError buildError(String template, Object... args) {
+        String message = String.format(template.replace("<%s>", "%s"), args);
+        String description = info.descriptionText();
+        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
     }
 }

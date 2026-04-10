@@ -77,4 +77,11 @@ class TryAssertTest {
     void isFluent_shouldChain() {
         assertThat(Try.success("ok")).isSuccess().containsValue("ok");
     }
+
+    @Test
+    void isSuccess_shouldIncludeDescription_inFailureMessage() {
+        assertThatThrownBy(() -> assertThat(Try.failure(new RuntimeException())).as("my try").isSuccess())
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("[my try]");
+    }
 }

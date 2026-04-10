@@ -3,8 +3,6 @@ package dmx.fun.assertj;
 import dmx.fun.Validated;
 import java.util.Objects;
 import org.assertj.core.api.AbstractAssert;
-import org.assertj.core.error.BasicErrorMessageFactory;
-import org.assertj.core.internal.Failures;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -30,8 +28,7 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
     public ValidatedAssert<E, A> isValid() {
         isNotNull();
         if (!actual.isValid()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Validated to be Valid but was Invalid<%s>", actual.getError()));
+            throw buildError("Expected Validated to be Valid but was Invalid<%s>", actual.getError());
         }
         return this;
     }
@@ -44,8 +41,7 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
     public ValidatedAssert<E, A> isInvalid() {
         isNotNull();
         if (!actual.isInvalid()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Validated to be Invalid but was Valid<%s>", actual.get()));
+            throw buildError("Expected Validated to be Invalid but was Valid<%s>", actual.get());
         }
         return this;
     }
@@ -59,8 +55,7 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
     public ValidatedAssert<E, A> containsValue(A expected) {
         isValid();
         if (!Objects.equals(actual.get(), expected)) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Validated to contain <%s> but contained <%s>", expected, actual.get()));
+            throw buildError("Expected Validated to contain <%s> but contained <%s>", expected, actual.get());
         }
         return this;
     }
@@ -74,9 +69,14 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
     public ValidatedAssert<E, A> hasError(E expected) {
         isInvalid();
         if (!Objects.equals(actual.getError(), expected)) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Validated to have error <%s> but had <%s>", expected, actual.getError()));
+            throw buildError("Expected Validated to have error <%s> but had <%s>", expected, actual.getError());
         }
         return this;
+    }
+
+    private AssertionError buildError(String template, Object... args) {
+        String message = String.format(template.replace("<%s>", "%s"), args);
+        String description = info.descriptionText();
+        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
     }
 }

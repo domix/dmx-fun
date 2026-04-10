@@ -70,4 +70,11 @@ class ResultAssertTest {
     void isFluent_shouldChain() {
         assertThat(Result.ok(42)).isOk().containsValue(42);
     }
+
+    @Test
+    void isOk_shouldIncludeDescription_inFailureMessage() {
+        assertThatThrownBy(() -> assertThat(Result.<Integer, String>err("e")).as("my result").isOk())
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("[my result]");
+    }
 }

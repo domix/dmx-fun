@@ -3,8 +3,6 @@ package dmx.fun.assertj;
 import dmx.fun.Try;
 import java.util.Objects;
 import org.assertj.core.api.AbstractAssert;
-import org.assertj.core.error.BasicErrorMessageFactory;
-import org.assertj.core.internal.Failures;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -29,8 +27,7 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
     public TryAssert<V> isSuccess() {
         isNotNull();
         if (!actual.isSuccess()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Try to be Success but was Failure<%s>", actual.getCause()));
+            throw buildError("Expected Try to be Success but was Failure<%s>", actual.getCause());
         }
         return this;
     }
@@ -43,8 +40,7 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
     public TryAssert<V> isFailure() {
         isNotNull();
         if (!actual.isFailure()) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Try to be Failure but was Success<%s>", actual.get()));
+            throw buildError("Expected Try to be Failure but was Success<%s>", actual.get());
         }
         return this;
     }
@@ -58,8 +54,7 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
     public TryAssert<V> containsValue(V expected) {
         isSuccess();
         if (!Objects.equals(actual.get(), expected)) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Try to contain <%s> but contained <%s>", expected, actual.get()));
+            throw buildError("Expected Try to contain <%s> but contained <%s>", expected, actual.get());
         }
         return this;
     }
@@ -73,10 +68,15 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
     public TryAssert<V> failsWith(Class<? extends Throwable> exceptionType) {
         isFailure();
         if (!exceptionType.isInstance(actual.getCause())) {
-            throw Failures.instance().failure(info,
-                new BasicErrorMessageFactory("Expected Try to fail with <%s> but failed with <%s>",
-                    exceptionType.getName(), actual.getCause().getClass().getName()));
+            throw buildError("Expected Try to fail with <%s> but failed with <%s>",
+                exceptionType.getName(), actual.getCause().getClass().getName());
         }
         return this;
+    }
+
+    private AssertionError buildError(String template, Object... args) {
+        String message = String.format(template.replace("<%s>", "%s"), args);
+        String description = info.descriptionText();
+        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
     }
 }

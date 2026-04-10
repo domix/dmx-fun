@@ -7,14 +7,6 @@ dependencies {
     api libs.assertj.core
 }
 
-compileJava {
-    options.compilerArgs += ['--add-exports', 'org.assertj.core/org.assertj.core.internal=dmx.fun.assertj']
-}
-
-javadoc {
-    options.addStringOption('-add-exports', 'org.assertj.core/org.assertj.core.internal=dmx.fun.assertj')
-}
-
 compileTestJava {
     def mainClassesDirs = sourceSets.main.output.classesDirs
     def apiDeps = configurations.compileClasspath

@@ -72,4 +72,11 @@ class OptionAssertTest {
     void isFluent_shouldChain() {
         assertThat(Option.some("hello")).isSome().containsValue("hello");
     }
+
+    @Test
+    void isSome_shouldIncludeDescription_inFailureMessage() {
+        assertThatThrownBy(() -> assertThat(Option.<Integer>none()).as("my option").isSome())
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("[my option]");
+    }
 }
