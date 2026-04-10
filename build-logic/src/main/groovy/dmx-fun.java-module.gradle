@@ -1,0 +1,80 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'com.github.ben-manes.versions'
+    id 'com.vanniktech.maven.publish'
+}
+
+repositories {
+    mavenCentral()
+}
+
+def catalog = versionCatalogs.named("libs")
+
+dependencies {
+    testImplementation(catalog.findLibrary("assertj-core").get())
+    testImplementation(platform(catalog.findLibrary("junit-bom").get()))
+    testImplementation(catalog.findLibrary("junit-jupiter").get())
+    testRuntimeOnly(catalog.findLibrary("junit-platform-launcher").get())
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+def isNonStable = { String version ->
+    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { version.toUpperCase().contains(it) }
+    def regex = /^[0-9,.v-]+(-r)?$/
+    return !stableKeyword && !(version ==~ regex)
+}
+
+tasks.named("dependencyUpdates").configure {
+    rejectVersionIf { isNonStable(it.candidate.version) }
+    gradleReleaseChannel = "current"
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    finalizedBy jacocoTestReport, javadoc
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(true, false)
+    signAllPublications()
+
+    pom {
+        inceptionYear = "2025"
+        url = 'https://fun.domix.codes'
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+        developers {
+            developer {
+                id = 'domix'
+                name = 'Domingo Suarez Torres'
+                email = 'domingo.suarez@gmail.com'
+            }
+        }
+        scm {
+            connection = 'scm:git:https://github.com/domix/dmx-fun'
+            developerConnection = 'scm:git:https://github.com/domix/dmx-fun'
+            url = 'https://github.com/domix/dmx-fun'
+        }
+    }
+}
