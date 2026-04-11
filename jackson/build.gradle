@@ -5,7 +5,7 @@ plugins {
 dependencies {
     api project(':lib')
     compileOnly libs.jackson.databind
-    testImplementation libs.jackson.databind
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${findProperty('jacksonVersion') ?: libs.versions.jackson.get()}"
 }
 
 compileTestJava {
