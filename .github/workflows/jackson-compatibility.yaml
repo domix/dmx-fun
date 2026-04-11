@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Covers the four most recent minor release lines still in wide use.
+        # Covers the nine most recent minor release lines still in wide use.
         # Update this list when a new minor is released or an old one is EOL.
         jackson-version: ['2.13.5', '2.14.3', '2.15.4', '2.16.2', '2.17.3', '2.18.2', '2.19.4', '2.20.2', '2.21.2']
     name: Jackson ${{ matrix.jackson-version }}
