@@ -1,0 +1,68 @@
+plugins {
+    id 'java-base'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('aggregateJavadoc', Exec) {
+    group = 'documentation'
+    description = 'Generates aggregated multi-module Javadoc covering dmx.fun, dmx.fun.assertj, and dmx.fun.jackson.'
+
+    dependsOn ':lib:compileJava', ':assertj:compileJava', ':jackson:compileJava'
+
+    // Capture all project-relative values at configuration time
+    def javadocToolProvider = javaToolchains.javadocToolFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    def libSrc     = project(':lib').file('src/main/java')
+    def assertjSrc = project(':assertj').file('src/main/java')
+    def jacksonSrc = project(':jackson').file('src/main/java')
+    def destDir    = file('build/reports/javadoc')
+    // Only external dependencies on the module-path; the three documented modules
+    // are found via --module-source-path so their artifacts must NOT appear here.
+    def internalDirs = [
+        project(':lib').projectDir.absolutePath,
+        project(':assertj').projectDir.absolutePath,
+        project(':jackson').projectDir.absolutePath,
+    ]
+    def externalDepsConfigs = [
+        project(':lib').configurations.compileClasspath,
+        project(':assertj').configurations.compileClasspath,
+        project(':jackson').configurations.compileClasspath,
+    ]
+
+    inputs.files fileTree(libSrc), fileTree(assertjSrc), fileTree(jacksonSrc)
+    outputs.dir destDir
+
+    // Build the command at execution time (configs are not yet resolved at configuration time)
+    doFirst {
+        def sep = File.pathSeparator
+
+        def modulePath = externalDepsConfigs
+            .collectMany { cfg ->
+                cfg.files.findAll { f ->
+                    !internalDirs.any { dir -> f.absolutePath.startsWith(dir) }
+                }*.absolutePath
+            }
+            .unique()
+            .join(sep)
+
+        destDir.mkdirs()
+
+        executable javadocToolProvider.get().executablePath.asFile.absolutePath
+        args '--module-path',        modulePath
+        args '--module-source-path', "dmx.fun=${libSrc.absolutePath}"
+        args '--module-source-path', "dmx.fun.assertj=${assertjSrc.absolutePath}"
+        args '--module-source-path', "dmx.fun.jackson=${jacksonSrc.absolutePath}"
+        args '--module',             'dmx.fun,dmx.fun.assertj,dmx.fun.jackson'
+        args '-d',                   destDir.absolutePath
+        args '-doctitle',            'dmx-fun API'
+        args '-windowtitle',         'dmx-fun API'
+        args '-quiet'
+        args '-notimestamp'
+    }
+}
