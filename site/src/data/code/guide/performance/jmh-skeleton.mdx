@@ -1,0 +1,38 @@
+---
+fileName: 'ResultAllocationBenchmark.java'
+---
+
+```java
+// Minimal JMH skeleton for benchmarking a dmx-fun type.
+// Only submit this alongside a real profiler trace that shows the library
+// as a hot spot — do not benchmark in isolation without application context.
+
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@State(Scope.Thread)
+@Warmup(iterations = 5, time = 1)
+@Measurement(iterations = 10, time = 1)
+@Fork(2)
+public class ResultAllocationBenchmark {
+
+    private int value;
+
+    @Setup
+    public void setup() {
+        value = ThreadLocalRandom.current().nextInt(1, 100);
+    }
+
+    @Benchmark
+    public Result<Integer, String> resultOk() {
+        return Result.ok(value);
+    }
+
+    @Benchmark
+    public int baseline() {
+        return value; // cost of returning a raw int — the lower bound
+    }
+}
+// Run: java -jar benchmarks.jar ResultAllocationBenchmark -prof gc
+// Include the output, JVM version (-version), and flags (-XX:+PrintFlagsFinal)
+// when opening an issue.
+```
