@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Try<Integer> t = Try.of(() -> Integer.parseInt(input));
+
+// onSuccess / onFailure — chainable, return this
+t.onSuccess(n  -> log.info("Parsed: {}", n))
+ .onFailure(ex -> log.warn("Parse failed: {}", ex.getMessage()));
+
+// match — terminal, void; both branches must be handled
+t.match(
+    value -> metrics.increment("parse.ok"),
+    ex    -> metrics.increment("parse.error")
+);
+```

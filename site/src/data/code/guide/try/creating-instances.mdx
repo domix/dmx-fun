@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Wrap any throwing computation — catches Throwable, not just Exception
+Try<Integer> parsed   = Try.of(() -> Integer.parseInt(input));
+Try<String>  content  = Try.of(() -> Files.readString(path));
+
+// Wrap a void side-effect (result value is null on success)
+Try<Void> written = Try.run(() -> Files.writeString(path, data));
+
+// Construct directly when you already know the outcome
+Try<Integer> ok  = Try.success(42);
+Try<Integer> err = Try.failure(new RuntimeException("oops"));
+```

@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Default: converts to Failure(IllegalArgumentException) when predicate fails
+Try<Integer> positive = Try.of(() -> Integer.parseInt(input))
+    .filter(n -> n > 0);
+
+// Custom exception supplier
+Try<Integer> valid = Try.of(() -> Integer.parseInt(input))
+    .filter(n -> n > 0, () -> new IllegalArgumentException("Must be positive"));
+
+// Value-aware error (receives the failing value)
+Try<Integer> age = Try.of(() -> Integer.parseInt(input))
+    .filter(n -> n >= 0, n -> new IllegalArgumentException("Negative age: " + n));
+```

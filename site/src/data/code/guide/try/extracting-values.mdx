@@ -1,0 +1,25 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Try<Integer> t = Try.of(() -> Integer.parseInt(input));
+
+// Safe: always returns a value
+int n = t.getOrElse(0);
+int m = t.getOrElseGet(() -> computeDefault());
+
+// Expressive: handles both tracks
+String result = t.fold(
+    value -> "Parsed: " + value,
+    ex    -> "Error: "  + ex.getMessage()
+);
+
+// Unsafe: throws if Failure
+int raw  = t.get();      // throws NoSuchElementException
+Throwable e = t.getCause(); // throws NoSuchElementException if Success
+
+// Rethrow the original exception (or wrap it)
+int val = t.getOrThrow();                        // rethrows as-is
+int v2  = t.getOrThrow(ex -> new AppException(ex)); // maps to RuntimeException
+```

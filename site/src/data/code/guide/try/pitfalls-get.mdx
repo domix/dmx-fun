@@ -1,0 +1,15 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: throws NoSuchElementException if Failure
+int n = Try.of(() -> Integer.parseInt(input)).get();
+
+// Good: safe extraction
+int n = Try.of(() -> Integer.parseInt(input)).getOrElse(0);
+
+// Good: handle both tracks explicitly
+int n = Try.of(() -> Integer.parseInt(input))
+    .fold(value -> value, ex -> { log.warn("bad input", ex); return 0; });
+```

@@ -1,0 +1,21 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// recover — map the exception to a fallback value
+Try<String> result = Try.of(() -> fetchRemote(url))
+    .recover(ex -> "default-value");
+
+// recover by exception type — only handles the matched subtype
+Try<String> typed = Try.of(() -> fetchRemote(url))
+    .recover(IOException.class, ex -> "offline-fallback");
+
+// recoverWith — map to a new Try (for chaining another fallible operation)
+Try<String> chain = Try.of(() -> fetchPrimary(url))
+    .recoverWith(ex -> Try.of(() -> fetchSecondary(url)));
+
+// recoverWith by exception type
+Try<String> typed2 = Try.of(() -> fetchPrimary(url))
+    .recoverWith(TimeoutException.class, ex -> Try.of(() -> fetchSecondary(url)));
+```

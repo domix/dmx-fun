@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Try.run() wraps a void computation — the success value is null
+Try<Void> written = Try.run(() -> Files.writeString(path, content));
+written.isSuccess(); // true
+written.getOrNull(); // null — do NOT use toOption() here; it always returns None
+
+// Use isSuccess() or fold() to observe a run() outcome
+boolean ok = written.isSuccess();
+String msg = written.fold(_ -> "written", ex -> "failed: " + ex.getMessage());
+
+// sequence preserves null values (uses Collections.unmodifiableList, not List.copyOf)
+Try<List<String>> result = Try.sequence(
+    Stream.of(Try.success("a"), Try.success(null), Try.success("c"))
+);
+// → Success(["a", null, "c"])
+```
