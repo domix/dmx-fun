@@ -1,0 +1,169 @@
+---
+import { getCollection, render } from 'astro:content';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+
+export async function getStaticPaths() {
+  const guideEntries = await getCollection('guide');
+  return guideEntries.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+
+const allEntries = (await getCollection('guide')).sort((a, b) => a.data.order - b.data.order);
+const currentIndex = allEntries.findIndex(e => e.id === entry.id);
+const prev = currentIndex > 0 ? allEntries[currentIndex - 1] : null;
+const next = currentIndex < allEntries.length - 1 ? allEntries[currentIndex + 1] : null;
+
+const toc = headings.filter(h => h.depth === 2);
+---
+
+<DocsLayout title={entry.data.title} description={entry.data.description}>
+  <div class="guide-content">
+    <h1 set:html={entry.data.h1} />
+
+    {toc.length > 0 && (
+      <nav class="toc" aria-label="Table of contents">
+        <ol>
+          {toc.map(h => (
+            <li><a href={`#${h.slug}`} set:html={h.text} /></li>
+          ))}
+        </ol>
+      </nav>
+    )}
+
+    <Content />
+
+    <div class="page-nav">
+      {prev ? (
+        <a href={`${base}guide/${prev.id}`} set:html={`&larr; ${prev.data.h1}`} />
+      ) : (
+        <a href={`${base}guide`}>&larr; Guide index</a>
+      )}
+      {next ? (
+        <a href={`${base}guide/${next.id}`} set:html={`${next.data.h1} &rarr;`} />
+      ) : (
+        <span></span>
+      )}
+    </div>
+  </div>
+</DocsLayout>
+
+<style>
+  .guide-content {
+    max-width: 860px;
+  }
+
+  .guide-content :global(h2) {
+    margin-top: 3rem;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.5rem;
+  }
+
+  .guide-content :global(h3) {
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .guide-content :global(p) {
+    line-height: 1.7;
+  }
+
+  .guide-content :global(ul),
+  .guide-content :global(ol:not(.toc ol)) {
+    line-height: 1.8;
+  }
+
+  .guide-content :global(a) {
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+
+  .guide-content :global(a:hover) {
+    color: var(--color-primary-hover);
+  }
+
+  h1 {
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem;
+  }
+
+  /* TOC */
+  .toc {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    display: inline-block;
+    min-width: 260px;
+  }
+
+  .toc ol {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .toc li {
+    line-height: 1.9;
+    font-size: 0.9rem;
+  }
+
+  .toc a {
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  .toc a:hover {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  /* Coming-soon callout */
+  .guide-content :global(.coming-soon) {
+    background-color: var(--color-surface);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--color-primary);
+    margin: 2rem 0;
+  }
+
+  .guide-content :global(.coming-soon p) {
+    margin: 0 0 0.75rem;
+    line-height: 1.7;
+  }
+
+  .guide-content :global(.coming-soon p:last-child) {
+    margin-bottom: 0;
+  }
+
+  /* Page navigation */
+  .page-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9rem;
+  }
+
+  .page-nav a {
+    text-decoration: none;
+    color: var(--color-primary);
+  }
+
+  .page-nav a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 600px) {
+    .toc {
+      display: block;
+    }
+  }
+</style>
