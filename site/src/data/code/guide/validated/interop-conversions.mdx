@@ -1,0 +1,28 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Validated<String, Integer> v = parseAge(input);
+
+// Validated → Result (Valid→Ok, Invalid→Err)
+Result<Integer, String> result = v.toResult();
+
+// Validated → Try (requires mapping the error to a Throwable)
+Try<Integer> t = v.toTry(err -> new IllegalArgumentException(err));
+
+// Validated → Either (Valid→right, Invalid→left)
+Either<String, Integer> either = v.toEither();
+
+// Validated → Option (discards the error)
+Option<Integer> opt = v.toOption();
+
+// Result → Validated
+Validated<String, Integer> fromResult = Validated.fromResult(result);
+
+// Option → Validated (supply error for the None case)
+Validated<String, Integer> fromOption = Validated.fromOption(opt, "value missing");
+
+// Try → Validated (map exception to error type)
+Validated<String, Integer> fromTry = Validated.fromTry(t, Throwable::getMessage);
+```

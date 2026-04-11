@@ -1,13 +1,162 @@
 ---
 title: "Validated<E,A> — Developer Guide"
-description: "Developer Guide — Validated<E,A>: accumulating errors instead of short-circuiting."
+description: "Comprehensive guide to Validated<E,A>: accumulating errors, combining independent validations, and the NonEmptyList pattern."
 order: 4
 h1: "Validated<E, A>"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as CreatingInstances}   from '../code/guide/validated/creating-instances.mdx';
+import {Content as CheckingState}       from '../code/guide/validated/checking-state.mdx';
+import {Content as ExtractingValues}    from '../code/guide/validated/extracting-values.mdx';
+import {Content as Transforming}        from '../code/guide/validated/transforming.mdx';
+import {Content as Combining}           from '../code/guide/validated/combining.mdx';
+import {Content as NelPattern}          from '../code/guide/validated/nel-pattern.mdx';
+import {Content as SequenceTraverse}    from '../code/guide/validated/sequence-traverse.mdx';
+import {Content as InteropConversions}  from '../code/guide/validated/interop-conversions.mdx';
+import {Content as PitfallsCombineOrder} from '../code/guide/validated/pitfalls-combine-order.mdx';
+import {Content as PitfallsFlatMap}     from '../code/guide/validated/pitfalls-flatmap.mdx';
+import {Content as RealWorldExample}    from '../code/guide/validated/real-world-example.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+## What is Validated&lt;E, A&gt;?
+
+`Validated<E, A>` models a validation result that either succeeds with a value
+of type `A` or fails with an error of type `E`.
+It is a sealed interface with two implementations:
+
+- `Valid<E, A>` — holds a non-null success value.
+- `Invalid<E, A>` — holds a non-null error.
+
+The defining feature of `Validated` is **error accumulation**: unlike `Result`,
+which stops at the first error (fail-fast), `Validated` is designed to run all
+independent validations and collect _every_ error before returning.
+This makes it the right choice for form validation, config parsing, and any
+scenario where callers need a complete list of problems, not just the first one.
+
+Use `Validated` when you need **all errors reported at once**.
+Use `Result` when the first error is enough and further computation is meaningless.
+
+## Creating instances
+
+<CreatingInstances/>
+
+Both `Valid` and `Invalid` reject `null`. The `invalidNel` factory is the
+preferred starting point when you plan to combine multiple validations — it
+wraps the error in a `NonEmptyList` so errors can be merged with
+`NonEmptyList::concat`. See the [NonEmptyList pattern](#the-nonemptylist-nel-pattern) section.
+
+## Checking state
+
+<CheckingState/>
+
+Prefer exhaustive switch patterns — the compiler enforces that both tracks are handled.
+
+## Extracting values
+
+| Method                        | When `Invalid`                      | Notes                                                          |
+|-------------------------------|-------------------------------------|----------------------------------------------------------------|
+| `get()`                       | Throws `NoSuchElementException`     | Only safe after an `isValid()` check; prefer alternatives.     |
+| `getError()`                  | N/A — throws if `Valid`             | Retrieves the error; unsafe on the valid track.                |
+| `getOrElse(fallback)`         | Returns `fallback`                  | Fallback is always evaluated eagerly.                          |
+| `getOrElseGet(supplier)`      | Calls supplier                      | Lazily computed fallback.                                      |
+| `getOrNull()`                 | Returns `null`                      | Bridge to null-expecting APIs.                                 |
+| `getOrThrow(exMapper)`        | Throws mapped `RuntimeException`    | Maps the error to an exception at the call site.               |
+| `fold(onValid, onInvalid)`    | Calls `onInvalid`                   | The most expressive extractor: forces both tracks to be handled. |
+
+<ExtractingValues/>
+
+## Transforming values
+
+<Transforming/>
+
+`flatMap` is available but applies **fail-fast** semantics — it does _not_
+accumulate errors. Use it only when the second validation logically depends on
+the first. For independent validations, always use `combine`.
+
+## Combining independent validations
+
+`combine(other, errMerge, valueMerge)` is the core of error accumulation.
+Both this and `other` are always evaluated. When both are `Invalid`, their
+errors are merged by `errMerge`. When both are `Valid`, the values are merged
+by `valueMerge`.
+
+**Argument order — easy to swap accidentally:**
+
+```
+combine(other, errMerge, valueMerge)
+         ^^^  ^^^^^^^^^  ^^^^^^^^^^^
+         1st     2nd         3rd
+```
+
+<Combining/>
+
+`product(other, errMerge)` is the lower-level variant that returns
+`Validated<E, Tuple2<A, B>>` instead of applying a value merger.
+Use `combine` in most cases.
+
+## The NonEmptyList (NEL) pattern
+
+Using `NonEmptyList<E>` as the error type is the idiomatic way to accumulate
+multiple errors. The `invalidNel`, `sequenceNel`, and `traverseNel` factory
+methods eliminate the need to pass `NonEmptyList::concat` manually.
+
+<NelPattern/>
+
+## Accumulating over collections
+
+`sequence` and `traverse` run **all** elements — they do not short-circuit on
+the first `Invalid`. All errors are merged left-to-right using `errMerge`.
+
+<SequenceTraverse/>
+
+A `Collector` variant is available via `Validated.collector(errMerge)` and
+`Validated.traverseCollector(mapper, errMerge)`, compatible with parallel
+streams and the standard `Stream.collect` API.
+
+## Interoperability
+
+| Conversion                           | Method                                         |
+|--------------------------------------|------------------------------------------------|
+| `Validated` → `Result`               | `v.toResult()`                                 |
+| `Validated` → `Try`                  | `v.toTry(errorMapper)`                         |
+| `Validated` → `Either`               | `v.toEither()`                                 |
+| `Validated` → `Option`               | `v.toOption()`                                 |
+| `Result` → `Validated`               | `Validated.fromResult(result)`                 |
+| `Option` → `Validated`               | `Validated.fromOption(option, errorIfNone)`    |
+| `Try` → `Validated`                  | `Validated.fromTry(t, errorMapper)`            |
+
+<InteropConversions/>
+
+See the [Combining Types](combining-types) page for the full conversion matrix.
+
+## Validated vs Result — when to use each
+
+| Scenario                                         | Use              |
+|--------------------------------------------------|------------------|
+| Stop at the first error; further steps depend on success | `Result`  |
+| Collect all errors; report everything at once    | `Validated`      |
+| Wrap throwing legacy code                        | `Try`            |
+| Independent field validations (form, config)     | `Validated`      |
+| Pipeline where each step feeds the next          | `Result`         |
+
+## Common pitfalls
+
+### Wrong argument order in `combine`
+
+`errMerge` is the **second** argument; `valueMerge` is the **third**.
+Swapping them is a common mistake because both are `BiFunction`-like arguments.
+
+<PitfallsCombineOrder/>
+
+### Using `flatMap` instead of `combine` for independent validations
+
+`flatMap` short-circuits — it stops at the first `Invalid`.
+Use `combine` when the validations are independent and all errors should be reported.
+
+<PitfallsFlatMap/>
+
+## Real-world example
+
+A user registration form: name, email, age, and password are all validated
+independently. All errors are accumulated and returned in a single response.
+
+<RealWorldExample/>

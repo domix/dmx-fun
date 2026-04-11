@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Validated<String, Integer> v = Validated.valid(42);
+
+v.isValid();   // true
+v.isInvalid(); // false
+
+// Exhaustive pattern matching — preferred
+String msg = switch (v) {
+    case Validated.Valid<String, Integer>   ok  -> "Value: "  + ok.value();
+    case Validated.Invalid<String, Integer> err -> "Error: "  + err.error();
+};
+```

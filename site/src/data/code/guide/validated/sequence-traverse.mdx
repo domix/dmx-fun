@@ -1,0 +1,31 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+List<Validated<String, Integer>> items = List.of(
+    Validated.valid(1),
+    Validated.invalid("too small"),
+    Validated.valid(3),
+    Validated.invalid("too large")
+);
+
+// sequence: accumulates ALL errors — does not short-circuit
+BinaryOperator<String> joinErrors = (a, b) -> a + "; " + b;
+
+Validated<String, List<Integer>> result = Validated.sequence(items, joinErrors);
+// → Invalid("too small; too large")
+
+// traverse: map + accumulate in one step
+Validated<String, List<Integer>> parsed =
+    Validated.traverse(
+        List.of("1", "bad", "3", "worse"),
+        s -> parsePositive(s),
+        joinErrors
+    );
+// → Invalid("bad: not a number; worse: not a number")
+
+// As a Stream Collector — composable with other stream operations
+Validated<String, List<Integer>> collected =
+    items.stream().collect(Validated.collector(joinErrors));
+```

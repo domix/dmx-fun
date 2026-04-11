@@ -1,0 +1,23 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: flatMap does NOT accumulate — it short-circuits on the first Invalid
+Validated<String, Form> form =
+    validateName(req.name())
+        .flatMap(name -> validateAge(req.age()))   // stops here if name is invalid
+        .flatMap(age  -> validateEmail(req.email())); // never reached if name or age fails
+
+// Good: use combine for independent validations so all errors are collected
+Validated<NonEmptyList<String>, Form> form =
+    Validated.invalidNel(validateName(req.name()).getError())
+        .combine(Validated.invalidNel(validateAge(req.age()).getError()),
+                 NonEmptyList::concat,
+                 (name, age) -> new Form(name, age));
+
+// flatMap is correct only when the second validation depends on the first
+Validated<String, Address> address =
+    validateCountry(req.country())
+        .flatMap(country -> validatePostalCode(req.postalCode(), country));
+```

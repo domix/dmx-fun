@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Validated<String, Integer> v = parse(input);
+
+// map — transforms the value; Invalid passes through
+Validated<String, String> hex = v.map(Integer::toHexString);
+
+// mapError — transforms the error; Valid passes through
+Validated<AppError, Integer> typed = v.mapError(msg -> new AppError(msg));
+
+// flatMap — fail-fast sequential composition (does NOT accumulate)
+// Use only when the second validation depends on the first
+Validated<String, Address> address = validateCity(input)
+    .flatMap(city -> validateZip(input, city)); // zip depends on city
+```

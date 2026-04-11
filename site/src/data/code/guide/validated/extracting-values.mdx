@@ -1,0 +1,24 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Validated<String, Integer> v = parse(input);
+
+// fold — the most expressive extractor; forces both branches
+String rendered = v.fold(
+    value -> "Parsed: " + value,
+    error -> "Invalid: " + error
+);
+
+// Safe fallbacks (inherited from Bicontainer)
+int n = v.getOrElse(0);
+int m = v.getOrElseGet(() -> computeDefault());
+
+// Unsafe accessors — throw NoSuchElementException on the wrong track
+int  val = v.get();       // throws if Invalid
+String e = v.getError();  // throws if Valid
+
+// Rethrow as RuntimeException with a custom mapper
+int forced = v.getOrThrow(err -> new IllegalArgumentException(err));
+```

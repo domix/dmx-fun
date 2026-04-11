@@ -1,0 +1,23 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// invalidNel wraps a single error in a NonEmptyList — errors accumulate via NonEmptyList::concat
+Validated<NonEmptyList<String>, String>  nameV  = Validated.invalidNel("name is required");
+Validated<NonEmptyList<String>, Integer> ageV   = Validated.invalidNel("age must be positive");
+Validated<NonEmptyList<String>, String>  emailV = Validated.valid("user@example.com");
+
+Validated<NonEmptyList<String>, RegistrationForm> result =
+    nameV.combine(ageV,   NonEmptyList::concat, (n, a)    -> new PartialForm(n, a))
+         .combine(emailV, NonEmptyList::concat, (pf, em)  -> new RegistrationForm(pf, em));
+
+// result.getError() → NonEmptyList["name is required", "age must be positive"]
+
+// sequenceNel and traverseNel are shorthand — no need to pass the merger
+List<String> rawEmails = List.of("a@b.com", "bad-email", "c@d.com", "also-bad");
+
+Validated<NonEmptyList<String>, List<String>> emails =
+    Validated.traverseNel(rawEmails, email -> validateEmail(email));
+// → Invalid(NonEmptyList["bad-email: invalid format", "also-bad: invalid format"])
+```
