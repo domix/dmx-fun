@@ -419,4 +419,20 @@ class ValidatedTest {
         assertThatThrownBy(() -> Validated.traverseCollector(n -> Validated.valid(n), null))
             .isInstanceOf(NullPointerException.class);
     }
+
+    // ---------- toEither ----------
+
+    @Test
+    void toEither_shouldReturnRight_whenValid() {
+        Either<String, Integer> e = Validated.<String, Integer>valid(42).toEither();
+        assertThat(e.isRight()).isTrue();
+        assertThat(e.getRight()).isEqualTo(42);
+    }
+
+    @Test
+    void toEither_shouldReturnLeft_whenInvalid() {
+        Either<String, Integer> e = Validated.<String, Integer>invalid("bad").toEither();
+        assertThat(e.isLeft()).isTrue();
+        assertThat(e.getLeft()).isEqualTo("bad");
+    }
 }

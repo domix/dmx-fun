@@ -529,6 +529,27 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     /**
+     * Converts this {@code Option} to an {@link Either}.
+     *
+     * <p>{@code Some(v)} maps to {@link Either#right(Object)}; {@code None} maps to
+     * {@link Either#left(Object)} using the supplied left value. Mirrors the
+     * existing {@link #toResult(Object)} overload for the neutral two-track type.
+     *
+     * @param <L>        the left type
+     * @param leftIfNone the value to use as the {@link Either.Left} when this is {@code None};
+     *                   must not be {@code null}
+     * @return an {@code Either<L, Value>} equivalent of this {@code Option}
+     * @throws NullPointerException if {@code leftIfNone} is {@code null}
+     */
+    default <L> Either<L, Value> toEither(L leftIfNone) {
+        Objects.requireNonNull(leftIfNone, "leftIfNone");
+        return switch (this) {
+            case Some<Value> s -> Either.right(s.value());
+            case None<Value> _ -> Either.left(leftIfNone);
+        };
+    }
+
+    /**
      * Converts a {@link Result} into an {@link Option}.
      * <p>
      * If the given {@code result} represents a successful value (i.e., {@code isOk()} returns true),

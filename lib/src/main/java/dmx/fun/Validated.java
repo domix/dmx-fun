@@ -304,6 +304,22 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
     }
 
     /**
+     * Converts this {@code Validated} to an {@link Either}.
+     *
+     * <p>{@link Valid} maps to {@link Either#right}; {@link Invalid} maps to {@link Either#left}.
+     * Useful as an escape hatch from error-accumulating validation into the short-circuiting
+     * {@code Either} world, for example to apply {@code flatMap} after validation succeeds.
+     *
+     * @return an {@code Either<E, A>} equivalent of this {@code Validated}
+     */
+    default Either<E, A> toEither() {
+        return switch (this) {
+            case Valid<E, A> v     -> Either.right(v.value());
+            case Invalid<E, A> inv -> Either.left(inv.error());
+        };
+    }
+
+    /**
      * Converts a {@link Result} to a {@code Validated}.
      * {@link Result.Ok} maps to {@link Valid}; {@link Result.Err} maps to {@link Invalid}.
      *

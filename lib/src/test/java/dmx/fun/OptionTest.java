@@ -574,4 +574,27 @@ class OptionTest {
 
         assertThat(left).isEqualTo(right);
     }
+
+    // ---------- toEither ----------
+
+    @Test
+    void toEither_shouldReturnRight_whenSome() {
+        Either<String, Integer> e = Option.some(42).toEither("missing");
+        assertThat(e.isRight()).isTrue();
+        assertThat(e.getRight()).isEqualTo(42);
+    }
+
+    @Test
+    void toEither_shouldReturnLeft_whenNone() {
+        Either<String, Integer> e = Option.<Integer>none().toEither("missing");
+        assertThat(e.isLeft()).isTrue();
+        assertThat(e.getLeft()).isEqualTo("missing");
+    }
+
+    @Test
+    void toEither_shouldThrowNPE_whenLeftIfNoneIsNull() {
+        assertThatThrownBy(() -> Option.some(1).toEither(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("leftIfNone");
+    }
 }

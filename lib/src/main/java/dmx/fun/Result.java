@@ -531,6 +531,22 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     }
 
     /**
+     * Converts this {@code Result} to an {@link Either}.
+     *
+     * <p>{@code Ok(v)} maps to {@code Either.right(v)}; {@code Err(e)} maps to
+     * {@code Either.left(e)}. The resulting {@code Either<Error, Value>} preserves
+     * the right-bias convention: the success value is on the right track.
+     *
+     * @return an {@code Either<Error, Value>} representing this result
+     */
+    default Either<Error, Value> toEither() {
+        return switch (this) {
+            case Ok<Value, Error>  ok  -> Either.right(ok.value());
+            case Err<Value, Error> err -> Either.left(err.error());
+        };
+    }
+
+    /**
      * Converts an {@link Option} to a {@link Result}.
      *
      * @param <V>         The type of the value contained in the {@link Option}.

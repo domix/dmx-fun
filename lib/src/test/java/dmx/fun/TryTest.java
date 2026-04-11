@@ -1083,4 +1083,29 @@ class TryTest {
         assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause()).isSameAs(thrown);
     }
+
+    // ---------- toEither ----------
+
+    @Test
+    void toEither_shouldReturnRight_whenSuccess() {
+        Either<Throwable, Integer> e = Try.success(42).toEither();
+        assertThat(e.isRight()).isTrue();
+        assertThat(e.getRight()).isEqualTo(42);
+    }
+
+    @Test
+    void toEither_shouldReturnLeft_whenFailure() {
+        RuntimeException ex = new RuntimeException("boom");
+        Either<Throwable, Integer> e = Try.<Integer>failure(ex).toEither();
+        assertThat(e.isLeft()).isTrue();
+        assertThat(e.getLeft()).isSameAs(ex);
+    }
+
+    @Test
+    void toEither_shouldThrowNPE_whenSuccessValueIsNull() {
+        Try<String> nullSuccess = Try.success(null);
+        assertThatThrownBy(nullSuccess::toEither)
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null");
+    }
 }
