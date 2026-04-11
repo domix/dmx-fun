@@ -1,0 +1,320 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+
+const types = [
+    {
+        name: 'Option<T>',
+        href: `${base}guide/option`,
+        summary: 'A value that may or may not be present. The null-safe alternative.',
+        whenToUse: 'You have an optional field or a lookup that may yield no result.',
+        avoidWhen: 'The absence carries meaning beyond "not found" — use Result instead.',
+        tag: 'Nullability',
+    },
+    {
+        name: 'Result<V, E>',
+        href: `${base}guide/result`,
+        summary: 'Either a success value or a typed error. Models domain failures explicitly.',
+        whenToUse: 'An operation can fail and the caller needs to handle the error type.',
+        avoidWhen: 'The error is always an exception message string — Try is simpler.',
+        tag: 'Error handling',
+    },
+    {
+        name: 'Try<V>',
+        href: `${base}guide/try`,
+        summary: 'Wraps a computation that may throw. Turns exceptions into values.',
+        whenToUse: 'You are calling legacy or third-party code that throws checked/runtime exceptions.',
+        avoidWhen: 'You own the error type and want callers to branch on it — use Result.',
+        tag: 'Exception handling',
+    },
+    {
+        name: 'Validated<E, A>',
+        href: `${base}guide/validated`,
+        summary: 'Like Result but accumulates multiple errors instead of failing fast.',
+        whenToUse: 'You want to collect all validation errors at once (e.g. a form submission).',
+        avoidWhen: 'You only care about the first failure — Result short-circuits and is simpler.',
+        tag: 'Validation',
+    },
+    {
+        name: 'Either<L, R>',
+        href: `${base}guide/either`,
+        summary: 'A neutral disjoint union with no success/failure semantics.',
+        whenToUse: 'You need a branching value where neither side is inherently an error.',
+        avoidWhen: 'One side clearly represents failure — use Result for that semantic clarity.',
+        tag: 'Disjoint union',
+    },
+    {
+        name: 'Lazy<T>',
+        href: `${base}guide/lazy`,
+        summary: 'A value computed at most once, on first access. Thread-safe memoization.',
+        whenToUse: 'You have an expensive computation you want to defer and cache.',
+        avoidWhen: 'The value is cheap to produce — the overhead of wrapping it is not worth it.',
+        tag: 'Deferred computation',
+    },
+    {
+        name: 'Tuple2/3/4',
+        href: `${base}guide/tuples`,
+        summary: 'Typed heterogeneous tuples. Named fields without a dedicated class.',
+        whenToUse: 'You need to return 2–4 values from a method without a dedicated record.',
+        avoidWhen: 'The tuple has stable semantics — model it as a proper record instead.',
+        tag: 'Product types',
+    },
+    {
+        name: 'NonEmptyList<T>',
+        href: `${base}guide/non-empty-list`,
+        summary: 'A list guaranteed to have at least one element at compile time.',
+        whenToUse: 'An API contract requires at least one element and you want to enforce it in the type.',
+        avoidWhen: 'Emptiness is a valid state — use a regular List.',
+        tag: 'Collections',
+    },
+    {
+        name: 'Checked interfaces',
+        href: `${base}guide/checked-interfaces`,
+        summary: 'Checked variants of Function, Supplier, Consumer, Runnable, plus TriFunction/QuadFunction.',
+        whenToUse: 'You need to pass lambdas that throw checked exceptions to higher-order functions.',
+        avoidWhen: 'The lambda does not throw — use the standard java.util.function types.',
+        tag: 'Interop',
+    },
+];
+---
+
+<DocsLayout
+    title="Developer Guide"
+    description="In-depth reference for every dmx-fun type: when to use it, how it composes, and common pitfalls."
+>
+    <div class="guide-content">
+        <h1>Developer Guide</h1>
+
+        <div class="intro">
+            <p>
+                This guide goes deeper than Getting Started. Each section covers one type in full:
+                design rationale, every combinator, composition with other types, and pitfalls to avoid.
+            </p>
+        </div>
+
+        <h2>Which type should I use?</h2>
+
+        <div class="decision-flow">
+            <div class="decision-step">
+                <span class="decision-q">Does the value simply may or may not exist?</span>
+                <span class="decision-a">→ <a href={`${base}guide/option`}>Option&lt;T&gt;</a></span>
+            </div>
+            <div class="decision-step">
+                <span class="decision-q">Can an operation fail with a <strong>typed</strong> error domain?</span>
+                <span class="decision-a">→ <a href={`${base}guide/result`}>Result&lt;V, E&gt;</a></span>
+            </div>
+            <div class="decision-step">
+                <span class="decision-q">Does it wrap legacy code that <strong>throws</strong>?</span>
+                <span class="decision-a">→ <a href={`${base}guide/try`}>Try&lt;V&gt;</a></span>
+            </div>
+            <div class="decision-step">
+                <span class="decision-q">Do you need to collect <strong>all</strong> validation errors?</span>
+                <span class="decision-a">→ <a href={`${base}guide/validated`}>Validated&lt;E, A&gt;</a></span>
+            </div>
+            <div class="decision-step">
+                <span class="decision-q">Branching value with <strong>no</strong> success/failure semantics?</span>
+                <span class="decision-a">→ <a href={`${base}guide/either`}>Either&lt;L, R&gt;</a></span>
+            </div>
+            <div class="decision-step">
+                <span class="decision-q">Expensive computation to defer and cache?</span>
+                <span class="decision-a">→ <a href={`${base}guide/lazy`}>Lazy&lt;T&gt;</a></span>
+            </div>
+        </div>
+
+        <h2>Type overview</h2>
+
+        <div class="type-grid">
+            {types.map(t => (
+                <a href={t.href} class="type-card">
+                    <div class="type-card-header">
+                        <code class="type-name">{t.name}</code>
+                        <span class="type-tag">{t.tag}</span>
+                    </div>
+                    <p class="type-summary">{t.summary}</p>
+                    <div class="type-meta">
+                        <div class="type-when">
+                            <span class="label">Use when</span>
+                            <span>{t.whenToUse}</span>
+                        </div>
+                        <div class="type-avoid">
+                            <span class="label">Avoid when</span>
+                            <span>{t.avoidWhen}</span>
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
+
+        <h2>Cross-type composition</h2>
+        <p>
+            The types interoperate through conversion methods.
+            The <a href={`${base}guide/combining-types`}>Combining Types</a> page covers
+            the full conversion matrix and composition patterns such as railway-oriented pipelines
+            and parallel validation.
+        </p>
+
+        <h2>Jackson module</h2>
+        <p>
+            All types support JSON serialization and deserialization via the optional
+            <code>fun-jackson</code> module.
+            See the <a href={`${base}getting-started`}>Getting Started</a> page for the dependency coordinates.
+        </p>
+    </div>
+</DocsLayout>
+
+<style>
+    .guide-content {
+        max-width: 900px;
+    }
+
+    .intro {
+        background-color: var(--color-surface);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--color-primary);
+        margin: 2rem 0;
+    }
+
+    .intro p {
+        margin: 0;
+        font-size: 1.125rem;
+        line-height: 1.7;
+    }
+
+    h1 {
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    h2 {
+        margin-top: 3rem;
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    /* Decision flow */
+    .decision-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background-color: var(--color-surface);
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+
+    .decision-step {
+        display: flex;
+        gap: 1rem;
+        align-items: baseline;
+        flex-wrap: wrap;
+    }
+
+    .decision-q {
+        color: var(--color-text-muted, var(--color-text));
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .decision-a {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* Type grid */
+    .type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 1.25rem;
+        margin: 1.5rem 0;
+    }
+
+    .type-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.25rem;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .type-card:hover {
+        border-color: var(--color-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .type-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .type-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-primary);
+    }
+
+    .type-tag {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        background-color: var(--color-surface);
+        color: var(--color-text-muted, var(--color-text));
+        border: 1px solid var(--color-border);
+        white-space: nowrap;
+    }
+
+    .type-summary {
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: var(--color-text);
+    }
+
+    .type-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        border-top: 1px solid var(--color-border);
+        padding-top: 0.75rem;
+        margin-top: auto;
+    }
+
+    .type-when,
+    .type-avoid {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .label {
+        font-weight: 700;
+        white-space: nowrap;
+        color: var(--color-text-muted, var(--color-text));
+    }
+
+    .type-when .label { color: var(--color-primary); }
+    .type-avoid .label { color: var(--color-secondary, #888); }
+
+    @media (max-width: 600px) {
+        .type-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .decision-step {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+    }
+</style>
