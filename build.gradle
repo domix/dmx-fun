@@ -1,18 +1,7 @@
 plugins {
-    id 'java-library'
-    id 'jacoco'
+    id 'dmx-fun.java-base'
     id 'test-report-aggregation'
     id 'jacoco-report-aggregation'
-}
-
-repositories {
-    mavenCentral()
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
-    }
 }
 
 dependencies {

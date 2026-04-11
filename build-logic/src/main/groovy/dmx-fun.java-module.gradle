@@ -1,25 +1,7 @@
 plugins {
-    id 'java-library'
-    id 'jacoco'
+    id 'dmx-fun.java-base'
     id 'com.github.ben-manes.versions'
     id 'com.vanniktech.maven.publish'
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation libs.assertj.core
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
-    }
 }
 
 def isNonStable = { String version ->
@@ -31,21 +13,6 @@ def isNonStable = { String version ->
 tasks.named("dependencyUpdates").configure {
     rejectVersionIf { isNonStable(it.candidate.version) }
     gradleReleaseChannel = "current"
-}
-
-test {
-    useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
-    }
-    finalizedBy jacocoTestReport, javadoc
-}
-
-jacocoTestReport {
-    dependsOn test
-    reports {
-        xml.required = true
-    }
 }
 
 mavenPublishing {
