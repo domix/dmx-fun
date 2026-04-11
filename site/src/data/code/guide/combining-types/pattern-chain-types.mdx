@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Chain Option → Try → Result in a single pipeline.
+// Convert at the boundary where the next operation's type demands it.
+
+Option<Config>   config = configStore.load();          // absent = not configured
+
+// Option → Try: treat absence as an exceptional state for this path
+Try<Connection> conn = config
+    .toTry(() -> new MissingConfigException("database config not found"))
+    .flatMap(cfg -> Try.of(() -> DataSource.connect(cfg.dbUrl())));
+
+// Try → Result: surface a domain error to the caller
+Result<Data, String> data = conn
+    .toResult(ex -> "Connection failed: " + ex.getMessage())
+    .flatMap(c -> fetchData(c));   // fetchData returns Result<Data, String>
+```

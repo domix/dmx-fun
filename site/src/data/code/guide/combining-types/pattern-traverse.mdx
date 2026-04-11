@@ -1,0 +1,25 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Option.traverse — apply a function that may return None; short-circuits on first None
+List<Long> userIds = List.of(1L, 2L, 3L);
+
+Option<List<User>> users = Option.traverse(userIds, id -> userRepo.findById(id));
+// Some([user1, user2, user3]) if all are found; None if any id is missing
+
+// Result.traverse — apply a function that may return Err; short-circuits on first Err
+List<String> orderRefs = List.of("ORD-1", "ORD-2", "ORD-3");
+
+Result<List<Order>, String> orders =
+    Result.traverse(orderRefs, ref -> orderService.load(ref));
+// Ok([order1, order2, order3]) if all succeed; Err("...") on first failure
+
+// Try.traverse — apply a checked operation to each element; stops on first exception
+List<Path> paths = List.of(Paths.get("a.txt"), Paths.get("b.txt"));
+
+Try<List<String>> contents =
+    Try.traverse(paths, path -> Try.of(() -> Files.readString(path)));
+// Success([...]) if all reads succeed; Failure(IOException) on first error
+```

@@ -1,0 +1,30 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: unnecessary chain of conversions — each conversion loses information
+// and makes the pipeline harder to follow.
+Result<String, AppError> result =
+    Try.of(() -> fetchValue())
+       .toOption()                          // discards the exception — why?
+       .toTry(() -> new RuntimeException()) // re-wraps into a less informative exception
+       .toResult(AppError::from);           // finally converts to Result
+
+// Good: stay in Try and convert directly to Result at the end
+Result<String, AppError> result2 =
+    Try.of(() -> fetchValue())
+       .toResult(AppError::from);
+
+// Bad: converting to Option mid-pipeline just to call getOrElseGet
+String value = Try.of(() -> fetchValue())
+    .toOption()                             // exception silently discarded
+    .getOrElseGet(() -> "default");
+
+// Good: use Try's own recovery methods — the exception is still accessible
+String value2 = Try.of(() -> fetchValue())
+    .getOrElse("default");
+// or, if you need the exception:
+String value3 = Try.of(() -> fetchValue())
+    .recover(ex -> "default (error: " + ex.getMessage() + ")");
+```
