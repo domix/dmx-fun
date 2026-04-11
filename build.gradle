@@ -1,11 +1,46 @@
 plugins {
-    id 'java-base'
+    id 'java-library'
+    id 'jacoco'
+    id 'test-report-aggregation'
+    id 'jacoco-report-aggregation'
+}
+
+repositories {
+    mavenCentral()
 }
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+dependencies {
+    def modules = [
+        ':lib',
+        ':assertj',
+        ':jackson'
+    ]
+
+    modules.each {
+        testReportAggregation project(it)
+        jacocoAggregation project(it)
+    }
+}
+
+reporting {
+    reports {
+        testAggregateTestReport(AggregateTestReport) {
+        }
+        testCodeCoverageReport(JacocoCoverageReport) {
+            testSuiteName = "test"
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('testAggregateTestReport')
+    dependsOn tasks.named('testCodeCoverageReport')
 }
 
 tasks.register('aggregateJavadoc', Exec) {
