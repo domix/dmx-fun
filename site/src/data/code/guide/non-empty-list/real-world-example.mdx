@@ -1,0 +1,37 @@
+---
+fileName: 'RegistrationService.java'
+---
+
+```java
+// Validate all fields and accumulate every error — no short-circuiting.
+// invalidNel wraps a single error; NonEmptyList::concat merges two NELs.
+
+public Validated<NonEmptyList<String>, RegistrationForm> validate(RawInput input) {
+
+    Validated<NonEmptyList<String>, Email> emailV =
+        Email.parse(input.email())
+             .map(Validated::<NonEmptyList<String>, Email>valid)
+             .getOrElseGet(() -> Validated.invalidNel("email is invalid"));
+
+    Validated<NonEmptyList<String>, String> nameV =
+        input.name().isBlank()
+            ? Validated.invalidNel("name must not be blank")
+            : Validated.valid(input.name().trim());
+
+    Validated<NonEmptyList<String>, Password> passwordV =
+        input.password().length() >= 8
+            ? Validated.valid(Password.of(input.password()))
+            : Validated.invalidNel("password must be at least 8 characters");
+
+    return emailV
+        .combine(nameV,     NonEmptyList::concat, (e, n)    -> new Partial(e, n))
+        .combine(passwordV, NonEmptyList::concat, (p, pass) -> new RegistrationForm(p.email(), p.name(), pass));
+}
+
+// Caller receives all errors at once, never just the first one:
+switch (validate(input)) {
+    case Validated.Valid<?, RegistrationForm>(var form)     -> register(form);
+    case Validated.Invalid<NonEmptyList<String>, ?>(var errs) ->
+        errs.toList().forEach(System.err::println);
+}
+```

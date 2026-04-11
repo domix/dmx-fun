@@ -1,13 +1,114 @@
 ---
 title: "NonEmptyList<T> — Developer Guide"
-description: "Developer Guide — NonEmptyList<T>: a list guaranteed to have at least one element."
+description: "Comprehensive guide to NonEmptyList<T>: construction, field access, transformations, Option/Validated interoperability, and error accumulation."
 order: 8
 h1: "NonEmptyList<T>"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as CreatingInstances}  from '../code/guide/non-empty-list/creating-instances.mdx';
+import {Content as AccessingElements}  from '../code/guide/non-empty-list/accessing-elements.mdx';
+import {Content as Transformations}    from '../code/guide/non-empty-list/transformations.mdx';
+import {Content as InteropOption}      from '../code/guide/non-empty-list/interop-option.mdx';
+import {Content as InteropValidated}   from '../code/guide/non-empty-list/interop-validated.mdx';
+import {Content as StreamInterop}      from '../code/guide/non-empty-list/stream-interop.mdx';
+import {Content as EqualityToString}   from '../code/guide/non-empty-list/equality-tostring.mdx';
+import {Content as RealWorldExample}   from '../code/guide/non-empty-list/real-world-example.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+## What is NonEmptyList&lt;T&gt;?
+
+`NonEmptyList<T>` is an **immutable list guaranteed at construction time to contain
+at least one element**. The non-emptiness constraint is encoded in the static type —
+callers that receive a `NonEmptyList<T>` never need to check whether it is empty.
+
+**Internal structure**: a `head` (the first element) and a `tail` (an unmodifiable
+`List<T>` for the remaining elements, which may be empty). `head()` is always
+present.
+
+**Null policy**: `NonEmptyList` is `@NullMarked` — null elements throw
+`NullPointerException` at construction time.
+
+`NonEmptyList<T>` pairs naturally with `Validated` error accumulation: a
+`Validated.Invalid` always carries at least one error, so
+`Validated<NonEmptyList<E>, A>` is the idiomatic type for accumulating validation
+errors without losing any of them.
+
+Use it when:
+
+- An API contract requires at least one element and you want the compiler to enforce it.
+- You are accumulating validation errors and need a structure that is never empty.
+- You want to pass a non-empty collection without repeatedly guarding against empty lists.
+
+## Creating instances
+
+| Factory                                       | When input is empty?          |
+|-----------------------------------------------|-------------------------------|
+| `NonEmptyList.of(head, tail)`                 | N/A — head is always required |
+| `NonEmptyList.singleton(head)`                | N/A — always one element      |
+| `NonEmptyList.fromList(list)`                 | Returns `None`                |
+| `stream.collect(NonEmptyList.collector())`    | Returns `None`                |
+
+<CreatingInstances/>
+
+## Accessing elements
+
+<AccessingElements/>
+
+`size()` always returns a value `>= 1`. `tail()` returns an unmodifiable `List`
+that may be empty (for singletons).
+
+## Transformations
+
+<Transformations/>
+
+All transformation methods (`map`, `append`, `prepend`, `concat`) return a **new
+`NonEmptyList`** — the original is unchanged.
+
+## Interoperability — `Option`
+
+`sequence` and `collector` bridge between `NonEmptyList` and `Option`.
+
+<InteropOption/>
+
+## Interoperability — `Validated` and error accumulation
+
+`NonEmptyList<E>` is the canonical error carrier for `Validated`. The library
+provides three dedicated helpers:
+
+| Method / Factory                               | Purpose                                                 |
+|------------------------------------------------|---------------------------------------------------------|
+| `Validated.invalidNel(error)`                  | Wrap one error in a singleton NEL                       |
+| `Validated.sequenceNel(iterable)`              | Sequence `Iterable<Validated<NEL<E>,A>>`, concat errors |
+| `Validated.traverseNel(iterable, validator)`   | Validate each element, accumulate all errors            |
+
+<InteropValidated/>
+
+## Stream and `Iterable` interop
+
+`NonEmptyList<T>` implements `Iterable<T>` and provides `toStream()` for
+integration with the standard Java stream API.
+
+<StreamInterop/>
+
+## `equals`, `hashCode`, and `toString`
+
+<EqualityToString/>
+
+Equality is **structural and consistent with `List`**: two `NonEmptyList` instances
+are equal if and only if their element sequences are equal.
+
+## When to use `NonEmptyList` vs plain `List`
+
+| Scenario                                              | Recommendation                               |
+|-------------------------------------------------------|----------------------------------------------|
+| At least one element required by contract             | `NonEmptyList<T>`                            |
+| Collection may legitimately be empty                  | `List<T>`                                    |
+| Accumulating validation errors                        | `Validated<NonEmptyList<E>, A>`              |
+| Reading from a source that could be empty             | `NonEmptyList.fromList(list)` → handle `None`|
+| Stream whose emptiness depends on runtime data        | `.collect(NonEmptyList.collector())`         |
+
+## Real-world example
+
+Validating a registration form with full error accumulation — every field is
+validated independently and all errors are returned together.
+
+<RealWorldExample/>

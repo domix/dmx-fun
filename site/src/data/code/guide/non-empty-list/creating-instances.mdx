@@ -1,0 +1,25 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// of(head, tail) — explicit head + tail; all elements null-guarded
+NonEmptyList<String> nel = NonEmptyList.of("a", List.of("b", "c"));
+// ["a", "b", "c"]
+
+// singleton — exactly one element
+NonEmptyList<String> single = NonEmptyList.singleton("only");
+// ["only"]
+
+// fromList — safe conversion from a plain List; empty list returns None
+Option<NonEmptyList<String>> fromList = NonEmptyList.fromList(someList);
+
+// collector — accumulate a Stream into Option<NonEmptyList<T>>
+Option<NonEmptyList<String>> fromStream =
+    Stream.of("x", "y", "z").collect(NonEmptyList.collector());
+// Some(["x", "y", "z"])
+
+Option<NonEmptyList<String>> empty =
+    Stream.<String>empty().collect(NonEmptyList.collector());
+// None
+```
