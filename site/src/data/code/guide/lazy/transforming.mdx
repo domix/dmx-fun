@@ -1,0 +1,21 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Lazy<Config> config = Lazy.of(() -> Config.loadFromDisk());
+
+// map — creates a new Lazy; the function is NOT called until the result is accessed
+Lazy<String> appName  = config.map(Config::appName);
+Lazy<Integer> timeout = config.map(c -> c.timeoutMs() / 1000);
+
+// flatMap — composes two lazy computations without forcing either
+Lazy<DataSource> ds = config
+    .flatMap(c -> Lazy.of(() -> DataSource.connect(c.dbUrl())));
+
+// Nothing has been evaluated yet — neither config nor ds have called their suppliers
+boolean stillLazy = !config.isEvaluated() && !ds.isEvaluated(); // true
+
+// Only when the terminal value is requested do the suppliers run in sequence
+DataSource live = ds.get(); // evaluates config, then DataSource.connect(...)
+```

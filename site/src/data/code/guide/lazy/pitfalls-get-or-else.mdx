@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: getOrElse accepts a value — the expensive default is always computed,
+// even when the Option is Some.
+Option<Config> opt = maybeConfig.getOrElse(Config.loadFromDisk()); // always loads!
+
+// Good: use the supplier overload so the default is deferred
+Option<Config> opt2 = maybeConfig.getOrElseGet(() -> Config.loadFromDisk());
+
+// Even better: store the expensive default itself in a Lazy
+Lazy<Config> fallback = Lazy.of(() -> Config.loadFromDisk());
+Config config = maybeConfig.getOrElseGet(fallback::get);
+```

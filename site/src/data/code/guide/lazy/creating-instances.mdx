@@ -1,0 +1,15 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Standard: supply a computation to be deferred
+Lazy<Config> config = Lazy.of(() -> Config.loadFromDisk());
+
+// From a CompletableFuture — blocks on get(), not on construction
+Lazy<Report> report = Lazy.fromFuture(CompletableFuture.supplyAsync(() -> buildReport()));
+
+// Nullable results: wrap in Option<T>, not Lazy<T> directly
+// (the supplier must return non-null)
+Lazy<Option<Config>> maybeConfig = Lazy.of(() -> Option.ofNullable(tryLoadConfig()));
+```

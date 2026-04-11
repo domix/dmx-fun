@@ -1,13 +1,103 @@
 ---
 title: "Lazy<T> — Developer Guide"
-description: "Developer Guide — Lazy<T>: deferred, memoized computations."
+description: "Comprehensive guide to Lazy<T>: deferred memoized computations, thread-safety guarantees, transformations, and interoperability."
 order: 6
 h1: "Lazy<T>"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as CreatingInstances}  from '../code/guide/lazy/creating-instances.mdx';
+import {Content as AccessingValue}     from '../code/guide/lazy/accessing-value.mdx';
+import {Content as Transforming}       from '../code/guide/lazy/transforming.mdx';
+import {Content as InteropConversions} from '../code/guide/lazy/interop-conversions.mdx';
+import {Content as PitfallsSideEffects} from '../code/guide/lazy/pitfalls-side-effects.mdx';
+import {Content as PitfallsGetOrElse}  from '../code/guide/lazy/pitfalls-get-or-else.mdx';
+import {Content as RealWorldExample}   from '../code/guide/lazy/real-world-example.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+## What is Lazy&lt;T&gt;?
+
+`Lazy<T>` represents a value whose computation is **deferred until first access**
+and then **memoized** — the supplier is called at most once.
+
+`Lazy` is a plain `final` class (not a sealed interface) with a single factory method.
+Use it when:
+
+- A computation is expensive and may not always be needed.
+- You need a thread-safe singleton without `static` initializer boilerplate.
+- You want to break circular initialization dependencies between components.
+- You need a lazy default for `getOrElseGet` that is also shared across call sites.
+
+**Thread-safety**: memoization is implemented with a `volatile` state field and a
+`synchronized` block (double-checked locking). The supplier is guaranteed to run
+**at most once** even under concurrent access. Both the successful value and any
+thrown exception are memoized — subsequent `get()` calls rethrow the same exception
+without re-invoking the supplier.
+
+**Null policy**: the supplier must return a non-null value (`@NullMarked`).
+Use `Lazy<Option<T>>` to model a lazily evaluated result that may be absent.
+
+## Creating instances
+
+<CreatingInstances/>
+
+## Accessing the value
+
+<AccessingValue/>
+
+`isEvaluated()` returns `true` after the first `get()` call.
+You can use it to check whether the cost has already been paid without triggering
+evaluation.
+
+## Transforming without forcing evaluation
+
+`map` and `flatMap` both return a new, unevaluated `Lazy`. **No supplier is called**
+until the terminal `get()` is invoked on the result.
+
+<Transforming/>
+
+## Interoperability
+
+| Method / Factory                    | Forces evaluation? | Returns                               | Notes                                              |
+|-------------------------------------|--------------------|---------------------------------------|----------------------------------------------------|
+| `get()`                             | Yes                | `T`                                   | Rethrows supplier exceptions.                      |
+| `toTry()`                           | Yes                | `Try<T>`                              | Captures exceptions as `Failure`; result memoized. |
+| `toResult()`                        | Yes                | `Result<T, Throwable>`                | Exception becomes `Err`.                           |
+| `toResult(errorMapper)`             | Yes                | `Result<T, E>`                        | Maps exception to a domain error.                  |
+| `toOption()`                        | Yes                | `Option<T>`                           | Throws if supplier throws.                         |
+| `toFuture()`                        | If already cached  | `CompletableFuture<T>`                | Returns completed future if cached; async otherwise. |
+| `Lazy.fromFuture(future)`           | No                 | `Lazy<T>`                             | Defers the blocking join to `get()` time.          |
+
+<InteropConversions/>
+
+## When to use `Lazy`
+
+| Scenario                                                          | Recommendation              |
+|-------------------------------------------------------------------|-----------------------------|
+| Expensive singleton computed once across the app                  | `Lazy<T>` as a static field |
+| Default value that is expensive to compute                        | `getOrElseGet(lazy::get)`   |
+| Optional expensive computation (result may be absent)             | `Lazy<Option<T>>`           |
+| Computation that should repeat on every call                      | Plain supplier — not `Lazy` |
+| Async computation whose result you want to defer                  | `Lazy.fromFuture(...)`      |
+
+## Common pitfalls
+
+### Using `Lazy` for side-effecting or repeatable actions
+
+The supplier runs **exactly once**. If the expectation is that an action repeats
+on every call, `Lazy` is the wrong tool.
+
+<PitfallsSideEffects/>
+
+### Eager evaluation via `getOrElse`
+
+`getOrElse(value)` evaluates its argument eagerly, defeating the purpose of deferral.
+Always prefer the supplier overload — or store the expensive default in its own `Lazy`.
+
+<PitfallsGetOrElse/>
+
+## Real-world example
+
+Application-wide singletons declared as `static final Lazy<T>` fields.
+Each is evaluated at most once, only when first needed, without any manual
+synchronization or `static` initializer blocks.
+
+<RealWorldExample/>

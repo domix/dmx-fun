@@ -1,0 +1,21 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Lazy<Config> config = Lazy.of(() -> Config.loadFromDisk());
+
+config.isEvaluated(); // false — supplier not yet called
+
+Config c1 = config.get(); // supplier called here; result is cached
+Config c2 = config.get(); // returns cached value — supplier NOT called again
+
+config.isEvaluated(); // true
+
+// If the supplier throws, the exception is memoized too.
+// Every subsequent get() call rethrows the same exception without
+// re-invoking the supplier.
+Lazy<String> broken = Lazy.of(() -> { throw new RuntimeException("oops"); });
+broken.get(); // throws RuntimeException("oops")
+broken.get(); // throws the same cached exception again
+```
