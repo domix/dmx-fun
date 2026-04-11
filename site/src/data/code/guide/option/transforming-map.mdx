@@ -1,0 +1,11 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Option<String> upper = Option.some("hello").map(String::toUpperCase);
+// Some("HELLO")
+
+Option<String> none = Option.<String>none().map(String::toUpperCase);
+// None
+```

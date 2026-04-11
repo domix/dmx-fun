@@ -1,0 +1,9 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+long count = options.stream()
+    .flatMap(Option::stream)   // flatten Nones out
+    .count();
+```

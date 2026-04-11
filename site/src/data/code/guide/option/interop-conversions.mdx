@@ -1,0 +1,12 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Promote to Result when absence should be an error
+Result<User, String> result = findUser(id)
+    .toResult(() -> "User not found: " + id);
+
+// Demote to JDK Optional for older APIs
+Optional<User> opt = findUser(id).toOptional();
+```

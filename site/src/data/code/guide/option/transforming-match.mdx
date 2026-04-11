@@ -1,0 +1,10 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+option.match(
+    ()    -> metrics.increment("cache.miss"),
+    value -> metrics.increment("cache.hit")
+);
+```

@@ -1,26 +1,449 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro';
+import {Content as CreatingSome}           from '../../data/code/guide/option/creating-some.mdx';
+import {Content as CreatingNone}           from '../../data/code/guide/option/creating-none.mdx';
+import {Content as CreatingOfNullable}     from '../../data/code/guide/option/creating-of-nullable.mdx';
+import {Content as CreatingFromOptional}   from '../../data/code/guide/option/creating-from-optional.mdx';
+import {Content as CreatingFromResultTry}  from '../../data/code/guide/option/creating-from-result-try.mdx';
+import {Content as CheckingStatePredicates} from '../../data/code/guide/option/checking-state-predicates.mdx';
+import {Content as CheckingStateSwitch}    from '../../data/code/guide/option/checking-state-switch.mdx';
+import {Content as ExtractingValues}       from '../../data/code/guide/option/extracting-values.mdx';
+import {Content as TransformingMap}        from '../../data/code/guide/option/transforming-map.mdx';
+import {Content as TransformingFlatMap}    from '../../data/code/guide/option/transforming-flatmap.mdx';
+import {Content as TransformingFilter}     from '../../data/code/guide/option/transforming-filter.mdx';
+import {Content as TransformingPeek}       from '../../data/code/guide/option/transforming-peek.mdx';
+import {Content as TransformingMatch}      from '../../data/code/guide/option/transforming-match.mdx';
+import {Content as ComposingOrElse}        from '../../data/code/guide/option/composing-or-else.mdx';
+import {Content as ComposingZip}           from '../../data/code/guide/option/composing-zip.mdx';
+import {Content as ComposingSequence}      from '../../data/code/guide/option/composing-sequence.mdx';
+import {Content as ComposingStream}        from '../../data/code/guide/option/composing-stream.mdx';
+import {Content as InteropConversions}     from '../../data/code/guide/option/interop-conversions.mdx';
+import {Content as PitfallsNested}         from '../../data/code/guide/option/pitfalls-nested.mdx';
+import {Content as PitfallsNullMapper}     from '../../data/code/guide/option/pitfalls-null-mapper.mdx';
+import {Content as RealWorldExample}       from '../../data/code/guide/option/real-world-example.mdx';
 const base = import.meta.env.BASE_URL;
 ---
-<DocsLayout title="Option" description="Developer Guide — Option">
+<DocsLayout
+    title="Option<T> — Developer Guide"
+    description="Comprehensive guide to Option<T>: creating instances, extracting values, transforming, composing, and common pitfalls."
+>
     <div class="guide-content">
         <h1>Option&lt;T&gt;</h1>
-        <div class="coming-soon">
-            <p>This page is under active development. Full content is coming soon.</p>
-            <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
+
+        <nav class="toc">
+            <ol>
+                <li><a href="#what-is-option">What is Option&lt;T&gt;?</a></li>
+                <li><a href="#creating">Creating instances</a></li>
+                <li><a href="#checking-state">Checking state</a></li>
+                <li><a href="#extracting">Extracting values</a></li>
+                <li><a href="#transforming">Transforming values</a></li>
+                <li><a href="#composing">Composing Options</a></li>
+                <li><a href="#interop">Interoperability</a></li>
+                <li><a href="#comparison">Option vs null vs Optional</a></li>
+                <li><a href="#pitfalls">Common pitfalls</a></li>
+                <li><a href="#real-world">Real-world example</a></li>
+            </ol>
+        </nav>
+
+        <!-- What is Option<T>? -->
+        <section id="what-is-option">
+            <h2>What is Option&lt;T&gt;?</h2>
+            <p>
+                <code>Option&lt;T&gt;</code> models a value that may or may not be present.
+                It is a sealed interface with exactly two implementations:
+            </p>
+            <ul>
+                <li><code>Some&lt;T&gt;</code> — holds a <strong>non-null</strong> value.</li>
+                <li><code>None&lt;T&gt;</code> — represents absence, with no value.</li>
+            </ul>
+            <p>
+                Unlike a raw <code>null</code>, an <code>Option</code> is explicit in the type system:
+                callers are forced to handle both the present and absent cases.
+                Unlike <code>java.util.Optional</code>, <code>Option</code> is a <em>sealed interface</em>
+                and can be used in switch expressions with exhaustive pattern matching.
+            </p>
+        </section>
+
+        <!-- Creating instances -->
+        <section id="creating">
+            <h2>Creating instances</h2>
+
+            <h3><code>Option.some(value)</code></h3>
+            <p>Wraps a known, non-null value. Throws <code>NullPointerException</code> if the argument is null.</p>
+            <CreatingSome/>
+
+            <h3><code>Option.none()</code></h3>
+            <p>Returns the singleton absent value.</p>
+            <CreatingNone/>
+
+            <h3><code>Option.ofNullable(value)</code></h3>
+            <p>
+                Creates an <code>Option</code> from a value that may be <code>null</code>.
+                Returns <code>None</code> when the argument is <code>null</code>, <code>Some(value)</code> otherwise.
+                This is the most common factory when bridging from legacy code.
+            </p>
+            <CreatingOfNullable/>
+
+            <h3><code>Option.fromOptional(optional)</code></h3>
+            <p>Converts a <code>java.util.Optional</code> into an <code>Option</code>.</p>
+            <CreatingFromOptional/>
+
+            <h3>Converting from Result or Try</h3>
+            <p>
+                Both <code>Result</code> and <code>Try</code> can be narrowed to an <code>Option</code>
+                when you only care about presence:
+            </p>
+            <CreatingFromResultTry/>
+        </section>
+
+        <!-- Checking state -->
+        <section id="checking-state">
+            <h2>Checking state</h2>
+            <p>
+                Prefer structural operations (<code>fold</code>, <code>map</code>, pattern matching)
+                over imperative state checks, but the predicates are available:
+            </p>
+            <CheckingStatePredicates/>
+            <p>You can also use <strong>Java pattern matching</strong> exhaustively:</p>
+            <CheckingStateSwitch/>
+        </section>
+
+        <!-- Extracting values -->
+        <section id="extracting">
+            <h2>Extracting values</h2>
+
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>When <code>None</code></th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>get()</code></td>
+                        <td>Throws <code>NoSuchElementException</code></td>
+                        <td>Only safe after an <code>isDefined()</code> check; prefer alternatives.</td>
+                    </tr>
+                    <tr>
+                        <td><code>getOrElse(fallback)</code></td>
+                        <td>Returns <code>fallback</code></td>
+                        <td>Fallback is always evaluated — use <code>getOrElseGet</code> for expensive defaults.</td>
+                    </tr>
+                    <tr>
+                        <td><code>getOrElseGet(supplier)</code></td>
+                        <td>Calls supplier</td>
+                        <td>Lazily computed fallback.</td>
+                    </tr>
+                    <tr>
+                        <td><code>getOrNull()</code></td>
+                        <td>Returns <code>null</code></td>
+                        <td>Bridge to null-expecting APIs. Avoid propagating the null further.</td>
+                    </tr>
+                    <tr>
+                        <td><code>getOrThrow(supplier)</code></td>
+                        <td>Throws supplied exception</td>
+                        <td>Use when absence is a programming error at that call site.</td>
+                    </tr>
+                    <tr>
+                        <td><code>fold(onNone, onSome)</code></td>
+                        <td>Calls <code>onNone</code></td>
+                        <td>The most expressive extractor: forces you to handle both branches.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <ExtractingValues/>
+        </section>
+
+        <!-- Transforming values -->
+        <section id="transforming">
+            <h2>Transforming values</h2>
+
+            <h3><code>map(mapper)</code></h3>
+            <p>
+                Applies a function to the value if present. Returns <code>None</code> unchanged.
+                If the mapper returns <code>null</code>, the result becomes <code>None</code>.
+            </p>
+            <TransformingMap/>
+
+            <h3><code>flatMap(mapper)</code></h3>
+            <p>
+                Like <code>map</code>, but the mapper itself returns an <code>Option</code>.
+                Use this to chain operations that may also produce absence.
+            </p>
+            <TransformingFlatMap/>
+
+            <h3><code>filter(predicate)</code></h3>
+            <p>
+                Keeps the value only if it satisfies the predicate; otherwise returns <code>None</code>.
+            </p>
+            <TransformingFilter/>
+
+            <h3><code>peek(action)</code></h3>
+            <p>
+                Runs a side-effecting action on the value (e.g., logging) without altering the
+                <code>Option</code>. No-op on <code>None</code>. Returns <code>this</code> for chaining.
+            </p>
+            <TransformingPeek/>
+
+            <h3><code>match(onNone, onSome)</code></h3>
+            <p>
+                Terminal side-effecting variant of <code>fold</code>. Both branches return void.
+            </p>
+            <TransformingMatch/>
+        </section>
+
+        <!-- Composing Options -->
+        <section id="composing">
+            <h2>Composing Options</h2>
+
+            <h3>Fallback chains with <code>orElse</code></h3>
+            <p>
+                Return an alternative <code>Option</code> when this one is <code>None</code>.
+                The supplier overload is lazy — use it when computing the alternative is expensive.
+            </p>
+            <ComposingOrElse/>
+
+            <h3>Zipping two or more Options</h3>
+            <p>
+                Combine multiple independent <code>Option</code> values.
+                Returns <code>None</code> if any input is <code>None</code>.
+            </p>
+            <ComposingZip/>
+
+            <h3>Collecting a list with <code>sequence</code></h3>
+            <p>
+                Converts a <code>List&lt;Option&lt;T&gt;&gt;</code> into an <code>Option&lt;List&lt;T&gt;&gt;</code>.
+                Returns <code>None</code> as soon as any element is <code>None</code>.
+            </p>
+            <ComposingSequence/>
+
+            <h3>Stream integration with <code>stream()</code></h3>
+            <p>
+                Turns an <code>Option</code> into a one-element or empty stream.
+                Useful for integrating into Stream pipelines without <code>filter + map</code>.
+            </p>
+            <ComposingStream/>
+        </section>
+
+        <!-- Interoperability -->
+        <section id="interop">
+            <h2>Interoperability</h2>
+
+            <table class="api-table">
+                <thead>
+                    <tr><th>Conversion</th><th>Method</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>Option</code> &rarr; <code>Optional</code></td><td><code>option.toOptional()</code></td></tr>
+                    <tr><td><code>Option</code> &rarr; <code>Result</code></td><td><code>option.toResult(errorSupplier)</code></td></tr>
+                    <tr><td><code>Option</code> &rarr; <code>Try</code></td><td><code>option.toTry(exceptionSupplier)</code></td></tr>
+                    <tr><td><code>Option</code> &rarr; <code>Either</code></td><td><code>option.toEither(leftSupplier)</code></td></tr>
+                    <tr><td><code>Result</code> &rarr; <code>Option</code></td><td><code>result.toOption()</code></td></tr>
+                    <tr><td><code>Try</code> &rarr; <code>Option</code></td><td><code>tryVal.toOption()</code></td></tr>
+                    <tr><td><code>Optional</code> &rarr; <code>Option</code></td><td><code>Option.fromOptional(optional)</code></td></tr>
+                </tbody>
+            </table>
+
+            <InteropConversions/>
+
+            <p>
+                See the <a href={`${base}guide/combining-types`}>Combining Types</a> page
+                for the full conversion matrix and composition patterns.
+            </p>
+        </section>
+
+        <!-- Comparison table -->
+        <section id="comparison">
+            <h2>Option vs null vs Optional</h2>
+
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th><code>null</code></th>
+                        <th><code>Optional&lt;T&gt;</code></th>
+                        <th><code>Option&lt;T&gt;</code></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Null-safety</td>
+                        <td>None — NPE at runtime</td>
+                        <td>Good — explicit</td>
+                        <td>Good — explicit</td>
+                    </tr>
+                    <tr>
+                        <td>Exhaustive handling</td>
+                        <td>No</td>
+                        <td>No (runtime only)</td>
+                        <td>Yes — sealed, switch patterns</td>
+                    </tr>
+                    <tr>
+                        <td>Use in records / generics</td>
+                        <td>Yes (fragile)</td>
+                        <td>Discouraged (not serializable)</td>
+                        <td>Yes — record-based, serializable</td>
+                    </tr>
+                    <tr>
+                        <td>Compose with Result / Try / Either</td>
+                        <td>No</td>
+                        <td>No</td>
+                        <td>Yes — first-class conversions</td>
+                    </tr>
+                    <tr>
+                        <td>Holds null values</td>
+                        <td>Yes</td>
+                        <td>No</td>
+                        <td>No</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Common pitfalls -->
+        <section id="pitfalls">
+            <h2>Common pitfalls</h2>
+
+            <h3>Nested Options</h3>
+            <p>
+                <code>Option&lt;Option&lt;T&gt;&gt;</code> almost always indicates a mistake.
+                Use <code>flatMap</code> instead of <code>map</code> when the mapper itself returns an <code>Option</code>.
+            </p>
+            <PitfallsNested/>
+
+            <h3>Mapper returning null</h3>
+            <p>
+                <code>map</code> treats a <code>null</code> return from the mapper as <code>None</code>.
+                This is intentional for legacy interop, but can be surprising if you expect a non-null.
+            </p>
+            <PitfallsNullMapper/>
+
+            <h3>Calling <code>get()</code> unconditionally</h3>
+            <p>
+                <code>get()</code> throws <code>NoSuchElementException</code> on <code>None</code>.
+                Use <code>getOrElse</code>, <code>fold</code>, or pattern matching instead.
+            </p>
+
+            <h3>Option as a method parameter</h3>
+            <p>
+                Prefer overloaded methods or a nullable parameter over an <code>Option</code>-typed parameter.
+                <code>Option</code> is designed for <em>return types</em>.
+            </p>
+        </section>
+
+        <!-- Real-world example -->
+        <section id="real-world">
+            <h2>Real-world example</h2>
+            <p>
+                A typical service layer pattern: look up a user, find their primary address,
+                format it, and fall back to a default — all without a single null check or try/catch.
+            </p>
+            <RealWorldExample/>
+            <p>
+                Each step propagates <code>None</code> silently.
+                No intermediate nulls, no nested conditionals.
+            </p>
+        </section>
+
+        <div class="page-nav">
+            <a href={`${base}guide`}>&larr; Guide index</a>
+            <a href={`${base}guide/result`}>Result&lt;V, E&gt; &rarr;</a>
         </div>
     </div>
 </DocsLayout>
+
 <style>
-    .guide-content { max-width: 800px; }
-    h1 { border-bottom: 2px solid var(--color-border); padding-bottom: 0.5rem; }
-    .coming-soon {
-        background-color: var(--color-surface);
-        padding: 1.5rem;
-        border-radius: 8px;
-        border-left: 4px solid var(--color-primary);
-        margin: 2rem 0;
+    .guide-content {
+        max-width: 860px;
     }
-    .coming-soon p { margin: 0 0 0.75rem; line-height: 1.7; }
-    .coming-soon p:last-child { margin-bottom: 0; }
+
+    h1 {
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    h2 {
+        margin-top: 3rem;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    h3 {
+        margin-top: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    p {
+        line-height: 1.7;
+    }
+
+    ul {
+        line-height: 1.8;
+    }
+
+    /* TOC */
+    .toc {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        margin: 2rem 0;
+        display: inline-block;
+        min-width: 260px;
+    }
+
+    .toc ol {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+
+    .toc li {
+        line-height: 1.9;
+        font-size: 0.9rem;
+    }
+
+    /* API table */
+    .api-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        margin: 1rem 0 1.5rem;
+    }
+
+    .api-table th,
+    .api-table td {
+        border: 1px solid var(--color-border);
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        vertical-align: top;
+        line-height: 1.5;
+    }
+
+    .api-table th {
+        background-color: var(--color-surface);
+        font-weight: 700;
+    }
+
+    .api-table td code {
+        white-space: nowrap;
+    }
+
+    /* Page navigation */
+    .page-nav {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-border);
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+        .toc {
+            display: block;
+        }
+    }
 </style>

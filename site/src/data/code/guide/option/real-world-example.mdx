@@ -1,0 +1,13 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+public String resolveShippingLabel(long userId) {
+    return userRepo.findById(userId)            // Option<User>
+        .flatMap(User::primaryAddress)          // Option<Address>
+        .filter(Address::isVerified)            // discard unverified
+        .map(AddressFormatter::format)          // Option<String>
+        .getOrElse("Default Warehouse, 1 Main St");
+}
+```

@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Preferred: fold makes both branches explicit
+String display = option.fold(
+    ()    -> "anonymous",
+    name  -> "Hello, " + name
+);
+
+// Lazy fallback — DB call only when None
+User user = maybeUser.getOrElseGet(() -> userRepo.defaultUser());
+
+// Throw a domain exception when absence is a bug
+Config cfg = maybeConfig.getOrThrow(
+    () -> new IllegalStateException("Config not loaded"));
+```

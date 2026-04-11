@@ -1,0 +1,11 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: creates Option<Option<Address>>
+Option<Option<Address>> nested = user.map(User::getAddress);
+
+// Good: flat result
+Option<Address> address = user.flatMap(User::getAddress);
+```

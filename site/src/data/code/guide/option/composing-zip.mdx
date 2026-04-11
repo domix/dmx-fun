@@ -1,0 +1,13 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Zip to a Tuple2
+Option<Tuple2<String, Integer>> pair =
+    Option.zip(nameOption, ageOption);
+
+// Zip with a custom combiner
+Option<Greeting> greeting =
+    Option.zip(nameOption, localeOption, Greeting::new);
+```
