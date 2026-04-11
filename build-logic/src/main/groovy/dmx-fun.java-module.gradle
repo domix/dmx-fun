@@ -9,18 +9,16 @@ repositories {
     mavenCentral()
 }
 
-def catalog = versionCatalogs.named("libs")
-
 dependencies {
-    testImplementation(catalog.findLibrary("assertj-core").get())
-    testImplementation(platform(catalog.findLibrary("junit-bom").get()))
-    testImplementation(catalog.findLibrary("junit-jupiter").get())
-    testRuntimeOnly(catalog.findLibrary("junit-platform-launcher").get())
+    testImplementation libs.assertj.core
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
     }
 }
 
@@ -56,7 +54,7 @@ mavenPublishing {
 
     pom {
         inceptionYear = "2025"
-        url = 'https://fun.domix.codes'
+        url = 'https://domix.github.io/dmx-fun/'
         licenses {
             license {
                 name = 'The Apache License, Version 2.0'
