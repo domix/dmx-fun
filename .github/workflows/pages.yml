@@ -9,6 +9,12 @@ on:
       - 'lib/src/main/**'
       - 'assertj/src/main/**'
       - 'jackson/src/main/**'
+      - '**/build.gradle'
+      - '**/build.gradle.kts'
+      - 'settings.gradle'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - 'gradle/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
