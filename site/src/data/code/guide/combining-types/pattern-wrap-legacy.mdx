@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Wrap a legacy checked API with Try, then convert to Result at the service boundary.
+// The caller receives a typed domain error — not a raw exception.
+
+Result<Report, AppError> report =
+    Try.of(() -> legacyReportService.generate(params))   // CheckedSupplier
+       .toResult(ex -> AppError.from("report-generation-failed", ex));
+
+// The same pattern for Optional-returning legacy APIs:
+Result<Config, AppError> config =
+    Try.of(() -> legacyConfigLoader.load())              // may throw or return null
+       .flatMap(cfg -> cfg != null
+           ? Try.success(cfg)
+           : Try.failure(new MissingConfigException()))
+       .toResult(AppError::from);
+```

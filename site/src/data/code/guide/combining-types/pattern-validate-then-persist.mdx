@@ -1,0 +1,23 @@
+---
+fileName: 'UserService.java'
+---
+
+```java
+// Validate with Validated — accumulate ALL errors, then hand off to the
+// repository which speaks Result (fail-fast, single error path).
+
+public Result<User, List<String>> register(RegistrationRequest req) {
+
+    Validated<NonEmptyList<String>, RegistrationForm> validation =
+        validateEmail(req.email())
+            .combine(validatePassword(req.password()), NonEmptyList::concat, RegistrationForm::new);
+
+    // Convert Validated → Result before hitting the database
+    return switch (validation) {
+        case Validated.Valid<?, RegistrationForm>(var form) ->
+            userRepository.save(form);          // returns Result<User, List<String>>
+        case Validated.Invalid<NonEmptyList<String>, ?>(var errors) ->
+            Result.err(errors.toList());        // surface all validation errors
+    };
+}
+```
