@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Either<String, Integer> e = authenticate(token);
+
+e.isLeft();  // true if Left
+e.isRight(); // true if Right
+
+// Exhaustive pattern matching — preferred
+String msg = switch (e) {
+    case Either.Left<String, Integer>  l -> "Admin: "   + l.value();
+    case Either.Right<String, Integer> r -> "Regular: " + r.value();
+};
+```

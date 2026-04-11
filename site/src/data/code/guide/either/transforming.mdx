@@ -1,0 +1,25 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Either<String, Integer> e = Either.right(21);
+
+// map — transforms the right value; Left passes through unchanged
+Either<String, String> hex = e.map(Integer::toHexString); // Right("15")
+
+// mapLeft — transforms the left value; Right passes through unchanged
+Either<Integer, Integer> e2 = Either.<String, Integer>left("error")
+    .mapLeft(String::length); // Left(5)
+
+// flatMap — chains right-biased operations
+Either<String, String> result =
+    Either.<String, Integer>right(42)
+        .flatMap(n -> n > 0
+            ? Either.right(Integer.toBinaryString(n))
+            : Either.left("non-positive"));
+
+// swap — flips Left ↔ Right
+Either<Integer, String> swapped = Either.<String, Integer>left("hello").swap();
+// → Right("hello")
+```

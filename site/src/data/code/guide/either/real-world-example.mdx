@@ -1,0 +1,24 @@
+---
+fileName: 'RouteHandler.java'
+---
+
+```java
+// Route dispatch: an authenticated request is either an admin or a regular user.
+// Neither side is an "error" — both are valid outcomes with different behaviour.
+
+Either<AdminUser, RegularUser> principal = authenticate(request.token());
+
+// Right-biased pipeline on the regular-user track
+Response response = principal
+    .map(user -> enrichWithPreferences(user))   // only for RegularUser
+    .fold(
+        admin   -> adminDashboard(admin),
+        regular -> userDashboard(regular)
+    );
+
+// swap + flatMap to operate on the left track
+Either<AdminReport, RegularUser> report = principal
+    .swap()                                      // AdminUser is now Right
+    .flatMap(admin -> Either.right(buildReport(admin)))
+    .swap();                                     // restore original orientation
+```

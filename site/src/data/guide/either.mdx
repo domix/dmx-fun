@@ -1,13 +1,106 @@
 ---
 title: "Either<L,R> — Developer Guide"
-description: "Developer Guide — Either<L,R>: modelling one of two possible values."
+description: "Comprehensive guide to Either<L,R>: neutral two-track branching, right-biased operations, and interoperability with Option, Result, Try, and Validated."
 order: 5
 h1: "Either<L, R>"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as CreatingInstances}  from '../code/guide/either/creating-instances.mdx';
+import {Content as CheckingState}      from '../code/guide/either/checking-state.mdx';
+import {Content as ExtractingValues}   from '../code/guide/either/extracting-values.mdx';
+import {Content as Transforming}       from '../code/guide/either/transforming.mdx';
+import {Content as SideEffects}        from '../code/guide/either/side-effects.mdx';
+import {Content as InteropConversions} from '../code/guide/either/interop-conversions.mdx';
+import {Content as RealWorldExample}   from '../code/guide/either/real-world-example.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+## What is Either&lt;L, R&gt;?
+
+`Either<L, R>` represents a value that is one of exactly two types.
+It is a sealed interface with two implementations:
+
+- `Left<L, R>` — holds a non-null value of type `L`.
+- `Right<L, R>` — holds a non-null value of type `R`.
+
+The critical distinction from `Result<V, E>` is that **`Either` carries no error
+semantics**. Neither side means success or failure — both are legitimate outcomes.
+Use `Either` when a computation can return one of two unrelated value types and
+neither should be labelled an error.
+
+By convention, `map`, `flatMap`, and related operations act on the **right** side.
+Use `swap()` to flip the sides when you need to operate on the left.
+
+**When to use `Either` vs other types:**
+
+| Scenario                                          | Use               |
+|---------------------------------------------------|-------------------|
+| One track is an error, the other is success       | `Result<V, E>`    |
+| Absent vs present value                           | `Option<T>`       |
+| Wrapping throwing code                            | `Try<V>`          |
+| Collecting all validation errors                  | `Validated<E, A>` |
+| Two equally valid outcomes with different types   | `Either<L, R>`    |
+
+## Creating instances
+
+<CreatingInstances/>
+
+Both `Left` and `Right` reject `null`. Most production code obtains an
+`Either` via a conversion from another type rather than constructing it directly.
+
+## Checking state
+
+<CheckingState/>
+
+Prefer exhaustive switch patterns — the compiler enforces that both sides are handled.
+
+## Extracting values
+
+| Method                      | On wrong side                   | Notes                                               |
+|-----------------------------|---------------------------------|-----------------------------------------------------|
+| `getLeft()`                 | Throws `NoSuchElementException` | Only safe after an `isLeft()` check.                |
+| `getRight()`                | Throws `NoSuchElementException` | Only safe after an `isRight()` check.               |
+| `fold(onLeft, onRight)`     | N/A — handles both sides        | The safest extractor; forces both branches.         |
+
+<ExtractingValues/>
+
+## Transforming values
+
+| Method             | Operates on | Left passes through | Notes                                                |
+|--------------------|-------------|---------------------|------------------------------------------------------|
+| `map(mapper)`      | Right       | Yes                 | Standard right-biased functor map.                   |
+| `mapLeft(mapper)`  | Left        | Yes (Right)         | Transforms the left value; Right passes through.     |
+| `flatMap(mapper)`  | Right       | Yes                 | Monadic bind for the right track.                    |
+| `swap()`           | Both        | N/A                 | Flips Left ↔ Right; useful before operating on Left. |
+| `fold(fn, fn)`     | Both        | N/A                 | Terminal — collapses both sides into one value.      |
+
+<Transforming/>
+
+## Side effects
+
+<SideEffects/>
+
+`peek` runs an action on the `Right` value and returns `this` unchanged.
+`peekLeft` does the same for the `Left` value. Both are chainable.
+
+## Interoperability
+
+| Conversion                   | Method / Factory                           | Notes                                  |
+|------------------------------|--------------------------------------------|----------------------------------------|
+| `Either` → `Option`          | `e.toOption()`                             | Right → Some; Left → None (discarded). |
+| `Either` → `Result`          | `e.toResult()`                             | Right → Ok; Left → Err.                |
+| `Either` → `Validated`       | `e.toValidated()`                          | Right → Valid; Left → Invalid.         |
+| `Try` → `Either`             | `tryVal.toEither()`                        | Success → Right; Failure → Left.       |
+| `Result` → `Either`          | `result.toEither()`                        | Ok → Right; Err → Left.                |
+| `Validated` → `Either`       | `validated.toEither()`                     | Valid → Right; Invalid → Left.         |
+| `Option` → `Either`          | `option.toEither(leftSupplier)`            | Some → Right; None → Left.             |
+
+<InteropConversions/>
+
+See the [Combining Types](combining-types) page for the full conversion matrix and composition patterns.
+
+## Real-world example
+
+Route dispatch where authenticated users are either admins or regular users —
+neither outcome is an error. `Either` makes the two-track branching explicit
+without implying that one side is a failure.
+
+<RealWorldExample/>

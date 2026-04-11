@@ -1,0 +1,11 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Either<String, Integer> e = resolve(input);
+
+// peek — runs action on Right; returns this for chaining
+e.peek(n -> log.info("Resolved: {}", n))
+ .peekLeft(s -> log.warn("Fallback branch: {}", s));
+```

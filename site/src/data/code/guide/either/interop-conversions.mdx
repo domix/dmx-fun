@@ -1,0 +1,23 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Either<String, Integer> e = compute();
+
+// Either → Option (Right → Some, Left → None — left value discarded)
+Option<Integer> opt = e.toOption();
+
+// Either → Result (Right → Ok, Left → Err)
+Result<Integer, String> result = e.toResult();
+
+// Either → Validated (Right → Valid, Left → Invalid)
+Validated<String, Integer> validated = e.toValidated();
+
+// Other types → Either
+Either<Throwable, String> fromTry       = Try.of(() -> fetch()).toEither();
+Either<String, Integer>   fromResult    = Result.<Integer, String>ok(1).toEither();
+Either<String, Integer>   fromValidated = Validated.<String, Integer>valid(1).toEither();
+Either<String, Integer>   fromOption    = Option.some(42)
+    .toEither(() -> "value absent");
+```

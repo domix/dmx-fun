@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Either carries no error semantics — both sides are equal citizens
+Either<String, Integer> right = Either.right(42);
+Either<String, Integer> left  = Either.left("admin");
+
+// Typical use: a computation that returns one of two unrelated types
+Either<AdminUser, RegularUser> user = authenticate(token);
+
+// From conversions — other types can produce an Either
+Either<Throwable, String> fromTry       = Try.of(() -> fetch(url)).toEither();
+Either<String, Integer>   fromResult    = Result.<Integer, String>ok(1).toEither();
+Either<String, Integer>   fromValidated = Validated.<String, Integer>valid(1).toEither();
+Either<String, Option<Integer>> fromOption = Either.right(Option.some(42));
+```
