@@ -1,0 +1,24 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// TriFunction<A, B, C, R> — three arguments, one result
+TriFunction<String, Integer, Boolean, String> describe =
+    (name, age, active) -> name + " (age " + age + ", active=" + active + ")";
+
+String label = describe.apply("Alice", 30, true);
+// "Alice (age 30, active=true)"
+
+// QuadFunction<A, B, C, D, R> — four arguments, one result
+QuadFunction<String, Integer, Boolean, Double, String> summarize =
+    (name, age, active, score) ->
+        name + " | " + age + "y | " + (active ? "active" : "inactive") + " | " + score;
+
+String summary = summarize.apply("Alice", 30, true, 9.5);
+// "Alice | 30y | active | 9.5"
+
+// Both are used by Tuple3.map and Tuple4.map
+String t3result = Tuple3.of("Alice", 30, true).map(describe);
+String t4result = Tuple4.of("Alice", 30, true, 9.5).map(summarize);
+```

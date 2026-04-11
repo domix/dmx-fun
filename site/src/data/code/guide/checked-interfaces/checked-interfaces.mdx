@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// CheckedFunction<T, R> — like Function<T,R> but may throw Exception
+CheckedFunction<Path, String>  readFile  = Files::readString;
+CheckedFunction<String, Class<?>> loader = Class::forName;
+
+// CheckedSupplier<T> — like Supplier<T> but may throw Exception
+CheckedSupplier<Connection> openConn = () -> dataSource.getConnection();
+
+// CheckedConsumer<T> — like Consumer<T> but may throw Exception
+CheckedConsumer<OutputStream> closeStream = Closeable::close;
+
+// CheckedRunnable — like Runnable but may throw Exception
+CheckedRunnable initDb = () -> flyway.migrate();
+```

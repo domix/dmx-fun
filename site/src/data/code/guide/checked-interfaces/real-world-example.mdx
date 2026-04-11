@@ -1,0 +1,36 @@
+---
+fileName: 'ReportGenerator.java'
+---
+
+```java
+// Read a set of report files and parse each one, collecting results or failures.
+// CheckedFunction keeps the lambda clean; Try.traverse accumulates the outcome.
+
+List<Path> reportPaths = List.of(
+    Paths.get("reports/q1.csv"),
+    Paths.get("reports/q2.csv"),
+    Paths.get("reports/q3.csv")
+);
+
+// Step 1 — read each file; any IOException becomes a Failure
+Try<List<String>> rawContents =
+    Try.traverse(reportPaths, path -> Try.of(() -> Files.readString(path)));
+
+// Step 2 — parse each raw string into a Report; parse errors become Failures
+Try<List<Report>> reports = rawContents.flatMap(contents ->
+    Try.traverse(contents, raw -> Try.of(() -> Report.parse(raw))));
+
+// Step 3 — generate the combined output or log the first error
+switch (reports) {
+    case Try.Success<List<Report>>(var list) ->
+        exportCombinedReport(list);
+    case Try.Failure<List<Report>>(var ex) ->
+        log.error("Report generation failed: {}", ex.getMessage(), ex);
+}
+
+// TriFunction used to merge three quarterly totals into a summary record
+TriFunction<BigDecimal, BigDecimal, BigDecimal, YearlySummary> toSummary =
+    (q1, q2, q3) -> new YearlySummary(q1.add(q2).add(q3));
+
+YearlySummary yearly = Tuple3.of(q1Total, q2Total, q3Total).map(toSummary);
+```
