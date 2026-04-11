@@ -1,0 +1,84 @@
+---
+title: "Introduction — Developer Guide"
+description: "What dmx-fun is, its core philosophy, a map of all types, and a first taste of type composition."
+order: 0
+h1: "Introduction"
+---
+
+import {Content as TasteOfComposition} from '../code/guide/introduction/taste-of-composition.mdx';
+
+## What is dmx-fun?
+
+**dmx-fun** is a functional programming toolkit for **Java 25+**. It fills the
+gap between plain Java and full FP frameworks by providing a small set of
+precisely scoped types that eliminate the most common sources of runtime
+surprises: null references, swallowed exceptions, and silent partial failures.
+
+The library depends on **[JSpecify](https://jspecify.dev/)** for its null-safety
+annotations (`@NullMarked`). An optional `fun-jackson` module adds JSON
+serialization for all types.
+
+## Core philosophy
+
+**Make illegal states unrepresentable.**
+Types like `Option<T>`, `Result<V,E>`, and `NonEmptyList<T>` encode constraints
+directly in the type system. A method returning `Option<T>` cannot accidentally
+return `null`; a method returning `NonEmptyList<T>` cannot return an empty list.
+The compiler enforces the contract, not a runtime check.
+
+**Explicit over implicit.**
+Absent values, domain errors, and thrown exceptions are all surfaced as first-class
+values. Nothing is hidden in a `null` return, a swallowed `catch` block, or an
+unchecked exception that only surfaces in production.
+
+**Composable by design.**
+Every type provides `map`, `flatMap`, and conversion methods to the other types.
+A `Try` converts to `Result`; a `Result` converts to `Option`; a `Validated`
+converts to `Result`. Pipelines stay clean because the plumbing is built in.
+
+**Pattern matching as the primary API.**
+All types are sealed interfaces with record variants (`Option.Some`/`Option.None`,
+`Try.Success`/`Try.Failure`, `Result.Ok`/`Result.Err`, etc.). Java 21+ exhaustive
+`switch` expressions are the idiomatic way to branch on them — compiler-checked,
+without `instanceof` boilerplate, and with destructuring built in.
+
+## The type landscape
+
+| Type                    | One-liner                                                  | Guide                              |
+|-------------------------|------------------------------------------------------------|------------------------------------|
+| `Option<T>`             | A value that may or may not be present                     | [Option guide](/guide/option)      |
+| `Result<V, E>`          | Either a success value or a typed domain error             | [Result guide](/guide/result)      |
+| `Try<V>`                | A computation that may throw, turned into a value          | [Try guide](/guide/try)            |
+| `Validated<E, A>`       | Like Result, but accumulates all errors instead of one     | [Validated guide](/guide/validated)|
+| `Either<L, R>`          | A neutral disjoint union — neither side means failure      | [Either guide](/guide/either)      |
+| `Lazy<T>`               | A value computed at most once, cached after first access   | [Lazy guide](/guide/lazy)          |
+| `Tuple2/3/4`            | Typed heterogeneous groupings without a named class        | [Tuples guide](/guide/tuples)      |
+| `NonEmptyList<T>`       | A list with at least one element, enforced at compile time | [NEL guide](/guide/non-empty-list) |
+| Checked interfaces      | `CheckedFunction`, `TriFunction`, `QuadFunction`, and more | [Checked interfaces guide](/guide/checked-interfaces) |
+
+## How to read this guide
+
+Each type page follows the same structure:
+
+1. **What it is** — the problem it solves and when to reach for it
+2. **Creating instances** — factory methods and constructors
+3. **Accessing / extracting values** — safe and unsafe extraction
+4. **Transforming** — `map`, `flatMap`, `filter`, and friends
+5. **Interoperability** — conversion to other types
+6. **Common pitfalls** — the mistakes made most often
+7. **Real-world example** — a concrete, idiomatic usage
+
+Types interoperate — the [Combining Types](/guide/combining-types) page covers the
+full conversion matrix and cross-type composition patterns.
+
+## A taste of composition
+
+The snippet below registers a user by combining three types, each doing what
+it does best: `Try` for exception handling, `Validated` for collecting all
+validation errors, and `Result` for the typed outcome returned to the caller.
+
+<TasteOfComposition/>
+
+The types stay in their natural roles throughout and convert only at the boundary
+where the next layer demands a different type. That is the core pattern of dmx-fun:
+**choose the right type for each concern, convert at the seam**.

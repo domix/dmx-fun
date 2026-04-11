@@ -1,0 +1,38 @@
+---
+fileName: 'UserRegistration.java'
+---
+
+```java
+// End-to-end registration flow combining Try, Validated, and Result.
+//
+// 1. Try       — wrap the HTTP body parse (may throw)
+// 2. Validated — accumulate ALL field validation errors
+// 3. Result    — persist; the DB layer speaks Result<User, DbError>
+
+public Result<User, RegistrationError> register(HttpRequest req) {
+
+    // Step 1: parse the request body — any parse exception becomes a Failure
+    Try<RawInput> parsed = Try.of(() -> bodyParser.parse(req));
+
+    if (parsed instanceof Try.Failure<RawInput>(var ex)) {
+        return Result.err(RegistrationError.invalidRequest(ex.getMessage()));
+    }
+
+    RawInput input = parsed.get();
+
+    // Step 2: validate all fields — collect every error, not just the first
+    Validated<NonEmptyList<String>, RegistrationForm> validation =
+        validateEmail(input.email())
+            .combine(validatePassword(input.password()), NonEmptyList::concat,
+                     RegistrationForm::new);
+
+    // Step 3: convert and persist
+    return switch (validation) {
+        case Validated.Valid<?, RegistrationForm>(var form) ->
+            userRepository.save(form)                    // Result<User, DbError>
+                .mapErr(RegistrationError::dbFailure);   // unify error type
+        case Validated.Invalid<NonEmptyList<String>, ?>(var errors) ->
+            Result.err(RegistrationError.validationFailed(errors.toList()));
+    };
+}
+```
