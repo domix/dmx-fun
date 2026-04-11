@@ -1,7 +1,12 @@
 plugins {
-    id 'dmx-fun.java-module'
+    id 'java-library'
+    id 'jacoco'
     id 'test-report-aggregation'
     id 'jacoco-report-aggregation'
+}
+
+repositories {
+    mavenCentral()
 }
 
 java {
