@@ -1,13 +1,99 @@
 ---
 title: "Combining Types — Developer Guide"
-description: "Developer Guide — Combining Types: conversion matrix and composition patterns across Option, Result, Try, and Either."
+description: "Recipes for composing Option, Result, Try, Validated, and Either together: conversion cheat sheet, pipeline patterns, traverse, and anti-patterns."
 order: 10
 h1: "Combining Types"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as ConversionCheatSheet}       from '../code/guide/combining-types/conversion-cheat-sheet.mdx';
+import {Content as PatternValidateThenPersist} from '../code/guide/combining-types/pattern-validate-then-persist.mdx';
+import {Content as PatternChainTypes}          from '../code/guide/combining-types/pattern-chain-types.mdx';
+import {Content as PatternFanoutTuple}         from '../code/guide/combining-types/pattern-fanout-tuple.mdx';
+import {Content as PatternTraverse}            from '../code/guide/combining-types/pattern-traverse.mdx';
+import {Content as PatternWrapLegacy}          from '../code/guide/combining-types/pattern-wrap-legacy.mdx';
+import {Content as Antipattern}                from '../code/guide/combining-types/antipattern.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+Each type in dmx-fun solves a specific problem in isolation. Real applications
+combine them: a `Validated` pipeline feeds a `Result`-based repository; a `Try`
+wraps a legacy API before being converted to `Option` for a lookup; a
+`NonEmptyList` carries errors collected by `Validated.traverseNel`.
+
+This page covers the conversion paths between types, common composition patterns,
+and the anti-patterns to avoid.
+
+## Type conversion cheat sheet
+
+| From                  | To                        | Method                                          |
+|-----------------------|---------------------------|-------------------------------------------------|
+| `Option<T>`           | `Result<T, E>`            | `option.toResult(errorIfNone)`                  |
+| `Option<T>`           | `Try<T>`                  | `option.toTry(exceptionSupplier)`               |
+| `Try<T>`              | `Result<T, Throwable>`    | `tryValue.toResult()`                           |
+| `Try<T>`              | `Result<T, E>`            | `tryValue.toResult(errorMapper)`                |
+| `Try<T>`              | `Option<T>`               | `tryValue.toOption()`                           |
+| `Result<T, E>`        | `Option<T>`               | `result.toOption()`                             |
+| `Result<T, E>`        | `Try<T>`                  | `result.toTry(errorToThrowable)`                |
+| `Validated<E, A>`     | `Result<A, E>`            | `validated.toResult()`                          |
+
+<ConversionCheatSheet/>
+
+**General rule**: stay in one type for as long as possible, and convert only at
+the boundary where the next operation demands a different type. Each conversion
+may discard information (e.g. `toOption()` silently drops the error).
+
+## Pattern: validate then persist
+
+Use `Validated` to accumulate all errors up front, then convert to `Result`
+before calling the repository or service that operates in fail-fast mode.
+
+<PatternValidateThenPersist/>
+
+`Validated` is the right tool for the validation layer because it accumulates
+every error. `Result` is right for the persistence layer because there is only
+one error path (database failure). Converting at the boundary keeps each layer
+in its natural type.
+
+## Pattern: chain across types
+
+Convert at the exact point where the next operation's type demands it —
+not earlier.
+
+<PatternChainTypes/>
+
+## Pattern: fan-out with `Validated` and `Tuple`
+
+Run two or more independent validations in parallel and combine their results.
+If either is invalid, all errors are accumulated.
+
+<PatternFanoutTuple/>
+
+## Pattern: `traverse` across a collection
+
+`Option.traverse`, `Result.traverse`, and `Try.traverse` apply a function to
+every element of a collection and collect the results into a single wrapper.
+All three short-circuit on the first failure.
+
+<PatternTraverse/>
+
+For `Validated` (which does **not** short-circuit), use `Validated.traverseNel`
+to accumulate errors from every element — see the
+[NonEmptyList guide](/guide/non-empty-list) for details.
+
+## Pattern: wrapping legacy APIs with `Try`
+
+Wrap any checked or null-returning legacy API with `Try`, then convert to your
+domain's error type at the service boundary.
+
+<PatternWrapLegacy/>
+
+## Anti-pattern: unnecessary conversions
+
+Convert only when the next operation requires a different type. Converting
+through multiple types in a single pipeline usually means the wrong type was
+chosen at the start, or that an exception is being silently discarded.
+
+<Antipattern/>
+
+**Rule of thumb**: if you are converting `Try → Option` just to call
+`getOrElseGet`, use `Try.getOrElse` or `Try.recover` directly. If you are
+converting `Result → Try → Result`, there is likely a missing method on `Result`
+— check the API first.

@@ -1,0 +1,19 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Run two independent validated computations and combine their results
+// into a Tuple2 — errors from both are accumulated via NonEmptyList::concat.
+
+Validated<NonEmptyList<String>, Email>    emailV    = validateEmail(req.email());
+Validated<NonEmptyList<String>, Username> usernameV = validateUsername(req.username());
+
+Validated<NonEmptyList<String>, Tuple2<Email, Username>> combined =
+    emailV.combine(usernameV, NonEmptyList::concat, Tuple2::new);
+
+// Collapse the tuple into a domain object once both values are valid
+Validated<NonEmptyList<String>, UserDraft> draft =
+    emailV.combine(usernameV, NonEmptyList::concat,
+        (email, username) -> new UserDraft(email, username));
+```
