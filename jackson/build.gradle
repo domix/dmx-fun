@@ -1,0 +1,32 @@
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    api project(':lib')
+    api libs.jackson.databind
+}
+
+compileTestJava {
+    def mainClassesDirs = sourceSets.main.output.classesDirs
+    def apiDeps = configurations.compileClasspath
+    def testSrcPath = files(sourceSets.test.java.srcDirs).asPath
+
+    classpath = classpath.filter { f -> !mainClassesDirs.contains(f) && !apiDeps.contains(f) }
+
+    def modulePath = (mainClassesDirs + apiDeps).asPath
+    options.compilerArgs += [
+        '--module-path', modulePath,
+        '--add-modules', 'dmx.fun.jackson',
+        '--patch-module', "dmx.fun.jackson=${testSrcPath}",
+        '--add-reads', 'dmx.fun.jackson=ALL-UNNAMED',
+    ]
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-jackson", "${project.version}")
+    pom {
+        name = 'Jackson module for dmx-fun types.'
+        description = 'Jackson serializers and deserializers for Option, Result, Try, Validated, Tuple2/3/4, NonEmptyList, and Either.'
+    }
+}
