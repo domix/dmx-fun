@@ -1,0 +1,15 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Successful result
+Validated<String, Integer> valid   = Validated.valid(42);
+
+// Failed result — the error type is explicit
+Validated<String, Integer> invalid = Validated.invalid("must be positive");
+
+// NEL convenience: wraps the error in a singleton NonEmptyList
+// Use this when combining multiple validations so errors accumulate naturally
+Validated<NonEmptyList<String>, Integer> nelInvalid = Validated.invalidNel("must be positive");
+```

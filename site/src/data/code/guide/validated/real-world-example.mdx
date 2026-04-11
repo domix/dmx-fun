@@ -1,0 +1,47 @@
+---
+fileName: 'RegistrationService.java'
+---
+
+```java
+// Each field validation returns Validated<NonEmptyList<String>, T>
+// All run independently — all errors are collected
+
+Validated<NonEmptyList<String>, String> nameV =
+    Optional.ofNullable(req.name())
+        .filter(s -> !s.isBlank())
+        .map(Validated::<NonEmptyList<String>, String>valid)
+        .orElseGet(() -> Validated.invalidNel("name is required"));
+
+Validated<NonEmptyList<String>, String> emailV =
+    Optional.ofNullable(req.email())
+        .filter(EMAIL_PATTERN.asPredicate())
+        .map(Validated::<NonEmptyList<String>, String>valid)
+        .orElseGet(() -> Validated.invalidNel("email is invalid"));
+
+Validated<NonEmptyList<String>, Integer> ageV =
+    Try.of(() -> Integer.parseInt(req.age()))
+        .toResult(ex -> NonEmptyList.singleton("age must be a number"))
+        .flatMap(n -> n >= 18
+            ? Result.ok(n)
+            : Result.err(NonEmptyList.singleton("must be 18 or older")))
+        .fold(Validated::valid, Validated::invalid);
+
+Validated<NonEmptyList<String>, String> passwordV =
+    Optional.ofNullable(req.password())
+        .filter(p -> p.length() >= 8)
+        .map(Validated::<NonEmptyList<String>, String>valid)
+        .orElseGet(() -> Validated.invalidNel("password must be at least 8 characters"));
+
+// Combine all — all fields are evaluated; all errors are accumulated
+Validated<NonEmptyList<String>, RegistrationForm> form =
+    nameV
+        .combine(emailV,    NonEmptyList::concat, (n, e)    -> new PartialForm(n, e))
+        .combine(ageV,      NonEmptyList::concat, (pf, a)   -> pf.withAge(a))
+        .combine(passwordV, NonEmptyList::concat, (pf, pwd) -> new RegistrationForm(pf, pwd));
+
+// At the call site
+form.fold(
+    registration -> userService.register(registration),
+    errors       -> Response.unprocessable(errors.toList())
+);
+```

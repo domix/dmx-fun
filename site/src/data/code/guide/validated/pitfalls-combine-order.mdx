@@ -1,0 +1,15 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// combine(other, errMerge, valueMerge)
+//           ^^^  ^^^^^^^^^  ^^^^^^^^^^^
+//           1st     2nd         3rd
+
+// Bad: arguments in the wrong order — does not compile or produces wrong result
+v1.combine(v2, (a, b) -> new Form(a, b), NonEmptyList::concat); // ← swapped!
+
+// Good: errMerge is ALWAYS the second argument, valueMerge is ALWAYS third
+v1.combine(v2, NonEmptyList::concat, (a, b) -> new Form(a, b));
+```

@@ -1,0 +1,33 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Validated<List<String>, String>  nameV  = validateName(req.name());
+Validated<List<String>, Integer> ageV   = validateAge(req.age());
+Validated<List<String>, String>  emailV = validateEmail(req.email());
+
+// combine(other, errMerge, valueMerge)
+// Argument order: other → errMerge → valueMerge
+Validated<List<String>, UserForm> form =
+    nameV.combine(
+        ageV,
+        (e1, e2) -> { var merged = new ArrayList<>(e1); merged.addAll(e2); return merged; },
+        (name, age) -> new UserForm(name, age)
+    )
+    .combine(
+        emailV,
+        (e1, e2) -> { var merged = new ArrayList<>(e1); merged.addAll(e2); return merged; },
+        (partial, email) -> partial.withEmail(email)
+    );
+
+// With NonEmptyList error type the merge is just NonEmptyList::concat
+Validated<NonEmptyList<String>, UserForm> nel =
+    Validated.invalidNel("name required")
+        .combine(
+            Validated.invalidNel("age must be positive"),
+            NonEmptyList::concat,
+            (name, age) -> new UserForm(name, age)
+        );
+// nel.getError() → NonEmptyList["name required", "age must be positive"]
+```
