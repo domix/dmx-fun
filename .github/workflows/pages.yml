@@ -7,6 +7,8 @@ on:
       - 'site/**'
       - 'lib/src/test/java/codes/domix/fun/example/**'
       - 'lib/src/main/**'
+      - 'assertj/src/main/**'
+      - 'jackson/src/main/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -46,7 +48,7 @@ jobs:
         working-directory: site
 
       - name: Build with Gradle Wrapper
-        run: ./gradlew javadoc
+        run: ./gradlew aggregateJavadoc
 
       - name: Build
         run: npm run build
