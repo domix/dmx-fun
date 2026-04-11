@@ -1,0 +1,33 @@
+# Verifies that the fun-jackson module remains compatible with multiple Jackson
+# versions. Jackson is declared as compileOnly so users bring their own version;
+# this matrix catches regressions against older (but still supported) releases
+# before they reach main.
+#
+# Triggered only on pull requests that touch the jackson/ module.
+# To run a specific version locally:
+#   ./gradlew :jackson:test -PjacksonVersion=2.15.4
+name: Jackson compatibility
+
+on:
+  pull_request:
+    # Only run when the jackson module itself is modified.
+    paths: ['jackson/**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Covers the nine most recent minor release lines still in wide use.
+        # Update this list when a new minor is released or an old one is EOL.
+        jackson-version: ['2.13.5', '2.14.3', '2.15.4', '2.16.2', '2.17.3', '2.18.2', '2.19.4', '2.20.2', '2.21.2']
+    name: Jackson ${{ matrix.jackson-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      # Pass the matrix version as a Gradle property; the build falls back to
+      # the catalog version when the property is absent (local development).
+      - run: ./gradlew :jackson:test -PjacksonVersion=${{ matrix.jackson-version }}
