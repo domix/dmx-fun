@@ -7,6 +7,8 @@ h1: "Introduction"
 
 import {Content as TasteOfComposition} from '../code/guide/introduction/taste-of-composition.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 ## What is dmx-fun?
 
 **dmx-fun** is a functional programming toolkit for **Java 25+**. It fills the
@@ -46,15 +48,15 @@ without `instanceof` boilerplate, and with destructuring built in.
 
 | Type                    | One-liner                                                  | Guide                              |
 |-------------------------|------------------------------------------------------------|------------------------------------|
-| `Option<T>`             | A value that may or may not be present                     | [Option guide](/guide/option)      |
-| `Result<V, E>`          | Either a success value or a typed domain error             | [Result guide](/guide/result)      |
-| `Try<V>`                | A computation that may throw, turned into a value          | [Try guide](/guide/try)            |
-| `Validated<E, A>`       | Like Result, but accumulates all errors instead of one     | [Validated guide](/guide/validated)|
-| `Either<L, R>`          | A neutral disjoint union — neither side means failure      | [Either guide](/guide/either)      |
-| `Lazy<T>`               | A value computed at most once, cached after first access   | [Lazy guide](/guide/lazy)          |
-| `Tuple2/3/4`            | Typed heterogeneous groupings without a named class        | [Tuples guide](/guide/tuples)      |
-| `NonEmptyList<T>`       | A list with at least one element, enforced at compile time | [NEL guide](/guide/non-empty-list) |
-| Checked interfaces      | `CheckedFunction`, `TriFunction`, `QuadFunction`, and more | [Checked interfaces guide](/guide/checked-interfaces) |
+| `Option<T>`             | A value that may or may not be present                     | <a href={`${base}guide/option`}>Option guide</a>      |
+| `Result<V, E>`          | Either a success value or a typed domain error             | <a href={`${base}guide/result`}>Result guide</a>      |
+| `Try<V>`                | A computation that may throw, turned into a value          | <a href={`${base}guide/try`}>Try guide</a>            |
+| `Validated<E, A>`       | Like Result, but accumulates all errors instead of one     | <a href={`${base}guide/validated`}>Validated guide</a>|
+| `Either<L, R>`          | A neutral disjoint union — neither side means failure      | <a href={`${base}guide/either`}>Either guide</a>      |
+| `Lazy<T>`               | A value computed at most once, cached after first access   | <a href={`${base}guide/lazy`}>Lazy guide</a>          |
+| `Tuple2/3/4`            | Typed heterogeneous groupings without a named class        | <a href={`${base}guide/tuples`}>Tuples guide</a>      |
+| `NonEmptyList<T>`       | A list with at least one element, enforced at compile time | <a href={`${base}guide/non-empty-list`}>NEL guide</a> |
+| Checked interfaces      | `CheckedFunction`, `TriFunction`, `QuadFunction`, and more | <a href={`${base}guide/checked-interfaces`}>Checked interfaces guide</a> |
 
 ## How to read this guide
 
@@ -68,8 +70,10 @@ Each type page follows the same structure:
 6. **Common pitfalls** — the mistakes made most often
 7. **Real-world example** — a concrete, idiomatic usage
 
-Types interoperate — the [Combining Types](/guide/combining-types) page covers the
+Types interoperate — the <a href={`${base}guide/combining-types`}>Combining Types</a> page covers the
 full conversion matrix and cross-type composition patterns.
+
+For performance expectations and design trade-offs, see the <a href={`${base}guide/performance`}>Performance</a> page.
 
 ## A taste of composition
 

@@ -1,0 +1,85 @@
+---
+title: "Performance — Developer Guide"
+description: "Performance characteristics of dmx-fun types: why allocation cost is negligible for most code, the two cases where overhead could be observable, and how to report a real performance concern."
+order: 11
+h1: "Performance"
+---
+
+import {Content as JmhSkeleton} from '../code/guide/performance/jmh-skeleton.mdx';
+
+dmx-fun prioritises correctness, type safety, and API ergonomics over raw
+throughput. This page documents what that means in practice, where the two
+observable cost areas are, and how to approach a performance concern if one
+arises.
+
+## Why dmx-fun types are fast enough for most use cases
+
+`Option`, `Result`, `Try`, `Either`, and `Validated` are implemented as
+**sealed interfaces with record variants**. The JVM treats small, short-lived
+records aggressively:
+
+- **Scalar replacement**: the JIT can decompose a record allocation into local
+  variables on the stack, eliminating heap allocation entirely in hot loops.
+- **Inlining**: single-method interfaces (the common case for `map`/`flatMap`
+  lambdas) are inlined after a small number of call-site observations.
+- **Escape analysis**: a `Result.ok(v)` that does not escape the current method
+  frame is optimised away by the JIT — the wrapper never reaches the heap.
+
+In practice, the cost of wrapping a value in `Result.ok(v)` is
+**not measurable against the surrounding I/O, database access, or serialization**
+that makes up the vast majority of application latency. These types are designed
+for use at those boundaries, not inside tight numeric loops.
+
+## Where overhead could be observable
+
+Two specific operations may show measurable cost under extreme conditions:
+
+| Type / operation                               | Condition                                   | Reason                                                        |
+|------------------------------------------------|---------------------------------------------|---------------------------------------------------------------|
+| `Lazy<T>.get()`                                | Very high concurrent thread contention      | Internal `synchronized` block (double-checked locking)        |
+| `Validated.sequence` / `Validated.traverse`    | Collections larger than ~10 000 elements    | Repeated `NonEmptyList::concat` copies the error list on each merge |
+
+**`Lazy<T>` under contention**: the `volatile` read on the happy path (already
+evaluated) is cheap. Cost only appears when many threads race to evaluate the
+same `Lazy` simultaneously. In typical usage — application-scoped singletons
+initialised once at startup — this is never a concern.
+
+**`Validated` over large collections**: `traverseNel` with `NonEmptyList::concat`
+as the error merger creates a new list on every merge of two `Invalid` results.
+For collections of a few hundred or even a few thousand elements this is
+negligible. At very large scales (tens of thousands of elements, all invalid),
+the quadratic copy cost may be visible. In that scenario, consider batching
+the input or streaming errors into a `List` builder instead.
+
+## Why there is no general benchmark suite
+
+The project deliberately does not ship a JMH benchmark suite. The reasons:
+
+- **Micro-benchmarks measure JIT behaviour as much as library code.** Results
+  for thin wrapper types are highly sensitive to JVM version, GC flags, warmup
+  duration, and surrounding context. A number produced in isolation is rarely
+  transferable to a real application.
+- **The value proposition is correctness, not throughput.** A benchmark showing
+  `Result.ok(42)` costs 3 ns more than `return 42` is not actionable — the
+  question is whether that difference is visible in your application's profiler
+  trace, not in a synthetic loop.
+- **Maintenance cost.** Benchmarks must be kept in sync with every API change.
+  That cost is justified when a benchmark is tied to a concrete regression; it
+  is not justified as speculative infrastructure.
+
+The right signal is a **real-world profiler trace** identifying a dmx-fun type
+as a hot spot. That has not been reported.
+
+## How to report a performance concern
+
+If profiling a real application identifies a dmx-fun type as a bottleneck, open
+a GitHub issue with:
+
+1. A reproducible JMH benchmark or profiler output (flame graph / allocation profile).
+2. The JVM version (`java -version`) and relevant flags.
+3. The specific operation, collection size, and concurrency level involved.
+
+A targeted benchmark and optimisation will be scoped from that evidence. The
+skeleton below can be used as a starting point for a JMH report:
+
+<JmhSkeleton/>
