@@ -1,0 +1,11 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+List<Option<User>> lookups = ids.stream()
+    .map(userRepo::findById)
+    .toList();
+
+Option<List<User>> allOrNone = Option.sequence(lookups);
+```

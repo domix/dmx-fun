@@ -1,0 +1,10 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+switch (option) {
+    case Option.Some<String>(var v) -> System.out.println("got: " + v);
+    case Option.None<String>      _ -> System.out.println("nothing here");
+}
+```

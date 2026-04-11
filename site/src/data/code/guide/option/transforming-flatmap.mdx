@@ -1,0 +1,8 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Option<Address> address = findUser(id)          // Option<User>
+    .flatMap(user -> user.getPrimaryAddress());  // returns Option<Address>
+```

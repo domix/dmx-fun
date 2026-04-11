@@ -1,0 +1,11 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Result -> Option (discards the error)
+Option<User> user = userResult.toOption();
+
+// Try -> Option (discards the exception)
+Option<Config> cfg = tryReadConfig.toOption();
+```

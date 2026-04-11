@@ -1,0 +1,9 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Option<Order> order = findOrder(id)
+    .peek(o -> log.debug("Processing order {}", o.id()))
+    .filter(Order::isActive);
+```

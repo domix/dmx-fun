@@ -1,0 +1,11 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Eager alternative
+Option<String> result = primary.orElse(secondary);
+
+// Lazy alternative (computed only when primary is None)
+Option<String> result = primary.orElse(() -> computeSecondary());
+```
