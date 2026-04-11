@@ -154,6 +154,25 @@ class DmxFunModuleTest {
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Result<Integer, String>>() {}));
             assertTrue(ex.getMessage().contains("unknown"));
         }
+
+        @Test
+        void deserializeFromNonObject_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("42", new TypeReference<Result<Integer, String>>() {}));
+        }
+
+        @Test
+        void deserializeEmptyObject_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{}", new TypeReference<Result<Integer, String>>() {}));
+        }
+
+        @Test
+        void deserializeExtraField_throws() {
+            JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{\"ok\":1,\"extra\":2}", new TypeReference<Result<Integer, String>>() {}));
+            assertTrue(ex.getMessage().contains("extra"));
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -287,6 +306,25 @@ class DmxFunModuleTest {
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Validated<String, Integer>>() {}));
             assertTrue(ex.getMessage().contains("unknown"));
         }
+
+        @Test
+        void deserializeFromNonObject_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("42", new TypeReference<Validated<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeEmptyObject_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{}", new TypeReference<Validated<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeExtraField_throws() {
+            JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{\"valid\":1,\"extra\":2}", new TypeReference<Validated<String, Integer>>() {}));
+            assertTrue(ex.getMessage().contains("extra"));
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -350,6 +388,25 @@ class DmxFunModuleTest {
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Either<String, Integer>>() {}));
             assertTrue(ex.getMessage().contains("unknown"));
         }
+
+        @Test
+        void deserializeFromNonObject_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("42", new TypeReference<Either<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeEmptyObject_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{}", new TypeReference<Either<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeExtraField_throws() {
+            JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{\"right\":1,\"extra\":2}", new TypeReference<Either<String, Integer>>() {}));
+            assertTrue(ex.getMessage().contains("extra"));
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -381,6 +438,30 @@ class DmxFunModuleTest {
             Tuple2<?, ?> result = mapper.readValue("[\"a\",1]", Tuple2.class);
             assertEquals("a", result._1());
             assertEquals(1, result._2());
+        }
+
+        @Test
+        void deserializeFromNonArray_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{}", new TypeReference<Tuple2<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_zero_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[]", new TypeReference<Tuple2<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_one_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1]", new TypeReference<Tuple2<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeTooManyElements_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1,2,3]", new TypeReference<Tuple2<String, Integer>>() {}));
         }
     }
 
@@ -415,6 +496,36 @@ class DmxFunModuleTest {
             assertEquals("a", result._1());
             assertEquals(1, result._2());
             assertEquals(true, result._3());
+        }
+
+        @Test
+        void deserializeFromNonArray_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{}", new TypeReference<Tuple3<String, Integer, Boolean>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_zero_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[]", new TypeReference<Tuple3<String, Integer, Boolean>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_one_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1]", new TypeReference<Tuple3<String, Integer, Boolean>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_two_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1,2]", new TypeReference<Tuple3<String, Integer, Boolean>>() {}));
+        }
+
+        @Test
+        void deserializeTooManyElements_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1,2,3,4]", new TypeReference<Tuple3<String, Integer, Boolean>>() {}));
         }
     }
 
@@ -451,6 +562,42 @@ class DmxFunModuleTest {
             assertEquals(1, result._2());
             assertEquals(true, result._3());
             assertEquals(3.14, (double) result._4(), 0.001);
+        }
+
+        @Test
+        void deserializeFromNonArray_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("{}", new TypeReference<Tuple4<String, Integer, Boolean, Double>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_zero_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[]", new TypeReference<Tuple4<String, Integer, Boolean, Double>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_one_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1]", new TypeReference<Tuple4<String, Integer, Boolean, Double>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_two_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1,2]", new TypeReference<Tuple4<String, Integer, Boolean, Double>>() {}));
+        }
+
+        @Test
+        void deserializeTooFewElements_three_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1,2,3]", new TypeReference<Tuple4<String, Integer, Boolean, Double>>() {}));
+        }
+
+        @Test
+        void deserializeTooManyElements_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[1,2,3,4,5]", new TypeReference<Tuple4<String, Integer, Boolean, Double>>() {}));
         }
     }
 
@@ -496,6 +643,12 @@ class DmxFunModuleTest {
             NonEmptyList<?> result = mapper.readValue("[1,2,3]", NonEmptyList.class);
             assertEquals(1, result.head());
             assertEquals(List.of(2, 3), result.tail());
+        }
+
+        @Test
+        void deserializeFromNonArray_throws() {
+            assertThrows(JsonMappingException.class, () ->
+                mapper.readValue("42", new TypeReference<NonEmptyList<Integer>>() {}));
         }
     }
 

@@ -71,12 +71,8 @@ class ResultDeserializer extends StdDeserializer<Result> implements ContextualDe
             throw ctxt.weirdStringException(fieldName, Result.class, "Expected 'ok' or 'err' field");
         }
 
-        JsonToken next = p.nextToken();
-        if (next == JsonToken.FIELD_NAME) {
+        if (p.nextToken() == JsonToken.FIELD_NAME) {
             throw ctxt.weirdStringException(p.currentName(), Result.class, "Unexpected extra field");
-        }
-        if (next != JsonToken.END_OBJECT) {
-            throw ctxt.wrongTokenException(p, Result.class, JsonToken.END_OBJECT, "Expected end of object");
         }
         return result;
     }

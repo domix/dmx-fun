@@ -71,12 +71,8 @@ class ValidatedDeserializer extends StdDeserializer<Validated> implements Contex
             throw ctxt.weirdStringException(fieldName, Validated.class, "Expected 'valid' or 'invalid' field");
         }
 
-        JsonToken next = p.nextToken();
-        if (next == JsonToken.FIELD_NAME) {
+        if (p.nextToken() == JsonToken.FIELD_NAME) {
             throw ctxt.weirdStringException(p.currentName(), Validated.class, "Unexpected extra field");
-        }
-        if (next != JsonToken.END_OBJECT) {
-            throw ctxt.wrongTokenException(p, Validated.class, JsonToken.END_OBJECT, "Expected end of object");
         }
         return result;
     }

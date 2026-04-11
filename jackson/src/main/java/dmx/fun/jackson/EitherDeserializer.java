@@ -71,12 +71,8 @@ class EitherDeserializer extends StdDeserializer<Either> implements ContextualDe
             throw ctxt.weirdStringException(fieldName, Either.class, "Expected 'right' or 'left' field");
         }
 
-        JsonToken next = p.nextToken();
-        if (next == JsonToken.FIELD_NAME) {
+        if (p.nextToken() == JsonToken.FIELD_NAME) {
             throw ctxt.weirdStringException(p.currentName(), Either.class, "Unexpected extra field");
-        }
-        if (next != JsonToken.END_OBJECT) {
-            throw ctxt.wrongTokenException(p, Either.class, JsonToken.END_OBJECT, "Expected end of object");
         }
         return result;
     }
