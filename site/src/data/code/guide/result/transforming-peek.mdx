@@ -1,0 +1,10 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+result
+    .peek(user  -> log.info("Processing user {}", user.id()))    // on Ok
+    .peekError(err -> log.warn("Request failed: {}", err))       // on Err
+    .map(User::name);
+```

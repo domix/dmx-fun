@@ -1,0 +1,18 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+sealed interface OrderError {
+    record InvalidItems(List<String> reasons) implements OrderError {}
+    record PaymentFailed(String code)         implements OrderError {}
+    record ShippingUnavailable(String region) implements OrderError {}
+}
+
+public Result<OrderConfirmation, OrderError> placeOrder(OrderRequest req) {
+    return validateItems(req.items())          // Result<List<Item>, OrderError>
+        .flatMap(items -> charge(req.payment(), items))  // Result<Receipt, OrderError>
+        .flatMap(receipt -> ship(req.address(), receipt)) // Result<Shipment, OrderError>
+        .map(shipment -> new OrderConfirmation(shipment.trackingId()));
+}
+```

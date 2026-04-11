@@ -1,0 +1,9 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Translate the error type while preserving the value track
+Result<User, OrderError> translated =
+    result.mapError(msg -> new OrderError(msg));
+```

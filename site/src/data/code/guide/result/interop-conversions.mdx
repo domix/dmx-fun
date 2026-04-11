@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Result -> Option (discards the error)
+Option<User> user = result.toOption();
+
+// Result -> Try (maps error with a function)
+Try<User> tried = result.toTry(err -> new RuntimeException(err));
+
+// Result -> Either (Ok becomes right, Err becomes left)
+Either<String, User> either = result.toEither();
+
+// Option -> Result (supplies error when None)
+Result<User, String> result = Option.fromOptional(optional)
+    .toResult(() -> "not found");
+```

@@ -1,0 +1,13 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Filter with a static error value
+Result<User, String> active =
+    result.filter(User::isActive, "account is inactive");
+
+// Filter with a dynamic error derived from the value
+Result<User, String> active =
+    result.filter(User::isActive, u -> "account " + u.id() + " is inactive");
+```

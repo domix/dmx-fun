@@ -1,0 +1,9 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Result<Profile, String> profile =
+    findUser(id)                       // Result<User, String>
+        .flatMap(user -> loadProfile(user)); // returns Result<Profile, String>
+```
