@@ -39,8 +39,8 @@ reporting {
 }
 
 tasks.named('check') {
-    dependsOn tasks.named('testAggregateTestReport', TestReport)
-    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    dependsOn tasks.named('testAggregateTestReport')
+    dependsOn tasks.named('testCodeCoverageReport')
 }
 
 tasks.register('aggregateJavadoc', Exec) {
