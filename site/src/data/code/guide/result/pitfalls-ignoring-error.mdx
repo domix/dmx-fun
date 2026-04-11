@@ -1,0 +1,14 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: silently discards the error track
+String name = result.getOrElse(User.anonymous()).name();
+
+// Good: make both branches explicit
+String name = result.fold(
+    user  -> user.name(),
+    error -> { log.warn("Using anonymous due to: {}", error); return "anonymous"; }
+);
+```

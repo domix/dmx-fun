@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// sequence: List<Result<V,E>> -> Result<List<V>, E>
+// Stops at the first Err (fail-fast)
+List<Result<User, String>> lookups = ids.stream()
+    .map(userRepo::findById)
+    .toList();
+
+Result<List<User>, String> allOrFirst = Result.sequence(lookups);
+
+// traverse: applies a fallible mapper to each element and collects
+Result<List<String>, String> names =
+    Result.traverse(ids, id -> userRepo.findById(id).map(User::name));
+```

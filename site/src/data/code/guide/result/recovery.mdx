@@ -1,0 +1,13 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// recover: Err -> Ok using the error value
+Result<User, String> result =
+    findUser(id).recover(err -> User.guest());
+
+// recoverWith: Err -> Result (may itself fail)
+Result<User, String> result =
+    findUser(id).recoverWith(err -> findUserByEmail(err));
+```

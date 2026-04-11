@@ -112,7 +112,7 @@ const base = import.meta.env.BASE_URL;
         <section id="extracting">
             <h2>Extracting values</h2>
 
-            <table class="api-table">
+            <div class="table-wrap"><table class="api-table">
                 <thead>
                     <tr>
                         <th>Method</th>
@@ -152,7 +152,7 @@ const base = import.meta.env.BASE_URL;
                         <td>The most expressive extractor: forces you to handle both branches.</td>
                     </tr>
                 </tbody>
-            </table>
+            </table></div>
 
             <ExtractingValues/>
         </section>
@@ -232,7 +232,7 @@ const base = import.meta.env.BASE_URL;
         <section id="interop">
             <h2>Interoperability</h2>
 
-            <table class="api-table">
+            <div class="table-wrap"><table class="api-table">
                 <thead>
                     <tr><th>Conversion</th><th>Method</th></tr>
                 </thead>
@@ -245,7 +245,7 @@ const base = import.meta.env.BASE_URL;
                     <tr><td><code>Try</code> &rarr; <code>Option</code></td><td><code>tryVal.toOption()</code></td></tr>
                     <tr><td><code>Optional</code> &rarr; <code>Option</code></td><td><code>Option.fromOptional(optional)</code></td></tr>
                 </tbody>
-            </table>
+            </table></div>
 
             <InteropConversions/>
 
@@ -259,7 +259,7 @@ const base = import.meta.env.BASE_URL;
         <section id="comparison">
             <h2>Option vs null vs Optional</h2>
 
-            <table class="api-table">
+            <div class="table-wrap"><table class="api-table">
                 <thead>
                     <tr>
                         <th></th>
@@ -300,7 +300,7 @@ const base = import.meta.env.BASE_URL;
                         <td>No</td>
                     </tr>
                 </tbody>
-            </table>
+            </table></div>
         </section>
 
         <!-- Common pitfalls -->
@@ -403,32 +403,6 @@ const base = import.meta.env.BASE_URL;
     .toc li {
         line-height: 1.9;
         font-size: 0.9rem;
-    }
-
-    /* API table */
-    .api-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-        margin: 1rem 0 1.5rem;
-    }
-
-    .api-table th,
-    .api-table td {
-        border: 1px solid var(--color-border);
-        padding: 0.5rem 0.75rem;
-        text-align: left;
-        vertical-align: top;
-        line-height: 1.5;
-    }
-
-    .api-table th {
-        background-color: var(--color-surface);
-        font-weight: 700;
-    }
-
-    .api-table td code {
-        white-space: nowrap;
     }
 
     /* Page navigation */

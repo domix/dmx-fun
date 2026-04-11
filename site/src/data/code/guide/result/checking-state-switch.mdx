@@ -1,0 +1,10 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+switch (result) {
+    case Result.Ok<User, String>(var user) -> System.out.println("ok: " + user.name());
+    case Result.Err<User, String>(var err) -> System.out.println("err: " + err);
+}
+```

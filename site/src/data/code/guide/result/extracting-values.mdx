@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// fold — the preferred extractor: both branches are forced
+String response = result.fold(
+    user  -> "Welcome, " + user.name(),
+    error -> "Error: " + error
+);
+
+// Eager fallback
+User user = result.getOrElse(User.anonymous());
+
+// Lazy fallback (supplier called only on Err)
+User user = result.getOrElseGet(() -> userRepo.defaultUser());
+
+// Throw a domain exception when an error is a programming error
+User user = result.getOrThrow(e -> new IllegalStateException("Unexpected: " + e));
+```

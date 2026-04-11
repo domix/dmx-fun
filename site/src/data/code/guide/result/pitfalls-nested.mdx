@@ -1,0 +1,13 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: creates Result<Result<Profile, String>, String>
+Result<Result<Profile, String>, String> nested =
+    findUser(id).map(user -> loadProfile(user));
+
+// Good: flat result
+Result<Profile, String> profile =
+    findUser(id).flatMap(user -> loadProfile(user));
+```
