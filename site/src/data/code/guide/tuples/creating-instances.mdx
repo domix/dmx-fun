@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Tuple2 — a pair
+Tuple2<String, Integer> t2 = new Tuple2<>("Alice", 30);
+
+// Tuple3 — a triple (null-guarded factory method)
+Tuple3<String, Integer, Boolean> t3 = Tuple3.of("Alice", 30, true);
+
+// Tuple4 — a quadruple (null-guarded factory method)
+Tuple4<String, Integer, Boolean, Double> t4 = Tuple4.of("Alice", 30, true, 1.75);
+
+// All fields are @NullMarked — null arguments throw NullPointerException
+Tuple3.of("Alice", null, true); // throws NullPointerException
+```

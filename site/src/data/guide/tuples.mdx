@@ -1,13 +1,90 @@
 ---
 title: "Tuples — Developer Guide"
-description: "Developer Guide — Tuples: typed pairs and triples without ceremony."
+description: "Comprehensive guide to Tuple2, Tuple3, and Tuple4: immutable type-safe groupings, field access, slot transformations, and pipeline use."
 order: 7
 h1: "Tuples"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as CreatingInstances} from '../code/guide/tuples/creating-instances.mdx';
+import {Content as AccessingFields}   from '../code/guide/tuples/accessing-fields.mdx';
+import {Content as TransformingSlots} from '../code/guide/tuples/transforming-slots.mdx';
+import {Content as CollapsingMap}     from '../code/guide/tuples/collapsing-map.mdx';
+import {Content as EqualityToString}  from '../code/guide/tuples/equality-tostring.mdx';
+import {Content as RealWorldExample}  from '../code/guide/tuples/real-world-example.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+## What are Tuples?
+
+`Tuple2<A,B>`, `Tuple3<A,B,C>`, and `Tuple4<A,B,C,D>` are **immutable, type-safe groupings**
+of 2, 3, or 4 heterogeneous values without requiring a named class or record.
+
+All three are Java `record` types, which means:
+
+- **Structural equality** (`equals`/`hashCode`) is derived automatically.
+- **`toString`** produces a readable representation with field names.
+- Fields are exposed via accessor methods `_1()`, `_2()`, `_3()`, `_4()` — consistent
+  across all tuple arities.
+
+**Null policy**: `Tuple3` and `Tuple4` are `@NullMarked` — null elements throw
+`NullPointerException` at construction time. `Tuple2` is a plain record without
+null guards; prefer `Tuple3`/`Tuple4` when null-safety is required.
+
+Use Tuples when:
+
+- You need to return **two or more values** from a private or intermediate method
+  without declaring a dedicated type.
+- You are building a **stream pipeline** and need to carry context (e.g., original
+  value + computed result) through a chain of `map` steps.
+- The grouping is **anonymous and local** — it never appears in a public API or
+  crosses a module boundary.
+
+## Creating instances
+
+<CreatingInstances/>
+
+## Accessing fields
+
+Fields are accessed via zero-argument methods `_1()`, `_2()`, `_3()`, and `_4()`.
+
+<AccessingFields/>
+
+## Transforming individual slots
+
+`Tuple3` and `Tuple4` provide `mapFirst`, `mapSecond`, `mapThird` (and `mapFourth`
+for `Tuple4`). Each returns a **new tuple** with the targeted slot replaced; the
+remaining slots are carried through unchanged.
+
+<TransformingSlots/>
+
+## Collapsing to a single value — `map`
+
+`Tuple3.map(TriFunction)` and `Tuple4.map(QuadFunction)` collapse the entire tuple
+into a single result by applying a function to all slots at once.
+
+<CollapsingMap/>
+
+`TriFunction<A,B,C,R>` and `QuadFunction<A,B,C,D,R>` are functional interfaces
+provided by the library, analogous to `java.util.function.BiFunction`.
+
+## Equality and `toString`
+
+<EqualityToString/>
+
+## When to use Tuples vs Records
+
+| Scenario                                                      | Recommendation                  |
+|---------------------------------------------------------------|---------------------------------|
+| Anonymous intermediate value in a private method or pipeline  | `Tuple2` / `Tuple3` / `Tuple4`  |
+| Two values returned from a private helper                     | `Tuple2`                        |
+| Named, stable domain concept used in a public API             | Java `record` with named fields |
+| Type appears in multiple modules or across service boundaries | Java `record` with named fields |
+| More than four elements                                       | Java `record` with named fields |
+
+The key rule: **if you would name it, use a record**. Tuples are for ephemeral,
+local groupings where the fields are obvious from context.
+
+## Real-world example
+
+Using `Tuple2` and `Tuple3` to carry multiple values through a stream pipeline
+without declaring intermediate named types.
+
+<RealWorldExample/>

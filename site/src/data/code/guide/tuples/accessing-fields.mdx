@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Tuple2<String, Integer> t2 = new Tuple2<>("Alice", 30);
+String name = t2._1();  // "Alice"
+int    age  = t2._2();  // 30
+
+Tuple3<String, Integer, Boolean> t3 = Tuple3.of("Alice", 30, true);
+String  n2      = t3._1();  // "Alice"
+int     age3    = t3._2();  // 30
+boolean active  = t3._3();  // true
+
+Tuple4<String, Integer, Boolean, Double> t4 = Tuple4.of("Alice", 30, true, 1.75);
+double height = t4._4();  // 1.75
+```

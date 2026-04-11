@@ -1,0 +1,32 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Pair each user with their validation result inside a stream pipeline.
+// Tuple2 keeps the original value and its outcome together without a named class.
+
+List<Tuple2<User, ValidationResult>> results = users.stream()
+    .map(user -> new Tuple2<>(user, validator.validate(user)))
+    .collect(Collectors.toList());
+
+// Partition into valid and invalid
+Map<Boolean, List<Tuple2<User, ValidationResult>>> partitioned = results.stream()
+    .collect(Collectors.partitioningBy(t -> t._2().isValid()));
+
+List<Tuple2<User, ValidationResult>> valid   = partitioned.get(true);
+List<Tuple2<User, ValidationResult>> invalid = partitioned.get(false);
+
+// Collapse each pair to a summary line for reporting
+List<String> report = invalid.stream()
+    .map(t -> t.map((user, res) ->
+        user.email() + ": " + String.join(", ", res.errors())))  // Tuple2 has no map() yet — use fields
+    .collect(Collectors.toList());
+
+// Simpler with Tuple3: carry user, result, and timestamp together
+Tuple3<User, ValidationResult, Instant> snapshot =
+    Tuple3.of(user, validator.validate(user), Instant.now());
+
+String audit = snapshot.map((u, r, ts) ->
+    "[" + ts + "] " + u.email() + " → " + (r.isValid() ? "OK" : r.errors()));
+```

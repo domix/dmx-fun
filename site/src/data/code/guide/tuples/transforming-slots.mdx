@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Tuple3 — transform individual slots; the others are unchanged
+Tuple3<String, Integer, Boolean> t3 = Tuple3.of("alice", 30, true);
+
+Tuple3<String, Integer, Boolean>  upper   = t3.mapFirst(String::toUpperCase); // ("ALICE", 30, true)
+Tuple3<String, Integer, Boolean>  older   = t3.mapSecond(age -> age + 1);    // ("alice", 31, true)
+Tuple3<String, Integer, Boolean>  toggled = t3.mapThird(b -> !b);            // ("alice", 30, false)
+
+// Tuple4 — additionally has mapFourth
+Tuple4<String, Integer, Boolean, Double> t4 = Tuple4.of("alice", 30, true, 1.75);
+
+Tuple4<String, Integer, Boolean, Double> taller = t4.mapFourth(h -> h + 0.1); // (..., 1.85)
+```
