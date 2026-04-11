@@ -1,0 +1,12 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Try<String> binary = Try.of(() -> Integer.parseInt(input))
+    .map(Integer::toBinaryString); // Try<Integer> → Try<String>
+
+// If the mapper throws, the exception is captured as a Failure
+Try<JsonNode> json = Try.of(() -> Files.readString(path))
+    .map(Json::parse); // IOException or JsonException → Failure
+```

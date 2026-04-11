@@ -1,0 +1,27 @@
+---
+fileName: 'ReportService.java'
+---
+
+```java
+// File → parse → validate → save pipeline
+// Each step may throw; Try captures the exception at every boundary.
+
+Try<ReportId> saveReport(Path path) {
+    return Try.of(() -> Files.readString(path))           // IOException
+        .map(text  -> Json.parse(text))                   // JsonException
+        .flatMap(json  -> Try.of(() -> validate(json)))   // ValidationException
+        .flatMap(valid -> Try.of(() -> reportRepo.save(valid))) // SQLException
+        .map(Report::id);
+}
+
+// At the call site, fold handles both outcomes
+saveReport(uploadedPath).fold(
+    id -> Response.ok("Saved report " + id),
+    ex -> switch (ex) {
+        case IOException      e -> Response.error(503, "Storage unavailable");
+        case JsonException    e -> Response.error(400, "Invalid JSON");
+        case ValidationException e -> Response.error(422, e.getMessage());
+        default                  -> Response.error(500, "Unexpected error");
+    }
+);
+```

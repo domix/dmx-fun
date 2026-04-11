@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Try<Integer> t = Try.of(() -> Integer.parseInt(input));
+
+t.isSuccess(); // true if Success
+t.isFailure(); // true if Failure
+
+// Exhaustive pattern matching — preferred
+String msg = switch (t) {
+    case Try.Success<Integer> s -> "Parsed: " + s.value();
+    case Try.Failure<Integer> f -> "Failed: " + f.cause().getMessage();
+};
+```

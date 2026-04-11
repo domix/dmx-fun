@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+List<String> inputs = List.of("1", "2", "abc", "4");
+
+// sequence: Stream<Try<V>> → Try<List<V>> — fails fast on first Failure
+Try<List<Integer>> allOrNone = Try.sequence(
+    inputs.stream().map(s -> Try.of(() -> Integer.parseInt(s)))
+);
+// → Failure(NumberFormatException) — stops at "abc"
+
+// traverse: applies the mapper and collects — same fail-fast behaviour
+Try<List<Integer>> result = Try.traverse(inputs, s -> Try.of(() -> Integer.parseInt(s)));
+
+// sequence also accepts an Iterable
+List<Try<Integer>> tries = List.of(Try.success(1), Try.success(2));
+Try<List<Integer>> list  = Try.sequence(tries); // → Success([1, 2])
+```

@@ -1,0 +1,23 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: Try buries the error domain — callers can't branch on error type
+Try<User> findUser(long id) {
+    return Try.of(() -> userRepo.find(id));
+}
+
+// Good: when you own the error type, use Result
+Result<User, UserError> findUser(long id) {
+    return userRepo.find(id)
+        .map(Result::<User, UserError>ok)
+        .orElse(Result.err(UserError.NOT_FOUND));
+}
+
+// Good: use Try only at the boundary where legacy code throws
+Result<User, UserError> findUser(long id) {
+    return Try.of(() -> legacyRepo.find(id))
+        .toResult(ex -> new UserError(ex.getMessage()));
+}
+```

@@ -1,0 +1,26 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Try<String> t = Try.of(() -> Files.readString(path));
+
+// Try → Option (discards the exception)
+Option<String> opt = t.toOption();
+
+// Try → Result<V, Throwable> (keeps the exception as a typed error)
+Result<String, Throwable> raw = t.toResult();
+
+// Try → Result<V, E> with error mapping
+Result<String, AppError> typed = t.toResult(ex -> new AppError(ex.getMessage()));
+
+// Try → Either<Throwable, V>
+Either<Throwable, String> either = t.toEither();
+
+// Try → Stream<V> (empty on Failure, single element on Success)
+t.stream().forEach(System.out::println);
+
+// Option → Try
+Option<String> option = Option.some("hello");
+Try<String> fromOpt = option.toTry(() -> new NoSuchElementException("missing"));
+```

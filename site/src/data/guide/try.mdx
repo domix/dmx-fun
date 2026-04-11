@@ -1,13 +1,185 @@
 ---
 title: "Try<V> — Developer Guide"
-description: "Developer Guide — Try<V>: wrapping throwing code, recovering from failures, and interoperability."
+description: "Comprehensive guide to Try<V>: wrapping throwing code, transforming, recovering from failures, and real-world pipelines."
 order: 3
 h1: "Try<V>"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as CreatingInstances}  from '../code/guide/try/creating-instances.mdx';
+import {Content as CheckingState}      from '../code/guide/try/checking-state.mdx';
+import {Content as ExtractingValues}   from '../code/guide/try/extracting-values.mdx';
+import {Content as TransformingMap}    from '../code/guide/try/transforming-map.mdx';
+import {Content as TransformingFlatMap} from '../code/guide/try/transforming-flatmap.mdx';
+import {Content as TransformingFilter} from '../code/guide/try/transforming-filter.mdx';
+import {Content as SideEffects}        from '../code/guide/try/side-effects.mdx';
+import {Content as Recovery}           from '../code/guide/try/recovery.mdx';
+import {Content as SequenceTraverse}   from '../code/guide/try/sequence-traverse.mdx';
+import {Content as NullHandling}       from '../code/guide/try/null-handling.mdx';
+import {Content as InteropConversions} from '../code/guide/try/interop-conversions.mdx';
+import {Content as PitfallsGet}        from '../code/guide/try/pitfalls-get.mdx';
+import {Content as PitfallsUseResult}  from '../code/guide/try/pitfalls-use-result.mdx';
+import {Content as RealWorldExample}   from '../code/guide/try/real-world-example.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+## What is Try&lt;V&gt;?
+
+`Try<V>` models a computation that either succeeds with a value of type `V`
+or fails with a `Throwable`.
+It is a sealed interface with two implementations:
+
+- `Success<V>` — holds the result value (which may be `null` for `Try<Void>`).
+- `Failure<V>` — holds a non-null `Throwable`.
+
+`Try` bridges the gap between exception-throwing code and functional pipelines.
+Use it to **wrap any computation that throws** so exceptions become values you can
+map, chain, and recover from — without try/catch blocks scattered through your logic.
+
+The key distinction from `Result<V, E>` is that the error type is always `Throwable`.
+That makes `Try` ideal for wrapping legacy or third-party code, but less suitable
+when you own the error domain and need callers to branch on specific error subtypes.
+
+## Creating instances
+
+<CreatingInstances/>
+
+`Try.of` catches **any** `Throwable` — not just `Exception`.
+`Try.run` is the void-safe variant: it yields `Success(null)` on success.
+See the [Null handling](#null-handling) section for the implications.
+
+## Checking state
+
+<CheckingState/>
+
+Prefer exhaustive switch patterns over `isSuccess()`/`isFailure()` predicates —
+the compiler enforces that both tracks are handled.
+
+## Extracting values
+
+| Method                        | When `Failure`                       | Notes                                                            |
+|-------------------------------|--------------------------------------|------------------------------------------------------------------|
+| `get()`                       | Throws `NoSuchElementException`      | Only safe after an `isSuccess()` check; prefer alternatives.     |
+| `getCause()`                  | N/A — throws if `Success`            | Retrieves the exception; unsafe on the success track.            |
+| `getOrElse(fallback)`         | Returns `fallback`                   | Fallback is always evaluated eagerly.                            |
+| `getOrElseGet(supplier)`      | Calls supplier                       | Lazily computed fallback.                                        |
+| `getOrNull()`                 | Returns `null`                       | Ambiguous for `Try<Void>` — avoid when possible.                 |
+| `getOrThrow()`                | Rethrows the original exception      | Rethrows `Exception` as-is; wraps `Error`/`Throwable`.           |
+| `getOrThrow(exMapper)`        | Throws mapped `RuntimeException`     | Maps the cause to a domain exception at the call site.           |
+| `fold(onSuccess, onFailure)`  | Calls `onFailure`                    | The most expressive extractor: forces both tracks to be handled. |
+
+<ExtractingValues/>
+
+## Transforming values
+
+### `map(mapper)`
+
+Transforms the success value. The failure track passes through unchanged.
+If the mapper itself throws, the exception is captured as a new `Failure`.
+
+<TransformingMap/>
+
+### `flatMap(mapper)` / `flatMapError(mapper)`
+
+`flatMap` chains fallible operations without nesting.
+`flatMapError` operates on the failure track — use it to attempt an alternative
+computation when the primary one fails.
+
+<TransformingFlatMap/>
+
+### `filter(predicate)`
+
+Converts a `Success` to `Failure` when the predicate returns `false`.
+The default failure is `IllegalArgumentException`; the overloads accept a
+custom supplier or a value-aware function.
+
+<TransformingFilter/>
+
+### `onSuccess` / `onFailure`
+
+Side-effecting operations that do not alter the `Try`. Both return `this` for
+chaining. Use `match` for a terminal void operation that forces both branches.
+
+<SideEffects/>
+
+## Recovery and fallbacks
+
+Recovery operations convert a `Failure` back to a `Success` by inspecting the
+exception. Typed overloads match only a specific exception subtype.
+
+<Recovery/>
+
+## sequence and traverse
+
+Both operations apply **fail-fast semantics**: they stop at the first `Failure`
+and return it immediately.
+
+<SequenceTraverse/>
+
+## Null handling
+
+`Try<Void>` is a special case produced by `Try.run()`. Its success value is
+`null`. This has one important consequence: `toOption()` always returns `None`
+for a `Try<Void>`, even on success — use `isSuccess()` or `fold()` instead.
+
+`sequence` uses `Collections.unmodifiableList` internally (not `List.copyOf`),
+so `null` elements in successful results are preserved.
+
+<NullHandling/>
+
+## Interoperability
+
+| Conversion                      | Method                              |
+|---------------------------------|-------------------------------------|
+| `Try` → `Option`                | `tryVal.toOption()`                 |
+| `Try` → `Result<V, Throwable>`  | `tryVal.toResult()`                 |
+| `Try` → `Result<V, E>`          | `tryVal.toResult(errorMapper)`      |
+| `Try` → `Either<Throwable, V>`  | `tryVal.toEither()`                 |
+| `Try` → `Stream<V>`             | `tryVal.stream()`                   |
+| `Option` → `Try`                | `option.toTry(exceptionSupplier)`   |
+| `Result` → `Try`                | `result.toTry(errorMapper)`         |
+
+<InteropConversions/>
+
+See the [Combining Types](combining-types) page for the full conversion matrix and composition patterns.
+
+## Try vs Result vs checked exceptions
+
+|                              | Checked exceptions             | `Try<V>`                             | `Result<V, E>`                          |
+|------------------------------|--------------------------------|--------------------------------------|-----------------------------------------|
+| Error type                   | Declared `throws` clause       | Always `Throwable`                   | Any domain type                         |
+| Forces handling              | Yes — compile time             | Yes — via API                        | Yes — via API and switch patterns       |
+| Branch on error subtype      | Via `catch` clauses            | Via `instanceof` / `recover(Class)`  | Via sealed subtype and switch patterns  |
+| Interop with throwing code   | Native                         | Excellent — `Try.of(() -> ...)`      | Indirect — wrap with `Try` first        |
+| Best for                     | Internal APIs you control      | Wrapping legacy/third-party code     | Domain logic with typed failure modes   |
+
+## Common pitfalls
+
+### Calling `get()` without checking state
+
+`get()` throws `NoSuchElementException` on `Failure`. Use `getOrElse`,
+`fold`, or pattern matching instead.
+
+<PitfallsGet/>
+
+### Using `Try` when `Result` is the right tool
+
+`Try` discards the error domain — callers can only catch `Throwable`.
+If you own the error type and callers need to branch on specific subtypes,
+use `Result`. Reserve `Try` for the boundary where third-party code throws.
+
+<PitfallsUseResult/>
+
+### Using `toOption()` after `Try.run()`
+
+`Try.run()` produces `Success(null)`. Converting to `Option` via `toOption()`
+always returns `None` — the `null` success value is silently discarded.
+Use `isSuccess()` or `fold()` to observe the outcome of a `run()` call.
+
+## Real-world example
+
+A file-read → parse → validate → save pipeline. Each step may throw;
+`Try` captures the exception at every boundary without nested try/catch blocks.
+
+<RealWorldExample/>
+
+Every step propagates its `Failure` automatically.
+At the call site, `fold` with a pattern-matched switch handles each exception
+type individually.

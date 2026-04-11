@@ -1,0 +1,14 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// flatMap chains fallible operations without nesting
+Try<Config> config = Try.of(() -> Files.readString(configPath))
+    .flatMap(text -> Try.of(() -> Json.parse(text)))
+    .flatMap(json -> Try.of(() -> Config.from(json)));
+
+// Equivalent flatMapError: recover on failure with another Try
+Try<String> result = Try.of(() -> fetchRemote(url))
+    .flatMapError(ex -> Try.of(() -> fetchFallback(url)));
+```
