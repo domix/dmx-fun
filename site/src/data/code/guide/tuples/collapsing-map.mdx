@@ -1,0 +1,19 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Tuple3.map — collapses three elements into one value via TriFunction
+Tuple3<String, Integer, Boolean> t3 = Tuple3.of("Alice", 30, true);
+
+String label = t3.map((name, age, active) ->
+    name + " (age " + age + ")" + (active ? " ✓" : ""));
+// "Alice (age 30) ✓"
+
+// Tuple4.map — collapses four elements into one value via QuadFunction
+Tuple4<String, Integer, Boolean, Double> t4 = Tuple4.of("Alice", 30, true, 1.75);
+
+String summary = t4.map((name, age, active, height) ->
+    name + " | " + age + "y | " + height + "m | " + (active ? "active" : "inactive"));
+// "Alice | 30y | 1.75m | active"
+```
