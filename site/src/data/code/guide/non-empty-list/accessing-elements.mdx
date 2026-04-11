@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyList<String> nel = NonEmptyList.of("a", List.of("b", "c"));
+
+String       head   = nel.head();   // "a"  — always present, never null
+List<String> tail   = nel.tail();   // ["b", "c"] — unmodifiable, may be empty
+List<String> all    = nel.toList(); // ["a", "b", "c"] — all elements
+int          size   = nel.size();   // 3 — always >= 1
+
+// Singleton: tail is empty
+NonEmptyList<String> one = NonEmptyList.singleton("only");
+one.head();   // "only"
+one.tail();   // []  (empty unmodifiable list)
+one.size();   // 1
+```

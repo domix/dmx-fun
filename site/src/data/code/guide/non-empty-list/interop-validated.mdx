@@ -1,0 +1,39 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// invalidNel — wrap a single error in a singleton NonEmptyList
+Validated<NonEmptyList<String>, Email>    emailV    = Validated.invalidNel("email is required");
+Validated<NonEmptyList<String>, Password> passwordV = Validated.invalidNel("password too short");
+
+// combine — use NonEmptyList::concat as the error merger to accumulate all errors
+Validated<NonEmptyList<String>, Form> form =
+    emailV.combine(passwordV, NonEmptyList::concat, Form::new);
+// Invalid(["email is required", "password too short"])
+
+// sequenceNel — sequence a list of Validated<NEL<E>, A> with concat built in
+List<Validated<NonEmptyList<String>, Integer>> list = List.of(
+    Validated.valid(1),
+    Validated.invalidNel("too small"),
+    Validated.invalidNel("out of range")
+);
+
+Validated<NonEmptyList<String>, List<Integer>> allErrors =
+    Validated.sequenceNel(list);
+// Invalid(["too small", "out of range"])
+
+// traverseNel — validate each element of a collection and accumulate errors
+List<String> inputs = List.of("42", "bad", "-1");
+
+Validated<NonEmptyList<String>, List<Integer>> result =
+    Validated.traverseNel(inputs, s -> {
+        try {
+            int n = Integer.parseInt(s);
+            return n > 0 ? Validated.valid(n) : Validated.invalidNel("must be positive: " + s);
+        } catch (NumberFormatException e) {
+            return Validated.invalidNel("not a number: " + s);
+        }
+    });
+// Invalid(["not a number: bad", "must be positive: -1"])
+```

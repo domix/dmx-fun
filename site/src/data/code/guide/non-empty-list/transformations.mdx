@@ -1,0 +1,24 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyList<String> nel = NonEmptyList.of("a", List.of("b", "c"));
+
+// map — apply a function to every element; returns a new NonEmptyList
+NonEmptyList<String> upper = nel.map(String::toUpperCase);
+// ["A", "B", "C"]
+
+// append — add an element at the end
+NonEmptyList<String> appended = nel.append("d");
+// ["a", "b", "c", "d"]
+
+// prepend — add an element at the front
+NonEmptyList<String> prepended = nel.prepend("z");
+// ["z", "a", "b", "c"]
+
+// concat — combine two NonEmptyLists
+NonEmptyList<String> other  = NonEmptyList.of("x", List.of("y"));
+NonEmptyList<String> merged = nel.concat(other);
+// ["a", "b", "c", "x", "y"]
+```

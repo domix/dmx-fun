@@ -1,0 +1,15 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Equality is structural — consistent with List.equals
+NonEmptyList<String> a = NonEmptyList.of("x", List.of("y", "z"));
+NonEmptyList<String> b = NonEmptyList.of("x", List.of("y", "z"));
+
+boolean same = a.equals(b); // true
+int     hash = a.hashCode(); // consistent with equals
+
+// toString delegates to List.toString
+String repr = a.toString(); // "[x, y, z]"
+```

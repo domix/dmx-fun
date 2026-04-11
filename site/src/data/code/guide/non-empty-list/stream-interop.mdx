@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyList<String> nel = NonEmptyList.of("banana", List.of("apple", "cherry", "apricot"));
+
+// toStream() — sequential Stream without materializing an intermediate list
+List<String> aFruits = nel.toStream()
+    .filter(s -> s.startsWith("a"))
+    .sorted()
+    .collect(Collectors.toList());
+// ["apple", "apricot"]
+
+// Use in for-each (Iterable)
+for (String fruit : nel) {
+    System.out.println(fruit);
+}
+
+// Convert to Set
+Set<String> set = nel.toStream().collect(Collectors.toSet());
+```

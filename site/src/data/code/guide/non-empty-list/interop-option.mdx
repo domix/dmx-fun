@@ -1,0 +1,24 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// sequence: NonEmptyList<Option<T>> → Option<NonEmptyList<T>>
+// Returns Some if every element is Some; None as soon as any element is None.
+NonEmptyList<Option<Integer>> opts =
+    NonEmptyList.of(Option.some(1), List.of(Option.some(2), Option.some(3)));
+
+Option<NonEmptyList<Integer>> result = NonEmptyList.sequence(opts);
+// Some([1, 2, 3])
+
+NonEmptyList<Option<Integer>> withNone =
+    NonEmptyList.of(Option.some(1), List.of(Option.none(), Option.some(3)));
+
+Option<NonEmptyList<Integer>> missing = NonEmptyList.sequence(withNone);
+// None
+
+// collector: Stream<T> → Option<NonEmptyList<T>>
+Option<NonEmptyList<String>> fromStream =
+    Stream.of("hello", "world").collect(NonEmptyList.collector());
+// Some(["hello", "world"])
+```
