@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+
+// Serialize
+String some = mapper.writeValueAsString(Option.some("hello")); // "hello"
+String none = mapper.writeValueAsString(Option.none());        // null
+
+// Deserialize — TypeReference required to carry the type parameter
+Option<String> opt = mapper.readValue("\"hello\"",
+    new TypeReference<Option<String>>() {});
+// Some("hello")
+
+Option<String> absent = mapper.readValue("null",
+    new TypeReference<Option<String>>() {});
+// None
+```

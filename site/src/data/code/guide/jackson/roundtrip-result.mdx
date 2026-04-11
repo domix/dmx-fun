@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+
+// Serialize
+String ok  = mapper.writeValueAsString(Result.ok(42));        // {"ok":42}
+String err = mapper.writeValueAsString(Result.err("oops"));   // {"err":"oops"}
+
+// Deserialize
+Result<Integer, String> okResult = mapper.readValue("{\"ok\":42}",
+    new TypeReference<Result<Integer, String>>() {});
+// Ok(42)
+
+Result<Integer, String> errResult = mapper.readValue("{\"err\":\"oops\"}",
+    new TypeReference<Result<Integer, String>>() {});
+// Err("oops")
+```

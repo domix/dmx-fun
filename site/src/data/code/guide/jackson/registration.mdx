@@ -1,0 +1,19 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Manual registration
+ObjectMapper mapper = new ObjectMapper()
+    .registerModule(new DmxFunModule());
+
+// Auto-discovery (recommended) — works because DmxFunModule is registered
+// as a com.fasterxml.jackson.databind.Module service provider via META-INF
+ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+
+// Spring Boot — register as a bean; Spring auto-applies it to the mapper
+@Bean
+public DmxFunModule dmxFunModule() {
+    return new DmxFunModule();
+}
+```
