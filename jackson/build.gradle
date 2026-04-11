@@ -4,7 +4,8 @@ plugins {
 
 dependencies {
     api project(':lib')
-    api libs.jackson.databind
+    compileOnly libs.jackson.databind
+    testImplementation libs.jackson.databind
 }
 
 compileTestJava {
