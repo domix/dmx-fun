@@ -58,47 +58,14 @@ Use **exhaustive pattern matching** in a switch expression to handle both tracks
 
 ## Extracting values
 
-<div class="table-wrap"><table class="api-table">
-  <thead>
-    <tr>
-      <th>Method</th>
-      <th>When `Err`</th>
-      <th>Notes</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>`get()`</td>
-      <td>Throws `NoSuchElementException`</td>
-      <td>Only safe after an `isSuccess()` check; prefer alternatives.</td>
-    </tr>
-    <tr>
-      <td>`getOrElse(fallback)`</td>
-      <td>Returns `fallback`</td>
-      <td>Fallback is always evaluated — use `getOrElseGet` for expensive defaults.</td>
-    </tr>
-    <tr>
-      <td>`getOrElseGet(supplier)`</td>
-      <td>Calls supplier</td>
-      <td>Lazily computed fallback.</td>
-    </tr>
-    <tr>
-      <td>`getOrNull()`</td>
-      <td>Returns `null`</td>
-      <td>Bridge to null-expecting APIs. Avoid propagating the null further.</td>
-    </tr>
-    <tr>
-      <td>`getOrThrow(exMapper)`</td>
-      <td>Throws exception from mapper</td>
-      <td>Maps the error to an exception — good for domain boundary re-throws.</td>
-    </tr>
-    <tr>
-      <td>`fold(onSuccess, onError)`</td>
-      <td>Calls `onError`</td>
-      <td>The most expressive extractor: forces both tracks to be handled.</td>
-    </tr>
-  </tbody>
-</table></div>
+| Method                     | When `Err`                      | Notes                                                                     |
+|----------------------------|---------------------------------|---------------------------------------------------------------------------|
+| `get()`                    | Throws `NoSuchElementException` | Only safe after an `isSuccess()` check; prefer alternatives.              |
+| `getOrElse(fallback)`      | Returns `fallback`              | Fallback is always evaluated — use `getOrElseGet` for expensive defaults. |
+| `getOrElseGet(supplier)`   | Calls supplier                  | Lazily computed fallback.                                                 |
+| `getOrNull()`              | Returns `null`                  | Bridge to null-expecting APIs. Avoid propagating the null further.        |
+| `getOrThrow(exMapper)`     | Throws exception from mapper    | Maps the error to an exception — good for domain boundary re-throws.      |
+| `fold(onSuccess, onError)` | Calls `onError`                 | The most expressive extractor: forces both tracks to be handled.          |
 
 <ExtractingValues/>
 
@@ -165,21 +132,16 @@ two lists, consuming the entire stream.
 
 ## Interoperability
 
-<div class="table-wrap"><table class="api-table">
-  <thead>
-    <tr><th>Conversion</th><th>Method</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>`Result` &rarr; `Option`</td><td>`result.toOption()`</td></tr>
-    <tr><td>`Result` &rarr; `Try`</td><td>`result.toTry(errorMapper)`</td></tr>
-    <tr><td>`Result` &rarr; `Either`</td><td>`result.toEither()`</td></tr>
-    <tr><td>`Result` &rarr; `CompletableFuture`</td><td>`result.toFuture()`</td></tr>
-    <tr><td>`Option` &rarr; `Result`</td><td>`option.toResult(errorSupplier)`</td></tr>
-    <tr><td>`Try` &rarr; `Result`</td><td>`tryVal.toResult()`</td></tr>
-    <tr><td>`Optional` &rarr; `Result`</td><td>`Result.fromOptional(optional)`</td></tr>
-    <tr><td>`CompletableFuture` &rarr; `Result`</td><td>`Result.fromFuture(future)`</td></tr>
-  </tbody>
-</table></div>
+| Conversion                          | Method                            |
+|-------------------------------------|-----------------------------------|
+| `Result` → `Option`                 | `result.toOption()`               |
+| `Result` → `Try`                    | `result.toTry(errorMapper)`       |
+| `Result` → `Either`                 | `result.toEither()`               |
+| `Result` → `CompletableFuture`      | `result.toFuture()`               |
+| `Option` → `Result`                 | `option.toResult(errorSupplier)`  |
+| `Try` → `Result`                    | `tryVal.toResult()`               |
+| `Optional` → `Result`               | `Result.fromOptional(optional)`   |
+| `CompletableFuture` → `Result`      | `Result.fromFuture(future)`       |
 
 <InteropConversions/>
 
@@ -187,48 +149,13 @@ See the [Combining Types](combining-types) page for the full conversion matrix a
 
 ## Result vs Try vs exceptions
 
-<div class="table-wrap"><table class="api-table">
-  <thead>
-    <tr>
-      <th></th>
-      <th>Exceptions</th>
-      <th>`Try<V>`</th>
-      <th>`Result<V, E>`</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Error type</td>
-      <td>`Throwable` — implicit</td>
-      <td>`Throwable` — explicit value</td>
-      <td>Any type — explicit and domain-specific</td>
-    </tr>
-    <tr>
-      <td>Forces handling</td>
-      <td>Only checked exceptions</td>
-      <td>Yes — via API</td>
-      <td>Yes — via API and switch patterns</td>
-    </tr>
-    <tr>
-      <td>Branch on error subtype</td>
-      <td>Via `catch` clauses</td>
-      <td>Via `instanceof`</td>
-      <td>Via sealed subtype and switch patterns</td>
-    </tr>
-    <tr>
-      <td>Interop with throwing code</td>
-      <td>Native</td>
-      <td>Excellent — `Try.of(() -> ...)`</td>
-      <td>Indirect — wrap with Try first</td>
-    </tr>
-    <tr>
-      <td>Best for</td>
-      <td>Truly exceptional situations</td>
-      <td>Wrapping legacy/third-party code</td>
-      <td>Domain logic with typed failure modes</td>
-    </tr>
-  </tbody>
-</table></div>
+|                             | Exceptions                    | `Try<V>`                         | `Result<V, E>`                          |
+|-----------------------------|-------------------------------|----------------------------------|-----------------------------------------|
+| Error type                  | `Throwable` — implicit        | `Throwable` — explicit value     | Any type — explicit and domain-specific |
+| Forces handling             | Only checked exceptions       | Yes — via API                    | Yes — via API and switch patterns       |
+| Branch on error subtype     | Via `catch` clauses           | Via `instanceof`                 | Via sealed subtype and switch patterns  |
+| Interop with throwing code  | Native                        | Excellent — `Try.of(() -> ...)`  | Indirect — wrap with Try first          |
+| Best for                    | Truly exceptional situations  | Wrapping legacy/third-party code | Domain logic with typed failure modes   |
 
 ## Common pitfalls
 

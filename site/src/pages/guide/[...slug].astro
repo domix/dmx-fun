@@ -161,6 +161,78 @@ const toc = headings.filter(h => h.depth === 2);
     text-decoration: underline;
   }
 
+  /* Tables */
+  .guide-content :global(table) {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 1.5rem 0;
+    font-size: 0.925rem;
+    line-height: 1.6;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px var(--color-shadow);
+  }
+
+  .guide-content :global(thead tr) {
+    background-color: var(--color-surface);
+  }
+
+  .guide-content :global(th) {
+    padding: 0.75rem 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  .guide-content :global(th:last-child) {
+    border-right: none;
+  }
+
+  .guide-content :global(td) {
+    padding: 0.75rem 1.25rem;
+    vertical-align: top;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+
+  .guide-content :global(td:last-child) {
+    border-right: none;
+  }
+
+  .guide-content :global(tbody tr:last-child td) {
+    border-bottom: none;
+  }
+
+  .guide-content :global(tbody tr:nth-child(even)) {
+    background-color: var(--color-surface);
+  }
+
+  .guide-content :global(tbody tr:hover) {
+    background-color: var(--color-code-bg);
+    transition: background-color 0.15s ease;
+  }
+
+  .guide-content :global(td code) {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .guide-content :global(table) {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   @media (max-width: 600px) {
     .toc {
       display: block;

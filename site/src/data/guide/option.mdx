@@ -87,47 +87,14 @@ You can also use **Java pattern matching** exhaustively:
 
 ## Extracting values
 
-<div class="table-wrap"><table class="api-table">
-  <thead>
-    <tr>
-      <th>Method</th>
-      <th>When `None`</th>
-      <th>Notes</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>`get()`</td>
-      <td>Throws `NoSuchElementException`</td>
-      <td>Only safe after an `isDefined()` check; prefer alternatives.</td>
-    </tr>
-    <tr>
-      <td>`getOrElse(fallback)`</td>
-      <td>Returns `fallback`</td>
-      <td>Fallback is always evaluated — use `getOrElseGet` for expensive defaults.</td>
-    </tr>
-    <tr>
-      <td>`getOrElseGet(supplier)`</td>
-      <td>Calls supplier</td>
-      <td>Lazily computed fallback.</td>
-    </tr>
-    <tr>
-      <td>`getOrNull()`</td>
-      <td>Returns `null`</td>
-      <td>Bridge to null-expecting APIs. Avoid propagating the null further.</td>
-    </tr>
-    <tr>
-      <td>`getOrThrow(supplier)`</td>
-      <td>Throws supplied exception</td>
-      <td>Use when absence is a programming error at that call site.</td>
-    </tr>
-    <tr>
-      <td>`fold(onNone, onSome)`</td>
-      <td>Calls `onNone`</td>
-      <td>The most expressive extractor: forces you to handle both branches.</td>
-    </tr>
-  </tbody>
-</table></div>
+| Method                   | When `None`                     | Notes                                                                     |
+|--------------------------|---------------------------------|---------------------------------------------------------------------------|
+| `get()`                  | Throws `NoSuchElementException` | Only safe after an `isDefined()` check; prefer alternatives.              |
+| `getOrElse(fallback)`    | Returns `fallback`              | Fallback is always evaluated — use `getOrElseGet` for expensive defaults. |
+| `getOrElseGet(supplier)` | Calls supplier                  | Lazily computed fallback.                                                 |
+| `getOrNull()`            | Returns `null`                  | Bridge to null-expecting APIs. Avoid propagating the null further.        |
+| `getOrThrow(supplier)`   | Throws supplied exception       | Use when absence is a programming error at that call site.                |
+| `fold(onNone, onSome)`   | Calls `onNone`                  | The most expressive extractor: forces you to handle both branches.        |
 
 <ExtractingValues/>
 
@@ -198,20 +165,15 @@ Useful for integrating into Stream pipelines without `filter + map`.
 
 ## Interoperability
 
-<div class="table-wrap"><table class="api-table">
-  <thead>
-    <tr><th>Conversion</th><th>Method</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>`Option` &rarr; `Optional`</td><td>`option.toOptional()`</td></tr>
-    <tr><td>`Option` &rarr; `Result`</td><td>`option.toResult(errorSupplier)`</td></tr>
-    <tr><td>`Option` &rarr; `Try`</td><td>`option.toTry(exceptionSupplier)`</td></tr>
-    <tr><td>`Option` &rarr; `Either`</td><td>`option.toEither(leftSupplier)`</td></tr>
-    <tr><td>`Result` &rarr; `Option`</td><td>`result.toOption()`</td></tr>
-    <tr><td>`Try` &rarr; `Option`</td><td>`tryVal.toOption()`</td></tr>
-    <tr><td>`Optional` &rarr; `Option`</td><td>`Option.fromOptional(optional)`</td></tr>
-  </tbody>
-</table></div>
+| Conversion                    | Method                            |
+|-------------------------------|-----------------------------------|
+| `Option` → `Optional`         | `option.toOptional()`             |
+| `Option` → `Result`           | `option.toResult(errorSupplier)`  |
+| `Option` → `Try`              | `option.toTry(exceptionSupplier)` |
+| `Option` → `Either`           | `option.toEither(leftSupplier)`   |
+| `Result` → `Option`           | `result.toOption()`               |
+| `Try` → `Option`              | `tryVal.toOption()`               |
+| `Optional` → `Option`         | `Option.fromOptional(optional)`   |
 
 <InteropConversions/>
 
@@ -219,48 +181,13 @@ See the [Combining Types](combining-types) page for the full conversion matrix a
 
 ## Option vs null vs Optional
 
-<div class="table-wrap"><table class="api-table">
-  <thead>
-    <tr>
-      <th></th>
-      <th>`null`</th>
-      <th>`Optional<T>`</th>
-      <th>`Option<T>`</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Null-safety</td>
-      <td>None — NPE at runtime</td>
-      <td>Good — explicit</td>
-      <td>Good — explicit</td>
-    </tr>
-    <tr>
-      <td>Exhaustive handling</td>
-      <td>No</td>
-      <td>No (runtime only)</td>
-      <td>Yes — sealed, switch patterns</td>
-    </tr>
-    <tr>
-      <td>Use in records / generics</td>
-      <td>Yes (fragile)</td>
-      <td>Discouraged (not serializable)</td>
-      <td>Yes — record-based, serializable</td>
-    </tr>
-    <tr>
-      <td>Compose with Result / Try / Either</td>
-      <td>No</td>
-      <td>No</td>
-      <td>Yes — first-class conversions</td>
-    </tr>
-    <tr>
-      <td>Holds null values</td>
-      <td>Yes</td>
-      <td>No</td>
-      <td>No</td>
-    </tr>
-  </tbody>
-</table></div>
+|                                    | `null`                         | `Optional<T>`                   | `Option<T>`                       |
+|------------------------------------|--------------------------------|---------------------------------|-----------------------------------|
+| Null-safety                        | None — NPE at runtime          | Good — explicit                 | Good — explicit                   |
+| Exhaustive handling                | No                             | No (runtime only)               | Yes — sealed, switch patterns     |
+| Use in records / generics          | Yes (fragile)                  | Discouraged (not serializable)  | Yes — record-based, serializable  |
+| Compose with Result / Try / Either | No                             | No                              | Yes — first-class conversions     |
+| Holds null values                  | Yes                            | No                              | No                                |
 
 ## Common pitfalls
 
