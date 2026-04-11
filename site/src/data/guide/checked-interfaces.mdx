@@ -1,13 +1,79 @@
 ---
 title: "Checked Interfaces — Developer Guide"
-description: "Developer Guide — Checked Interfaces: functional interfaces that declare checked exceptions."
+description: "Comprehensive guide to CheckedFunction, CheckedSupplier, CheckedConsumer, CheckedRunnable, TriFunction, and QuadFunction: eliminating checked-exception boilerplate in functional code."
 order: 9
 h1: "Checked Interfaces"
 ---
 
-export const base = import.meta.env.BASE_URL;
+import {Content as Problem}           from '../code/guide/checked-interfaces/problem.mdx';
+import {Content as CheckedIfaces}     from '../code/guide/checked-interfaces/checked-interfaces.mdx';
+import {Content as TryIntegration}    from '../code/guide/checked-interfaces/try-integration.mdx';
+import {Content as HigherArity}       from '../code/guide/checked-interfaces/higher-arity.mdx';
+import {Content as RealWorldExample}  from '../code/guide/checked-interfaces/real-world-example.mdx';
 
-<div class="coming-soon">
-  <p>This page is under active development. Full content is coming soon.</p>
-  <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
-</div>
+## The problem: checked exceptions in lambdas
+
+Java's standard functional interfaces — `Function`, `Supplier`, `Consumer`,
+`Runnable` — do not declare checked exceptions. Any lambda that calls a method
+throwing a checked exception must wrap it in a `try/catch` block, converting
+it to an unchecked exception inline. This produces noise that obscures intent.
+
+<Problem/>
+
+dmx-fun provides `Checked*` variants of the four most common functional interfaces
+so that throwing method references can be used directly.
+
+## Checked functional interfaces
+
+| Interface                  | Checked equivalent of     | Signature                          |
+|----------------------------|---------------------------|------------------------------------|
+| `CheckedFunction<T, R>`    | `Function<T, R>`          | `R apply(T t) throws Exception`    |
+| `CheckedSupplier<T>`       | `Supplier<T>`             | `T get() throws Exception`         |
+| `CheckedConsumer<T>`       | `Consumer<T>`             | `void accept(T t) throws Exception`|
+| `CheckedRunnable`          | `Runnable`                | `void run() throws Exception`      |
+
+All four are `@FunctionalInterface` and `@NullMarked`.
+
+<CheckedIfaces/>
+
+## Integrating with `Try`
+
+`CheckedSupplier<T>` is the natural input for `Try.of()` — the supplier is
+executed and any thrown exception is captured as a `Failure` without any
+manual wrapping. `CheckedRunnable` feeds `Try.run()` for side-effecting
+operations that produce no value.
+
+<TryIntegration/>
+
+## Higher-arity function interfaces
+
+The standard library stops at `BiFunction<A,B,R>`. dmx-fun extends this with:
+
+| Interface                       | Arguments | Used by                      |
+|---------------------------------|-----------|------------------------------|
+| `TriFunction<A, B, C, R>`       | 3         | `Tuple3.map(TriFunction)`    |
+| `QuadFunction<A, B, C, D, R>`   | 4         | `Tuple4.map(QuadFunction)`   |
+
+Both follow the same `@FunctionalInterface` + `@NullMarked` contract as the
+standard library interfaces.
+
+<HigherArity/>
+
+## When to use each
+
+| Scenario                                                         | Interface                      |
+|------------------------------------------------------------------|--------------------------------|
+| Pass a throwing method reference to a functional API             | `CheckedFunction` / `CheckedSupplier` |
+| Wrap a throwing void action (e.g. DB migration, file write)      | `CheckedRunnable`              |
+| Side-effecting loop body that throws                             | `CheckedConsumer`              |
+| Feed a throwing supplier into `Try.of()`                        | `CheckedSupplier`              |
+| Collapse a `Tuple3` into a single value                         | `TriFunction`                  |
+| Collapse a `Tuple4` into a single value                         | `QuadFunction`                 |
+| Combine more than two values in a `Validated.combine` chain     | `TriFunction` / `QuadFunction` |
+
+## Real-world example
+
+Reading and parsing a set of report files using `CheckedFunction`, `Try.traverse`,
+and `TriFunction` to keep the pipeline clean and exception-safe.
+
+<RealWorldExample/>

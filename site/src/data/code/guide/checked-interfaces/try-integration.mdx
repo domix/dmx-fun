@@ -1,0 +1,23 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Try.of(CheckedSupplier<V>) — captures any exception as Failure
+Try<String> content = Try.of(() -> Files.readString(path));
+
+// Method reference — Files::readString matches CheckedFunction<Path,String>
+// but also satisfies CheckedSupplier<String> when path is already in scope
+Try<String> content2 = Try.of(() -> Files.readString(Paths.get("config.txt")));
+
+// Try.run(CheckedRunnable) — for side-effecting operations that return nothing
+Try<Void> migration = Try.run(() -> flyway.migrate());
+
+// CheckedFunction used with Try.traverse — apply to every element,
+// collecting results or accumulating the first failure
+List<Path> paths = List.of(Paths.get("a.txt"), Paths.get("b.txt"));
+
+Try<List<String>> allContents =
+    Try.traverse(paths, path -> Try.of(() -> Files.readString(path)));
+// Success([...]) if all reads succeed, Failure(IOException) on first error
+```

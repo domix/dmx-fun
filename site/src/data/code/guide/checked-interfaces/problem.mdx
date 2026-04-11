@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Standard Function<T,R> does not declare checked exceptions.
+// Every checked call inside a lambda requires manual wrapping.
+Function<Path, String> reader = path -> {
+    try {
+        return Files.readString(path);         // IOException is checked
+    } catch (IOException e) {
+        throw new RuntimeException(e);         // boilerplate every time
+    }
+};
+
+// With CheckedFunction the method reference is used directly:
+CheckedFunction<Path, String> reader = Files::readString; // clean
+```
