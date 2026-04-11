@@ -1,11 +1,41 @@
 plugins {
-    id 'java-base'
+    id 'dmx-fun.java-module'
+    id 'test-report-aggregation'
+    id 'jacoco-report-aggregation'
 }
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+dependencies {
+    def modules = [
+        ':lib',
+        ':assertj',
+        ':jackson'
+    ]
+
+    modules.each {
+        testReportAggregation project(it)
+        jacocoAggregation project(it)
+    }
+}
+
+reporting {
+    reports {
+        testAggregateTestReport(AggregateTestReport) {
+        }
+        testCodeCoverageReport(JacocoCoverageReport) {
+            testSuiteName = "test"
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('testAggregateTestReport', TestReport)
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
 }
 
 tasks.register('aggregateJavadoc', Exec) {
