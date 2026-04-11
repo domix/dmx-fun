@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Either<String, Integer> e = compute();
+
+// fold — maps both sides to a common type; forces both to be handled
+String rendered = e.fold(
+    left  -> "Left: "  + left,
+    right -> "Right: " + right
+);
+
+// Unsafe accessors — throw NoSuchElementException on the wrong side
+String leftVal  = e.getLeft();  // throws if Right
+int    rightVal = e.getRight(); // throws if Left
+```
