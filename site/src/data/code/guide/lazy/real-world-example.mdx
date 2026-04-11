@@ -1,0 +1,33 @@
+---
+fileName: 'AppContext.java'
+---
+
+```java
+// Application-wide singletons — each is computed at most once, only when first needed.
+// Thread-safe: double-checked locking ensures the supplier runs exactly once.
+
+public class AppContext {
+
+    // Configuration loaded from disk — deferred until first use
+    private static final Lazy<AppConfig> CONFIG =
+        Lazy.of(() -> AppConfig.loadFromDisk(Paths.get("config/app.yaml")));
+
+    // DataSource depends on config — not initialized until config is ready
+    private static final Lazy<DataSource> DATA_SOURCE =
+        CONFIG.flatMap(cfg -> Lazy.of(() -> DataSource.connect(cfg.dbUrl())));
+
+    // FeatureFlags also depends on config; independently lazy
+    private static final Lazy<FeatureFlags> FLAGS =
+        CONFIG.map(cfg -> FeatureFlags.from(cfg.featureSection()));
+
+    public static AppConfig   config()     { return CONFIG.get(); }
+    public static DataSource  dataSource() { return DATA_SOURCE.get(); }
+    public static FeatureFlags flags()     { return FLAGS.get(); }
+}
+
+// In application bootstrap — only what is actually needed is evaluated:
+if (AppContext.flags().isEnabled("new-ui")) {
+    // CONFIG and FLAGS are evaluated here; DATA_SOURCE is NOT touched
+    renderNewUi();
+}
+```

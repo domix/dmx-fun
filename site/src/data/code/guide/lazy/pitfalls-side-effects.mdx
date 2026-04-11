@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Bad: side-effecting supplier — the email is sent exactly once, not on every call.
+// If callers expect the action to repeat, Lazy is the wrong tool.
+Lazy<Void> send = Lazy.of(() -> { emailService.sendWelcome(user); return null; });
+send.get(); // sends email
+send.get(); // does NOT send again — memoized
+
+// Bad: supplier returns null — Lazy is @NullMarked and will throw NullPointerException
+Lazy<String> bad = Lazy.of(() -> null); // NPE on get()
+
+// Good: use Lazy<Option<T>> for nullable results
+Lazy<Option<String>> safe = Lazy.of(() -> Option.ofNullable(findValue()));
+```

@@ -1,0 +1,26 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Lazy<Config> config = Lazy.of(() -> Config.loadFromDisk());
+
+// toTry() — forces evaluation; captures any exception as Failure (result is memoized)
+Try<Config> t = config.toTry();
+
+// toResult() — forces evaluation; exception becomes Err(Throwable)
+Result<Config, Throwable> r1 = config.toResult();
+
+// toResult(errorMapper) — forces evaluation; maps the exception to a domain error
+Result<Config, AppError> r2 = config.toResult(ex -> new AppError("Config load failed", ex));
+
+// toOption() — forces evaluation; wraps value in Some (throws if supplier throws)
+Option<Config> opt = config.toOption();
+
+// toFuture() — if already evaluated, returns a completed future immediately;
+//              otherwise evaluates asynchronously via CompletableFuture.supplyAsync
+CompletableFuture<Config> future = config.toFuture();
+
+// fromFuture — defers the blocking join until get() is called
+Lazy<Config> fromAsync = Lazy.fromFuture(CompletableFuture.supplyAsync(() -> Config.loadFromDisk()));
+```
