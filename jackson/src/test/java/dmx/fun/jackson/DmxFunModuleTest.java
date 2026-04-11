@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.JsonNode;
 import dmx.fun.Either;
 import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
@@ -149,8 +150,9 @@ class DmxFunModuleTest {
 
         @Test
         void deserializeUnknownField_throws() {
-            assertThrows(JsonMappingException.class, () ->
+            JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Result<Integer, String>>() {}));
+            assertTrue(ex.getMessage().contains("unknown"));
         }
     }
 
@@ -210,6 +212,8 @@ class DmxFunModuleTest {
             // START_OBJECT, no "error" key, valueType == null → returns Try.success(node)
             Try<?> result = mapper.readValue("{\"key\":\"v\"}", Try.class);
             assertTrue(result.isSuccess());
+            assertInstanceOf(JsonNode.class, result.get());
+            assertEquals("v", ((JsonNode) result.get()).get("key").asText());
         }
 
         @Test
@@ -279,8 +283,9 @@ class DmxFunModuleTest {
 
         @Test
         void deserializeUnknownField_throws() {
-            assertThrows(JsonMappingException.class, () ->
+            JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Validated<String, Integer>>() {}));
+            assertTrue(ex.getMessage().contains("unknown"));
         }
     }
 
@@ -341,8 +346,9 @@ class DmxFunModuleTest {
 
         @Test
         void deserializeUnknownField_throws() {
-            assertThrows(JsonMappingException.class, () ->
+            JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Either<String, Integer>>() {}));
+            assertTrue(ex.getMessage().contains("unknown"));
         }
     }
 
@@ -518,6 +524,10 @@ class DmxFunModuleTest {
             Result<String, Integer> ok = Result.ok("found");
             String json = autoMapper.writeValueAsString(ok);
             assertEquals("{\"ok\":\"found\"}", json);
+
+            Result<String, Integer> deserialized = autoMapper.readValue(json, new TypeReference<Result<String, Integer>>() {});
+            assertTrue(deserialized.isOk());
+            assertEquals("found", deserialized.get());
         }
     }
 }

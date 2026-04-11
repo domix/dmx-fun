@@ -1,6 +1,7 @@
 package dmx.fun.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
@@ -50,7 +51,12 @@ class EitherDeserializer extends StdDeserializer<Either> implements ContextualDe
 
     @Override
     public Either deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        p.nextToken(); // move to field name
+        if (p.currentToken() != JsonToken.START_OBJECT) {
+            throw ctxt.wrongTokenException(p, Either.class, JsonToken.START_OBJECT, "Expected object");
+        }
+        if (p.nextToken() != JsonToken.FIELD_NAME) {
+            throw ctxt.wrongTokenException(p, Either.class, JsonToken.FIELD_NAME, "Expected field name");
+        }
         String fieldName = p.currentName();
         p.nextToken(); // move to value
 
@@ -65,7 +71,13 @@ class EitherDeserializer extends StdDeserializer<Either> implements ContextualDe
             throw ctxt.weirdStringException(fieldName, Either.class, "Expected 'right' or 'left' field");
         }
 
-        p.nextToken(); // move past END_OBJECT
+        JsonToken next = p.nextToken();
+        if (next == JsonToken.FIELD_NAME) {
+            throw ctxt.weirdStringException(p.currentName(), Either.class, "Unexpected extra field");
+        }
+        if (next != JsonToken.END_OBJECT) {
+            throw ctxt.wrongTokenException(p, Either.class, JsonToken.END_OBJECT, "Expected end of object");
+        }
         return result;
     }
 }

@@ -3,6 +3,7 @@ package dmx.fun.jackson;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -46,12 +47,20 @@ class Tuple2Deserializer extends StdDeserializer<Tuple2> implements ContextualDe
 
     @Override
     public Tuple2 deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        // Expect START_ARRAY
-        p.nextToken();
+        if (p.currentToken() != JsonToken.START_ARRAY) {
+            throw ctxt.wrongTokenException(p, Tuple2.class, JsonToken.START_ARRAY, "Expected array");
+        }
+        if (p.nextToken() == JsonToken.END_ARRAY) {
+            throw InvalidFormatException.from(p, "Tuple2 requires exactly 2 elements, got 0", null, Tuple2.class);
+        }
         Object v1 = type1 != null ? ctxt.readValue(p, type1) : p.readValueAs(Object.class);
-        p.nextToken();
+        if (p.nextToken() == JsonToken.END_ARRAY) {
+            throw InvalidFormatException.from(p, "Tuple2 requires exactly 2 elements, got 1", null, Tuple2.class);
+        }
         Object v2 = type2 != null ? ctxt.readValue(p, type2) : p.readValueAs(Object.class);
-        p.nextToken(); // END_ARRAY
+        if (p.nextToken() != JsonToken.END_ARRAY) {
+            throw InvalidFormatException.from(p, "Tuple2 requires exactly 2 elements, got more", null, Tuple2.class);
+        }
         return new Tuple2<>(v1, v2);
     }
 }

@@ -51,7 +51,7 @@ class TryDeserializer extends StdDeserializer<Try> implements ContextualDeserial
     public Try deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p.currentToken() == JsonToken.START_OBJECT) {
             ObjectNode node = p.readValueAsTree();
-            if (node.has("error")) {
+            if (node.size() == 1 && node.has("error") && node.get("error").isTextual()) {
                 String message = node.get("error").asText();
                 return Try.failure(new RuntimeException(message));
             }

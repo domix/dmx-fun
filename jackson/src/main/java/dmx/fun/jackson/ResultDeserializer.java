@@ -51,7 +51,12 @@ class ResultDeserializer extends StdDeserializer<Result> implements ContextualDe
 
     @Override
     public Result deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        p.nextToken(); // move to field name
+        if (p.currentToken() != JsonToken.START_OBJECT) {
+            throw ctxt.wrongTokenException(p, Result.class, JsonToken.START_OBJECT, "Expected object");
+        }
+        if (p.nextToken() != JsonToken.FIELD_NAME) {
+            throw ctxt.wrongTokenException(p, Result.class, JsonToken.FIELD_NAME, "Expected field name");
+        }
         String fieldName = p.currentName();
         p.nextToken(); // move to value
 
@@ -66,7 +71,13 @@ class ResultDeserializer extends StdDeserializer<Result> implements ContextualDe
             throw ctxt.weirdStringException(fieldName, Result.class, "Expected 'ok' or 'err' field");
         }
 
-        p.nextToken(); // move past END_OBJECT
+        JsonToken next = p.nextToken();
+        if (next == JsonToken.FIELD_NAME) {
+            throw ctxt.weirdStringException(p.currentName(), Result.class, "Unexpected extra field");
+        }
+        if (next != JsonToken.END_OBJECT) {
+            throw ctxt.wrongTokenException(p, Result.class, JsonToken.END_OBJECT, "Expected end of object");
+        }
         return result;
     }
 }

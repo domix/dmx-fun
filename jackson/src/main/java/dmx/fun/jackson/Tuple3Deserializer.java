@@ -1,7 +1,9 @@
 package dmx.fun.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -51,13 +53,24 @@ class Tuple3Deserializer extends StdDeserializer<Tuple3> implements ContextualDe
 
     @Override
     public Tuple3 deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        p.nextToken(); // first element
+        if (p.currentToken() != JsonToken.START_ARRAY) {
+            throw ctxt.wrongTokenException(p, Tuple3.class, JsonToken.START_ARRAY, "Expected array");
+        }
+        if (p.nextToken() == JsonToken.END_ARRAY) {
+            throw InvalidFormatException.from(p, "Tuple3 requires exactly 3 elements, got 0", null, Tuple3.class);
+        }
         Object v1 = type1 != null ? ctxt.readValue(p, type1) : p.readValueAs(Object.class);
-        p.nextToken();
+        if (p.nextToken() == JsonToken.END_ARRAY) {
+            throw InvalidFormatException.from(p, "Tuple3 requires exactly 3 elements, got 1", null, Tuple3.class);
+        }
         Object v2 = type2 != null ? ctxt.readValue(p, type2) : p.readValueAs(Object.class);
-        p.nextToken();
+        if (p.nextToken() == JsonToken.END_ARRAY) {
+            throw InvalidFormatException.from(p, "Tuple3 requires exactly 3 elements, got 2", null, Tuple3.class);
+        }
         Object v3 = type3 != null ? ctxt.readValue(p, type3) : p.readValueAs(Object.class);
-        p.nextToken(); // END_ARRAY
+        if (p.nextToken() != JsonToken.END_ARRAY) {
+            throw InvalidFormatException.from(p, "Tuple3 requires exactly 3 elements, got more", null, Tuple3.class);
+        }
         return Tuple3.of(v1, v2, v3);
     }
 }

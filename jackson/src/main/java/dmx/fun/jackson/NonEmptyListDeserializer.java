@@ -47,7 +47,9 @@ class NonEmptyListDeserializer extends StdDeserializer<NonEmptyList> implements 
 
     @Override
     public NonEmptyList deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        // p is at START_ARRAY
+        if (p.currentToken() != JsonToken.START_ARRAY) {
+            throw ctxt.wrongTokenException(p, NonEmptyList.class, JsonToken.START_ARRAY, "Expected array");
+        }
         List<Object> elements = new ArrayList<>();
         while (p.nextToken() != JsonToken.END_ARRAY) {
             Object element = elementType != null ? ctxt.readValue(p, elementType) : p.readValueAs(Object.class);
