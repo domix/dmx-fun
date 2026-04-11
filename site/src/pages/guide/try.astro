@@ -1,0 +1,26 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+---
+<DocsLayout title="Try" description="Developer Guide — Try">
+    <div class="guide-content">
+        <h1>Try&lt;V&gt;</h1>
+        <div class="coming-soon">
+            <p>This page is under active development. Full content is coming soon.</p>
+            <p>In the meantime, explore the <a href={`${base}javadoc/index.html`} target="_blank" rel="noopener">API documentation</a> or return to the <a href={`${base}guide`}>Guide index</a>.</p>
+        </div>
+    </div>
+</DocsLayout>
+<style>
+    .guide-content { max-width: 800px; }
+    h1 { border-bottom: 2px solid var(--color-border); padding-bottom: 0.5rem; }
+    .coming-soon {
+        background-color: var(--color-surface);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--color-primary);
+        margin: 2rem 0;
+    }
+    .coming-soon p { margin: 0 0 0.75rem; line-height: 1.7; }
+    .coming-soon p:last-child { margin-bottom: 0; }
+</style>
