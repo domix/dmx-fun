@@ -1,0 +1,199 @@
+---
+title: "Result<V,E> — Developer Guide"
+description: "Comprehensive guide to Result<V,E>: modelling typed failures, transforming, composing, and real-world pipelines."
+order: 2
+h1: "Result<V, E>"
+---
+
+import {Content as CreatingInstances}    from '../code/guide/result/creating-instances.mdx';
+import {Content as CheckingState}        from '../code/guide/result/checking-state.mdx';
+import {Content as CheckingStateSwitch}  from '../code/guide/result/checking-state-switch.mdx';
+import {Content as ExtractingValues}     from '../code/guide/result/extracting-values.mdx';
+import {Content as TransformingMap}      from '../code/guide/result/transforming-map.mdx';
+import {Content as TransformingMapError} from '../code/guide/result/transforming-map-error.mdx';
+import {Content as TransformingFlatMap}  from '../code/guide/result/transforming-flatmap.mdx';
+import {Content as TransformingFilter}   from '../code/guide/result/transforming-filter.mdx';
+import {Content as TransformingPeek}     from '../code/guide/result/transforming-peek.mdx';
+import {Content as Recovery}             from '../code/guide/result/recovery.mdx';
+import {Content as SequenceTraverse}     from '../code/guide/result/sequence-traverse.mdx';
+import {Content as InteropConversions}   from '../code/guide/result/interop-conversions.mdx';
+import {Content as PitfallsNested}       from '../code/guide/result/pitfalls-nested.mdx';
+import {Content as PitfallsIgnoringError} from '../code/guide/result/pitfalls-ignoring-error.mdx';
+import {Content as RealWorldExample}     from '../code/guide/result/real-world-example.mdx';
+
+## What is Result&lt;V, E&gt;?
+
+`Result<V, E>` models a computation that either succeeds with a value of type `V`
+or fails with a **typed error** of type `E`.
+It is a sealed interface with two implementations:
+
+- `Ok<V, E>` — holds a non-null success value.
+- `Err<V, E>` — holds a non-null typed error.
+
+The key distinction from `Try<V>` is that the error type is
+_explicit and domain-specific_ — not a raw `Throwable`.
+This forces callers to acknowledge the error domain and handle it by type,
+rather than catching a generic exception.
+
+Use `Result` when you _own the error type_ and callers need to
+branch on it. Use `Try` when wrapping legacy or third-party code that throws.
+
+## Creating instances
+
+<CreatingInstances/>
+
+Both `Ok` and `Err` reject `null` — pass a non-null value.
+If the success case has no meaningful value, use `Result<Void, E>`
+with a sentinel like `Result.ok(Boolean.TRUE)` or a dedicated unit type instead.
+
+## Checking state
+
+Predicates are available, but prefer structural operations in most cases:
+
+<CheckingState/>
+
+Use **exhaustive pattern matching** in a switch expression to handle both tracks:
+
+<CheckingStateSwitch/>
+
+## Extracting values
+
+| Method                     | When `Err`                      | Notes                                                                     |
+|----------------------------|---------------------------------|---------------------------------------------------------------------------|
+| `get()`                    | Throws `NoSuchElementException` | Only safe after an `isSuccess()` check; prefer alternatives.              |
+| `getOrElse(fallback)`      | Returns `fallback`              | Fallback is always evaluated — use `getOrElseGet` for expensive defaults. |
+| `getOrElseGet(supplier)`   | Calls supplier                  | Lazily computed fallback.                                                 |
+| `getOrNull()`              | Returns `null`                  | Bridge to null-expecting APIs. Avoid propagating the null further.        |
+| `getOrThrow(exMapper)`     | Throws exception from mapper    | Maps the error to an exception — good for domain boundary re-throws.      |
+| `fold(onSuccess, onError)` | Calls `onError`                 | The most expressive extractor: forces both tracks to be handled.          |
+
+<ExtractingValues/>
+
+## Transforming values
+
+### `map(mapper)`
+
+Transforms the success value. The error track passes through unchanged.
+
+<TransformingMap/>
+
+### `mapError(mapper)`
+
+Transforms the error value. The success track passes through unchanged.
+Useful for translating between error domains at architectural boundaries.
+
+<TransformingMapError/>
+
+### `flatMap(mapper)`
+
+Like `map`, but the mapper itself returns a `Result`.
+Use this to chain fallible operations without nesting.
+
+<TransformingFlatMap/>
+
+### `filter(predicate, error)`
+
+Converts an `Ok` to `Err` when the predicate fails.
+Accepts a static error value or a function that derives the error from the value.
+
+<TransformingFilter/>
+
+### `peek` / `peekError`
+
+Side-effecting operations (logging, metrics) that do not alter the `Result`.
+Return `this` for chaining.
+
+<TransformingPeek/>
+
+### `match(onSuccess, onError)`
+
+Terminal side-effecting variant of `fold`. Both consumers return void.
+Use for logging, metrics, or dispatching to side-effecting systems.
+
+## Recovery and fallbacks
+
+Recovery operations convert an `Err` back to an `Ok` by inspecting the error value.
+
+<Recovery/>
+
+For a simple static fallback without inspecting the error, use `orElse`.
+
+## sequence and traverse
+
+Both operations apply **fail-fast semantics**: they stop at the first
+`Err` and return it immediately, without consuming the rest of the stream.
+This is implemented internally with a Stream Gatherer.
+
+<SequenceTraverse/>
+
+If you need all results regardless of failure, use `Result.partitioningBy()`
+as a `Collector` — it separates `Ok` values and errors into
+two lists, consuming the entire stream.
+
+## Interoperability
+
+| Conversion                          | Method                            |
+|-------------------------------------|-----------------------------------|
+| `Result` → `Option`                 | `result.toOption()`               |
+| `Result` → `Try`                    | `result.toTry(errorMapper)`       |
+| `Result` → `Either`                 | `result.toEither()`               |
+| `Result` → `CompletableFuture`      | `result.toFuture()`               |
+| `Option` → `Result`                 | `option.toResult(errorSupplier)`  |
+| `Try` → `Result`                    | `tryVal.toResult()`               |
+| `Optional` → `Result`               | `Result.fromOptional(optional)`   |
+| `CompletableFuture` → `Result`      | `Result.fromFuture(future)`       |
+
+<InteropConversions/>
+
+See the [Combining Types](combining-types) page for the full conversion matrix and composition patterns.
+
+## Result vs Try vs exceptions
+
+|                             | Exceptions                    | `Try<V>`                         | `Result<V, E>`                          |
+|-----------------------------|-------------------------------|----------------------------------|-----------------------------------------|
+| Error type                  | `Throwable` — implicit        | `Throwable` — explicit value     | Any type — explicit and domain-specific |
+| Forces handling             | Only checked exceptions       | Yes — via API                    | Yes — via API and switch patterns       |
+| Branch on error subtype     | Via `catch` clauses           | Via `instanceof`                 | Via sealed subtype and switch patterns  |
+| Interop with throwing code  | Native                        | Excellent — `Try.of(() -> ...)`  | Indirect — wrap with Try first          |
+| Best for                    | Truly exceptional situations  | Wrapping legacy/third-party code | Domain logic with typed failure modes   |
+
+## Common pitfalls
+
+### Nested Results
+
+`Result<Result<V, E>, E>` almost always indicates a mistake.
+Use `flatMap` instead of `map` when the mapper returns a `Result`.
+
+<PitfallsNested/>
+
+### Ignoring the error track
+
+Calling `getOrElse` silently discards the error.
+Use `fold` or `match` to make both branches explicit,
+especially in production code paths.
+
+<PitfallsIgnoringError/>
+
+### Using Result for truly exceptional situations
+
+If the error represents a bug or unrecoverable system failure (out of memory, corrupted state),
+an exception is still the right tool. `Result` is for expected,
+recoverable failure modes that callers are designed to handle.
+
+### Result as a method parameter
+
+Like `Option`, `Result` is designed for _return types_.
+Prefer overloaded methods or a nullable/typed parameter over a
+`Result`-typed parameter.
+
+## Real-world example
+
+A typed order placement pipeline. Each step is a fallible operation returning
+a domain-specific error — the compiler enforces that every error case is handled
+at the call site.
+
+<RealWorldExample/>
+
+Every step propagates its `Err` automatically via `flatMap`.
+The caller receives a single `Result<OrderConfirmation, OrderError>`
+and branches on the sealed `OrderError` subtypes.

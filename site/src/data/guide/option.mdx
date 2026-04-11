@@ -1,0 +1,226 @@
+---
+title: "Option<T> — Developer Guide"
+description: "Comprehensive guide to Option<T>: creating instances, extracting values, transforming, composing, and common pitfalls."
+order: 1
+h1: "Option<T>"
+---
+
+import {Content as CreatingSome}           from '../code/guide/option/creating-some.mdx';
+import {Content as CreatingNone}           from '../code/guide/option/creating-none.mdx';
+import {Content as CreatingOfNullable}     from '../code/guide/option/creating-of-nullable.mdx';
+import {Content as CreatingFromOptional}   from '../code/guide/option/creating-from-optional.mdx';
+import {Content as CreatingFromResultTry}  from '../code/guide/option/creating-from-result-try.mdx';
+import {Content as CheckingStatePredicates} from '../code/guide/option/checking-state-predicates.mdx';
+import {Content as CheckingStateSwitch}    from '../code/guide/option/checking-state-switch.mdx';
+import {Content as ExtractingValues}       from '../code/guide/option/extracting-values.mdx';
+import {Content as TransformingMap}        from '../code/guide/option/transforming-map.mdx';
+import {Content as TransformingFlatMap}    from '../code/guide/option/transforming-flatmap.mdx';
+import {Content as TransformingFilter}     from '../code/guide/option/transforming-filter.mdx';
+import {Content as TransformingPeek}       from '../code/guide/option/transforming-peek.mdx';
+import {Content as TransformingMatch}      from '../code/guide/option/transforming-match.mdx';
+import {Content as ComposingOrElse}        from '../code/guide/option/composing-or-else.mdx';
+import {Content as ComposingZip}           from '../code/guide/option/composing-zip.mdx';
+import {Content as ComposingSequence}      from '../code/guide/option/composing-sequence.mdx';
+import {Content as ComposingStream}        from '../code/guide/option/composing-stream.mdx';
+import {Content as InteropConversions}     from '../code/guide/option/interop-conversions.mdx';
+import {Content as PitfallsNested}         from '../code/guide/option/pitfalls-nested.mdx';
+import {Content as PitfallsNullMapper}     from '../code/guide/option/pitfalls-null-mapper.mdx';
+import {Content as RealWorldExample}       from '../code/guide/option/real-world-example.mdx';
+
+## What is Option&lt;T&gt;?
+
+`Option<T>` models a value that may or may not be present.
+It is a sealed interface with exactly two implementations:
+
+- `Some<T>` — holds a **non-null** value.
+- `None<T>` — represents absence, with no value.
+
+Unlike a raw `null`, an `Option` is explicit in the type system:
+callers are forced to handle both the present and absent cases.
+Unlike `java.util.Optional`, `Option` is a _sealed interface_
+and can be used in switch expressions with exhaustive pattern matching.
+
+## Creating instances
+
+### `Option.some(value)`
+
+Wraps a known, non-null value. Throws `NullPointerException` if the argument is null.
+
+<CreatingSome/>
+
+### `Option.none()`
+
+Returns the singleton absent value.
+
+<CreatingNone/>
+
+### `Option.ofNullable(value)`
+
+Creates an `Option` from a value that may be `null`.
+Returns `None` when the argument is `null`, `Some(value)` otherwise.
+This is the most common factory when bridging from legacy code.
+
+<CreatingOfNullable/>
+
+### `Option.fromOptional(optional)`
+
+Converts a `java.util.Optional` into an `Option`.
+
+<CreatingFromOptional/>
+
+### Converting from Result or Try
+
+Both `Result` and `Try` can be narrowed to an `Option` when you only care about presence:
+
+<CreatingFromResultTry/>
+
+## Checking state
+
+Prefer structural operations (`fold`, `map`, pattern matching)
+over imperative state checks, but the predicates are available:
+
+<CheckingStatePredicates/>
+
+You can also use **Java pattern matching** exhaustively:
+
+<CheckingStateSwitch/>
+
+## Extracting values
+
+| Method                   | When `None`                     | Notes                                                                     |
+|--------------------------|---------------------------------|---------------------------------------------------------------------------|
+| `get()`                  | Throws `NoSuchElementException` | Only safe after an `isDefined()` check; prefer alternatives.              |
+| `getOrElse(fallback)`    | Returns `fallback`              | Fallback is always evaluated — use `getOrElseGet` for expensive defaults. |
+| `getOrElseGet(supplier)` | Calls supplier                  | Lazily computed fallback.                                                 |
+| `getOrNull()`            | Returns `null`                  | Bridge to null-expecting APIs. Avoid propagating the null further.        |
+| `getOrThrow(supplier)`   | Throws supplied exception       | Use when absence is a programming error at that call site.                |
+| `fold(onNone, onSome)`   | Calls `onNone`                  | The most expressive extractor: forces you to handle both branches.        |
+
+<ExtractingValues/>
+
+## Transforming values
+
+### `map(mapper)`
+
+Applies a function to the value if present. Returns `None` unchanged.
+If the mapper returns `null`, the result becomes `None`.
+
+<TransformingMap/>
+
+### `flatMap(mapper)`
+
+Like `map`, but the mapper itself returns an `Option`.
+Use this to chain operations that may also produce absence.
+
+<TransformingFlatMap/>
+
+### `filter(predicate)`
+
+Keeps the value only if it satisfies the predicate; otherwise returns `None`.
+
+<TransformingFilter/>
+
+### `peek(action)`
+
+Runs a side-effecting action on the value (e.g., logging) without altering the `Option`.
+No-op on `None`. Returns `this` for chaining.
+
+<TransformingPeek/>
+
+### `match(onNone, onSome)`
+
+Terminal side-effecting variant of `fold`. Both branches return void.
+
+<TransformingMatch/>
+
+## Composing Options
+
+### Fallback chains with `orElse`
+
+Return an alternative `Option` when this one is `None`.
+The supplier overload is lazy — use it when computing the alternative is expensive.
+
+<ComposingOrElse/>
+
+### Zipping two or more Options
+
+Combine multiple independent `Option` values.
+Returns `None` if any input is `None`.
+
+<ComposingZip/>
+
+### Collecting a list with `sequence`
+
+Converts a `List<Option<T>>` into an `Option<List<T>>`.
+Returns `None` as soon as any element is `None`.
+
+<ComposingSequence/>
+
+### Stream integration with `stream()`
+
+Turns an `Option` into a one-element or empty stream.
+Useful for integrating into Stream pipelines without `filter + map`.
+
+<ComposingStream/>
+
+## Interoperability
+
+| Conversion                    | Method                            |
+|-------------------------------|-----------------------------------|
+| `Option` → `Optional`         | `option.toOptional()`             |
+| `Option` → `Result`           | `option.toResult(errorSupplier)`  |
+| `Option` → `Try`              | `option.toTry(exceptionSupplier)` |
+| `Option` → `Either`           | `option.toEither(leftSupplier)`   |
+| `Result` → `Option`           | `result.toOption()`               |
+| `Try` → `Option`              | `tryVal.toOption()`               |
+| `Optional` → `Option`         | `Option.fromOptional(optional)`   |
+
+<InteropConversions/>
+
+See the [Combining Types](combining-types) page for the full conversion matrix and composition patterns.
+
+## Option vs null vs Optional
+
+|                                    | `null`                         | `Optional<T>`                   | `Option<T>`                       |
+|------------------------------------|--------------------------------|---------------------------------|-----------------------------------|
+| Null-safety                        | None — NPE at runtime          | Good — explicit                 | Good — explicit                   |
+| Exhaustive handling                | No                             | No (runtime only)               | Yes — sealed, switch patterns     |
+| Use in records / generics          | Yes (fragile)                  | Discouraged (not serializable)  | Yes — record-based, serializable  |
+| Compose with Result / Try / Either | No                             | No                              | Yes — first-class conversions     |
+| Holds null values                  | Yes                            | No                              | No                                |
+
+## Common pitfalls
+
+### Nested Options
+
+`Option<Option<T>>` almost always indicates a mistake.
+Use `flatMap` instead of `map` when the mapper itself returns an `Option`.
+
+<PitfallsNested/>
+
+### Mapper returning null
+
+`map` treats a `null` return from the mapper as `None`.
+This is intentional for legacy interop, but can be surprising if you expect a non-null.
+
+<PitfallsNullMapper/>
+
+### Calling `get()` unconditionally
+
+`get()` throws `NoSuchElementException` on `None`.
+Use `getOrElse`, `fold`, or pattern matching instead.
+
+### Option as a method parameter
+
+Prefer overloaded methods or a nullable parameter over an `Option`-typed parameter.
+`Option` is designed for _return types_.
+
+## Real-world example
+
+A typical service layer pattern: look up a user, find their primary address,
+format it, and fall back to a default — all without a single null check or try/catch.
+
+<RealWorldExample/>
+
+Each step propagates `None` silently.
+No intermediate nulls, no nested conditionals.

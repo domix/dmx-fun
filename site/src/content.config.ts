@@ -31,5 +31,15 @@ const blog = defineCollection({
     }),
 });
 
+const guide = defineCollection({
+    loader: glob({pattern: "**/*.{md,mdx}", base: "./src/data/guide"}),
+    schema: z.object({
+        title: z.string(),
+        description: z.string(),
+        order: z.number(),
+        h1: z.string(),
+    }),
+});
+
 // Export a single `collections` object to register your collection(s)
-export const collections = {code, blog};
+export const collections = {code, blog, guide};
