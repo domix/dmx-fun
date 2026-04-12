@@ -1,0 +1,107 @@
+---
+title: "Release Process — Developer Guide"
+description: "Step-by-step process for cutting a stable dmx-fun release: version bump, CI publish, tag creation, post-release SNAPSHOT bump, and verification."
+order: 16
+h1: "Release Process"
+---
+
+import {Content as BumpVersion} from '../code/guide/release-process/bump-version.mdx';
+
+Releases are fully automated once the version is bumped and pushed to `main`.
+This page documents the exact steps and what happens at each stage.
+
+## Required repository secrets
+
+Before any release can be published, these five secrets must be configured in
+**GitHub → Settings → Secrets and variables → Actions**:
+
+| Secret | Purpose |
+|---|---|
+| `MAVEN_CENTRAL_USERNAME` | Maven Central portal username |
+| `MAVEN_CENTRAL_PASSWORD` | Maven Central portal password / token |
+| `SIGNING_KEY_ID` | GPG key ID (last 8 hex characters) |
+| `SIGNING_KEY` | GPG private key — armored, base64-encoded |
+| `SIGNING_KEY_PASSWORD` | Passphrase protecting the GPG key |
+
+These secrets are consumed by `publish.yml` and `publish-snapshot.yml`.
+They are never printed in logs.
+
+## Release checklist
+
+### 1. Merge all target PRs
+
+Ensure every issue and PR that should land in the release is merged to `main`
+and the CI build (`gradle.yml`) is green.
+
+### 2. Bump the version to stable
+
+Edit `gradle.properties` — remove the `-SNAPSHOT` suffix:
+
+<BumpVersion/>
+
+Commit with:
+```bash
+git commit -m "chore(release): bump version to 0.0.13" gradle.properties
+git push origin main
+```
+
+### 3. CI publishes automatically
+
+Pushing a stable version to `main` triggers `publish.yml`, which:
+
+1. Detects that `version=0.0.13` is **not** a SNAPSHOT
+2. Checks that the git tag `v0.0.13` does not already exist
+3. Runs `./gradlew test` — all modules
+4. Runs `./gradlew publishToMavenCentral --no-configuration-cache`
+5. Creates and pushes the annotated tag `v0.0.13`
+6. Opens a GitHub Release with auto-generated release notes
+
+Monitor progress at **Actions → Publish to Maven Central**.
+
+### 4. Verify the release on Maven Central
+
+After the workflow completes (typically 5–10 minutes for Maven Central propagation):
+
+- Check the artifact exists: `https://central.sonatype.com/artifact/codes.domix/fun`
+- Verify all three modules are present: `fun`, `fun-jackson`, `fun-assertj`
+- Confirm the POM, sources JAR, and Javadoc JAR are attached
+
+### 5. Bump to the next SNAPSHOT
+
+Immediately after the release, start the next development cycle:
+
+```bash
+# Edit gradle.properties: version=0.0.14-SNAPSHOT
+git commit -m "chore(release): bump version to 0.0.14-SNAPSHOT" gradle.properties
+git push origin main
+```
+
+This triggers `publish-snapshot.yml`, which publishes the SNAPSHOT to Maven Central's
+snapshot repository so early adopters can test against `HEAD`.
+
+### 6. Update README (if needed)
+
+The README uses shields.io Maven Central badges that auto-update.
+If you hardcode version numbers anywhere else, update them now.
+
+---
+
+## Tag format
+
+Tags follow the pattern `v{version}` — e.g. `v0.0.13`.
+Tags are annotated (created with `-a`) and pushed by the CI workflow automatically.
+**Never create release tags manually** — let `publish.yml` manage them to avoid
+triggering a duplicate publish.
+
+---
+
+## Re-running a failed publish
+
+If `publish.yml` fails after the tests but before the tag is pushed:
+
+1. Fix the root cause (e.g. expired signing key, Maven Central outage).
+2. Push any fix to `main`.
+3. The workflow re-runs. The tag-check step will find no existing tag and proceed.
+
+If the workflow fails *after* the tag was pushed but before the GitHub Release was created,
+create the release manually via `gh release create v0.0.13 --generate-notes`.
