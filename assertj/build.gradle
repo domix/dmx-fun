@@ -4,7 +4,8 @@ plugins {
 
 dependencies {
     api project(':lib')
-    api libs.assertj.core
+    compileOnly libs.assertj.core
+    testImplementation "org.assertj:assertj-core:${findProperty('assertjVersion') ?: libs.versions.assertj.get()}"
 }
 
 compileTestJava {
