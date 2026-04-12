@@ -239,7 +239,7 @@ If you are on a non-LTS release: Java 25 is the stable foundation your next proj
 
 ```kotlin
 // Gradle (Kotlin DSL)
-implementation("codes.domix:fun:0.0.12")
+implementation("codes.domix:fun:0.0.13")
 ```
 
 ```xml
@@ -247,7 +247,7 @@ implementation("codes.domix:fun:0.0.12")
 <dependency>
   <groupId>codes.domix</groupId>
   <artifactId>fun</artifactId>
-  <version>0.0.12</version>
+  <version>0.0.13</version>
 </dependency>
 ```
 
