@@ -1,0 +1,170 @@
+---
+title: "CI/CD Pipelines — Developer Guide"
+description: "Reference for every GitHub Actions workflow in dmx-fun: triggers, purpose, required secrets, local equivalents, and known gotchas."
+order: 15
+h1: "CI/CD Pipelines"
+---
+
+export const base = import.meta.env.BASE_URL;
+
+All CI/CD is handled by GitHub Actions. The workflows live in `.github/workflows/`.
+
+## Workflow overview
+
+| Workflow file | Trigger | Purpose |
+|---|---|---|
+| `gradle.yml` | push / PR to `main` (code paths) | Full build, tests, coverage, Javadoc, dependency graph submission |
+| `publish.yml` | push to `main` — stable version only | Publish all modules to Maven Central, create git tag and GitHub Release |
+| `publish-snapshot.yml` | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central |
+| `jackson-compatibility.yaml` | PR touching `jackson/**` | Matrix test against Jackson 2.13.x – 2.21.x |
+| `assertj-compatibility.yaml` | PR touching `assertj/**` | Matrix test against AssertJ 3.21.x – 3.27.x |
+| `pages.yml` | push to `main` | Build and deploy the documentation site to GitHub Pages |
+
+---
+
+## `gradle.yml` — Main CI build
+
+**Triggers**: push to `main` on tracked paths, or any PR to `main`.
+
+Uses `dorny/paths-filter` on PRs to skip the build entirely when no relevant file changed
+(e.g. a documentation-only commit).
+
+**What it does**:
+1. Compiles all modules
+2. Runs all tests and uploads the aggregated JaCoCo coverage report to the PR
+3. Generates aggregated Javadoc
+4. Submits the dependency graph to GitHub for Dependabot
+
+**Local equivalent**:
+```bash
+./gradlew build
+```
+
+**Secrets required**: none.
+
+---
+
+## `publish.yml` — Stable release
+
+**Triggers**: push to `main` when any of `lib/**`, `jackson/**`, `assertj/**`, `gradle/**`,
+`gradle.properties`, `gradlew`, `gradlew.bat`, or the workflow file itself changes.
+
+**Gotcha**: the workflow reads `version` from `gradle.properties` at runtime.
+If the version ends with `-SNAPSHOT`, all subsequent steps are skipped — the workflow exits early.
+Only stable versions (e.g. `0.0.13`) proceed.
+
+**What it does**:
+1. Reads the version from `gradle.properties`
+2. Checks whether the git tag `v{version}` already exists — skips if it does (idempotent)
+3. Runs all tests (`./gradlew test`)
+4. Publishes all modules to Maven Central (`./gradlew publishToMavenCentral --no-configuration-cache`)
+5. Creates and pushes the git tag `v{version}`
+6. Creates a GitHub Release with auto-generated release notes
+
+**Secrets required**:
+
+| Secret | Purpose |
+|---|---|
+| `MAVEN_CENTRAL_USERNAME` | Maven Central portal username |
+| `MAVEN_CENTRAL_PASSWORD` | Maven Central portal password / token |
+| `SIGNING_KEY_ID` | GPG key ID (last 8 characters) |
+| `SIGNING_KEY` | GPG private key (armored, base64-encoded) |
+| `SIGNING_KEY_PASSWORD` | Passphrase for the GPG key |
+
+**Local equivalent** (dry-run only — do not publish locally):
+```bash
+./gradlew publishToMavenCentral --no-configuration-cache --dry-run
+```
+
+---
+
+## `publish-snapshot.yml` — SNAPSHOT publish
+
+**Triggers**: same paths as `publish.yml`.
+
+**Gotcha**: mirror of `publish.yml` — only proceeds when the version ends with `-SNAPSHOT`.
+Stable versions cause all steps to be skipped.
+
+**What it does**:
+1. Reads the version; skips if not a SNAPSHOT
+2. Runs all tests
+3. Publishes to Maven Central's snapshot repository via `./gradlew publishToMavenCentral`
+
+**Secrets required**: same five secrets as `publish.yml`.
+
+---
+
+## `jackson-compatibility.yaml` — Jackson matrix
+
+**Triggers**: PR where at least one changed file matches `jackson/**` or the workflow file itself.
+
+Runs only on pull requests — not on push to `main`.
+
+**What it does**: runs `:jackson:test` for each Jackson version in the matrix:
+
+| Jackson version | Status |
+|---|---|
+| 2.13.5 | tested |
+| 2.14.3 | tested |
+| 2.15.4 | tested |
+| 2.16.2 | tested |
+| 2.17.3 | tested |
+| 2.18.2 | tested |
+| 2.19.4 | tested |
+| 2.20.2 | tested |
+| 2.21.2 | tested |
+
+**Local equivalent**:
+```bash
+./gradlew :jackson:test -PjacksonVersion=2.17.3
+```
+
+**Secrets required**: none.
+
+---
+
+## `assertj-compatibility.yaml` — AssertJ matrix
+
+**Triggers**: PR where at least one changed file matches `assertj/**` or the workflow file itself.
+
+Runs only on pull requests — not on push to `main`.
+
+**What it does**: runs `:assertj:test` for each AssertJ version in the matrix:
+
+| AssertJ version | Status |
+|---|---|
+| 3.21.0 | tested |
+| 3.22.0 | tested |
+| 3.23.1 | tested |
+| 3.24.2 | tested |
+| 3.25.3 | tested |
+| 3.26.3 | tested |
+| 3.27.7 | tested |
+
+**Local equivalent**:
+```bash
+./gradlew :assertj:test -PassertjVersion=3.25.3
+```
+
+**Secrets required**: none.
+
+---
+
+## `pages.yml` — Documentation site deploy
+
+**Triggers**: push to `main` (no path filter — any push rebuilds the site).
+
+**What it does**:
+1. Runs `./gradlew aggregateJavadoc` to generate the API reference
+2. Copies the Javadoc output into `site/public/javadoc/`
+3. Runs `npm run build` inside `site/`
+4. Deploys the `dist/` directory to GitHub Pages
+
+**Secrets required**: none (uses `GITHUB_TOKEN` with `pages: write` permission).
+
+**Local equivalent**:
+```bash
+./gradlew aggregateJavadoc
+cd site && npm run build
+# open dist/ in a local static server
+```

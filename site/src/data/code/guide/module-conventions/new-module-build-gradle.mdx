@@ -1,0 +1,24 @@
+---
+fileName: 'fun-spring/build.gradle'
+---
+
+```groovy
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    api project(':lib')
+    compileOnly libs.spring.context          // optional peer dependency
+    testImplementation libs.spring.context   // or property-driven version
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-spring", "${project.version}")
+
+    pom {
+        name = 'dmx-fun Spring integration'
+        description = 'Optional Spring module for dmx-fun: ...'
+    }
+}
+```

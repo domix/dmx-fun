@@ -1,0 +1,16 @@
+---
+fileName: 'terminal'
+---
+
+```bash
+# Run all tests across all modules
+./gradlew test
+
+# Run tests for a specific module
+./gradlew :lib:test
+./gradlew :jackson:test
+./gradlew :assertj:test
+
+# Run a single test class
+./gradlew :lib:test --tests "dmx.fun.OptionTest"
+```

@@ -77,6 +77,41 @@ const types = [
     },
 ];
 
+const contributing = [
+    {
+        name: 'Contributing',
+        href: `${base}guide/contributing`,
+        summary: 'Prerequisites, local build and test setup, code conventions, and how to open a PR.',
+        whenToUse: 'You want to contribute a bug fix, feature, or documentation improvement.',
+        avoidWhen: '',
+        tag: 'Contributors',
+    },
+    {
+        name: 'CI/CD Pipelines',
+        href: `${base}guide/pipelines`,
+        summary: 'Reference for all six GitHub Actions workflows: triggers, secrets, local equivalents, and gotchas.',
+        whenToUse: 'You need to understand or debug the CI/CD setup.',
+        avoidWhen: '',
+        tag: 'Maintainers',
+    },
+    {
+        name: 'Release Process',
+        href: `${base}guide/release-process`,
+        summary: 'Step-by-step guide for cutting a stable release: version bump, publish, tag, post-release SNAPSHOT.',
+        whenToUse: 'You are cutting a new release.',
+        avoidWhen: '',
+        tag: 'Maintainers',
+    },
+    {
+        name: 'Adding a New Module',
+        href: `${base}guide/module-conventions`,
+        summary: 'Conventions and checklist for adding a new optional integration module.',
+        whenToUse: 'You are adding a new integration module (e.g. fun-spring).',
+        avoidWhen: '',
+        tag: 'Maintainers',
+    },
+];
+
 const modules = [
     {
         name: 'Jackson integration',
@@ -200,6 +235,24 @@ const modules = [
                             <span>{m.avoidWhen}</span>
                         </div>
                     </div>
+                </a>
+            ))}
+        </div>
+
+        <h2>Contributing &amp; Maintainer</h2>
+        <p>
+            Documentation for working on the library itself: local setup, CI pipelines, release process,
+            and conventions for adding new modules.
+        </p>
+
+        <div class="type-grid">
+            {contributing.map(c => (
+                <a href={c.href} class="type-card">
+                    <div class="type-card-header">
+                        <code class="type-name">{c.name}</code>
+                        <span class="type-tag">{c.tag}</span>
+                    </div>
+                    <p class="type-summary">{c.summary}</p>
                 </a>
             ))}
         </div>

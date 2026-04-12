@@ -1,0 +1,121 @@
+---
+title: "Contributing — Developer Guide"
+description: "How to set up the dmx-fun development environment, run tests, run the site locally, follow code conventions, and open a pull request."
+order: 14
+h1: "Contributing"
+---
+
+import {Content as CloneAndBuild} from '../code/guide/contributing/clone-and-build.mdx';
+import {Content as RunTests}      from '../code/guide/contributing/run-tests.mdx';
+import {Content as RunSite}       from '../code/guide/contributing/run-site.mdx';
+
+Contributions are welcome — bug reports, documentation improvements, and new features alike.
+This page covers everything you need to go from a fresh clone to a passing build and an open PR.
+
+## Prerequisites
+
+| Tool | Version | Notes |
+|---|---|---|
+| Java | 25+ | Use the Gradle toolchain — no manual install needed if you have a JDK provider |
+| Gradle | wrapper (`./gradlew`) | Never install Gradle globally; always use the wrapper |
+| Node.js | 18+ | Only needed to run or build the documentation site |
+| npm | bundled with Node.js | Run from the `site/` directory |
+
+No other global tools are required.
+
+## Clone and build
+
+<CloneAndBuild/>
+
+`./gradlew build` compiles all modules, runs all tests, and generates the aggregated Javadoc and coverage report.
+
+## Running tests
+
+<RunTests/>
+
+To see the full test report after a run, open `build/reports/tests/testAggregateTestReport/index.html`.
+
+## Running the documentation site locally
+
+<RunSite/>
+
+The dev server watches for changes in `site/src/` and reloads automatically.
+The site is served under the `/dmx-fun/` base path to match GitHub Pages.
+
+> **Note**: `npm run build` in `site/` copies the Javadoc from `build/reports/javadoc/` into the
+> site's `public/` directory. Run `./gradlew aggregateJavadoc` first if you need the full build.
+
+## Code conventions
+
+### No `null` in the public API
+
+All public methods must be annotated with `@NullMarked` (via the package-info or class-level annotation).
+Return `Option<T>` instead of a nullable type; accept `@Nullable` parameters only when the absence is
+meaningful to the implementation.
+
+### Sealed interfaces and records
+
+Every sum type in the library is a sealed interface with record implementations.
+This enables exhaustive pattern matching for callers and removes the need for `instanceof` chains.
+
+```java
+// Correct — sealed + records
+public sealed interface Option<T> permits Option.Some, Option.None {
+    record Some<T>(T value) implements Option<T> {}
+    record None<T>()        implements Option<T> {}
+}
+```
+
+### No checked exceptions in the public API
+
+Checked exceptions must not appear in public method signatures.
+Wrap third-party code that throws in `Try.of(...)` and surface failures through `Result` or `Try`.
+
+### Test naming
+
+Test method names follow the pattern `<condition>_<expected outcome>`, written in `camelCase`:
+
+```java
+@Test
+void emptyOption_mapReturnsNone() { ... }
+```
+
+## Commit convention
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Type | When to use |
+|---|---|
+| `feat` | New public API or behaviour |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `refactor` | Code change with no behaviour change |
+| `test` | Adding or updating tests |
+| `chore` | Build, CI, dependencies |
+| `perf` | Performance improvement |
+
+Always reference the issue number: `feat(option): add mapBoth combinator (close #42)`.
+
+## Branch naming
+
+```
+<type>/<short-description>
+feat/option-map-both
+fix/try-recover-npe
+docs/guide/adding-validated-examples
+```
+
+## Opening a pull request
+
+1. Fork the repository and create a branch from `main`.
+2. Make your changes — one concern per PR.
+3. Ensure `./gradlew build` passes locally.
+4. Open the PR against `main` with a title following the commit convention.
+5. Link the related issue in the PR description (`close #NNN`).
+
+All PRs run the full CI pipeline (`gradle.yml`) automatically.
+
+## Note on `lib/src/test/resources/`
+
+This directory is intentionally untracked (it appears in `git status` as untracked).
+It is generated at test time and should not be committed.
