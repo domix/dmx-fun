@@ -3,6 +3,7 @@ plugins {
 }
 
 javadoc.enabled = false
+jacocoTestReport.enabled = false
 
 dependencies {
     implementation project(':lib')
