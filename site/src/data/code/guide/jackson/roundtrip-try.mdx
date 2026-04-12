@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+
+// Serialize
+String success = mapper.writeValueAsString(Try.success("data")); // "data"
+String failure = mapper.writeValueAsString(
+    Try.failure(new IllegalArgumentException("bad input")));     // {"error":"bad input"}
+
+// Deserialize — success
+Try<String> ok = mapper.readValue("\"data\"",
+    new TypeReference<Try<String>>() {});
+// Success("data")
+
+// Deserialize — failure; always reconstructed as RuntimeException
+Try<String> failed = mapper.readValue("{\"error\":\"bad input\"}",
+    new TypeReference<Try<String>>() {});
+// Failure(RuntimeException("bad input"))
+```

@@ -1,0 +1,123 @@
+---
+title: "Jackson Integration — Developer Guide"
+description: "How to serialize and deserialize all dmx-fun types with Jackson: module registration, JSON shapes, TypeReference round-trips, Spring Boot / JAX-RS integration, and known limitations."
+order: 12
+h1: "Jackson Integration"
+---
+
+import {Content as Dependency}      from '../code/guide/jackson/dependency.mdx';
+import {Content as Registration}    from '../code/guide/jackson/registration.mdx';
+import {Content as RoundtripOption} from '../code/guide/jackson/roundtrip-option.mdx';
+import {Content as RoundtripResult} from '../code/guide/jackson/roundtrip-result.mdx';
+import {Content as RoundtripTry}    from '../code/guide/jackson/roundtrip-try.mdx';
+import {Content as RoundtripOther}  from '../code/guide/jackson/roundtrip-other.mdx';
+import {Content as SpringJaxrs}     from '../code/guide/jackson/spring-jaxrs.mdx';
+
+The `fun-jackson` module provides Jackson serializers and deserializers for all
+dmx-fun types. It is an **optional** dependency — the core `fun` library has no
+runtime dependency on Jackson.
+
+## Adding the dependency
+
+`fun-jackson` declares `jackson-databind` as `compileOnly`. You must add
+`jackson-databind` explicitly to your own classpath. Any version from
+**2.13.x through 2.21.x** is supported (see [version compatibility](#version-compatibility) below).
+
+<Dependency/>
+
+## Registering `DmxFunModule`
+
+<Registration/>
+
+`DmxFunModule` is registered as a `com.fasterxml.jackson.databind.Module`
+service provider, so `findAndRegisterModules()` picks it up automatically
+without any explicit wiring.
+
+## JSON shapes
+
+| Type                | Success / present                  | Failure / absent                  |
+|---------------------|------------------------------------|-----------------------------------|
+| `Option<T>`         | `v` (unwrapped)                    | `null`                            |
+| `Result<V, E>`      | `{"ok": v}`                        | `{"err": e}`                      |
+| `Try<V>`            | `v` (unwrapped)                    | `{"error": "message"}`            |
+| `Validated<E, A>`   | `{"valid": a}`                     | `{"invalid": e}`                  |
+| `Either<L, R>`      | `{"right": v}`                     | `{"left": v}`                     |
+| `Tuple2<A, B>`      | `[a, b]`                           | —                                 |
+| `Tuple3<A, B, C>`   | `[a, b, c]`                        | —                                 |
+| `Tuple4<A, B, C, D>`| `[a, b, c, d]`                     | —                                 |
+| `NonEmptyList<T>`   | `[head, ...tail]`                  | —                                 |
+
+## Round-trip examples
+
+### `Option<T>`
+
+<RoundtripOption/>
+
+### `Result<V, E>`
+
+<RoundtripResult/>
+
+### `Try<V>`
+
+<RoundtripTry/>
+
+### `Validated`, `Either`, `Tuple*`, `NonEmptyList`
+
+<RoundtripOther/>
+
+## Spring Boot and JAX-RS
+
+<SpringJaxrs/>
+
+## Version compatibility
+
+The module is tested in CI against the following Jackson versions on every pull
+request that touches the `jackson/` module:
+
+| Jackson version | Status  |
+|-----------------|---------|
+| 2.13.x          | tested  |
+| 2.14.x          | tested  |
+| 2.15.x          | tested  |
+| 2.16.x          | tested  |
+| 2.17.x          | tested  |
+| 2.18.x          | tested  |
+| 2.19.x          | tested  |
+| 2.20.x          | tested  |
+| 2.21.x          | tested  |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :jackson:test -PjacksonVersion=2.15.4
+```
+
+## Known limitations
+
+### `Try.failure` loses the exception type
+
+`Try.failure(ex)` serializes as `{"error": "message"}` — only the exception
+message is preserved. On deserialization, a `RuntimeException` is always
+reconstructed regardless of the original exception class. Stack traces are not
+serialized.
+
+**Workaround**: convert `Try<V>` to `Result<V, String>` via `toResult(Throwable::getMessage)`
+before serializing if the exception type matters to consumers.
+
+### `Try.success` with object values that have a single `"error"` string field
+
+The deserializer detects a `Failure` by checking whether the JSON object has
+exactly one field named `"error"` containing a string. If a success value is a
+POJO that happens to serialize as `{"error": "some text"}` (one string field
+named `"error"`), it will be misread as a `Failure` on deserialization.
+
+**Workaround**: avoid using `Try<V>` for types whose JSON shape is
+`{"error": "<string>"}`. Use `Result<V, E>` instead, which uses an explicit
+`"ok"` / `"err"` envelope that cannot be confused with value content.
+
+### Type parameters require `TypeReference`
+
+Without a `TypeReference`, Jackson loses the generic type information at
+deserialization time and returns raw `LinkedHashMap` / `ArrayList` instead of
+the intended element types. Always use `TypeReference<Option<String>>()`,
+`TypeReference<Result<Integer, String>>()`, etc.

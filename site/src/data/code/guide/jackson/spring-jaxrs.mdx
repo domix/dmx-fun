@@ -1,0 +1,31 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Spring Boot — declare DmxFunModule as a @Bean; Spring applies it automatically
+// to the auto-configured ObjectMapper.
+@Configuration
+public class JacksonConfig {
+    @Bean
+    public DmxFunModule dmxFunModule() {
+        return new DmxFunModule();
+    }
+}
+
+// Controller returning Result<User, ApiError> — Jackson serializes it transparently
+@GetMapping("/users/{id}")
+public Result<User, ApiError> getUser(@PathVariable Long id) {
+    return userService.findById(id);   // {"ok":{...}} or {"err":{...}}
+}
+
+// JAX-RS — register DmxFunModule on the ObjectMapper provider
+@Provider
+public class ObjectMapperProvider implements ContextResolver<ObjectMapper> {
+    private final ObjectMapper mapper =
+        new ObjectMapper().registerModule(new DmxFunModule());
+
+    @Override
+    public ObjectMapper getContext(Class<?> type) { return mapper; }
+}
+```

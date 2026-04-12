@@ -76,6 +76,17 @@ const types = [
         tag: 'Interop',
     },
 ];
+
+const modules = [
+    {
+        name: 'Jackson integration',
+        href: `${base}guide/jackson`,
+        summary: 'Serializers and deserializers for all dmx-fun types via the optional fun-jackson module.',
+        whenToUse: 'You need to serialize Option, Result, Try, or any other dmx-fun type to/from JSON.',
+        avoidWhen: 'You are not using Jackson — the module is optional and has no effect without it.',
+        tag: 'JSON',
+    },
+];
 ---
 
 <DocsLayout
@@ -157,12 +168,33 @@ const types = [
             and parallel validation.
         </p>
 
-        <h2>Jackson module</h2>
+        <h2>Modules</h2>
         <p>
-            All types support JSON serialization and deserialization via the optional
-            <code>fun-jackson</code> module.
-            See the <a href={`${base}getting-started`}>Getting Started</a> page for the dependency coordinates.
+            Optional modules extend the library with integrations for popular frameworks and libraries.
+            Each module is an independent dependency — add only what you need.
         </p>
+
+        <div class="type-grid">
+            {modules.map(m => (
+                <a href={m.href} class="type-card">
+                    <div class="type-card-header">
+                        <code class="type-name">{m.name}</code>
+                        <span class="type-tag">{m.tag}</span>
+                    </div>
+                    <p class="type-summary">{m.summary}</p>
+                    <div class="type-meta">
+                        <div class="type-when">
+                            <span class="label">Use when</span>
+                            <span>{m.whenToUse}</span>
+                        </div>
+                        <div class="type-avoid">
+                            <span class="label">Avoid when</span>
+                            <span>{m.avoidWhen}</span>
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
     </div>
 </DocsLayout>
 
