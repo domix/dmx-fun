@@ -1,55 +1,20 @@
-
-# λ dmx-fun: Functional Programming Constructions in Java
+# dmx-fun
 
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/cab675c2-c8ca-4017-903f-6790309750e8" />
 
-This repository contains a collection of implementations and experiments exploring **functional programming constructions in Java**. The goal is to demonstrate how functional paradigms—such as immutability, pure functions, higher-order functions, currying, and more—can be expressed in Java, a traditionally object-oriented language.
+A Java library of functional types that make failures, absence, and validation explicit in the type system — without ceremony.
 
-## 🔍 Purpose
+`Option<T>`, `Result<V, E>`, `Try<V>`, `Validated<E, A>`, `Either<L, R>`, `Lazy<T>`, `Tuple2/3/4`, and `NonEmptyList<T>` — each designed to compose cleanly with the others and with the Java standard library.
 
-While Java is not a purely functional language, modern features like lambda expressions, streams, and the `Optional` and `CompletableFuture` APIs allow for elegant and expressive functional-style programming. This project aims to:
+---
 
-- Explore functional programming principles in Java
-- Showcase reusable constructions inspired by functional languages
-- Experiment with Java libraries that support functional programming
-- Serve as a reference and learning resource for developers
+## Installation
 
-## 📦 What's Included
+All modules are published to Maven Central. Add only what you need.
 
-Examples and implementations may include:
+### Core library
 
-- Function composition and higher-order functions  
-- Currying and partial application  
-- Immutable data structures  
-- Functional error handling (e.g., using `Try`, `Result`, or `Option`)  
-- Lazy evaluation  
-- Monads and functors (in a Java-friendly context)  
-- Functional streams and pipelines  
-
-## 🛠 Technologies
-
-- Java 25+
-- Gradle
-- Spock for testing  
-- [Vavr](https://www.vavr.io/) or similar libraries for functional data types (optional)  
-
-## 🤝 Contributions
-
-Contributions, discussions, and suggestions are welcome! Feel free to open issues or submit pull requests.
-
-## 📄 License
-
-This project is licensed under the Apache License. See the [LICENSE](./LICENSE) file for more details.
-
-## 🛠️ Usage
-
-
-### Installation
-
-This library is available on Maven Central. To use it, include the following dependency to your project's configuration file:
-
-#### Maven
-
+**Maven**
 ```xml
 <dependency>
     <groupId>codes.domix</groupId>
@@ -58,80 +23,112 @@ This library is available on Maven Central. To use it, include the following dep
 </dependency>
 ```
 
-#### Gradle
-
+**Gradle**
 ```groovy
 implementation("codes.domix:fun:0.0.12")
 ```
-### Usage
 
-Assuming you have imported the library, you can start using it in your code.
+### Jackson integration (optional)
 
-Let's start with a simple example. You have a method that validates a user's email, in a method like this:
+Serializers and deserializers for all dmx-fun types.
 
-```java
-    protected Result<CreateUserCommand, String> isValidEmail(
-        CreateUserCommand command
-    ) {
-        var email = command.email();
-        if (email == null || email.isBlank()) {
-            return Result.err("Provided email is either null or blank");
-        }
-        boolean emailMatches = EMAIL_PATTERN
-            .matcher(email)
-            .matches();
-
-        if (!emailMatches) {
-            return Result.err("Invalid email");
-        }
-
-        return Result.ok(command);
-    }
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-jackson</artifactId>
+    <version>0.0.12</version>
+</dependency>
 ```
 
-In the previous example, we are using the `Result` type from the `fun` library. This type is a simple wrapper around an `Optional` that provides additional methods for handling errors.
-
-In a nutshell, the `Result` type allows you to express a computation that may fail, and handle the error case in a type-safe way.
-
-If everything goes well, the `Result` will contain the original value, in case of error, it will contain an error message.
-
-Now you want to validate the user's password, with similar logic. You can create a new method like this:
-
-```java
-    protected Result<CreateUserCommand, String> isValidPassword(
-        CreateUserCommand command
-    ) {
-
-        var password = command.password();
-        if (password == null) {
-            return Result.err("Provided password is null");
-        }
-        boolean validPassword = PASSWORD_PATTERN
-            .matcher(password)
-            .matches();
-
-        if (!validPassword) {
-            return Result.err("Invalid password.");
-        }
-
-        return Result.ok(command);
-    }
+**Gradle**
+```groovy
+implementation("codes.domix:fun-jackson:0.0.12")
 ```
 
-As you can see, the `Result` type is used to express the result of the validation. 
+### AssertJ integration (optional, test scope)
 
-Now we can combine both validations in a single method. You can do it like this:
+Fluent custom assertions for all dmx-fun types.
 
-```java
-    public Result<User, String> createUser(CreateUserCommand command) {
-        return this.isValidEmail(command)
-            .flatMap(this::isValidPassword)
-            .flatMap(this.userRepository::createUser);
-    }
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-assertj</artifactId>
+    <version>0.0.12</version>
+    <scope>test</scope>
+</dependency>
 ```
 
-In this case, the validation is performed in two steps, and the result of the first step is used as the input for the second step.
+**Gradle**
+```groovy
+testImplementation("codes.domix:fun-assertj:0.0.12")
+```
 
-In the end, the result of the whole validation process is used to create the user in the database.
+---
 
-The main benefit of this approach is that the validation logic is encapsulated in a single method, and it can be reused in other places.
+## Types
+
+| Type | Tag | When to use |
+|---|---|---|
+| `Option<T>` | Nullability | A value that may or may not be present. The null-safe alternative to `@Nullable`. |
+| `Result<V, E>` | Error handling | An operation that can succeed or fail with a typed error. |
+| `Try<V>` | Exception handling | Wraps a computation that may throw. Turns exceptions into values. |
+| `Validated<E, A>` | Validation | Like `Result` but accumulates all errors instead of failing on the first. |
+| `Either<L, R>` | Disjoint union | A value that is one of two types with no success/failure semantics. |
+| `Lazy<T>` | Deferred computation | A value computed at most once, on first access. Thread-safe memoization. |
+| `Tuple2/3/4` | Product types | Typed heterogeneous tuples without a dedicated class. |
+| `NonEmptyList<T>` | Collections | A list guaranteed to have at least one element at compile time. |
+
+---
+
+## Quick example
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.Validated;
+
+// Wrap a legacy API that throws
+Try<RawUser> raw = Try.of(() -> externalService.fetchUser(id));
+
+// Convert to Result for typed error handling
+Result<User, RegistrationError> user = raw
+    .toResult(e -> RegistrationError.fetchFailed(id, e))
+    .flatMap(this::parseUser)
+    .flatMap(this::enrichWithDefaults);
+
+// Validate all fields at once — accumulate every error, not just the first
+Validated<NonEmptyList<String>, ValidUser> validated = user
+    .map(this::validate)
+    .getOrElse(Validated.invalidNel("user could not be loaded"));
+
+validated
+    .onValid(userRepository::save)
+    .onInvalid(errors -> log.warn("Registration rejected: {}", errors));
+```
+
+---
+
+## Documentation
+
+Full developer guide, API reference, and composition patterns:
+**https://domix.github.io/dmx-fun/**
+
+---
+
+## Requirements
+
+- Java 25 or later
+
+---
+
+## Contributing
+
+Bug reports, feature requests, and pull requests are welcome. Please open an issue before submitting a large change.
+
+---
+
+## License
+
+Apache License 2.0 — see [LICENSE](./LICENSE) for details.
