@@ -12,6 +12,14 @@ A Java library of functional types that make failures, absence, and validation e
 
 All modules are published to Maven Central. Add only what you need.
 
+| Module        | Latest version                                                                                                                                    |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `fun`         | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                 |
+| `fun-jackson` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson) |
+| `fun-assertj` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj) |
+
+Replace `LATEST_VERSION` with the version shown in the badge above.
+
 ### Core library
 
 **Maven**
@@ -19,13 +27,13 @@ All modules are published to Maven Central. Add only what you need.
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun</artifactId>
-    <version>0.0.12</version>
+    <version>LATEST_VERSION</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
-implementation("codes.domix:fun:0.0.12")
+implementation("codes.domix:fun:LATEST_VERSION")
 ```
 
 ### Jackson integration (optional)
@@ -37,13 +45,13 @@ Serializers and deserializers for all dmx-fun types.
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun-jackson</artifactId>
-    <version>0.0.12</version>
+    <version>LATEST_VERSION</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
-implementation("codes.domix:fun-jackson:0.0.12")
+implementation("codes.domix:fun-jackson:LATEST_VERSION")
 ```
 
 ### AssertJ integration (optional, test scope)
@@ -55,14 +63,14 @@ Fluent custom assertions for all dmx-fun types.
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun-assertj</artifactId>
-    <version>0.0.12</version>
+    <version>LATEST_VERSION</version>
     <scope>test</scope>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
-testImplementation("codes.domix:fun-assertj:0.0.12")
+testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
 ```
 
 ---
@@ -88,6 +96,7 @@ testImplementation("codes.domix:fun-assertj:0.0.12")
 import dmx.fun.Result;
 import dmx.fun.Try;
 import dmx.fun.Validated;
+import dmx.fun.NonEmptyList;
 
 // Wrap a legacy API that throws
 Try<RawUser> raw = Try.of(() -> externalService.fetchUser(id));
