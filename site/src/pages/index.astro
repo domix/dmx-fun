@@ -1,10 +1,79 @@
 ---
 import {site} from "../config/site.ts";
 import DocsLayout from '../layouts/DocsLayout.astro';
-import {Code} from 'astro-expressive-code/components'
 import {Content as QuickExample} from '../data/code/quick-example.mdx';
+import {Content as InstallGradle} from '../data/code/home/install-gradle.mdx';
+import {Content as InstallMaven} from '../data/code/home/install-maven.mdx';
 
 const base = import.meta.env.BASE_URL;
+
+const types = [
+    {
+        name: 'Option<T>',
+        href: `${base}guide/option`,
+        summary: 'A value that may or may not be present. The null-safe alternative.',
+        tag: 'Nullability',
+    },
+    {
+        name: 'Result<V, E>',
+        href: `${base}guide/result`,
+        summary: 'Either a success value or a typed error. Models domain failures explicitly.',
+        tag: 'Error handling',
+    },
+    {
+        name: 'Try<V>',
+        href: `${base}guide/try`,
+        summary: 'Wraps a computation that may throw. Turns exceptions into values.',
+        tag: 'Exception handling',
+    },
+    {
+        name: 'Validated<E, A>',
+        href: `${base}guide/validated`,
+        summary: 'Like Result but accumulates multiple errors instead of failing fast.',
+        tag: 'Validation',
+    },
+    {
+        name: 'Either<L, R>',
+        href: `${base}guide/either`,
+        summary: 'A neutral disjoint union with no success/failure semantics.',
+        tag: 'Disjoint union',
+    },
+    {
+        name: 'Lazy<T>',
+        href: `${base}guide/lazy`,
+        summary: 'A value computed at most once, on first access. Thread-safe memoization.',
+        tag: 'Deferred computation',
+    },
+    {
+        name: 'Tuple2/3/4',
+        href: `${base}guide/tuples`,
+        summary: 'Typed heterogeneous tuples. Named fields without a dedicated class.',
+        tag: 'Product types',
+    },
+    {
+        name: 'NonEmptyList<T>',
+        href: `${base}guide/non-empty-list`,
+        summary: 'A list guaranteed to have at least one element at compile time.',
+        tag: 'Collections',
+    },
+];
+
+const modules = [
+    {
+        name: 'fun-jackson',
+        href: `${base}guide/jackson`,
+        summary: 'Serializers and deserializers for all dmx-fun types via Jackson.',
+        tag: 'JSON',
+        coords: 'codes.domix:fun-jackson',
+    },
+    {
+        name: 'fun-assertj',
+        href: `${base}guide/assertj`,
+        summary: 'Fluent AssertJ custom assertions for all dmx-fun types.',
+        tag: 'Testing',
+        coords: 'codes.domix:fun-assertj',
+    },
+];
 ---
 
 <DocsLayout title="Home" description={`${site.slug} - ${site.description}`}>
@@ -13,69 +82,145 @@ const base = import.meta.env.BASE_URL;
             <span class="lambda">λ</span> {site.slug}
         </h1>
         <p class="hero-description">
-            {site.description}
+            Explicit types for failures, absence, and validation in Java.
         </p>
         <div class="hero-actions">
             <a href={`${base}getting-started`} class="btn btn-primary">Get Started</a>
-            <a href={site.github} target="_blank" rel="noopener" class="btn btn-secondary">
+            <a href={`${base}guide`} class="btn btn-secondary">Developer Guide</a>
+            <a href={site.github} target="_blank" rel="noopener" class="btn btn-ghost">
                 View on GitHub
             </a>
         </div>
     </div>
 
-    <div class="features">
-        <div class="feature-card">
-            <div class="feature-icon">⚡</div>
-            <h3>Pure Functions</h3>
-            <p>Build reliable and testable code with pure functional programming principles.</p>
+    <section class="section intro-section">
+        <div class="intro-card">
+            <p class="intro-text">
+                dmx-fun is a Java library that makes failures, absence, and validation
+                <strong>explicit in the type system</strong>. Instead of throwing exceptions or returning
+                <code>null</code>, operations return values that encode both the happy path and the error
+                case — composable via <code>map</code> and <code>flatMap</code>, pattern-matchable via
+                sealed interfaces, and testable without mocks.
+            </p>
+            <p class="intro-text">
+                The core library has a single mandatory dependency:
+                <a href="https://github.com/jspecify/jspecify" target="_blank" rel="noopener">JSpecify</a>
+                for null-safety annotations. Everything else is optional.
+            </p>
         </div>
+    </section>
 
-        <div class="feature-card">
-            <div class="feature-icon">🔄</div>
-            <h3>Immutability</h3>
-            <p>Work with immutable data structures to avoid side effects and race conditions.</p>
+    <section class="section">
+        <h2 class="section-title">Types</h2>
+        <p class="section-desc">
+            Eight composable types — each with a clear purpose, a consistent API, and a guide page.
+        </p>
+        <div class="type-grid">
+            {types.map(t => (
+                <a href={t.href} class="type-card">
+                    <div class="type-card-header">
+                        <code class="type-name">{t.name}</code>
+                        <span class="type-tag">{t.tag}</span>
+                    </div>
+                    <p class="type-summary">{t.summary}</p>
+                </a>
+            ))}
         </div>
+    </section>
 
-        <div class="feature-card">
-            <div class="feature-icon">🎯</div>
-            <h3>Type Safety</h3>
-            <p>Leverage Java's type system for compile-time guarantees and safer code.</p>
+    <section class="section">
+        <h2 class="section-title">Optional modules</h2>
+        <p class="section-desc">
+            Independent dependencies — add only what you need.
+        </p>
+        <div class="module-grid">
+            {modules.map(m => (
+                <a href={m.href} class="module-card">
+                    <div class="type-card-header">
+                        <code class="type-name">{m.name}</code>
+                        <span class="type-tag">{m.tag}</span>
+                    </div>
+                    <p class="type-summary">{m.summary}</p>
+                    <code class="module-coords">{m.coords}</code>
+                </a>
+            ))}
         </div>
+    </section>
 
-        <div class="feature-card">
-            <div class="feature-icon">🛠️</div>
-            <h3>Rich API</h3>
-            <p>Comprehensive collection of functional utilities for everyday programming tasks.</p>
+    <section class="section">
+        <h2 class="section-title">Installation</h2>
+        <p class="section-desc">
+            Available on Maven Central.
+            See the <a href={`${base}getting-started`}>Getting Started</a> page for full coordinates.
+        </p>
+        <p class="install-badge-row">
+            <a href="https://central.sonatype.com/artifact/codes.domix/fun" target="_blank" rel="noopener">
+                <img src="https://img.shields.io/maven-central/v/codes.domix/fun" alt="Maven Central" />
+            </a>
+        </p>
+        <div class="install-grid">
+            <div class="install-block">
+                <span class="install-label">Gradle</span>
+                <InstallGradle/>
+            </div>
+            <div class="install-block">
+                <span class="install-label">Maven</span>
+                <InstallMaven/>
+            </div>
         </div>
+    </section>
 
-        <div class="feature-card">
-            <div class="feature-icon">📦</div>
-            <h3>Zero Dependencies</h3>
-            <p>Lightweight library with no external dependencies, easy to integrate.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🚀</div>
-            <h3>Production Ready</h3>
-            <p>Battle-tested in production environments with comprehensive test coverage.</p>
-        </div>
-    </div>
     <div class="quick-example">
-        <h2>Quick Example</h2>
+        <h2>Quick example</h2>
         <QuickExample/>
     </div>
 
     <div class="cta-section">
-        <h2>Ready to Get Started?</h2>
-        <p>Add functional programming power to your Java projects today.</p>
-        <a href={`${base}getting-started`} class="btn btn-primary btn-large">View Documentation</a>
+        <h2>Ready to dive in?</h2>
+        <p>The Developer Guide covers every type in depth — design rationale, every combinator, composition patterns, and pitfalls to avoid.</p>
+        <div class="cta-actions">
+            <a href={`${base}guide`} class="btn btn-primary btn-large">Developer Guide</a>
+            <a href={`${base}getting-started`} class="btn btn-secondary btn-large">Getting Started</a>
+        </div>
     </div>
 </DocsLayout>
 
 <style>
+    /* ── Intro ────────────────────────────────────────── */
+    .intro-section {
+        margin: 2rem 0 3rem;
+    }
+
+    .intro-card {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-left: 4px solid var(--color-primary);
+        border-radius: 8px;
+        padding: 1.75rem 2rem;
+        max-width: 820px;
+        margin: 0 auto;
+    }
+
+    .intro-text {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: var(--color-text-secondary);
+        margin: 0 0 0.85rem;
+        text-align: center;
+    }
+
+    .intro-text strong {
+        color: var(--color-text);
+    }
+
+    .intro-text:last-child {
+        margin-bottom: 0;
+    }
+
+    /* ── Hero ─────────────────────────────────────────── */
     .hero {
         text-align: center;
-        padding: 4rem 0;
+        padding: 4rem 0 3rem;
     }
 
     .hero-title {
@@ -107,6 +252,7 @@ const base = import.meta.env.BASE_URL;
         flex-wrap: wrap;
     }
 
+    /* ── Buttons ──────────────────────────────────────── */
     .btn {
         display: inline-block;
         padding: 0.75rem 2rem;
@@ -140,49 +286,165 @@ const base = import.meta.env.BASE_URL;
         transform: translateY(-2px);
     }
 
+    .btn-ghost {
+        background-color: transparent;
+        color: var(--color-text-secondary);
+        border-color: transparent;
+    }
+
+    .btn-ghost:hover {
+        color: var(--color-text);
+        transform: translateY(-2px);
+    }
+
     .btn-large {
         padding: 1rem 2.5rem;
         font-size: 1.125rem;
     }
 
-    .features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
+    /* ── Sections ─────────────────────────────────────── */
+    .section {
         margin: 4rem 0;
     }
 
-    .feature-card {
-        background-color: var(--color-surface);
-        padding: 2rem;
-        border-radius: 12px;
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    .section-desc {
+        color: var(--color-text-secondary);
+        margin: 0 0 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* ── Type grid ────────────────────────────────────── */
+    .type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1rem;
+    }
+
+    .type-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1.1rem 1.25rem;
         border: 1px solid var(--color-border);
-        transition: all 0.3s ease;
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .feature-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px var(--color-shadow);
+    .type-card:hover {
         border-color: var(--color-primary);
+        box-shadow: 0 2px 8px var(--color-shadow);
     }
 
-    .feature-icon {
-        font-size: 2.5rem;
+    .type-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .type-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--color-primary);
+    }
+
+    .type-tag {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        background-color: var(--color-surface);
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border);
+        white-space: nowrap;
+    }
+
+    .type-summary {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--color-text-secondary);
+    }
+
+    /* ── Module grid ──────────────────────────────────── */
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1rem;
+    }
+
+    .module-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1.1rem 1.25rem;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .module-card:hover {
+        border-color: var(--color-primary);
+        box-shadow: 0 2px 8px var(--color-shadow);
+    }
+
+    .module-coords {
+        font-size: 0.75rem;
+        color: var(--color-text-secondary);
+        margin-top: 0.25rem;
+    }
+
+    /* ── Install ──────────────────────────────────────── */
+    .install-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
         margin-bottom: 1rem;
     }
 
-    .feature-card h3 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-        font-size: 1.25rem;
+    .install-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 1rem 1.25rem;
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        min-width: 0;
     }
 
-    .feature-card p {
+    .install-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
         color: var(--color-text-secondary);
-        margin: 0;
-        line-height: 1.6;
+        margin-bottom: 0.25rem;
     }
 
+    .install-badge-row {
+        margin: 0;
+    }
+
+    .install-badge-row img {
+        height: 20px;
+    }
+
+    /* ── Quick example ────────────────────────────────── */
     .quick-example {
         background-color: var(--color-surface);
         padding: 2rem;
@@ -195,13 +457,10 @@ const base = import.meta.env.BASE_URL;
         margin-top: 0;
     }
 
-    .quick-example pre {
-        margin: 1rem 0 0;
-    }
-
+    /* ── CTA ──────────────────────────────────────────── */
     .cta-section {
         text-align: center;
-        padding: 4rem 0;
+        padding: 4rem 2rem;
         margin: 4rem 0;
         background-color: var(--color-surface);
         border-radius: 12px;
@@ -213,11 +472,22 @@ const base = import.meta.env.BASE_URL;
     }
 
     .cta-section p {
-        font-size: 1.125rem;
+        font-size: 1.1rem;
         color: var(--color-text-secondary);
         margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
+    .cta-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* ── Responsive ───────────────────────────────────── */
     @media (max-width: 768px) {
         .hero-title {
             font-size: 2.5rem;
@@ -231,7 +501,12 @@ const base = import.meta.env.BASE_URL;
             font-size: 1.25rem;
         }
 
-        .features {
+        .type-grid,
+        .module-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .install-grid {
             grid-template-columns: 1fr;
         }
     }
