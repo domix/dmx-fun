@@ -3,14 +3,14 @@
 # this matrix catches regressions against older (but still supported) releases
 # before they reach main.
 #
-# Triggered only on pull requests that touch the jackson/ module.
+# Triggered only on pull requests that touch jackson/** or this workflow file.
 # To run a specific version locally:
 #   ./gradlew :jackson:test -PjacksonVersion=2.15.4
 name: Jackson compatibility
 
 on:
   pull_request:
-    # Only run when the jackson module itself is modified.
+    # Run when the jackson module or this workflow file is modified.
     paths:
       - 'jackson/**'
       - '.github/workflows/jackson-compatibility.yaml'
