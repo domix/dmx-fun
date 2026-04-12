@@ -87,7 +87,7 @@ const modules = [
         <div class="hero-actions">
             <a href={`${base}getting-started`} class="btn btn-primary">Get Started</a>
             <a href={`${base}guide`} class="btn btn-secondary">Developer Guide</a>
-            <a href={site.github} target="_blank" rel="noopener" class="btn btn-ghost">
+            <a href={site.github} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
                 View on GitHub
             </a>
         </div>
@@ -104,7 +104,7 @@ const modules = [
             </p>
             <p class="intro-text">
                 The core library has a single mandatory dependency:
-                <a href="https://github.com/jspecify/jspecify" target="_blank" rel="noopener">JSpecify</a>
+                <a href="https://github.com/jspecify/jspecify" target="_blank" rel="noopener noreferrer">JSpecify</a>
                 for null-safety annotations. Everything else is optional.
             </p>
         </div>
@@ -154,7 +154,7 @@ const modules = [
             See the <a href={`${base}getting-started`}>Getting Started</a> page for full coordinates.
         </p>
         <p class="install-badge-row">
-            <a href="https://central.sonatype.com/artifact/codes.domix/fun" target="_blank" rel="noopener">
+            <a href="https://central.sonatype.com/artifact/codes.domix/fun" target="_blank" rel="noopener noreferrer">
                 <img src="https://img.shields.io/maven-central/v/codes.domix/fun" alt="Maven Central" />
             </a>
         </p>
@@ -328,7 +328,8 @@ const modules = [
         gap: 1rem;
     }
 
-    .type-card {
+    .type-card,
+    .module-card {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
@@ -340,7 +341,8 @@ const modules = [
         transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .type-card:hover {
+    .type-card:hover,
+    .module-card:hover {
         border-color: var(--color-primary);
         box-shadow: 0 2px 8px var(--color-shadow);
     }
@@ -383,23 +385,6 @@ const modules = [
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
         gap: 1rem;
-    }
-
-    .module-card {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 1.1rem 1.25rem;
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        text-decoration: none;
-        color: inherit;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .module-card:hover {
-        border-color: var(--color-primary);
-        box-shadow: 0 2px 8px var(--color-shadow);
     }
 
     .module-coords {
