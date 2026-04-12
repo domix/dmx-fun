@@ -1,0 +1,26 @@
+---
+fileName: 'TryTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+// Assert success and value
+assertThat(Try.success("data"))
+    .isSuccess()
+    .containsValue("data");
+
+// Assert failure — just check it failed
+assertThat(Try.failure(new RuntimeException("boom")))
+    .isFailure();
+
+// Assert failure with a specific exception type
+assertThat(Try.of(() -> { throw new IOException("disk full"); }))
+    .isFailure()
+    .failsWith(IOException.class);
+
+// Assert a computation succeeds
+assertThat(Try.of(() -> Integer.parseInt("42")))
+    .isSuccess()
+    .containsValue(42);
+```

@@ -1,0 +1,25 @@
+---
+fileName: 'TupleTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+// Tuple2
+assertThat(new Tuple2<>("Alice", 30))
+    .hasFirst("Alice")
+    .hasSecond(30);
+
+// Tuple3
+assertThat(Tuple3.of("Alice", 30, true))
+    .hasFirst("Alice")
+    .hasSecond(30)
+    .hasThird(true);
+
+// Tuple4
+assertThat(Tuple4.of("Alice", 30, true, 1.75))
+    .hasFirst("Alice")
+    .hasSecond(30)
+    .hasThird(true)
+    .hasFourth(1.75);
+```

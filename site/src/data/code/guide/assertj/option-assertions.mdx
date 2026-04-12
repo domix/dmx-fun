@@ -1,0 +1,21 @@
+---
+fileName: 'OptionTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+// Assert presence and value
+assertThat(Option.some(42))
+    .isSome()
+    .containsValue(42);
+
+// Assert absence
+assertThat(Option.<String>none())
+    .isNone();
+
+// Assert the value satisfies a condition without extracting it
+assertThat(Option.some("hello"))
+    .isSome()
+    .hasValueSatisfying(v -> assertThat(v).startsWith("hel").hasSize(5));
+```

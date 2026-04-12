@@ -1,0 +1,94 @@
+---
+title: "AssertJ Integration — Developer Guide"
+description: "How to use the optional fun-assertj module: fluent assertions for Option, Result, Try, Validated, and Tuple types via DmxFunAssertions.assertThat."
+order: 13
+h1: "AssertJ Integration"
+---
+
+import {Content as Dependency}           from '../code/guide/assertj/dependency.mdx';
+import {Content as OptionAssertions}     from '../code/guide/assertj/option-assertions.mdx';
+import {Content as ResultAssertions}     from '../code/guide/assertj/result-assertions.mdx';
+import {Content as TryAssertions}        from '../code/guide/assertj/try-assertions.mdx';
+import {Content as ValidatedAssertions}  from '../code/guide/assertj/validated-assertions.mdx';
+import {Content as TupleAssertions}      from '../code/guide/assertj/tuple-assertions.mdx';
+
+The `fun-assertj` module provides fluent AssertJ custom assertions for all
+dmx-fun types. It is an **optional test-only dependency** — the core `fun`
+library has no runtime dependency on AssertJ.
+
+## Adding the dependency
+
+`fun-assertj` declares `assertj-core` as `compileOnly`. You must add
+`assertj-core` explicitly to your own test classpath. Any version from
+**3.21.x through 3.27.x** is supported (see [version compatibility](#version-compatibility) below).
+
+<Dependency/>
+
+## Entry point
+
+All assertions are accessed through a single overloaded static method:
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+```
+
+`DmxFunAssertions.assertThat` coexists with
+`org.assertj.core.api.Assertions.assertThat` — both can be statically imported
+in the same test class without naming conflict, because the argument types differ.
+
+> **Note**: `fun-assertj` cannot be used inside the `:lib` module's own tests
+> due to a circular dependency. Use it only in consumer projects or in the
+> `:assertj` module's own test suite.
+
+## Assertions reference
+
+| Type | Methods |
+|------|---------|
+| `Option<T>` | `isSome()`, `isNone()`, `containsValue(expected)`, `hasValueSatisfying(consumer)` |
+| `Result<V, E>` | `isOk()`, `isErr()`, `containsValue(expected)`, `containsError(expected)` |
+| `Try<V>` | `isSuccess()`, `isFailure()`, `containsValue(expected)`, `failsWith(exceptionType)` |
+| `Validated<E, A>` | `isValid()`, `isInvalid()`, `containsValue(expected)`, `hasError(expected)` |
+| `Tuple2<A, B>` | `hasFirst(expected)`, `hasSecond(expected)` |
+| `Tuple3<A, B, C>` | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)` |
+| `Tuple4<A, B, C, D>` | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)`, `hasFourth(expected)` |
+
+## `Option<T>` assertions
+
+<OptionAssertions/>
+
+## `Result<V, E>` assertions
+
+<ResultAssertions/>
+
+## `Try<V>` assertions
+
+<TryAssertions/>
+
+## `Validated<E, A>` assertions
+
+<ValidatedAssertions/>
+
+## `Tuple2/3/4` assertions
+
+<TupleAssertions/>
+
+## Version compatibility
+
+The module is tested in CI against the following AssertJ versions on every pull
+request that touches the `assertj/` module:
+
+| AssertJ version | Status  |
+|-----------------|---------|
+| 3.21.x          | tested  |
+| 3.22.x          | tested  |
+| 3.23.x          | tested  |
+| 3.24.x          | tested  |
+| 3.25.x          | tested  |
+| 3.26.x          | tested  |
+| 3.27.x          | tested  |
+
+To run the tests locally against a specific version:
+
+```bash
+./gradlew :assertj:test -PassertjVersion=3.25.3
+```

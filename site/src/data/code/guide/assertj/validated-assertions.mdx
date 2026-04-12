@@ -1,0 +1,25 @@
+---
+fileName: 'ValidatedTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+// Assert valid and value
+assertThat(Validated.valid("ok"))
+    .isValid()
+    .containsValue("ok");
+
+// Assert invalid and error
+assertThat(Validated.<String, String>invalid("bad input"))
+    .isInvalid()
+    .hasError("bad input");
+
+// Assert NEL-based validation result
+Validated<NonEmptyList<String>, Integer> result =
+    Validated.invalidNel("must be positive");
+
+assertThat(result)
+    .isInvalid()
+    .hasError(NonEmptyList.singleton("must be positive"));
+```

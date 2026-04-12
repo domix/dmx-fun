@@ -1,0 +1,22 @@
+---
+fileName: 'ResultTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+// Assert Ok and its value
+assertThat(Result.ok("hello"))
+    .isOk()
+    .containsValue("hello");
+
+// Assert Err and its error
+assertThat(Result.<String, String>err("oops"))
+    .isErr()
+    .containsError("oops");
+
+// Combining with standard AssertJ — both static imports coexist
+assertThat(Result.ok(List.of(1, 2, 3)))
+    .isOk()
+    .containsValue(List.of(1, 2, 3));
+```

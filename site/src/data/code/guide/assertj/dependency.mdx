@@ -1,0 +1,26 @@
+---
+fileName: 'build.gradle / pom.xml'
+---
+
+```groovy
+// Gradle — test scope only
+testImplementation("codes.domix:fun-assertj:0.0.12")
+// AssertJ itself — bring your own version (3.21.x – 3.27.x)
+testImplementation("org.assertj:assertj-core:3.27.7")
+```
+
+```xml
+<!-- Maven — test scope only -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-assertj</artifactId>
+    <version>0.0.12</version>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.assertj</groupId>
+    <artifactId>assertj-core</artifactId>
+    <version>3.27.7</version>
+    <scope>test</scope>
+</dependency>
+```
