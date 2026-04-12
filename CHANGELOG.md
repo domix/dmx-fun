@@ -7,6 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.13] - 2026-04-12
+
+### Breaking Changes
+
+- **Package renamed from `codes.domix.fun` to `dmx.fun`:** all import statements must be
+  updated. Module descriptor renamed to `dmx.fun`; artifact group/coordinates unchanged.
+
+### Added
+
+- **`Either<L, R>` — disjoint union type:**
+  - Sealed interface with `Left<L, R>` and `Right<L, R>` implementations.
+  - `map(Function)` / `mapLeft(Function)` / `flatMap(Function)` — standard functor / monad
+    operations on the right channel.
+  - `fold(Function, Function)` — collapses either branch into a single value.
+  - `peek(Consumer)` / `peekLeft(Consumer)` — side-effect hooks.
+  - `swap()` — exchanges left and right channels.
+  - `toOption()` / `toResult()` / `toValidated()` — interop with other dmx-fun types.
+  - Full `@NullMarked` coverage.
+- **`NonEmptyList<T>` — non-empty list guaranteed at compile time (#122):**
+  - `of(T head, List<? extends T> tail)` and `singleton(T)` factory methods.
+  - `fromList(List<T>)` — returns `Option<NonEmptyList<T>>`; empty list produces `None`.
+  - `head()`, `tail()`, `size()`, `toList()` accessors.
+  - `map(Function)` — transforms all elements, preserving non-emptiness.
+  - `concat(NonEmptyList)` — concatenates two non-empty lists.
+  - Interop with `Validated` for error accumulation via `Validated.invalidNel`.
+- **`Try.recover` and `Try.recoverWith` typed overloads (#118):**
+  - `recover(Class<E>, Function<E, Value>)` — recovers only from a specific exception type.
+  - `recoverWith(Class<E>, Function<E, Try<Value>>)` — same but returns a new `Try`.
+  - Both overloads ignore failures whose exception does not match the given type.
+- **`Option` / `Result` — eager and lazy `orElse` overloads (#123):**
+  - `Option.orElse(Option<Value>)` — returns `this` if `Some`, otherwise the given alternative.
+  - `Option.orElse(Supplier<Option<Value>>)` — lazy variant; supplier not called when `Some`.
+  - `Result.orElse` / `Result.orElse(Supplier)` equivalents on the error channel.
+- **`Validated` collectors (#117):**
+  - `Validated.collector()` — `Collector` that accumulates a `Stream<Validated<E, A>>` into a
+    single `Validated<NonEmptyList<E>, List<A>>`.
+  - `Validated.traverseCollector(Function)` — map-then-collect in one pass.
+- **`fun-jackson` module — Jackson serialization support:**
+  - `DmxFunModule` — Jackson `Module` that registers serializers and deserializers for all
+    dmx-fun types; register once with `ObjectMapper.registerModule(new DmxFunModule())`.
+  - `Option<T>`: `Some` serializes as `{"value": ...}`, `None` as `{}`.
+  - `Result<V, E>`: `Ok` as `{"ok": ...}`, `Err` as `{"err": ...}`.
+  - `Try<V>`: `Success` as `{"value": ...}`, `Failure` as `{"error": "..."}`.
+  - `Either<L, R>`: `Left` as `{"left": ...}`, `Right` as `{"right": ...}`.
+  - `Validated<E, A>`, `Tuple2/3/4`, `NonEmptyList<T>`: full round-trip support.
+  - Tested against Jackson 2.17.x through 2.21.x.
+- **`fun-assertj` module — fluent AssertJ custom assertions (#116):**
+  - `DmxFunAssertions.assertThat(Option<T>)` — `isSome()`, `isNone()`, `hasSomeValue(T)`.
+  - `DmxFunAssertions.assertThat(Result<V, E>)` — `isOk()`, `isError()`, `hasOkValue(V)`.
+  - `DmxFunAssertions.assertThat(Try<V>)` — `isSuccess()`, `isFailure()`, `hasSuccessValue(V)`.
+  - `DmxFunAssertions.assertThat(Validated<E, A>)` — `isValid()`, `isInvalid()`.
+  - `DmxFunAssertions.assertThat(Tuple2/3/4)` — per-slot value assertions.
+  - Tested against AssertJ 3.21.x through 3.27.x.
+- **`samples/` subproject — runnable examples (#52):**
+  - One executable `*Sample.java` class per type: `OptionSample`, `ResultSample`, `TrySample`,
+    `EitherSample`, `ValidatedSample`, `LazySample`, `TupleSample`, `NonEmptyListSample`,
+    `CheckedInterfacesSample`, `JacksonSample`.
+  - `AssertJSampleTest` — JUnit 5 test class demonstrating all `fun-assertj` assertions.
+
+### Changed
+
+- **Build — convention plugins extracted (#156):**
+  - `dmx-fun.java-base` — applies `java-library`, JaCoCo, JUnit 5, AssertJ test dependencies.
+  - `dmx-fun.java-module` — extends base with `mavenPublishing`, signing, JSpecify dependency,
+    `issueManagement`, and `ciManagement` metadata.
+- **POM metadata improved for all modules (#209):**
+  - `name` and `description` updated to reflect each module's identity.
+  - `issueManagement` pointing to the GitHub issue tracker added to all published modules.
+  - `ciManagement` pointing to GitHub Actions added to all published modules.
+- **CI — multi-module Maven Central publication (#157, #172):**
+  - Root-level `publishToMavenCentral` task now publishes `lib`, `jackson`, and `assertj`
+    modules in a single pipeline run.
+  - Separate `publish-snapshot.yml` workflow publishes `*-SNAPSHOT` builds on push to `main`.
+  - `publish.yml` skips automatically when the version ends with `-SNAPSHOT` (#201).
+  - `publish-snapshot.yml` uses `publishToMavenCentral` (not the generic `publish` task) (#203).
+- **CI — GitHub Actions upgraded to v6 and path filters expanded (#196).**
+- **CI — compatibility matrices added:** AssertJ 3.21–3.27 (#194); Jackson 2.17–2.21 (#174).
+- **Java version centralized** in `libs.versions.toml`; Jackson updated to 2.21.2.
+
+### Fixed
+
+- `Try.toEither` now guards against a `null` value inside `Success`.
+- `Either.flatMap` now validates that the mapper does not return `null`.
+
+### Documentation
+
+- **Full Developer Guide published** — 9 core type pages (Option, Result, Try, Either,
+  Validated, Lazy, Tuples, NonEmptyList, CheckedInterfaces) plus Jackson and AssertJ
+  integration pages, each with a link to its runnable sample.
+- **Contributing & Maintainer guide** — 4 new pages: contributing, pipelines, release process,
+  module conventions (#212).
+- **README rewritten** (#206) — Maven Central badges, type overview table, quick example,
+  documentation link.
+- **Homepage redesigned** (#211) — type grid, modules section, install snippets.
+
 ## [0.0.12] - 2026-04-06
 
 ### Added
@@ -230,7 +325,8 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.12...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.13...HEAD
+[0.0.13]: https://github.com/domix/dmx-fun/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/domix/dmx-fun/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/domix/dmx-fun/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/domix/dmx-fun/compare/v0.0.9...v0.0.10
