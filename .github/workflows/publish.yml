@@ -32,8 +32,21 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Detected version: $VERSION"
 
+      - name: Check whether version is a stable release
+        id: release_check
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [[ "$VERSION" == *-SNAPSHOT ]]; then
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "Version $VERSION is a SNAPSHOT — skipping stable release publish."
+          else
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "Version $VERSION is a stable release — will publish."
+          fi
+
       - name: Check whether v${{ steps.version.outputs.version }} is a new release
         id: tag_check
+        if: steps.release_check.outputs.is_release == 'true'
         run: |
           TAG="v${{ steps.version.outputs.version }}"
           if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
@@ -45,22 +58,22 @@ jobs:
           fi
 
       - name: Set up JDK
-        if: steps.tag_check.outputs.exists == 'false'
+        if: steps.release_check.outputs.is_release == 'true' && steps.tag_check.outputs.exists == 'false'
         uses: actions/setup-java@v5.2.0
         with:
           java-version: '25'
           distribution: 'temurin'
 
       - name: Setup Gradle
-        if: steps.tag_check.outputs.exists == 'false'
+        if: steps.release_check.outputs.is_release == 'true' && steps.tag_check.outputs.exists == 'false'
         uses: gradle/actions/setup-gradle@v6
 
       - name: Run tests
-        if: steps.tag_check.outputs.exists == 'false'
+        if: steps.release_check.outputs.is_release == 'true' && steps.tag_check.outputs.exists == 'false'
         run: ./gradlew test
 
       - name: Publish all modules to Maven Central
-        if: steps.tag_check.outputs.exists == 'false'
+        if: steps.release_check.outputs.is_release == 'true' && steps.tag_check.outputs.exists == 'false'
         run: ./gradlew publishToMavenCentral --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -70,7 +83,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
       - name: Create and push release tag
-        if: steps.tag_check.outputs.exists == 'false'
+        if: steps.release_check.outputs.is_release == 'true' && steps.tag_check.outputs.exists == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -78,7 +91,7 @@ jobs:
           git push origin "v${{ steps.version.outputs.version }}"
 
       - name: Create GitHub Release
-        if: steps.tag_check.outputs.exists == 'false'
+        if: steps.release_check.outputs.is_release == 'true' && steps.tag_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v3.0.0
         with:
           tag_name: v${{ steps.version.outputs.version }}
