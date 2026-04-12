@@ -29,7 +29,7 @@ mavenPublishing {
     coordinates("codes.domix", "fun", "${project.version}")
 
     pom {
-        name = 'Functional Programming Constructions in Java.'
-        description = 'The goal is to demonstrate how functional paradigms—such as immutability, pure functions, higher-order functions, currying, and more—can be expressed in Java, a traditionally object-oriented language.'
+        name = 'dmx-fun'
+        description = 'Functional types for Java: Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList. Makes failures, absence, and validation explicit in the type system.'
     }
 }

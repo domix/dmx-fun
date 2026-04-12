@@ -28,7 +28,7 @@ mavenPublishing {
     coordinates("codes.domix", "fun-assertj", "${project.version}")
 
     pom {
-        name = 'AssertJ custom assertions for dmx-fun types.'
-        description = 'Fluent AssertJ custom assertions for Option, Result, Try, Validated, Tuple2, Tuple3, and Tuple4.'
+        name = 'dmx-fun AssertJ integration'
+        description = 'Optional AssertJ module for dmx-fun: fluent custom assertions for Option, Result, Try, Validated, Either, Tuple2/3/4, and NonEmptyList.'
     }
 }

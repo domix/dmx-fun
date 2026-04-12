@@ -41,5 +41,13 @@ mavenPublishing {
             developerConnection = 'scm:git:https://github.com/domix/dmx-fun'
             url = 'https://github.com/domix/dmx-fun'
         }
+        issueManagement {
+            system = 'GitHub'
+            url = 'https://github.com/domix/dmx-fun/issues'
+        }
+        ciManagement {
+            system = 'GitHub Actions'
+            url = 'https://github.com/domix/dmx-fun/actions'
+        }
     }
 }
