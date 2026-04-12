@@ -27,7 +27,7 @@ compileTestJava {
 mavenPublishing {
     coordinates("codes.domix", "fun-jackson", "${project.version}")
     pom {
-        name = 'Jackson module for dmx-fun types.'
-        description = 'Jackson serializers and deserializers for Option, Result, Try, Validated, Tuple2/3/4, NonEmptyList, and Either.'
+        name = 'dmx-fun Jackson integration'
+        description = 'Optional Jackson module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
     }
 }
