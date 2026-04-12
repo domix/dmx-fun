@@ -5,6 +5,8 @@ on:
     branches: [ "main" ]
     paths:
       - 'lib/**'
+      - 'jackson/**'
+      - 'assertj/**'
       - 'settings.gradle'
       - 'gradle.properties'
       - 'gradle/**'
@@ -51,15 +53,15 @@ jobs:
 
       - name: Setup Gradle
         if: steps.tag_check.outputs.exists == 'false'
-        uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run tests
         if: steps.tag_check.outputs.exists == 'false'
-        run: ./gradlew :lib:test
+        run: ./gradlew test
 
-      - name: Publish to Maven Central
+      - name: Publish all modules to Maven Central
         if: steps.tag_check.outputs.exists == 'false'
-        run: ./gradlew :lib:publishToMavenCentral --no-configuration-cache
+        run: ./gradlew publishToMavenCentral --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
