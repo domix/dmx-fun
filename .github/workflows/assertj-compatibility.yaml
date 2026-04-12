@@ -2,14 +2,14 @@
 # versions. AssertJ is declared as compileOnly so users bring their own version;
 # this matrix catches regressions before they reach main.
 #
-# Triggered only on pull requests that touch the assertj/ module.
+# Triggered only on pull requests that touch assertj/** or this workflow file.
 # To run a specific version locally:
 #   ./gradlew :assertj:test -PassertjVersion=3.25.3
 name: AssertJ compatibility
 
 on:
   pull_request:
-    # Only run when the assertj module itself is modified.
+    # Run when the assertj module or this workflow file is modified.
     paths:
       - 'assertj/**'
       - '.github/workflows/assertj-compatibility.yaml'
