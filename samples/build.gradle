@@ -1,0 +1,15 @@
+plugins {
+    id 'dmx-fun.java-base'
+}
+
+javadoc.enabled = false
+jacocoTestReport.enabled = false
+
+dependencies {
+    implementation project(':lib')
+    implementation project(':jackson')
+    implementation libs.jackson.databind
+
+    testImplementation project(':assertj')
+    testImplementation libs.assertj.core
+}
