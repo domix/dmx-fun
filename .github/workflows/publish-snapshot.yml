@@ -67,7 +67,7 @@ jobs:
 
       - name: Publish SNAPSHOT to Maven Central
         if: steps.snapshot_check.outputs.is_snapshot == 'true'
-        run: ./gradlew publish --no-configuration-cache
+        run: ./gradlew publishToMavenCentral --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
