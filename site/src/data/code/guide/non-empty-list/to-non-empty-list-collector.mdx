@@ -8,7 +8,7 @@ Option<NonEmptyList<String>> tags =
     Stream.of("java", "fp", "dmx-fun")
           .filter(t -> t.length() > 2)
           .collect(NonEmptyList.toNonEmptyList());
-// Some(["java", "fp", "dmx-fun"])
+// Some(["java", "dmx-fun"])   // "fp".length() == 2, filtered out by > 2
 
 // Empty stream → None
 Option<NonEmptyList<String>> noTags =

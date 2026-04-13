@@ -78,7 +78,7 @@ public class NonEmptyListSample {
             .filter(t -> t.length() > 2)
             .collect(NonEmptyList.toNonEmptyList());
         collected.peek(nel -> System.out.println("Collected: " + nel.toList()));
-        // Collected: [java, fp, dmx-fun]
+        // Collected: [java, dmx-fun]
 
         // Empty stream → None
         Option<NonEmptyList<String>> noResults = Stream.<String>empty()

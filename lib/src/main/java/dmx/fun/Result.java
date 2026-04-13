@@ -828,25 +828,8 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     static <V, K> Collector<V, ?, Map<K, NonEmptyList<V>>> groupingBy(
             Function<? super V, ? extends K> classifier) {
         Objects.requireNonNull(classifier, "classifier");
-        class Acc { final Map<K, ArrayList<V>> map = new LinkedHashMap<>(); }
-        return Collector.of(
-            Acc::new,
-            (acc, v) -> {
-                Objects.requireNonNull(v, "groupingBy stream element must not be null");
-                K key = Objects.requireNonNull(classifier.apply(v), "classifier must not return null");
-                acc.map.computeIfAbsent(key, k -> new ArrayList<>()).add(v);
-            },
-            (a, b) -> {
-                b.map.forEach((k, vs) -> a.map.computeIfAbsent(k, __ -> new ArrayList<>()).addAll(vs));
-                return a;
-            },
-            acc -> {
-                Map<K, NonEmptyList<V>> result = new LinkedHashMap<>();
-                acc.map.forEach((k, vs) ->
-                    result.put(k, NonEmptyList.of(vs.get(0), vs.subList(1, vs.size()))));
-                return Collections.unmodifiableMap(result);
-            }
-        );
+        return groupingByCollector(classifier,
+            vs -> NonEmptyList.of(vs.get(0), vs.subList(1, vs.size())));
     }
 
     /**
@@ -878,6 +861,20 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
             Function<? super NonEmptyList<V>, ? extends R> downstream) {
         Objects.requireNonNull(classifier, "classifier");
         Objects.requireNonNull(downstream, "downstream");
+        return groupingByCollector(classifier,
+            vs -> Objects.requireNonNull(
+                downstream.apply(NonEmptyList.of(vs.get(0), vs.subList(1, vs.size()))),
+                "downstream must not return null"));
+    }
+
+    /**
+     * Shared accumulation logic for both {@link #groupingBy} overloads.
+     * Builds a {@code LinkedHashMap<K, ArrayList<V>>} and applies {@code groupFinisher}
+     * to each group's list in the finisher step.
+     */
+    private static <V, K, R> Collector<V, ?, Map<K, R>> groupingByCollector(
+            Function<? super V, ? extends K> classifier,
+            Function<ArrayList<V>, ? extends R> groupFinisher) {
         class Acc { final Map<K, ArrayList<V>> map = new LinkedHashMap<>(); }
         return Collector.of(
             Acc::new,
@@ -892,11 +889,7 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
             },
             acc -> {
                 Map<K, R> result = new LinkedHashMap<>();
-                acc.map.forEach((k, vs) -> {
-                    NonEmptyList<V> nel = NonEmptyList.of(vs.get(0), vs.subList(1, vs.size()));
-                    result.put(k, Objects.requireNonNull(downstream.apply(nel),
-                        "downstream must not return null"));
-                });
+                acc.map.forEach((k, vs) -> result.put(k, groupFinisher.apply(vs)));
                 return Collections.unmodifiableMap(result);
             }
         );

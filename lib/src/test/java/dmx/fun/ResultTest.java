@@ -754,6 +754,11 @@ class ResultTest {
         Map<Integer, Long> result = Stream.of("a", "bb", "cc", "ddd")
             .collect(Result.groupingBy(String::length, nel -> (long) nel.size()));
         assertThat(result).containsEntry(1, 1L).containsEntry(2, 2L).containsEntry(3, 1L);
+        // keys must appear in encounter order: 1, 2, 3
+        assertThat(result.keySet()).containsExactly(1, 2, 3);
+        // result map must be unmodifiable
+        assertThatThrownBy(() -> result.put(99, 0L))
+            .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

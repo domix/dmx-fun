@@ -423,6 +423,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         return Collector.of(
             Acc::new,
             (acc, opt) -> {
+                Objects.requireNonNull(opt, "sequenceCollector stream element must not be null");
                 if (!acc.hasNone) {
                     switch (opt) {
                         case None<V> __ -> acc.hasNone = true;

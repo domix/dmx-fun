@@ -138,10 +138,13 @@ two lists, consuming the entire stream.
 `Result.groupingBy(classifier)` groups stream elements by a derived key into a
 `Map<K, NonEmptyList<V>>`. Unlike `Collectors.groupingBy`, the value type is
 `NonEmptyList<V>` rather than `List<V>`, making the non-emptiness of every group
-explicit in the type.
+explicit in the type. The returned `Map<K, NonEmptyList<V>>` is **insertion-order**
+(encounter order of the stream) and **unmodifiable**.
 
-A downstream variant `groupingBy(classifier, downstream)` applies a transformation
-to each group's `NonEmptyList` after grouping.
+The downstream variant `groupingBy(classifier, downstream)` applies a
+`Function<NonEmptyList<V>, R>` to each group after grouping, producing a
+`Map<K, R>`. Like the base overload, the result is **insertion-order** and
+**unmodifiable**.
 
 <GroupingBy/>
 
