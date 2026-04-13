@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+
+// mapValues — transform every value; keys are unchanged
+NonEmptyMap<String, String> labeled = nem.mapValues(v -> v + " pts");
+// {alice="10 pts", bob="20 pts"}
+
+// mapKeys — transform every key; values follow their original key
+NonEmptyMap<String, Integer> upper = nem.mapKeys(String::toUpperCase);
+// {ALICE=10, BOB=20}
+
+// Colliding mapped keys: head key takes priority; conflicting tail entries are dropped
+NonEmptyMap<String, Integer> collision = NonEmptyMap.of("a", 1, Map.of("A", 2));
+NonEmptyMap<String, Integer> mapped = collision.mapKeys(String::toUpperCase);
+// {A=1}  (tail entry A=2 dropped because mapped key equals the new head key)
+```

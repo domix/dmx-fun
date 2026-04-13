@@ -40,7 +40,7 @@ tasks.register('aggregateJavadoc', Exec) {
 
     // Capture all project-relative values at configuration time
     def javadocToolProvider = javaToolchains.javadocToolFor {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get().toInteger()))
     }
     def libSrc     = project(':lib').file('src/main/java')
     def assertjSrc = project(':assertj').file('src/main/java')

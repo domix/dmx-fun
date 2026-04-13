@@ -1,6 +1,7 @@
 package dmx.fun.samples;
 
 import dmx.fun.NonEmptyList;
+import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import dmx.fun.Validated;
 import java.util.List;
@@ -47,6 +48,12 @@ public class NonEmptyListSample {
 
         Option<NonEmptyList<String>> fromFull = NonEmptyList.fromList(List.of("a", "b"));
         System.out.println("From full: " + fromFull.isDefined()); // true
+
+        // toNonEmptySet — deduplicates while preserving head and insertion order
+        NonEmptyList<String> withDups = NonEmptyList.of("java", List.of("fp", "java", "fp", "dmx-fun"));
+        NonEmptySet<String> dedupSet  = withDups.toNonEmptySet();
+        System.out.println("Set head: " + dedupSet.head());  // java
+        System.out.println("Set size: " + dedupSet.size());  // 3 (not 5)
 
         // Concat — instance method
         NonEmptyList<String> more = NonEmptyList.of("quarkus", List.of("spring"));

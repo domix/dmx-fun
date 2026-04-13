@@ -1,0 +1,121 @@
+---
+title: "NonEmptySet<T> — Developer Guide"
+description: "Comprehensive guide to NonEmptySet<T>: construction, element access, transformations, filter, set operations (union, intersection), and cross-type conversions (toNonEmptyMap, toNonEmptyList)."
+order: 10
+h1: "NonEmptySet<T>"
+---
+
+import {Content as CreatingInstances}  from '../code/guide/non-empty-set/creating-instances.mdx';
+import {Content as AccessingElements}  from '../code/guide/non-empty-set/accessing-elements.mdx';
+import {Content as Transformations}    from '../code/guide/non-empty-set/transformations.mdx';
+import {Content as Filter}             from '../code/guide/non-empty-set/filter.mdx';
+import {Content as SetOperations}      from '../code/guide/non-empty-set/set-operations.mdx';
+import {Content as Interop}            from '../code/guide/non-empty-set/interop.mdx';
+import {Content as RealWorldExample}   from '../code/guide/non-empty-set/real-world-example.mdx';
+
+> **Runnable example:** [`NonEmptySetSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/NonEmptySetSample.java)
+
+## What is NonEmptySet&lt;T&gt;?
+
+`NonEmptySet<T>` is an **immutable set guaranteed at construction time to contain
+at least one element**. The non-emptiness constraint is encoded in the static type —
+callers that receive a `NonEmptySet<T>` never need to check whether it is empty.
+
+**Internal structure**: a `head` (the first element) and a `tail`
+(an unmodifiable `Set<T>` for the remaining elements, which may be empty).
+`head()` is always present.
+
+**Null policy**: `NonEmptySet` is `@NullMarked` — null elements throw
+`NullPointerException` at construction time.
+
+**Insertion order preserved**: backed by `LinkedHashSet`, so iteration follows
+insertion order with the head element always first.
+
+**Implements `Iterable<T>`**: use directly in for-each loops, or adapt to streams
+via `StreamSupport.stream(nes.spliterator(), false)`.
+
+Use it when:
+
+- An API contract requires at least one element and you want the compiler to enforce it.
+- You need set semantics (no duplicates) with the additional guarantee of non-emptiness.
+- You want to eliminate `isEmpty()` guards on sets that are semantically never empty
+  (e.g. a user's assigned roles, a product's tags).
+
+## Creating instances
+
+| Factory                                       | When input is empty?          |
+|-----------------------------------------------|-------------------------------|
+| `NonEmptySet.of(head, rest)`                  | N/A — head is always required |
+| `NonEmptySet.singleton(head)`                 | N/A — always one element      |
+| `NonEmptySet.fromSet(set)`                    | Returns `None`                |
+
+<CreatingInstances/>
+
+## Accessing elements
+
+<AccessingElements/>
+
+`size()` always returns a value `>= 1`. `head()` gives direct, null-safe access to
+the first element. `toSet()` returns an unmodifiable `java.util.Set` for standard API
+interop.
+
+## Transformations
+
+<Transformations/>
+
+`map` always returns a **new `NonEmptySet`** — the original is unchanged. Because
+mapping can produce duplicates, the result is automatically deduplicated; the head
+element always takes priority.
+
+## Filter
+
+<Filter/>
+
+`filter` returns `Option<NonEmptySet<T>>` because filtering can produce an empty
+result. If no element passes the predicate, `None` is returned.
+
+## Set operations
+
+<SetOperations/>
+
+`union` always returns a non-empty set (both inputs are non-empty), so no `Option`
+wrapping is needed. `intersection` may yield an empty result, so it returns
+`Option<NonEmptySet<T>>`. `intersection` accepts any `java.util.Set<? extends T>`,
+not just `NonEmptySet`.
+
+## Interoperability
+
+Cross-type conversions bridge `NonEmptySet` with `NonEmptyMap`, `NonEmptyList`, and the
+standard Java collections.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `toNonEmptyMap(valueMapper)` | `NonEmptyMap<T, V>` | Elements become keys; mapper produces values |
+| `toNonEmptyList()` | `NonEmptyList<T>` | Ordered snapshot; head element preserved |
+| `toSet()` | `Set<T>` | Unmodifiable `java.util.Set` for standard API interop |
+| `fromSet(set)` | `Option<NonEmptySet<T>>` | Safe bridge from a plain `Set`; `None` if empty |
+
+<Interop/>
+
+## `equals`, `hashCode`, and `toString`
+
+Equality is **structural and consistent with `Set`**: two `NonEmptySet` instances are
+equal if and only if their element sets are equal (order ignored). `hashCode`
+delegates to `toSet().hashCode()`. `toString` prints in `[element, ...]` format.
+
+## When to use `NonEmptySet` vs plain `Set`
+
+| Scenario                                               | Recommendation                               |
+|--------------------------------------------------------|----------------------------------------------|
+| At least one element required by contract              | `NonEmptySet<T>`                             |
+| Set may legitimately be empty                          | `Set<T>`                                     |
+| Reading from an external source that may be empty      | `NonEmptySet.fromSet(set)` → handle `None`   |
+| Combining two non-empty sets — result always non-empty | `nes1.union(nes2)`                           |
+| Finding common elements — result may be empty          | `nes.intersection(other)` → handle `None`    |
+
+## Real-world example
+
+An access-control service where every user must have at least one role. The type
+system prevents creating a user with no roles.
+
+<RealWorldExample/>

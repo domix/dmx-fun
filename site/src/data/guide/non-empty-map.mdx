@@ -1,0 +1,118 @@
+---
+title: "NonEmptyMap<K, V> — Developer Guide"
+description: "Comprehensive guide to NonEmptyMap<K, V>: construction, entry access, transformations, filter, merge, interoperability, and cross-type conversions (keySet, values)."
+order: 9
+h1: "NonEmptyMap<K, V>"
+---
+
+import {Content as CreatingInstances}  from '../code/guide/non-empty-map/creating-instances.mdx';
+import {Content as AccessingElements}  from '../code/guide/non-empty-map/accessing-elements.mdx';
+import {Content as Transformations}    from '../code/guide/non-empty-map/transformations.mdx';
+import {Content as Filter}             from '../code/guide/non-empty-map/filter.mdx';
+import {Content as Merge}              from '../code/guide/non-empty-map/merge.mdx';
+import {Content as Interop}            from '../code/guide/non-empty-map/interop.mdx';
+import {Content as RealWorldExample}   from '../code/guide/non-empty-map/real-world-example.mdx';
+
+> **Runnable example:** [`NonEmptyMapSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/NonEmptyMapSample.java)
+
+## What is NonEmptyMap&lt;K, V&gt;?
+
+`NonEmptyMap<K, V>` is an **immutable map guaranteed at construction time to contain
+at least one entry**. The non-emptiness constraint is encoded in the static type —
+callers that receive a `NonEmptyMap<K, V>` never need to check whether it is empty.
+
+**Internal structure**: a `headKey` + `headValue` (the first entry) and a `tail`
+(an unmodifiable `Map<K, V>` for the remaining entries, which may be empty).
+`headKey()` and `headValue()` are always present.
+
+**Null policy**: `NonEmptyMap` is `@NullMarked` — null keys, values, or rest entries
+throw `NullPointerException` at construction time.
+
+**Insertion order preserved**: backed by `LinkedHashMap`, so iteration follows
+insertion order with the head entry always first.
+
+Use it when:
+
+- An API contract requires at least one map entry and you want the compiler to enforce it.
+- You are building a registry, configuration, or lookup table that must always have at least one entry.
+- You want to eliminate runtime `isEmpty()` guards on maps that are semantically never empty.
+
+## Creating instances
+
+| Factory                                       | When input is empty?          |
+|-----------------------------------------------|-------------------------------|
+| `NonEmptyMap.of(key, value, rest)`            | N/A — head entry is always required |
+| `NonEmptyMap.singleton(key, value)`           | N/A — always one entry        |
+| `NonEmptyMap.fromMap(map)`                    | Returns `None`                |
+
+<CreatingInstances/>
+
+## Accessing elements
+
+<AccessingElements/>
+
+`size()` always returns a value `>= 1`. `headKey()` and `headValue()` give direct,
+null-safe access to the first entry. `get(key)` returns `Option<V>` — no nulls, no
+`NoSuchElementException`.
+
+## Transformations
+
+<Transformations/>
+
+`mapValues` and `mapKeys` always return a **new `NonEmptyMap`** — the original is
+unchanged. When `mapKeys` produces collisions, the head key takes priority and
+conflicting tail entries are dropped.
+
+## Filter
+
+<Filter/>
+
+`filter` returns `Option<NonEmptyMap<K, V>>` because filtering can produce an empty
+result. The predicate receives both the key and the value via `BiPredicate<K, V>`.
+
+## Merge
+
+<Merge/>
+
+`merge` takes a second `NonEmptyMap` and a `BinaryOperator<V>` to resolve key
+conflicts. Because both inputs are non-empty, the result is guaranteed non-empty —
+no `Option` wrapping needed.
+
+## Interoperability
+
+Cross-type conversions bridge `NonEmptyMap` with `NonEmptySet`, `NonEmptyList`, and the
+standard Java collections.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `keySet()` | `NonEmptySet<K>` | All keys as a non-empty set; head key becomes set head |
+| `values()` | `NonEmptyList<V>` | All values in insertion order; duplicates preserved |
+| `toMap()` | `Map<K, V>` | Unmodifiable `java.util.Map` for standard API interop |
+| `toNonEmptyList()` | `NonEmptyList<Map.Entry<K,V>>` | All entries in insertion order |
+| `fromMap(map)` | `Option<NonEmptyMap<K,V>>` | Safe bridge from a plain `Map`; `None` if empty |
+
+<Interop/>
+
+## `equals`, `hashCode`, and `toString`
+
+Equality is **structural and consistent with `Map`**: two `NonEmptyMap` instances are
+equal if and only if their entry sets are equal (key equality + value equality, order
+ignored). `hashCode` delegates to `toMap().hashCode()`. `toString` prints in
+`{key=value, ...}` format.
+
+## When to use `NonEmptyMap` vs plain `Map`
+
+| Scenario                                               | Recommendation                               |
+|--------------------------------------------------------|----------------------------------------------|
+| At least one entry required by contract                | `NonEmptyMap<K, V>`                          |
+| Map may legitimately be empty                          | `Map<K, V>`                                  |
+| Reading from an external source that may be empty      | `NonEmptyMap.fromMap(map)` → handle `None`   |
+| Merging two registries — result is always non-empty    | `nem1.merge(nem2, mergeFunction)`            |
+| Filtering entries — result may be empty                | `nem.filter(predicate)` → handle `None`      |
+
+## Real-world example
+
+A role-to-permissions registry initialized with at least one role. The type system
+prevents constructing the service with an empty permissions map.
+
+<RealWorldExample/>

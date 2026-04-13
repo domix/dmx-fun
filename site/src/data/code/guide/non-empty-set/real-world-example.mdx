@@ -1,0 +1,47 @@
+---
+fileName: 'AccessControlService.java'
+---
+
+```java
+// An access-control service where every user must have at least one role.
+// The compiler prevents creating a user with no roles.
+
+public record UserAccess(String username, NonEmptySet<String> roles) {}
+
+public class AccessControlService {
+
+    /** Checks whether the user has ALL of the required roles. */
+    public boolean hasAllRoles(UserAccess user, Set<String> required) {
+        return user.roles().intersection(required)
+            .map(common -> common.size() == required.size())
+            .getOrElse(false);
+    }
+
+    /** Checks whether the user has ANY of the required roles. */
+    public boolean hasAnyRole(UserAccess user, NonEmptySet<String> required) {
+        return user.roles().intersection(required.toSet())
+            .isDefined();
+    }
+
+    /** Combines two users' roles (e.g. for a temporary delegation). */
+    public NonEmptySet<String> combinedRoles(UserAccess a, UserAccess b) {
+        return a.roles().union(b.roles());
+    }
+
+    /** Promotes a user by adding a new role. */
+    public UserAccess addRole(UserAccess user, String newRole) {
+        NonEmptySet<String> updatedRoles = user.roles().union(NonEmptySet.singleton(newRole));
+        return new UserAccess(user.username(), updatedRoles);
+    }
+}
+
+// Usage
+UserAccess alice = new UserAccess("alice", NonEmptySet.of("admin", Set.of("editor")));
+UserAccess bob   = new UserAccess("bob",   NonEmptySet.singleton("viewer"));
+
+AccessControlService acl = new AccessControlService();
+
+boolean aliceCanEdit = acl.hasAnyRole(alice, NonEmptySet.singleton("editor")); // true
+NonEmptySet<String> allRoles = acl.combinedRoles(alice, bob);
+// [admin, editor, viewer]
+```

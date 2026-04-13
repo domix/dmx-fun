@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyList<String> nel = NonEmptyList.of("admin", List.of("editor", "admin", "viewer"));
+
+// toNonEmptySet() — deduplicate while preserving head; insertion order retained
+NonEmptySet<String> nes = nel.toNonEmptySet();
+// NonEmptySet["admin", "editor", "viewer"]  (duplicate "admin" dropped)
+nes.head();   // "admin"
+nes.size();   // 3  (not 4)
+
+// Singleton list — yields singleton set
+NonEmptySet<String> single = NonEmptyList.singleton("admin").toNonEmptySet();
+single.size();   // 1
+
+// Round-trip: NonEmptySet → NonEmptyList → NonEmptySet (idempotent)
+NonEmptySet<String> roles = NonEmptySet.of("admin", Set.of("editor"));
+NonEmptySet<String> roundTrip = roles.toNonEmptyList().toNonEmptySet();
+assertThat(roundTrip).isEqualTo(roles);
+```

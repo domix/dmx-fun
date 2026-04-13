@@ -1,0 +1,24 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Use a LinkedHashSet to guarantee insertion order in the rest argument
+Set<String> rest = new LinkedHashSet<>(List.of("user", "moderator"));
+NonEmptySet<String> nes = NonEmptySet.of("admin", rest);
+
+String head = nes.head();  // "admin" — always present, never null
+int    size = nes.size();  // 3       — always >= 1
+
+// contains
+boolean hasAdmin   = nes.contains("admin");   // true
+boolean hasUnknown = nes.contains("unknown"); // false
+
+// toSet — unmodifiable copy of all elements in insertion order
+Set<String> all = nes.toSet(); // [admin, user, moderator]
+
+// Iterable — use directly in for-each loops
+for (String role : nes) {
+    System.out.println(role);
+}
+```

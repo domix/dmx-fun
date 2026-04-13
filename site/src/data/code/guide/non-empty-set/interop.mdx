@@ -1,0 +1,29 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptySet<String> nes = NonEmptySet.of("admin", Set.of("editor", "viewer"));
+
+// toNonEmptyMap(valueMapper) — each element becomes a key; mapper produces values
+NonEmptyMap<String, Integer> permCount = nes.toNonEmptyMap(role -> loadPermissions(role).size());
+// NonEmptyMap{admin=3, editor=2, viewer=1}
+permCount.headKey();          // "admin"
+permCount.headValue();        // 3
+
+// Identity map (element → itself)
+NonEmptyMap<String, String> identity = nes.toNonEmptyMap(r -> r);
+// {admin=admin, editor=editor, viewer=viewer}
+
+// toSet() — unmodifiable java.util.Set for interop with standard APIs
+Set<String> javaSet = nes.toSet();
+
+// toNonEmptyList() — ordered snapshot of elements as a NonEmptyList
+NonEmptyList<String> nel = nes.toNonEmptyList();
+// NonEmptyList["admin", "editor", "viewer"]
+
+// fromSet() — bridge from plain Set (e.g. from external source)
+Set<String> external = fetchRolesFromDatabase();
+Option<NonEmptySet<String>> safe = NonEmptySet.fromSet(external);
+safe.peek(roles -> processRoles(roles));
+```

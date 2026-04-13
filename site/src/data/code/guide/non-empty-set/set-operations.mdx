@@ -1,0 +1,27 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptySet<String> a = NonEmptySet.of("admin", Set.of("user"));
+NonEmptySet<String> b = NonEmptySet.of("user",  Set.of("moderator"));
+
+// union — always non-empty (both inputs are non-empty)
+NonEmptySet<String> union = a.union(b);
+// [admin, user, moderator]
+
+// union with fully overlapping sets — deduplication applies
+NonEmptySet<String> same = a.union(a);
+// [admin, user]
+
+// intersection — may be empty, so returns Option
+Option<NonEmptySet<String>> common = a.intersection(Set.of("user", "moderator"));
+// Some([user])
+
+Option<NonEmptySet<String>> empty = a.intersection(Set.of("unknown"));
+// None
+
+// intersection accepts any java.util.Set, not just NonEmptySet
+Set<String> external = fetchAllowedRoles();
+Option<NonEmptySet<String>> allowed = a.intersection(external);
+```
