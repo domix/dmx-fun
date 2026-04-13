@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// zipWith(Function) — pair the current value with a derived Option
+Option<String> name = Option.some("alice");
+
+Option<Tuple2<String, Integer>> result =
+    name.zipWith(n -> lookupAge(n));
+// Some(Tuple2("alice", 30))  — if lookupAge returns Some(30)
+// None                       — if lookupAge returns None or name is None
+
+// flatZip is an alias with the same semantics
+Option<Tuple2<String, Integer>> same =
+    name.flatZip(n -> lookupAge(n));
+
+// Contrast with zip(Option) — the second Option is pre-evaluated
+Option<Integer> age = Option.some(30);
+Option<Tuple2<String, Integer>> fromZip = name.zip(age);
+// Both are None when name is None, but zip always evaluates age regardless
+```

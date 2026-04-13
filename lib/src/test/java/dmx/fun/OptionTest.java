@@ -597,4 +597,55 @@ class OptionTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("leftIfNone");
     }
+
+    // -------------------------------------------------------------------------
+    // zipWith(Function) / flatZip
+    // -------------------------------------------------------------------------
+
+    @Test
+    void zipWith_function_shouldReturnTuple_whenBothPresent() {
+        Option<Tuple2<String, Integer>> result =
+            Option.some("alice").zipWith(name -> Option.some(name.length()));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get()).isEqualTo(new Tuple2<>("alice", 5));
+    }
+
+    @Test
+    void zipWith_function_shouldReturnNone_whenMapperReturnsNone() {
+        Option<Tuple2<String, Integer>> result =
+            Option.<String>some("alice").zipWith(name -> Option.none());
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void zipWith_function_shouldReturnNone_whenThisIsNone() {
+        boolean[] called = {false};
+        Option<Tuple2<String, Integer>> result =
+            Option.<String>none().zipWith(name -> { called[0] = true; return Option.some(1); });
+        assertThat(result.isEmpty()).isTrue();
+        assertThat(called[0]).isFalse();
+    }
+
+    @Test
+    void zipWith_function_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Option.some("x").zipWith(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void zipWith_function_shouldThrowNPE_whenMapperReturnsNull() {
+        assertThatThrownBy(() -> Option.some("x").zipWith(v -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper must not return null");
+    }
+
+    @Test
+    void flatZip_shouldBehaveIdenticallyToZipWith() {
+        Option<Tuple2<String, Integer>> viaZipWith =
+            Option.some("hello").zipWith(s -> Option.some(s.length()));
+        Option<Tuple2<String, Integer>> viaFlatZip =
+            Option.some("hello").flatZip(s -> Option.some(s.length()));
+        assertThat(viaFlatZip).isEqualTo(viaZipWith);
+    }
 }
