@@ -1,0 +1,34 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// combine3 — three independent validations in one flat call
+Validated<NonEmptyList<String>, RegistrationForm> form3 = Validated.combine3(
+    validateUsername(username),
+    validateEmail(email),
+    validateAge(age),
+    NonEmptyList::concat,
+    RegistrationForm::new   // (String, String, Integer) -> RegistrationForm
+);
+
+// combine4 — four independent validations in one flat call
+Validated<NonEmptyList<String>, UserProfile> profile = Validated.combine4(
+    validateUsername(username),
+    validateEmail(email),
+    validateAge(age),
+    validateCountry(country),
+    NonEmptyList::concat,
+    UserProfile::new        // (String, String, Integer, String) -> UserProfile
+);
+
+// All errors accumulated — no short-circuit
+Validated<NonEmptyList<String>, RegistrationForm> allInvalid = Validated.combine3(
+    Validated.invalidNel("username too short"),
+    Validated.invalidNel("missing @"),
+    Validated.invalidNel("age must be positive"),
+    NonEmptyList::concat,
+    RegistrationForm::new
+);
+// Invalid(["username too short", "missing @", "age must be positive"])
+```

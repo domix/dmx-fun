@@ -422,6 +422,113 @@ class ValidatedTest {
 
     // ---------- toEither ----------
 
+    // -------------------------------------------------------------------------
+    // combine3
+    // -------------------------------------------------------------------------
+
+    @Test
+    void combine3_allValid_shouldApplyValueMerge() {
+        Validated<String, String> result = Validated.combine3(
+            Validated.valid("a"),
+            Validated.valid("b"),
+            Validated.valid("c"),
+            (e1, e2) -> e1 + "," + e2,
+            (a, b, c) -> a + b + c
+        );
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo("abc");
+    }
+
+    @Test
+    void combine3_oneInvalid_shouldReturnInvalid() {
+        Validated<String, String> result = Validated.combine3(
+            Validated.valid("a"),
+            Validated.invalid("err-b"),
+            Validated.valid("c"),
+            (e1, e2) -> e1 + "," + e2,
+            (a, b, c) -> a + b + c
+        );
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError()).isEqualTo("err-b");
+    }
+
+    @Test
+    void combine3_allInvalid_shouldAccumulateAllErrors() {
+        Validated<NonEmptyList<String>, String> result = Validated.combine3(
+            Validated.<String, String>invalidNel("err-a"),
+            Validated.<String, String>invalidNel("err-b"),
+            Validated.<String, String>invalidNel("err-c"),
+            NonEmptyList::concat,
+            (a, b, c) -> a + b + c
+        );
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList())
+            .containsExactly("err-a", "err-b", "err-c");
+    }
+
+    @Test
+    void combine3_shouldThrowNPE_whenAnyArgIsNull() {
+        assertThatThrownBy(() -> Validated.combine3(null,
+            Validated.valid("b"), Validated.valid("c"),
+            (e1, e2) -> e1, (a, b, c) -> a))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // combine4
+    // -------------------------------------------------------------------------
+
+    @Test
+    void combine4_allValid_shouldApplyValueMerge() {
+        Validated<String, String> result = Validated.combine4(
+            Validated.valid("a"),
+            Validated.valid("b"),
+            Validated.valid("c"),
+            Validated.valid("d"),
+            (e1, e2) -> e1 + "," + e2,
+            (a, b, c, d) -> a + b + c + d
+        );
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo("abcd");
+    }
+
+    @Test
+    void combine4_oneInvalid_shouldReturnInvalid() {
+        Validated<String, String> result = Validated.combine4(
+            Validated.valid("a"),
+            Validated.valid("b"),
+            Validated.invalid("err-c"),
+            Validated.valid("d"),
+            (e1, e2) -> e1 + "," + e2,
+            (a, b, c, d) -> a + b + c + d
+        );
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError()).isEqualTo("err-c");
+    }
+
+    @Test
+    void combine4_allInvalid_shouldAccumulateAllErrors() {
+        Validated<NonEmptyList<String>, String> result = Validated.combine4(
+            Validated.<String, String>invalidNel("err-a"),
+            Validated.<String, String>invalidNel("err-b"),
+            Validated.<String, String>invalidNel("err-c"),
+            Validated.<String, String>invalidNel("err-d"),
+            NonEmptyList::concat,
+            (a, b, c, d) -> a + b + c + d
+        );
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList())
+            .containsExactly("err-a", "err-b", "err-c", "err-d");
+    }
+
+    @Test
+    void combine4_shouldThrowNPE_whenAnyArgIsNull() {
+        assertThatThrownBy(() -> Validated.combine4(null,
+            Validated.valid("b"), Validated.valid("c"), Validated.valid("d"),
+            (e1, e2) -> e1, (a, b, c, d) -> a))
+            .isInstanceOf(NullPointerException.class);
+    }
+
     @Test
     void toEither_shouldReturnRight_whenValid() {
         Either<String, Integer> e = Validated.<String, Integer>valid(42).toEither();

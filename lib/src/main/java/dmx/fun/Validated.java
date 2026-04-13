@@ -594,6 +594,110 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
         return Validated.traverse(values, mapper, NonEmptyList::concat);
     }
 
+    /**
+     * Combines three independent {@code Validated} values, accumulating all errors.
+     *
+     * <p>All three inputs are always evaluated — no short-circuit. If any are {@link Invalid},
+     * all errors are merged left-to-right using {@code errMerge}. If all are {@link Valid},
+     * {@code valueMerge} is applied and the result is returned as {@link Valid}.
+     *
+     * <pre>{@code
+     * Validated<NonEmptyList<String>, Form> result = Validated.combine3(
+     *     validateUsername(username),
+     *     validateEmail(email),
+     *     validateAge(age),
+     *     NonEmptyList::concat,
+     *     Form::new
+     * );
+     * }</pre>
+     *
+     * @param <E>        the error type
+     * @param <A>        the value type of the first {@code Validated}
+     * @param <B>        the value type of the second {@code Validated}
+     * @param <C>        the value type of the third {@code Validated}
+     * @param <R>        the result value type
+     * @param va         the first validated value; must not be {@code null}
+     * @param vb         the second validated value; must not be {@code null}
+     * @param vc         the third validated value; must not be {@code null}
+     * @param errMerge   a function to merge two errors when multiple inputs are invalid;
+     *                   must not be {@code null} or return {@code null}
+     * @param valueMerge a function to combine three values when all inputs are valid;
+     *                   must not be {@code null}
+     * @return {@code Valid(valueMerge(a, b, c))} if all are valid,
+     *         or {@code Invalid(mergedError)} otherwise
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <E, A, B, C, R> Validated<E, R> combine3(
+        Validated<E, A> va,
+        Validated<E, B> vb,
+        Validated<E, C> vc,
+        BinaryOperator<E> errMerge,
+        TriFunction<? super A, ? super B, ? super C, ? extends R> valueMerge
+    ) {
+        Objects.requireNonNull(va,         "va must not be null");
+        Objects.requireNonNull(vb,         "vb must not be null");
+        Objects.requireNonNull(vc,         "vc must not be null");
+        Objects.requireNonNull(errMerge,   "errMerge must not be null");
+        Objects.requireNonNull(valueMerge, "valueMerge must not be null");
+        return va.combine(vb, errMerge, Tuple2::new)
+                 .combine(vc, errMerge, (t, c) -> valueMerge.apply(t._1(), t._2(), c));
+    }
+
+    /**
+     * Combines four independent {@code Validated} values, accumulating all errors.
+     *
+     * <p>All four inputs are always evaluated — no short-circuit. If any are {@link Invalid},
+     * all errors are merged left-to-right using {@code errMerge}. If all are {@link Valid},
+     * {@code valueMerge} is applied and the result is returned as {@link Valid}.
+     *
+     * <pre>{@code
+     * Validated<NonEmptyList<String>, Form> result = Validated.combine4(
+     *     validateUsername(username),
+     *     validateEmail(email),
+     *     validateAge(age),
+     *     validateCountry(country),
+     *     NonEmptyList::concat,
+     *     Form::new
+     * );
+     * }</pre>
+     *
+     * @param <E>        the error type
+     * @param <A>        the value type of the first {@code Validated}
+     * @param <B>        the value type of the second {@code Validated}
+     * @param <C>        the value type of the third {@code Validated}
+     * @param <D>        the value type of the fourth {@code Validated}
+     * @param <R>        the result value type
+     * @param va         the first validated value; must not be {@code null}
+     * @param vb         the second validated value; must not be {@code null}
+     * @param vc         the third validated value; must not be {@code null}
+     * @param vd         the fourth validated value; must not be {@code null}
+     * @param errMerge   a function to merge two errors when multiple inputs are invalid;
+     *                   must not be {@code null} or return {@code null}
+     * @param valueMerge a function to combine four values when all inputs are valid;
+     *                   must not be {@code null}
+     * @return {@code Valid(valueMerge(a, b, c, d))} if all are valid,
+     *         or {@code Invalid(mergedError)} otherwise
+     * @throws NullPointerException if any argument is {@code null}
+     */
+    static <E, A, B, C, D, R> Validated<E, R> combine4(
+        Validated<E, A> va,
+        Validated<E, B> vb,
+        Validated<E, C> vc,
+        Validated<E, D> vd,
+        BinaryOperator<E> errMerge,
+        QuadFunction<? super A, ? super B, ? super C, ? super D, ? extends R> valueMerge
+    ) {
+        Objects.requireNonNull(va,         "va must not be null");
+        Objects.requireNonNull(vb,         "vb must not be null");
+        Objects.requireNonNull(vc,         "vc must not be null");
+        Objects.requireNonNull(vd,         "vd must not be null");
+        Objects.requireNonNull(errMerge,   "errMerge must not be null");
+        Objects.requireNonNull(valueMerge, "valueMerge must not be null");
+        return va.combine(vb, errMerge, Tuple2::new)
+                 .combine(vc, errMerge, Tuple2::new)
+                 .combine(vd, errMerge, (t, d) -> valueMerge.apply(t._1()._1(), t._1()._2(), t._2(), d));
+    }
+
     private static <E, A> Validated<E, List<A>> accumulate(
         Iterable<Validated<E, A>> items,
         BinaryOperator<E> errMerge
