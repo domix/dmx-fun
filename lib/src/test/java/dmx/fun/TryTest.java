@@ -1,8 +1,10 @@
 package dmx.fun;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -1107,5 +1109,49 @@ class TryTest {
         assertThatThrownBy(nullSuccess::toEither)
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("null");
+    }
+
+    // -------------------------------------------------------------------------
+    // withTimeout
+    // -------------------------------------------------------------------------
+
+    @Test
+    void withTimeout_shouldReturnSuccess_whenCompletesBeforeDeadline() {
+        Try<String> result = Try.withTimeout(Duration.ofSeconds(5), () -> "hello");
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void withTimeout_shouldReturnFailureWithTimeoutException_whenDeadlineExceeded() throws Exception {
+        Try<String> result = Try.withTimeout(Duration.ofMillis(100), () -> {
+            Thread.sleep(10_000);
+            return "never";
+        });
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(TimeoutException.class);
+        assertThat(result.getCause().getMessage()).contains("100ms");
+    }
+
+    @Test
+    void withTimeout_shouldReturnFailureWithOriginalCause_whenSupplierThrowsBeforeTimeout() {
+        RuntimeException boom = new RuntimeException("boom");
+        Try<String> result = Try.withTimeout(Duration.ofSeconds(5), () -> { throw boom; });
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(boom);
+    }
+
+    @Test
+    void withTimeout_shouldThrowNPE_whenTimeoutIsNull() {
+        assertThatThrownBy(() -> Try.withTimeout(null, () -> "x"))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("timeout");
+    }
+
+    @Test
+    void withTimeout_shouldThrowNPE_whenSupplierIsNull() {
+        assertThatThrownBy(() -> Try.withTimeout(Duration.ofSeconds(1), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("supplier");
     }
 }

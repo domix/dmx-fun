@@ -5,6 +5,8 @@ import dmx.fun.Try;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Demonstrates Try<V>: wraps a computation that may throw and turns the exception into a value.
@@ -52,5 +54,30 @@ public class TrySample {
         content
             .onSuccess(c -> System.out.println("File content: " + c))
             .onFailure(e -> System.out.println("File not found: " + e.getClass().getSimpleName()));
+
+        // ---- withTimeout ----
+
+        System.out.println("\n=== withTimeout ===");
+
+        // Completes within the deadline
+        Try<String> fast = Try.withTimeout(Duration.ofSeconds(5), () -> "quick result");
+        fast.onSuccess(v -> System.out.println("Got: " + v)); // Got: quick result
+
+        // Exceeds the deadline
+        Try<String> slow = Try.withTimeout(Duration.ofMillis(100), () -> {
+            Thread.sleep(10_000);
+            return "never";
+        });
+        System.out.println("Timed out: " + slow.isFailure()); // true
+        System.out.println("Cause: " + slow.getCause().getMessage()); // Operation timed out after 100ms
+
+        // Recover from timeout with a fallback
+        String value = Try.withTimeout(Duration.ofMillis(50), () -> {
+                Thread.sleep(5_000);
+                return "live-data";
+            })
+            .recover(TimeoutException.class, ex -> "cached-data")
+            .getOrElse("unknown");
+        System.out.println("Value: " + value); // cached-data
     }
 }
