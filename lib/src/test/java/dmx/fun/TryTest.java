@@ -1130,7 +1130,7 @@ class TryTest {
         });
         assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause()).isInstanceOf(TimeoutException.class);
-        assertThat(result.getCause().getMessage()).contains("100ms");
+        assertThat(result.getCause().getMessage()).contains("ns");
     }
 
     @Test
@@ -1153,5 +1153,29 @@ class TryTest {
         assertThatThrownBy(() -> Try.withTimeout(Duration.ofSeconds(1), null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("supplier");
+    }
+
+    @Test
+    void withTimeout_shouldReturnFailure_whenCallerThreadIsInterrupted() throws Exception {
+        Thread testThread = Thread.currentThread();
+
+        // Interrupt the test thread shortly after the call begins
+        Thread interrupter = new Thread(() -> {
+            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+            testThread.interrupt();
+        });
+        interrupter.setDaemon(true);
+        interrupter.start();
+
+        Try<String> result = Try.withTimeout(Duration.ofSeconds(30), () -> {
+            Thread.sleep(10_000);
+            return "never";
+        });
+
+        // Clear the interrupt status set by withTimeout so the test harness is clean
+        Thread.interrupted();
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(InterruptedException.class);
     }
 }

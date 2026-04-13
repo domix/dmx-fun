@@ -9,13 +9,13 @@ Try<Response> result = Try.withTimeout(
     () -> httpClient.get(url)
 );
 
-// Exceeded deadline → Failure(TimeoutException("Operation timed out after 5000ms"))
+// Exceeded deadline → Failure(TimeoutException("Operation timed out after 100000000ns"))
 Try<String> timedOut = Try.withTimeout(
     Duration.ofMillis(100),
     () -> { Thread.sleep(10_000); return "never"; }
 );
 timedOut.isFailure();  // true
-timedOut.getCause();   // TimeoutException: "Operation timed out after 100ms"
+timedOut.getCause();   // TimeoutException: "Operation timed out after 100000000ns"
 
 // Composes naturally with the rest of the API
 Try.withTimeout(Duration.ofSeconds(3), () -> fetchUser(id))

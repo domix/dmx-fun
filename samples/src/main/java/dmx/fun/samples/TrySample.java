@@ -60,16 +60,22 @@ public class TrySample {
         System.out.println("\n=== withTimeout ===");
 
         // Completes within the deadline
-        Try<String> fast = Try.withTimeout(Duration.ofSeconds(5), () -> "quick result");
+        Try<String> fast = Try.withTimeout(
+            Duration.ofSeconds(5),
+            () -> "quick result"
+        );
         fast.onSuccess(v -> System.out.println("Got: " + v)); // Got: quick result
 
         // Exceeds the deadline
-        Try<String> slow = Try.withTimeout(Duration.ofMillis(100), () -> {
-            Thread.sleep(10_000);
-            return "never";
-        });
+        Try<String> slow = Try.withTimeout(
+            Duration.ofMillis(100),
+            () -> {
+                Thread.sleep(10_000);
+                return "never";
+            }
+        );
         System.out.println("Timed out: " + slow.isFailure()); // true
-        System.out.println("Cause: " + slow.getCause().getMessage()); // Operation timed out after 100ms
+        System.out.println("Cause: " + slow.getCause().getMessage()); // Operation timed out after 100000000ns
 
         // Recover from timeout with a fallback
         String value = Try.withTimeout(Duration.ofMillis(50), () -> {
