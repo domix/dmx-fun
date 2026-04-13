@@ -172,8 +172,10 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     static <V> Try<V> withTimeout(Duration timeout, CheckedSupplier<? extends V> supplier) {
         Objects.requireNonNull(timeout, "timeout");
         Objects.requireNonNull(supplier, "supplier");
+
         FutureTask<V> task = new FutureTask<>(supplier::get);
         Thread thread = Thread.ofVirtual().start(task);
+
         try {
             return success(task.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
         } catch (TimeoutException e) {
