@@ -4,7 +4,7 @@
 
 A Java library of functional types that make failures, absence, and validation explicit in the type system — without ceremony.
 
-`Option<T>`, `Result<V, E>`, `Try<V>`, `Validated<E, A>`, `Either<L, R>`, `Lazy<T>`, `Tuple2/3/4`, and `NonEmptyList<T>` — each designed to compose cleanly with the others and with the Java standard library.
+`Option<T>`, `Result<V, E>`, `Try<V>`, `Validated<E, A>`, `Either<L, R>`, `Lazy<T>`, `Tuple2/3/4`, `NonEmptyList<T>`, `NonEmptyMap<K, V>`, and `NonEmptySet<T>` — each designed to compose cleanly with the others and with the Java standard library.
 
 ---
 
@@ -77,16 +77,18 @@ testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
 
 ## Types
 
-| Type              | Tag                  | When to use                                                                       |
-|-------------------|----------------------|-----------------------------------------------------------------------------------|
-| `Option<T>`       | Nullability          | A value that may or may not be present. The null-safe alternative to `@Nullable`. |
-| `Result<V, E>`    | Error handling       | An operation that can succeed or fail with a typed error.                         |
-| `Try<V>`          | Exception handling   | Wraps a computation that may throw. Turns exceptions into values.                 |
-| `Validated<E, A>` | Validation           | Like `Result` but accumulates all errors instead of failing on the first.         |
-| `Either<L, R>`    | Disjoint union       | A value that is one of two types with no success/failure semantics.               |
-| `Lazy<T>`         | Deferred computation | A value computed at most once, on first access. Thread-safe memoization.          |
-| `Tuple2/3/4`      | Product types        | Typed heterogeneous tuples without a dedicated class.                             |
-| `NonEmptyList<T>` | Collections          | A list guaranteed to have at least one element at compile time.                   |
+| Type               | Tag                   | When to use                                                                                              |
+|--------------------|-----------------------|----------------------------------------------------------------------------------------------------------|
+| `Option<T>`        | Nullability           | A value that may or may not be present. The null-safe alternative to `@Nullable`.                        |
+| `Result<V, E>`     | Error handling        | An operation that can succeed or fail with a typed error.                                                |
+| `Try<V>`           | Exception handling    | Wraps a computation that may throw. Turns exceptions into values.                                        |
+| `Validated<E, A>`  | Validation            | Like `Result` but accumulates all errors instead of failing on the first.                                |
+| `Either<L, R>`     | Disjoint union        | A value that is one of two types with no success/failure semantics.                                      |
+| `Lazy<T>`          | Deferred computation  | A value computed at most once, on first access. Thread-safe memoization.                                 |
+| `Tuple2/3/4`       | Product types         | Typed heterogeneous tuples without a dedicated class.                                                    |
+| `NonEmptyList<T>`  | Collections           | A list guaranteed to have at least one element at compile time.                                          |
+| `NonEmptyMap<K,V>` | Collections           | A map guaranteed to have at least one entry at compile time. Insertion order preserved.                  |
+| `NonEmptySet<T>`   | Collections           | A set guaranteed to have at least one element at compile time. No duplicates, insertion order preserved. |
 
 ---
 
