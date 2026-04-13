@@ -3,6 +3,7 @@ package dmx.fun;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -703,5 +704,67 @@ class ResultTest {
             .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> new Result.Partition<>(srcOks, null))
             .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // groupingBy
+    // -------------------------------------------------------------------------
+
+    @Test
+    void groupingBy_shouldGroupElementsByKey() {
+        Map<Integer, NonEmptyList<String>> result = Stream.of("a", "bb", "cc", "ddd")
+            .collect(Result.groupingBy(String::length));
+        assertThat(result).containsOnlyKeys(1, 2, 3);
+        assertThat(result.get(1).toList()).containsExactly("a");
+        assertThat(result.get(2).toList()).containsExactly("bb", "cc");
+        assertThat(result.get(3).toList()).containsExactly("ddd");
+    }
+
+    @Test
+    void groupingBy_shouldReturnEmptyMap_forEmptyStream() {
+        Map<Integer, NonEmptyList<String>> result = Stream.<String>empty()
+            .collect(Result.groupingBy(String::length));
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void groupingBy_resultShouldBeUnmodifiable() {
+        Map<Integer, NonEmptyList<String>> result = Stream.of("a")
+            .collect(Result.groupingBy(String::length));
+        assertThatThrownBy(() -> result.put(99, NonEmptyList.singleton("x")))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void groupingBy_shouldThrowNPE_whenClassifierIsNull() {
+        assertThatThrownBy(() -> Stream.of("a").collect(Result.groupingBy(null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("classifier");
+    }
+
+    @Test
+    void groupingBy_shouldThrowNPE_whenStreamElementIsNull() {
+        Stream<String> s = Stream.of("a", null);
+        assertThatThrownBy(() -> s.collect(Result.groupingBy(String::length)))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void groupingBy_downstream_shouldApplyFunctionToEachGroup() {
+        Map<Integer, Long> result = Stream.of("a", "bb", "cc", "ddd")
+            .collect(Result.groupingBy(String::length, nel -> (long) nel.size()));
+        assertThat(result).containsEntry(1, 1L).containsEntry(2, 2L).containsEntry(3, 1L);
+        // keys must appear in encounter order: 1, 2, 3
+        assertThat(result.keySet()).containsExactly(1, 2, 3);
+        // result map must be unmodifiable
+        assertThatThrownBy(() -> result.put(99, 0L))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void groupingBy_downstream_shouldThrowNPE_whenDownstreamIsNull() {
+        assertThatThrownBy(() -> Stream.of("a").collect(Result.groupingBy(String::length, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("downstream");
     }
 }

@@ -1,0 +1,27 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Group by a key — each group is a guaranteed-non-empty NonEmptyList
+Map<Integer, NonEmptyList<String>> byLength =
+    Stream.of("a", "bb", "cc", "ddd")
+          .collect(Result.groupingBy(String::length));
+// {1 -> ["a"], 2 -> ["bb", "cc"], 3 -> ["ddd"]}
+
+// Downstream variant — transform each group after grouping
+Map<Integer, Long> countByLength =
+    Stream.of("a", "bb", "cc", "ddd")
+          .collect(Result.groupingBy(String::length, nel -> (long) nel.size()));
+// {1 -> 1, 2 -> 2, 3 -> 1}
+
+// Domain example — group users by role
+Map<Role, NonEmptyList<User>> byRole =
+    users.stream()
+         .collect(Result.groupingBy(User::role));
+
+// Count per role using the downstream variant
+Map<Role, Integer> countByRole =
+    users.stream()
+         .collect(Result.groupingBy(User::role, NonEmptyList::size));
+```

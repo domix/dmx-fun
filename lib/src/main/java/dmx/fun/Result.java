@@ -2,7 +2,9 @@ package dmx.fun;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -797,6 +799,99 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
             },
             (a, b) -> { a.oks.addAll(b.oks); a.errors.addAll(b.errors); return a; },
             acc -> new Partition<>(acc.oks, acc.errors)
+        );
+    }
+
+    // ---------- groupingBy ----------
+
+    /**
+     * Returns a {@link Collector} that groups stream elements by a key derived from each element.
+     * Each group is collected into a {@link NonEmptyList}, making the non-emptiness of every
+     * group explicit in the type.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Map<String, NonEmptyList<String>> byFirstChar =
+     *     Stream.of("apple", "avocado", "banana")
+     *           .collect(Result.groupingBy(s -> s.substring(0, 1)));
+     * // {"a" -> ["apple", "avocado"], "b" -> ["banana"]}
+     * }</pre>
+     *
+     * @param <V>        the element type
+     * @param <K>        the key type produced by the classifier
+     * @param classifier function mapping each element to its group key; must not be {@code null}
+     *                   and must not return {@code null}
+     * @return an unmodifiable {@code Map<K, NonEmptyList<V>>} preserving encounter order
+     * @throws NullPointerException if {@code classifier} is {@code null}, if a stream element is
+     *                              {@code null}, or if the classifier returns {@code null}
+     */
+    static <V, K> Collector<V, ?, Map<K, NonEmptyList<V>>> groupingBy(
+            Function<? super V, ? extends K> classifier) {
+        Objects.requireNonNull(classifier, "classifier");
+        return groupingByCollector(classifier,
+            vs -> NonEmptyList.of(vs.get(0), vs.subList(1, vs.size())));
+    }
+
+    /**
+     * Returns a {@link Collector} that groups stream elements by a key derived from each element
+     * and applies a downstream function to each group's {@link NonEmptyList}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Map<String, Long> countByFirstChar =
+     *     Stream.of("apple", "avocado", "banana")
+     *           .collect(Result.groupingBy(s -> s.substring(0, 1), NonEmptyList::size));
+     * // {"a" -> 2, "b" -> 1}
+     * }</pre>
+     *
+     * @param <V>        the element type
+     * @param <K>        the key type produced by the classifier
+     * @param <R>        the result type produced by the downstream function
+     * @param classifier function mapping each element to its group key; must not be {@code null}
+     *                   and must not return {@code null}
+     * @param downstream function applied to each group's {@code NonEmptyList}; must not be
+     *                   {@code null} and must not return {@code null}
+     * @return an unmodifiable {@code Map<K, R>} preserving encounter order
+     * @throws NullPointerException if {@code classifier} or {@code downstream} is {@code null},
+     *                              if a stream element is {@code null}, or if the classifier or
+     *                              downstream returns {@code null}
+     */
+    static <V, K, R> Collector<V, ?, Map<K, R>> groupingBy(
+            Function<? super V, ? extends K> classifier,
+            Function<? super NonEmptyList<V>, ? extends R> downstream) {
+        Objects.requireNonNull(classifier, "classifier");
+        Objects.requireNonNull(downstream, "downstream");
+        return groupingByCollector(classifier,
+            vs -> Objects.requireNonNull(
+                downstream.apply(NonEmptyList.of(vs.get(0), vs.subList(1, vs.size()))),
+                "downstream must not return null"));
+    }
+
+    /**
+     * Shared accumulation logic for both {@link #groupingBy} overloads.
+     * Builds a {@code LinkedHashMap<K, ArrayList<V>>} and applies {@code groupFinisher}
+     * to each group's list in the finisher step.
+     */
+    private static <V, K, R> Collector<V, ?, Map<K, R>> groupingByCollector(
+            Function<? super V, ? extends K> classifier,
+            Function<ArrayList<V>, ? extends R> groupFinisher) {
+        class Acc { final Map<K, ArrayList<V>> map = new LinkedHashMap<>(); }
+        return Collector.of(
+            Acc::new,
+            (acc, v) -> {
+                Objects.requireNonNull(v, "groupingBy stream element must not be null");
+                K key = Objects.requireNonNull(classifier.apply(v), "classifier must not return null");
+                acc.map.computeIfAbsent(key, k -> new ArrayList<>()).add(v);
+            },
+            (a, b) -> {
+                b.map.forEach((k, vs) -> a.map.computeIfAbsent(k, __ -> new ArrayList<>()).addAll(vs));
+                return a;
+            },
+            acc -> {
+                Map<K, R> result = new LinkedHashMap<>();
+                acc.map.forEach((k, vs) -> result.put(k, groupFinisher.apply(vs)));
+                return Collections.unmodifiableMap(result);
+            }
         );
     }
 

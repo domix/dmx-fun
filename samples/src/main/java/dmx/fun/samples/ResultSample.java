@@ -1,6 +1,10 @@
 package dmx.fun.samples;
 
+import dmx.fun.NonEmptyList;
 import dmx.fun.Result;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Demonstrates Result<V, E>: an operation that can succeed or fail with a typed error.
@@ -37,7 +41,7 @@ public class ResultSample {
             : Result.err(new UserError.InvalidEmail(email));
     }
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
         // Happy path — three steps chained with flatMap
         Result<String, UserError> email = findUser("u1")
             .flatMap(ResultSample::validateActive)
@@ -63,5 +67,36 @@ public class ResultSample {
             case Result.Ok<User, UserError>  ok  -> System.out.println("Found: "  + ok.value());
             case Result.Err<User, UserError> err -> System.out.println("Error: "  + err.error());
         }
+
+        // ---- groupingBy ----
+
+        System.out.println("\n=== groupingBy ===");
+
+        List<User> users = List.of(
+            new User("u1", "alice@example.com", true),
+            new User("u2", "bob@example.com",   false),
+            new User("u3", "carol@example.com", true)
+        );
+
+        // Group by active status — each group is a NonEmptyList
+        Map<Boolean, NonEmptyList<User>> byActive =
+            users.stream().collect(Result.groupingBy(User::active));
+        byActive.forEach((active, group) ->
+            System.out.println("active=" + active + " count=" + group.size()));
+        // active=true  count=2
+        // active=false count=1
+
+        // Downstream variant — count per group
+        Map<Boolean, Integer> countByActive =
+            users.stream().collect(Result.groupingBy(User::active, NonEmptyList::size));
+        System.out.println("Active count: " + countByActive.get(true));   // 2
+        System.out.println("Inactive count: " + countByActive.get(false)); // 1
+
+        // Group strings by first character
+        Map<Character, NonEmptyList<String>> byFirstChar =
+            Stream.of("apple", "avocado", "banana")
+                  .collect(Result.groupingBy(s -> s.charAt(0)));
+        System.out.println("'a' group: " + byFirstChar.get('a').toList()); // [apple, avocado]
+        System.out.println("'b' group: " + byFirstChar.get('b').toList()); // [banana]
     }
 }

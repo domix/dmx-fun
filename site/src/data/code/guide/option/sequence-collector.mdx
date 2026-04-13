@@ -1,0 +1,27 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// All Some → Optional containing all values
+Optional<List<String>> result = Stream.of(
+        Option.some("alice"), Option.some("bob"))
+    .collect(Option.sequenceCollector());
+// Optional.of(["alice", "bob"])
+
+// Any None → Optional.empty()
+Optional<List<String>> missing = Stream.of(
+        Option.some("alice"), Option.<String>none())
+    .collect(Option.sequenceCollector());
+// Optional.empty()
+
+// Empty stream → Optional.of([])
+Optional<List<String>> empty = Stream.<Option<String>>empty()
+    .collect(Option.sequenceCollector());
+// Optional.of([])
+
+// Typical use: look up all IDs, fail if any is missing
+Optional<List<User>> allFound = ids.stream()
+    .map(userRepo::findById)             // Stream<Option<User>>
+    .collect(Option.sequenceCollector()); // Optional<List<User>>
+```
