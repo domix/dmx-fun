@@ -17,6 +17,6 @@ Option<Integer> missing = nem.get("unknown"); // None
 boolean hasAlice = nem.containsKey("alice"); // true
 boolean hasDave  = nem.containsKey("dave");  // false
 
-// toMap — unmodifiable view of all entries
+// toMap — unmodifiable copy of all entries (not backed by internal storage)
 Map<String, Integer> all = nem.toMap(); // {alice=10, bob=20}
 ```

@@ -284,6 +284,7 @@ class NonEmptyListTest {
         assertThat(nes.head()).isEqualTo("a");
         assertThat(nes.contains("b")).isTrue();
         assertThat(nes.contains("c")).isTrue();
+        assertThat(nes).containsExactly("a", "b", "c"); // insertion order preserved
     }
 
     @Test
@@ -293,6 +294,7 @@ class NonEmptyListTest {
         assertThat(nes.size()).isEqualTo(2);
         assertThat(nes.head()).isEqualTo("a");
         assertThat(nes.contains("b")).isTrue();
+        assertThat(nes).containsExactly("a", "b"); // insertion order preserved
     }
 
     @Test
@@ -300,6 +302,7 @@ class NonEmptyListTest {
         NonEmptySet<String> nes = NonEmptyList.singleton("x").toNonEmptySet();
         assertThat(nes.size()).isEqualTo(1);
         assertThat(nes.head()).isEqualTo("x");
+        assertThat(nes).containsExactly("x");
     }
 
     // -------------------------------------------------------------------------

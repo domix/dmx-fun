@@ -34,6 +34,8 @@ public final class NonEmptySet<T> implements Iterable<T> {
     private final T head;
     private final Set<T> tail; // unmodifiable, does NOT include head
 
+    private transient volatile Set<T> cachedSet;
+
     private NonEmptySet(T head, Set<T> tail) {
         this.head = head;
         this.tail = tail;
@@ -146,15 +148,25 @@ public final class NonEmptySet<T> implements Iterable<T> {
 
     /**
      * Returns an unmodifiable {@link Set} containing all elements (head first, then
-     * tail in insertion order).
+     * tail in insertion order). The same instance is returned on repeated calls
+     * (lazily initialized, thread-safe).
      *
-     * @return a new unmodifiable set with all elements
+     * @return an unmodifiable set with all elements
      */
     public Set<T> toSet() {
-        Set<T> result = new LinkedHashSet<>();
-        result.add(head);
-        result.addAll(tail);
-        return Collections.unmodifiableSet(result);
+        Set<T> s = cachedSet;
+        if (s == null) {
+            synchronized (this) {
+                s = cachedSet;
+                if (s == null) {
+                    Set<T> result = new LinkedHashSet<>();
+                    result.add(head);
+                    result.addAll(tail);
+                    cachedSet = s = Collections.unmodifiableSet(result);
+                }
+            }
+        }
+        return s;
     }
 
     // -------------------------------------------------------------------------

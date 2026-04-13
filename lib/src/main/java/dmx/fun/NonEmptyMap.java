@@ -37,6 +37,8 @@ public final class NonEmptyMap<K, V> {
     private final V headValue;
     private final Map<K, V> tail; // unmodifiable, does NOT include headKey
 
+    private transient volatile Map<K, V> cachedMap;
+
     private NonEmptyMap(K headKey, V headValue, Map<K, V> tail) {
         this.headKey   = headKey;
         this.headValue = headValue;
@@ -208,15 +210,25 @@ public final class NonEmptyMap<K, V> {
 
     /**
      * Returns an unmodifiable {@link Map} containing all entries (head entry first,
-     * then tail entries in insertion order).
+     * then tail entries in insertion order). The same instance is returned on repeated
+     * calls (lazily initialized, thread-safe).
      *
-     * @return a new unmodifiable map with all entries
+     * @return an unmodifiable map with all entries
      */
     public Map<K, V> toMap() {
-        Map<K, V> result = new LinkedHashMap<>();
-        result.put(headKey, headValue);
-        result.putAll(tail);
-        return Collections.unmodifiableMap(result);
+        Map<K, V> m = cachedMap;
+        if (m == null) {
+            synchronized (this) {
+                m = cachedMap;
+                if (m == null) {
+                    Map<K, V> result = new LinkedHashMap<>();
+                    result.put(headKey, headValue);
+                    result.putAll(tail);
+                    cachedMap = m = Collections.unmodifiableMap(result);
+                }
+            }
+        }
+        return m;
     }
 
     // -------------------------------------------------------------------------
@@ -245,9 +257,9 @@ public final class NonEmptyMap<K, V> {
      * Applies {@code mapper} to every key and returns a new {@code NonEmptyMap}
      * with the mapped keys and the original values.
      *
-     * <p>If multiple keys map to the same new key, last-write-wins semantics apply
-     * (same as building a {@link LinkedHashMap} in encounter order). The head key is
-     * always processed first.
+     * <p>If multiple keys map to the same new key, <strong>head-wins</strong> semantics apply:
+     * the head entry is always preserved, and any tail entry whose mapped key collides with
+     * the mapped head key is silently dropped.
      *
      * @param mapper a non-null function to apply to each key; must not return {@code null}
      * @param <R>    the result key type
