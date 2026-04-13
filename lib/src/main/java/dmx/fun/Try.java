@@ -148,8 +148,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the operation does not complete within {@code timeout}, the virtual thread is
      * interrupted and a {@code Failure} containing a {@link TimeoutException} is returned.
      *
-     * <p>The {@link TimeoutException} message includes the configured duration in milliseconds,
-     * e.g. {@code "Operation timed out after 500ms"}.
+     * <p>The {@link TimeoutException} message includes the configured duration in nanoseconds,
+     * e.g. {@code "Operation timed out after 500000000ns"}. Nanosecond precision is used so
+     * that sub-millisecond timeouts are honoured without truncation.
      *
      * <p><b>Requires Java 21+</b> (virtual threads).
      *
@@ -177,13 +178,16 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         Thread thread = Thread.ofVirtual().start(task);
 
         try {
-            return success(task.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
+            return success(task.get(timeout.toNanos(), TimeUnit.NANOSECONDS));
         } catch (TimeoutException e) {
             thread.interrupt();
-            return failure(new TimeoutException("Operation timed out after " + timeout.toMillis() + "ms"));
+            task.cancel(true);
+            return failure(new TimeoutException("Operation timed out after " + timeout.toNanos() + "ns"));
         } catch (ExecutionException e) {
             return failure(e.getCause());
         } catch (InterruptedException e) {
+            thread.interrupt();
+            task.cancel(true);
             Thread.currentThread().interrupt();
             return failure(e);
         } catch (CancellationException e) {

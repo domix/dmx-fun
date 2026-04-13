@@ -75,7 +75,7 @@ public class TrySample {
             }
         );
         System.out.println("Timed out: " + slow.isFailure()); // true
-        System.out.println("Cause: " + slow.getCause().getMessage()); // Operation timed out after 100ms
+        System.out.println("Cause: " + slow.getCause().getMessage()); // Operation timed out after 100000000ns
 
         // Recover from timeout with a fallback
         String value = Try.withTimeout(Duration.ofMillis(50), () -> {
