@@ -10,9 +10,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.time.Duration;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -135,6 +140,58 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
             return success(null);
         } catch (Throwable t) {
             return failure(t);
+        }
+    }
+
+    /**
+     * Executes {@code supplier} on a virtual thread and returns the result as a {@code Try}.
+     * If the operation does not complete within {@code timeout}, the virtual thread is
+     * interrupted and a {@code Failure} containing a {@link TimeoutException} is returned.
+     *
+     * <p>The {@link TimeoutException} message includes the configured duration in nanoseconds,
+     * e.g. {@code "Operation timed out after 500000000ns"}. Nanosecond precision is used so
+     * that sub-millisecond timeouts are honoured without truncation.
+     *
+     * <p><b>Requires Java 21+</b> (virtual threads).
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Try<Response> result = Try.withTimeout(
+     *     Duration.ofSeconds(5),
+     *     () -> httpClient.get(url)
+     * );
+     * }</pre>
+     *
+     * @param <V>      the type of the result supplied
+     * @param timeout  the maximum time to wait; must not be {@code null}
+     * @param supplier the computation to run; must not be {@code null}
+     * @return {@code Success(value)} if the computation completes within the timeout,
+     *         {@code Failure(TimeoutException)} if the timeout is exceeded,
+     *         or {@code Failure(cause)} if the computation itself throws before the timeout
+     * @throws NullPointerException if {@code timeout} or {@code supplier} is {@code null}
+     */
+    static <V> Try<V> withTimeout(Duration timeout, CheckedSupplier<? extends V> supplier) {
+        Objects.requireNonNull(timeout, "timeout");
+        Objects.requireNonNull(supplier, "supplier");
+
+        FutureTask<V> task = new FutureTask<>(supplier::get);
+        Thread thread = Thread.ofVirtual().start(task);
+
+        try {
+            return success(task.get(timeout.toNanos(), TimeUnit.NANOSECONDS));
+        } catch (TimeoutException e) {
+            thread.interrupt();
+            task.cancel(true);
+            return failure(new TimeoutException("Operation timed out after " + timeout.toNanos() + "ns"));
+        } catch (ExecutionException e) {
+            return failure(e.getCause());
+        } catch (InterruptedException e) {
+            thread.interrupt();
+            task.cancel(true);
+            Thread.currentThread().interrupt();
+            return failure(e);
+        } catch (CancellationException e) {
+            return failure(e);
         }
     }
 

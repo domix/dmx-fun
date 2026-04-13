@@ -7,12 +7,12 @@
  *   <li>{@link dmx.fun.Result} — represents a value or an error</li>
  *   <li>{@link dmx.fun.Either} — neutral disjoint union of two value types</li>
  *   <li>{@link dmx.fun.Try}    — represents a computation that may throw</li>
- *   <li>{@link dmx.fun.Tuple2}    — an immutable pair of two values</li>
  *   <li>{@link dmx.fun.Validated} — error-accumulating validation type</li>
  *   <li>{@link dmx.fun.CheckedSupplier} — supplier that may throw checked exceptions</li>
  *   <li>{@link dmx.fun.CheckedRunnable} — runnable that may throw checked exceptions</li>
  *   <li>{@link dmx.fun.CheckedFunction} — function that may throw checked exceptions</li>
  *   <li>{@link dmx.fun.CheckedConsumer} — consumer that may throw checked exceptions</li>
+ *   <li>{@link dmx.fun.Tuple2}       — an immutable pair of two values</li>
  *   <li>{@link dmx.fun.Tuple3}       — immutable triple of three values</li>
  *   <li>{@link dmx.fun.Tuple4}       — immutable quadruple of four values</li>
  *   <li>{@link dmx.fun.TriFunction}  — function accepting three arguments</li>

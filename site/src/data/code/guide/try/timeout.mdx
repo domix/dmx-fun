@@ -1,0 +1,25 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Static factory — enforce a time limit from the start
+Try<Response> result = Try.withTimeout(
+    Duration.ofSeconds(5),
+    () -> httpClient.get(url)
+);
+
+// Exceeded deadline → Failure(TimeoutException("Operation timed out after 100000000ns"))
+Try<String> timedOut = Try.withTimeout(
+    Duration.ofMillis(100),
+    () -> { Thread.sleep(10_000); return "never"; }
+);
+timedOut.isFailure();  // true
+timedOut.getCause();   // TimeoutException: "Operation timed out after 100000000ns"
+
+// Composes naturally with the rest of the API
+Try.withTimeout(Duration.ofSeconds(3), () -> fetchUser(id))
+   .recover(TimeoutException.class, ex -> User.anonymous())
+   .flatMap(user -> validateActive(user))
+   .onSuccess(user -> cache.put(id, user));
+```

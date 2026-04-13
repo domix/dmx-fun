@@ -18,6 +18,7 @@ import {Content as NullHandling}       from '../code/guide/try/null-handling.mdx
 import {Content as InteropConversions} from '../code/guide/try/interop-conversions.mdx';
 import {Content as PitfallsGet}        from '../code/guide/try/pitfalls-get.mdx';
 import {Content as PitfallsUseResult}  from '../code/guide/try/pitfalls-use-result.mdx';
+import {Content as Timeout}            from '../code/guide/try/timeout.mdx';
 import {Content as RealWorldExample}   from '../code/guide/try/real-world-example.mdx';
 
 > **Runnable example:** [`TrySample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/TrySample.java)
@@ -151,6 +152,22 @@ See the [Combining Types](combining-types) page for the full conversion matrix a
 | Branch on error subtype      | Via `catch` clauses            | Via `instanceof` / `recover(Class)`  | Via sealed subtype and switch patterns  |
 | Interop with throwing code   | Native                         | Excellent — `Try.of(() -> ...)`      | Indirect — wrap with `Try` first        |
 | Best for                     | Internal APIs you control      | Wrapping legacy/third-party code     | Domain logic with typed failure modes   |
+
+## Time-bounded execution — `Try.withTimeout`
+
+`Try.withTimeout(Duration, CheckedSupplier)` runs the supplier on a virtual thread
+and enforces the time limit via `Future.get(timeout, unit)`.
+
+- If the computation **completes in time** → `Success(value)`.
+- If the **deadline is exceeded** → the virtual thread is interrupted and a
+  `Failure(TimeoutException("Operation timed out after Xms"))` is returned.
+- If the computation **throws before the deadline** → `Failure(originalCause)`.
+
+**Requires Java 21+** (virtual threads). Because `Try` is an immutable value type
+(already computed), timeout applies at creation time — use the static factory
+rather than trying to retroactively time-limit an existing `Try`.
+
+<Timeout/>
 
 ## Common pitfalls
 
