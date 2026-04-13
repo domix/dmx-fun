@@ -1,0 +1,21 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// of(head, rest) — explicit head element + additional elements
+NonEmptySet<String> nes = NonEmptySet.of("admin", Set.of("user", "moderator"));
+// [admin, user, moderator]
+
+// Duplicate head in rest is silently ignored
+NonEmptySet<String> dedup = NonEmptySet.of("admin", Set.of("admin", "user"));
+// [admin, user]
+
+// singleton — exactly one element
+NonEmptySet<String> single = NonEmptySet.singleton("admin");
+// [admin]
+
+// fromSet — safe conversion from a plain Set; empty set returns None
+Option<NonEmptySet<String>> fromSet = NonEmptySet.fromSet(someSet);
+// Some([...])  or  None
+```

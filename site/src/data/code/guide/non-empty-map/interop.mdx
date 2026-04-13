@@ -1,0 +1,19 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+
+// toMap — unmodifiable java.util.Map for interop with standard APIs
+Map<String, Integer> javaMap = nem.toMap();
+
+// toNonEmptyList — convert entries to a NonEmptyList in insertion order
+NonEmptyList<Map.Entry<String, Integer>> entries = nem.toNonEmptyList();
+// [alice=10, bob=20]
+
+// fromMap — bridge from plain Map (e.g. from external source)
+Map<String, Integer> external = fetchScoresFromDatabase();
+Option<NonEmptyMap<String, Integer>> safe = NonEmptyMap.fromMap(external);
+safe.forEach(scores -> processScores(scores));
+```

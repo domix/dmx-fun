@@ -1,0 +1,55 @@
+---
+fileName: 'RolePermissionsService.java'
+---
+
+```java
+// A role-to-permissions registry that is always initialized with at least one entry.
+// The compiler prevents calling this service with an empty map.
+
+public class RolePermissionsService {
+
+    private final NonEmptyMap<String, Set<String>> permissions;
+
+    public RolePermissionsService(NonEmptyMap<String, Set<String>> permissions) {
+        this.permissions = permissions;
+    }
+
+    /** Returns the permissions for a role, or an empty set if the role is unknown. */
+    public Set<String> permissionsFor(String role) {
+        return permissions.get(role)
+            .getOrElse(Set.of());
+    }
+
+    /** Returns a new service with an additional role merged in. */
+    public RolePermissionsService withRole(String role, Set<String> perms) {
+        NonEmptyMap<String, Set<String>> updated =
+            permissions.merge(NonEmptyMap.singleton(role, perms), (existing, incoming) -> {
+                Set<String> merged = new HashSet<>(existing);
+                merged.addAll(incoming);
+                return Set.copyOf(merged);
+            });
+        return new RolePermissionsService(updated);
+    }
+
+    /** Returns only roles that have the given permission. */
+    public Option<NonEmptyMap<String, Set<String>>> rolesWithPermission(String permission) {
+        return permissions.filter((role, perms) -> perms.contains(permission));
+    }
+}
+
+// Usage
+NonEmptyMap<String, Set<String>> initial = NonEmptyMap.of(
+    "admin",  Set.of("read", "write", "delete"),
+    Map.of(
+        "editor", Set.of("read", "write"),
+        "viewer", Set.of("read")
+    )
+);
+
+RolePermissionsService svc = new RolePermissionsService(initial);
+
+Set<String> editorPerms = svc.permissionsFor("editor"); // [read, write]
+
+Option<NonEmptyMap<String, Set<String>>> canWrite = svc.rolesWithPermission("write");
+// Some({admin=[read,write,delete], editor=[read,write]})
+```

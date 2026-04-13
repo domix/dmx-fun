@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptySet<Integer> nes = NonEmptySet.of(1, Set.of(2, 3, 4, 5));
+
+// filter — returns Option because no element may pass
+Option<NonEmptySet<Integer>> evens = nes.filter(n -> n % 2 == 0);
+// Some([2, 4])
+
+Option<NonEmptySet<Integer>> none = nes.filter(n -> n > 100);
+// None
+
+// All elements pass — same size as original
+Option<NonEmptySet<Integer>> all = nes.filter(n -> n > 0);
+// Some([1, 2, 3, 4, 5])
+```

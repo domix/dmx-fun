@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptySet<String> nes = NonEmptySet.of("admin", Set.of("user", "moderator"));
+
+// map — transform every element; result is deduplicated, head always comes from mapping head
+NonEmptySet<String> upper = nes.map(String::toUpperCase);
+// [ADMIN, USER, MODERATOR]
+
+// map with deduplication: "a" and "A" both map to "A" — only one "A" survives
+NonEmptySet<String> collision = NonEmptySet.of("a", Set.of("A"));
+NonEmptySet<String> mapped = collision.map(String::toUpperCase);
+// [A]  (size 1 — head "a" maps to "A", tail "A" is a duplicate and dropped)
+```

@@ -1,0 +1,21 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// of(key, value, rest) — explicit head entry + additional entries
+NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20, "carol", 30));
+// {alice=10, bob=20, carol=30}
+
+// Duplicate head key in rest is silently ignored — head value wins
+NonEmptyMap<String, Integer> dedup = NonEmptyMap.of("alice", 10, Map.of("alice", 99, "bob", 20));
+// {alice=10, bob=20}  (alice=99 dropped)
+
+// singleton — exactly one entry
+NonEmptyMap<String, Integer> single = NonEmptyMap.singleton("alice", 10);
+// {alice=10}
+
+// fromMap — safe conversion from a plain Map; empty map returns None
+Option<NonEmptyMap<String, Integer>> fromMap = NonEmptyMap.fromMap(someMap);
+// Some({...})  or  None
+```

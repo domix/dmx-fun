@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptySet<String> nes = NonEmptySet.of("admin", Set.of("user", "moderator"));
+
+String head = nes.head();  // "admin" — always present, never null
+int    size = nes.size();  // 3       — always >= 1
+
+// contains
+boolean hasAdmin   = nes.contains("admin");   // true
+boolean hasUnknown = nes.contains("unknown"); // false
+
+// toSet — unmodifiable view of all elements in insertion order
+Set<String> all = nes.toSet(); // [admin, user, moderator]
+
+// Iterable — use directly in for-each loops
+for (String role : nes) {
+    System.out.println(role);
+}
+```

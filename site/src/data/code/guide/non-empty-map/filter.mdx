@@ -1,0 +1,18 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 5, "carol", 30));
+
+// filter — predicate receives (key, value); returns Option because result may be empty
+Option<NonEmptyMap<String, Integer>> highScorers = nem.filter((k, v) -> v >= 10);
+// Some({alice=10, carol=30})
+
+Option<NonEmptyMap<String, Integer>> none = nem.filter((k, v) -> v > 100);
+// None
+
+// filter on key
+Option<NonEmptyMap<String, Integer>> startWithC = nem.filter((k, v) -> k.startsWith("c"));
+// Some({carol=30})
+```

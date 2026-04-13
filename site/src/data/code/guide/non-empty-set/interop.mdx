@@ -1,0 +1,24 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptySet<String> nes = NonEmptySet.of("admin", Set.of("user", "moderator"));
+
+// toSet — unmodifiable java.util.Set for interop with standard APIs
+Set<String> javaSet = nes.toSet();
+
+// toNonEmptyList — ordered snapshot of elements as a NonEmptyList
+NonEmptyList<String> nel = nes.toNonEmptyList();
+// NonEmptyList["admin", "user", "moderator"]
+
+// fromSet — bridge from plain Set (e.g. from external source)
+Set<String> external = fetchRolesFromDatabase();
+Option<NonEmptySet<String>> safe = NonEmptySet.fromSet(external);
+safe.forEach(roles -> processRoles(roles));
+
+// Iterable — stream-friendly via StreamSupport or direct for-each
+StreamSupport.stream(nes.spliterator(), false)
+    .filter(r -> r.startsWith("a"))
+    .forEach(System.out::println);
+```

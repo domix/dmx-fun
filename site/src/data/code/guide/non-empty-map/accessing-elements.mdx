@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+
+String  headKey   = nem.headKey();    // "alice" — always present, never null
+Integer headValue = nem.headValue();  // 10      — always present, never null
+int     size      = nem.size();       // 2       — always >= 1
+
+// get — Option-based safe lookup
+Option<Integer> found   = nem.get("bob");     // Some(20)
+Option<Integer> missing = nem.get("unknown"); // None
+
+// containsKey
+boolean hasAlice = nem.containsKey("alice"); // true
+boolean hasDave  = nem.containsKey("dave");  // false
+
+// toMap — unmodifiable view of all entries
+Map<String, Integer> all = nem.toMap(); // {alice=10, bob=20}
+```

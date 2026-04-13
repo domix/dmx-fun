@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyMap<String, Integer> scores1 = NonEmptyMap.of("alice", 10, Map.of("bob", 5));
+NonEmptyMap<String, Integer> scores2 = NonEmptyMap.of("carol", 20, Map.of("bob", 15));
+
+// merge — combine two maps; mergeFunction resolves conflicts
+NonEmptyMap<String, Integer> combined = scores1.merge(scores2, Integer::sum);
+// {alice=10, bob=20, carol=20}  (bob: 5+15=20)
+
+// merge with last-write-wins for conflicts
+NonEmptyMap<String, Integer> lastWins = scores1.merge(scores2, (v1, v2) -> v2);
+// {alice=10, bob=15, carol=20}  (bob=15 from scores2)
+
+// Disjoint maps — no conflict, all entries preserved
+NonEmptyMap<String, Integer> a = NonEmptyMap.singleton("x", 1);
+NonEmptyMap<String, Integer> b = NonEmptyMap.singleton("y", 2);
+NonEmptyMap<String, Integer> merged = a.merge(b, Integer::sum);
+// {x=1, y=2}
+```

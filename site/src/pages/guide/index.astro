@@ -68,6 +68,22 @@ const types = [
         tag: 'Collections',
     },
     {
+        name: 'NonEmptyMap<K, V>',
+        href: `${base}guide/non-empty-map`,
+        summary: 'A map guaranteed to have at least one entry at compile time. Insertion order preserved.',
+        whenToUse: 'A registry, configuration, or lookup table that must always contain at least one entry.',
+        avoidWhen: 'Emptiness is a valid state — use a regular Map.',
+        tag: 'Collections',
+    },
+    {
+        name: 'NonEmptySet<T>',
+        href: `${base}guide/non-empty-set`,
+        summary: 'A set guaranteed to have at least one element at compile time. No duplicates, insertion order preserved.',
+        whenToUse: 'Set semantics (no duplicates) with the additional guarantee of non-emptiness, e.g. user roles or product tags.',
+        avoidWhen: 'Emptiness is a valid state — use a regular Set.',
+        tag: 'Collections',
+    },
+    {
         name: 'Checked interfaces',
         href: `${base}guide/checked-interfaces`,
         summary: 'Checked variants of Function, Supplier, Consumer, Runnable, plus TriFunction/QuadFunction.',
