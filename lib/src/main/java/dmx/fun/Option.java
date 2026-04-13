@@ -614,6 +614,58 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     /**
+     * Applies {@code mapper} to the value inside this {@code Option} and pairs the original value
+     * with the result. Returns {@link Option#none()} if this is empty <em>or</em> if the mapper
+     * returns {@link Option#none()}.
+     *
+     * <p>This is the monadic "dependent zip": the second {@code Option} is computed <em>from</em>
+     * the first value, unlike {@link #zip(Option)} which takes an already-evaluated option.
+     *
+     * <pre>{@code
+     * Option<String> name = Option.some("alice");
+     * Option<Tuple2<String, Integer>> result =
+     *     name.zipWith(n -> lookupAge(n));
+     * // Some(Tuple2("alice", 30)) if lookupAge returns Some(30)
+     * // None                      if lookupAge returns None
+     * }</pre>
+     *
+     * @param <B>    type of the value produced by {@code mapper}
+     * @param mapper function that receives this option's value and returns an {@code Option<B>};
+     *               must not be {@code null}, and must not return {@code null}
+     * @return {@code Some(Tuple2(thisValue, b))} if both are present, otherwise {@code None}
+     * @throws NullPointerException if {@code mapper} is {@code null} or if {@code mapper} returns
+     *                              {@code null}
+     */
+    default <B> Option<Tuple2<Value, B>> zipWith(
+            Function<? super Value, ? extends Option<? extends B>> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
+        return flatMap(v -> {
+            Option<? extends B> opt =
+                Objects.requireNonNull(mapper.apply(v), "mapper must not return null");
+            return opt.map(b -> new Tuple2<>(v, b));
+        });
+    }
+
+    /**
+     * Alias for {@link #zipWith(Function)}.
+     *
+     * <p>Applies {@code mapper} to the value inside this {@code Option} and pairs the original
+     * value with the result. Useful when the name {@code flatZip} better communicates intent
+     * at the call site.
+     *
+     * @param <B>    type of the value produced by {@code mapper}
+     * @param mapper function that receives this option's value and returns an {@code Option<B>};
+     *               must not be {@code null}, and must not return {@code null}
+     * @return {@code Some(Tuple2(thisValue, b))} if both are present, otherwise {@code None}
+     * @throws NullPointerException if {@code mapper} is {@code null} or if {@code mapper} returns
+     *                              {@code null}
+     */
+    default <B> Option<Tuple2<Value, B>> flatZip(
+            Function<? super Value, ? extends Option<? extends B>> mapper) {
+        return zipWith(mapper);
+    }
+
+    /**
      * Combines this {@code Option} with two others into an {@code Option<Tuple3>}.
      * Returns {@link Option#none()} if any of the three is empty.
      *

@@ -20,6 +20,7 @@ import {Content as TransformingPeek}       from '../code/guide/option/transformi
 import {Content as TransformingMatch}      from '../code/guide/option/transforming-match.mdx';
 import {Content as ComposingOrElse}        from '../code/guide/option/composing-or-else.mdx';
 import {Content as ComposingZip}           from '../code/guide/option/composing-zip.mdx';
+import {Content as ComposingZipWith}       from '../code/guide/option/composing-zip-with.mdx';
 import {Content as ComposingSequence}      from '../code/guide/option/composing-sequence.mdx';
 import {Content as ComposingStream}        from '../code/guide/option/composing-stream.mdx';
 import {Content as InteropConversions}     from '../code/guide/option/interop-conversions.mdx';
@@ -150,6 +151,17 @@ Combine multiple independent `Option` values.
 Returns `None` if any input is `None`.
 
 <ComposingZip/>
+
+### Pairing a value with a derived Option — `zipWith` / `flatZip`
+
+`zipWith(mapper)` applies a function to the current value and pairs the original
+value with whatever the function returns. If the mapper returns `None`, the whole
+result is `None`. Unlike `zip(Option)`, the second `Option` is computed lazily
+_from_ the first value.
+
+`flatZip` is an alias that may read more naturally at the call site.
+
+<ComposingZipWith/>
 
 ### Collecting a list with `sequence`
 
