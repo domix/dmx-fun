@@ -648,4 +648,41 @@ class OptionTest {
             Option.some("hello").flatZip(s -> Option.some(s.length()));
         assertThat(viaFlatZip).isEqualTo(viaZipWith);
     }
+
+    // -------------------------------------------------------------------------
+    // sequenceCollector
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceCollector_shouldReturnPresentList_whenAllSome() {
+        Optional<List<String>> result = Stream.of(
+                Option.some("a"), Option.some("b"), Option.some("c"))
+            .collect(Option.sequenceCollector());
+        assertThat(result).isPresent();
+        assertThat(result.get()).containsExactly("a", "b", "c");
+    }
+
+    @Test
+    void sequenceCollector_shouldReturnEmpty_whenAnyNone() {
+        Optional<List<String>> result = Stream.of(
+                Option.some("a"), Option.<String>none(), Option.some("c"))
+            .collect(Option.sequenceCollector());
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void sequenceCollector_shouldReturnPresentEmptyList_forEmptyStream() {
+        Optional<List<String>> result = Stream.<Option<String>>empty()
+            .collect(Option.sequenceCollector());
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEmpty();
+    }
+
+    @Test
+    void sequenceCollector_resultListShouldBeUnmodifiable() {
+        Optional<List<String>> result = Stream.of(Option.some("a"))
+            .collect(Option.sequenceCollector());
+        assertThatThrownBy(() -> result.get().add("z"))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
 }

@@ -22,6 +22,7 @@ import {Content as ComposingOrElse}        from '../code/guide/option/composing-
 import {Content as ComposingZip}           from '../code/guide/option/composing-zip.mdx';
 import {Content as ComposingZipWith}       from '../code/guide/option/composing-zip-with.mdx';
 import {Content as ComposingSequence}      from '../code/guide/option/composing-sequence.mdx';
+import {Content as SequenceCollector}      from '../code/guide/option/sequence-collector.mdx';
 import {Content as ComposingStream}        from '../code/guide/option/composing-stream.mdx';
 import {Content as InteropConversions}     from '../code/guide/option/interop-conversions.mdx';
 import {Content as PitfallsNested}         from '../code/guide/option/pitfalls-nested.mdx';
@@ -169,6 +170,14 @@ Converts a `List<Option<T>>` into an `Option<List<T>>`.
 Returns `None` as soon as any element is `None`.
 
 <ComposingSequence/>
+
+### Collecting a stream with `sequenceCollector`
+
+`Option.sequenceCollector()` is the stream `Collector` counterpart to `sequence`.
+It reduces a `Stream<Option<V>>` to a single `Optional<List<V>>` — present only if
+every element is `Some`, empty if any element is `None`.
+
+<SequenceCollector/>
 
 ### Stream integration with `stream()`
 

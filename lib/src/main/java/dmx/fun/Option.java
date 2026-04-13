@@ -1,6 +1,7 @@
 package dmx.fun;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -391,6 +392,53 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      */
     static <V> Collector<Option<? extends V>, ?, List<V>> presentValuesToList() {
         return Collectors.flatMapping(Option::stream, Collectors.toList());
+    }
+
+    /**
+     * Returns a {@link Collector} that reduces a {@code Stream<Option<V>>} to a single
+     * {@code Optional<List<V>>}.
+     *
+     * <p>The result is {@link Optional#of(Object) present} only if <em>every</em> element in the
+     * stream is {@link Option#some(Object) Some}. The first {@link Option#none() None} causes the
+     * entire result to be {@link Optional#empty()}. An empty stream yields an empty list wrapped
+     * in {@code Optional.of}.
+     *
+     * <p>This mirrors {@link #sequence(Iterable)} but operates as a stream {@link Collector}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Optional<List<User>> allFound = ids.stream()
+     *     .map(userRepo::findById)             // Stream<Option<User>>
+     *     .collect(Option.sequenceCollector()); // Optional<List<User>>
+     * }</pre>
+     *
+     * @param <V> the element type inside each {@code Option}
+     * @return a collector producing {@code Optional<List<V>>}
+     */
+    static <V> Collector<Option<V>, ?, Optional<List<V>>> sequenceCollector() {
+        class Acc {
+            final ArrayList<V> values = new ArrayList<>();
+            boolean hasNone = false;
+        }
+        return Collector.of(
+            Acc::new,
+            (acc, opt) -> {
+                if (!acc.hasNone) {
+                    switch (opt) {
+                        case None<V> __ -> acc.hasNone = true;
+                        case Some<V> s  -> acc.values.add(s.value());
+                    }
+                }
+            },
+            (a, b) -> {
+                if (a.hasNone || b.hasNone) { a.hasNone = true; return a; }
+                a.values.addAll(b.values);
+                return a;
+            },
+            acc -> acc.hasNone
+                ? Optional.empty()
+                : Optional.of(Collections.unmodifiableList(acc.values))
+        );
     }
 
     // ---------- sequence / traverse ----------

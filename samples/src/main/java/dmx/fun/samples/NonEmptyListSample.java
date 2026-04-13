@@ -5,6 +5,7 @@ import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import dmx.fun.Validated;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Demonstrates NonEmptyList<T>: a list guaranteed to have at least one element at compile time.
@@ -23,7 +24,7 @@ public class NonEmptyListSample {
         }
     }
 
-    static void main(String[] args) {
+    public static void main(String[] args) {
         // Construction — head + tail list
         NonEmptyList<String> tags = NonEmptyList.of("java", List.of("fp", "dmx-fun"));
         System.out.println("Head: " + tags.head());      // java
@@ -67,5 +68,27 @@ public class NonEmptyListSample {
           .peekError(errors -> errors.toList().forEach(e -> System.out.println("Error: " + e)));
         // Error: Must be positive, got: -1
         // Error: Not a number: abc
+
+        // ---- toNonEmptyList() collector ----
+
+        System.out.println("\n=== toNonEmptyList collector ===");
+
+        // Non-empty stream → Some(NonEmptyList)
+        Option<NonEmptyList<String>> collected = Stream.of("java", "fp", "dmx-fun")
+            .filter(t -> t.length() > 2)
+            .collect(NonEmptyList.toNonEmptyList());
+        collected.peek(nel -> System.out.println("Collected: " + nel.toList()));
+        // Collected: [java, fp, dmx-fun]
+
+        // Empty stream → None
+        Option<NonEmptyList<String>> noResults = Stream.<String>empty()
+            .collect(NonEmptyList.toNonEmptyList());
+        System.out.println("No results: " + noResults.isEmpty()); // true
+
+        // Useful when a filter may eliminate all elements
+        Option<NonEmptyList<String>> longTags = Stream.of("java", "fp", "dmx-fun")
+            .filter(t -> t.length() > 10)
+            .collect(NonEmptyList.toNonEmptyList());
+        System.out.println("Long tags: " + longTags.isEmpty()); // true
     }
 }

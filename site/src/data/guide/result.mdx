@@ -19,6 +19,7 @@ import {Content as SequenceTraverse}     from '../code/guide/result/sequence-tra
 import {Content as InteropConversions}   from '../code/guide/result/interop-conversions.mdx';
 import {Content as PitfallsNested}       from '../code/guide/result/pitfalls-nested.mdx';
 import {Content as PitfallsIgnoringError} from '../code/guide/result/pitfalls-ignoring-error.mdx';
+import {Content as GroupingBy}           from '../code/guide/result/grouping-by.mdx';
 import {Content as RealWorldExample}     from '../code/guide/result/real-world-example.mdx';
 
 > **Runnable example:** [`ResultSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/ResultSample.java)
@@ -131,6 +132,18 @@ This is implemented internally with a Stream Gatherer.
 If you need all results regardless of failure, use `Result.partitioningBy()`
 as a `Collector` — it separates `Ok` values and errors into
 two lists, consuming the entire stream.
+
+## Grouping with `Result.groupingBy`
+
+`Result.groupingBy(classifier)` groups stream elements by a derived key into a
+`Map<K, NonEmptyList<V>>`. Unlike `Collectors.groupingBy`, the value type is
+`NonEmptyList<V>` rather than `List<V>`, making the non-emptiness of every group
+explicit in the type.
+
+A downstream variant `groupingBy(classifier, downstream)` applies a transformation
+to each group's `NonEmptyList` after grouping.
+
+<GroupingBy/>
 
 ## Interoperability
 

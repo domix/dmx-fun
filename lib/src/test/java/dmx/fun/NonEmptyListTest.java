@@ -1,6 +1,7 @@
 package dmx.fun;
 
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -371,5 +372,33 @@ class NonEmptyListTest {
     void toString_shouldMatchListFormat() {
         NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
         assertThat(nel.toString()).isEqualTo("[1, 2, 3]");
+    }
+
+    // -------------------------------------------------------------------------
+    // toNonEmptyList() collector
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toNonEmptyList_shouldReturnSome_whenStreamIsNonEmpty() {
+        Option<NonEmptyList<String>> result = Stream.of("a", "b", "c")
+            .collect(NonEmptyList.toNonEmptyList());
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().toList()).containsExactly("a", "b", "c");
+    }
+
+    @Test
+    void toNonEmptyList_shouldReturnNone_whenStreamIsEmpty() {
+        Option<NonEmptyList<String>> result = Stream.<String>empty()
+            .collect(NonEmptyList.toNonEmptyList());
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void toNonEmptyList_shouldBehaveIdenticallyToCollector() {
+        Option<NonEmptyList<Integer>> viaCollector =
+            Stream.of(1, 2, 3).collect(NonEmptyList.collector());
+        Option<NonEmptyList<Integer>> viaAlias =
+            Stream.of(1, 2, 3).collect(NonEmptyList.toNonEmptyList());
+        assertThat(viaAlias).isEqualTo(viaCollector);
     }
 }

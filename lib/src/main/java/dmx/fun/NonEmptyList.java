@@ -255,6 +255,32 @@ public final class NonEmptyList<T> implements Iterable<T> {
     }
 
     /**
+     * Alias for {@link #collector()}.
+     *
+     * <p>Returns a {@link Collector} that accumulates a {@link Stream}{@code <T>} into an
+     * {@link Option}{@code <NonEmptyList<T>>}. Produces {@link Option#some(Object)} if the stream
+     * has at least one element, or {@link Option#none()} if the stream is empty.
+     *
+     * <pre>{@code
+     * Option<NonEmptyList<String>> tags =
+     *     Stream.of("java", "fp", "dmx-fun")
+     *           .collect(NonEmptyList.toNonEmptyList());
+     * // Some(["java", "fp", "dmx-fun"])
+     *
+     * Option<NonEmptyList<String>> empty =
+     *     Stream.<String>empty()
+     *           .collect(NonEmptyList.toNonEmptyList());
+     * // None
+     * }</pre>
+     *
+     * @param <T> the element type
+     * @return a {@code Collector} producing {@code Option<NonEmptyList<T>>}
+     */
+    public static <T> Collector<T, ?, Option<NonEmptyList<T>>> toNonEmptyList() {
+        return collector();
+    }
+
+    /**
      * Sequences a {@code NonEmptyList} of {@link Option}s into an {@code Option} of a
      * {@code NonEmptyList}.
      *

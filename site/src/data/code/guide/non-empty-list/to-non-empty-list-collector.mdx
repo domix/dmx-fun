@@ -1,0 +1,26 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Non-empty stream → Some(NonEmptyList)
+Option<NonEmptyList<String>> tags =
+    Stream.of("java", "fp", "dmx-fun")
+          .filter(t -> t.length() > 2)
+          .collect(NonEmptyList.toNonEmptyList());
+// Some(["java", "fp", "dmx-fun"])
+
+// Empty stream → None
+Option<NonEmptyList<String>> noTags =
+    Stream.<String>empty()
+          .collect(NonEmptyList.toNonEmptyList());
+// None
+
+// Combine with other stream operations
+Option<NonEmptyList<Integer>> evens =
+    IntStream.rangeClosed(1, 10)
+             .boxed()
+             .filter(n -> n % 2 == 0)
+             .collect(NonEmptyList.toNonEmptyList());
+// Some([2, 4, 6, 8, 10])
+```
