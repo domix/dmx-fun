@@ -1,6 +1,6 @@
 ---
 title: "NonEmptyMap<K, V> — Developer Guide"
-description: "Comprehensive guide to NonEmptyMap<K, V>: construction, entry access, transformations, filter, merge, and interoperability."
+description: "Comprehensive guide to NonEmptyMap<K, V>: construction, entry access, transformations, filter, merge, interoperability, and cross-type conversions (keySet, values)."
 order: 9
 h1: "NonEmptyMap<K, V>"
 ---
@@ -79,6 +79,17 @@ conflicts. Because both inputs are non-empty, the result is guaranteed non-empty
 no `Option` wrapping needed.
 
 ## Interoperability
+
+Cross-type conversions bridge `NonEmptyMap` with `NonEmptySet`, `NonEmptyList`, and the
+standard Java collections.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `keySet()` | `NonEmptySet<K>` | All keys as a non-empty set; head key becomes set head |
+| `values()` | `NonEmptyList<V>` | All values in insertion order; duplicates preserved |
+| `toMap()` | `Map<K, V>` | Unmodifiable `java.util.Map` for standard API interop |
+| `toNonEmptyList()` | `NonEmptyList<Map.Entry<K,V>>` | All entries in insertion order |
+| `fromMap(map)` | `Option<NonEmptyMap<K,V>>` | Safe bridge from a plain `Map`; `None` if empty |
 
 <Interop/>
 

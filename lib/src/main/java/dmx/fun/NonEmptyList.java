@@ -3,8 +3,10 @@ package dmx.fun;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
@@ -210,6 +212,18 @@ public final class NonEmptyList<T> implements Iterable<T> {
     // -------------------------------------------------------------------------
     // Interop
     // -------------------------------------------------------------------------
+
+    /**
+     * Converts this list to a {@link NonEmptySet}, preserving the head element and
+     * deduplicating the tail in insertion order.
+     * Duplicate elements are silently dropped; the head is always retained.
+     *
+     * @return a {@code NonEmptySet<T>} with the same distinct elements
+     */
+    public NonEmptySet<T> toNonEmptySet() {
+        Set<T> tailAsSet = new LinkedHashSet<>(tail);
+        return NonEmptySet.of(head, tailAsSet);
+    }
 
     /**
      * Returns a sequential {@link Stream} of all elements (head first, then tail).

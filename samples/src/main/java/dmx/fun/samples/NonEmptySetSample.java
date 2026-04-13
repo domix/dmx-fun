@@ -1,6 +1,7 @@
 package dmx.fun.samples;
 
 import dmx.fun.NonEmptyList;
+import dmx.fun.NonEmptyMap;
 import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import java.util.Set;
@@ -109,6 +110,13 @@ public class NonEmptySetSample {
         System.out.println("No common: " + noCommon.isEmpty()); // true
 
         // ---- Interop ----
+
+        // toNonEmptyMap(valueMapper) — elements become keys; mapper produces values
+        NonEmptySet<String> roleSet = NonEmptySet.of("admin", Set.of("editor", "viewer"));
+        NonEmptyMap<String, Integer> permCount = roleSet.toNonEmptyMap(String::length);
+        System.out.println("admin perms key:   " + permCount.headKey());              // admin
+        System.out.println("admin perms value: " + permCount.headValue());            // 5
+        System.out.println("editor length:     " + permCount.get("editor").getOrElse(0)); // 6
 
         // toNonEmptyList — ordered snapshot
         NonEmptyList<String> nel = roles.toNonEmptyList();

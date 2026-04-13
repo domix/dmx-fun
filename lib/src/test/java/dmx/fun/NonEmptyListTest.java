@@ -273,6 +273,36 @@ class NonEmptyListTest {
     }
 
     // -------------------------------------------------------------------------
+    // toNonEmptySet()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toNonEmptySet_shouldContainAllDistinctElements() {
+        NonEmptyList<String> nel = NonEmptyList.of("a", List.of("b", "c"));
+        NonEmptySet<String> nes = nel.toNonEmptySet();
+        assertThat(nes.size()).isEqualTo(3);
+        assertThat(nes.head()).isEqualTo("a");
+        assertThat(nes.contains("b")).isTrue();
+        assertThat(nes.contains("c")).isTrue();
+    }
+
+    @Test
+    void toNonEmptySet_shouldDeduplicateTailElements() {
+        NonEmptyList<String> nel = NonEmptyList.of("a", List.of("b", "a", "b"));
+        NonEmptySet<String> nes = nel.toNonEmptySet();
+        assertThat(nes.size()).isEqualTo(2);
+        assertThat(nes.head()).isEqualTo("a");
+        assertThat(nes.contains("b")).isTrue();
+    }
+
+    @Test
+    void toNonEmptySet_singletonShouldYieldSingletonSet() {
+        NonEmptySet<String> nes = NonEmptyList.singleton("x").toNonEmptySet();
+        assertThat(nes.size()).isEqualTo(1);
+        assertThat(nes.head()).isEqualTo("x");
+    }
+
+    // -------------------------------------------------------------------------
     // Iterable
     // -------------------------------------------------------------------------
 

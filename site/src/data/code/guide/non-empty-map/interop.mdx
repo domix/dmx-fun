@@ -3,17 +3,29 @@ fileName: 'Demo.java'
 ---
 
 ```java
-NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20, "carol", 30));
 
-// toMap — unmodifiable java.util.Map for interop with standard APIs
+// keySet() — all keys as a NonEmptySet; head key becomes set head
+NonEmptySet<String> keys = nem.keySet();
+// NonEmptySet["alice", "bob", "carol"]
+keys.head();          // "alice"
+keys.size();          // 3
+
+// values() — all values as a NonEmptyList in insertion order; head value becomes list head
+NonEmptyList<Integer> vals = nem.values();
+// NonEmptyList[10, 20, 30]
+vals.head();          // 10
+vals.size();          // 3
+
+// toMap() — unmodifiable java.util.Map for interop with standard APIs
 Map<String, Integer> javaMap = nem.toMap();
 
-// toNonEmptyList — convert entries to a NonEmptyList in insertion order
+// toNonEmptyList() — all entries as Map.Entry objects in insertion order
 NonEmptyList<Map.Entry<String, Integer>> entries = nem.toNonEmptyList();
-// [alice=10, bob=20]
+// [alice=10, bob=20, carol=30]
 
-// fromMap — bridge from plain Map (e.g. from external source)
+// fromMap() — bridge from plain Map (e.g. from external source)
 Map<String, Integer> external = fetchScoresFromDatabase();
 Option<NonEmptyMap<String, Integer>> safe = NonEmptyMap.fromMap(external);
-safe.forEach(scores -> processScores(scores));
+safe.peek(scores -> processScores(scores));
 ```

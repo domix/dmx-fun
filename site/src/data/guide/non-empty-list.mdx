@@ -11,8 +11,9 @@ import {Content as Transformations}    from '../code/guide/non-empty-list/transf
 import {Content as InteropOption}      from '../code/guide/non-empty-list/interop-option.mdx';
 import {Content as InteropValidated}   from '../code/guide/non-empty-list/interop-validated.mdx';
 import {Content as StreamInterop}      from '../code/guide/non-empty-list/stream-interop.mdx';
-import {Content as EqualityToString}   from '../code/guide/non-empty-list/equality-tostring.mdx';
-import {Content as RealWorldExample}   from '../code/guide/non-empty-list/real-world-example.mdx';
+import {Content as EqualityToString}       from '../code/guide/non-empty-list/equality-tostring.mdx';
+import {Content as InteropNonEmptyTypes}   from '../code/guide/non-empty-list/interop-non-empty-types.mdx';
+import {Content as RealWorldExample}       from '../code/guide/non-empty-list/real-world-example.mdx';
 
 > **Runnable example:** [`NonEmptyListSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/NonEmptyListSample.java)
 
@@ -90,6 +91,13 @@ provides three dedicated helpers:
 integration with the standard Java stream API.
 
 <StreamInterop/>
+
+## Interoperability — `NonEmptySet` and `NonEmptyMap`
+
+`toNonEmptySet()` converts a list to a set, deduplicating elements while preserving the
+head. It is the inverse of `NonEmptySet.toNonEmptyList()`.
+
+<InteropNonEmptyTypes/>
 
 ## `equals`, `hashCode`, and `toString`
 

@@ -3,8 +3,10 @@ package dmx.fun;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -246,6 +248,28 @@ public final class NonEmptySet<T> implements Iterable<T> {
     public NonEmptyList<T> toNonEmptyList() {
         List<T> tailList = new ArrayList<>(tail);
         return NonEmptyList.of(head, tailList);
+    }
+
+    /**
+     * Returns a {@link NonEmptyMap} by applying {@code valueMapper} to each element of
+     * this set. Elements become keys; mapped results become values.
+     * The head of this set is the head key of the returned map.
+     *
+     * @param valueMapper a non-null function to derive a value from each element;
+     *                    must not return {@code null}
+     * @param <V>         the value type
+     * @return a new {@code NonEmptyMap<T, V>}
+     * @throws NullPointerException if {@code valueMapper} is {@code null} or returns {@code null}
+     */
+    public <V> NonEmptyMap<T, V> toNonEmptyMap(Function<? super T, ? extends V> valueMapper) {
+        Objects.requireNonNull(valueMapper, "valueMapper must not be null");
+        V headVal = Objects.requireNonNull(valueMapper.apply(head), "valueMapper must not return null");
+        Map<T, V> tailMap = new LinkedHashMap<>();
+        for (T element : tail) {
+            V val = Objects.requireNonNull(valueMapper.apply(element), "valueMapper must not return null");
+            tailMap.put(element, val);
+        }
+        return NonEmptyMap.of(head, headVal, tailMap);
     }
 
     // -------------------------------------------------------------------------

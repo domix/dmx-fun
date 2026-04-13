@@ -242,6 +242,56 @@ class NonEmptyMapTest {
     }
 
     // -------------------------------------------------------------------------
+    // keySet()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void keySet_shouldReturnAllKeys() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+        NonEmptySet<String> keys = nem.keySet();
+        assertThat(keys.size()).isEqualTo(2);
+        assertThat(keys.contains("alice")).isTrue();
+        assertThat(keys.contains("bob")).isTrue();
+    }
+
+    @Test
+    void keySet_headShouldMatchMapHeadKey() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+        assertThat(nem.keySet().head()).isEqualTo("alice");
+    }
+
+    @Test
+    void keySet_singletonMapShouldYieldSingletonSet() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.singleton("alice", 10);
+        assertThat(nem.keySet().size()).isEqualTo(1);
+        assertThat(nem.keySet().head()).isEqualTo("alice");
+    }
+
+    // -------------------------------------------------------------------------
+    // values()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void values_shouldReturnAllValues() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+        NonEmptyList<Integer> vals = nem.values();
+        assertThat(vals.size()).isEqualTo(2);
+        assertThat(vals.toList()).containsExactlyInAnyOrder(10, 20);
+    }
+
+    @Test
+    void values_headShouldMatchMapHeadValue() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.singleton("alice", 42);
+        assertThat(nem.values().head()).isEqualTo(42);
+    }
+
+    @Test
+    void values_shouldPreserveDuplicateValues() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 10));
+        assertThat(nem.values().size()).isEqualTo(2);
+    }
+
+    // -------------------------------------------------------------------------
     // toNonEmptyList()
     // -------------------------------------------------------------------------
 

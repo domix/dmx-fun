@@ -2,6 +2,7 @@ package dmx.fun.samples;
 
 import dmx.fun.NonEmptyList;
 import dmx.fun.NonEmptyMap;
+import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import java.util.HashSet;
 import java.util.Map;
@@ -104,6 +105,17 @@ public class NonEmptyMapSample {
         System.out.println("Merged bob: " + total.get("bob").getOrElse(0)); // 20
 
         // ---- Interop ----
+
+        // keySet() — all keys as a NonEmptySet; head key becomes set head
+        NonEmptySet<String> keys = scores.keySet();
+        System.out.println("Keys size: " + keys.size());       // 3
+        System.out.println("Keys head: " + keys.head());       // alice
+        System.out.println("Keys has bob: " + keys.contains("bob")); // true
+
+        // values() — all values as a NonEmptyList in insertion order
+        NonEmptyList<Integer> vals = scores.values();
+        System.out.println("Values size: " + vals.size());     // 3
+        System.out.println("Values head: " + vals.head());     // 10
 
         // toMap — standard java.util.Map
         Map<String, Integer> javaMap = scores.toMap();

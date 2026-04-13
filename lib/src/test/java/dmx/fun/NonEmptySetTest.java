@@ -254,6 +254,36 @@ class NonEmptySetTest {
     }
 
     // -------------------------------------------------------------------------
+    // toNonEmptyMap()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toNonEmptyMap_shouldCreateMapWithMappedValues() {
+        NonEmptySet<String> nes = NonEmptySet.of("admin", Set.of("editor"));
+        NonEmptyMap<String, Integer> nem = nes.toNonEmptyMap(String::length);
+        assertThat(nem.headKey()).isEqualTo("admin");
+        assertThat(nem.headValue()).isEqualTo(5);
+        assertThat(nem.get("editor").get()).isEqualTo(6);
+        assertThat(nem.size()).isEqualTo(2);
+    }
+
+    @Test
+    void toNonEmptyMap_singletonShouldYieldSingletonMap() {
+        NonEmptySet<String> nes = NonEmptySet.singleton("admin");
+        NonEmptyMap<String, Integer> nem = nes.toNonEmptyMap(String::length);
+        assertThat(nem.size()).isEqualTo(1);
+        assertThat(nem.headKey()).isEqualTo("admin");
+        assertThat(nem.headValue()).isEqualTo(5);
+    }
+
+    @Test
+    void toNonEmptyMap_shouldThrowNPE_whenMapperIsNull() {
+        NonEmptySet<String> nes = NonEmptySet.singleton("x");
+        assertThatThrownBy(() -> nes.toNonEmptyMap(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
     // Iterable
     // -------------------------------------------------------------------------
 

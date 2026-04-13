@@ -186,6 +186,27 @@ public final class NonEmptyMap<K, V> {
     }
 
     /**
+     * Returns a {@link NonEmptySet} containing all keys of this map in insertion order.
+     * The head key of this map is the head of the returned set.
+     *
+     * @return a {@code NonEmptySet<K>} of all keys (never {@code null})
+     */
+    public NonEmptySet<K> keySet() {
+        return NonEmptySet.of(headKey, tail.keySet());
+    }
+
+    /**
+     * Returns a {@link NonEmptyList} containing all values of this map in insertion order.
+     * The head value of this map is the head of the returned list.
+     * Duplicate values are preserved (unlike keys, values need not be unique).
+     *
+     * @return a {@code NonEmptyList<V>} of all values (never {@code null})
+     */
+    public NonEmptyList<V> values() {
+        return NonEmptyList.of(headValue, new ArrayList<>(tail.values()));
+    }
+
+    /**
      * Returns an unmodifiable {@link Map} containing all entries (head entry first,
      * then tail entries in insertion order).
      *
