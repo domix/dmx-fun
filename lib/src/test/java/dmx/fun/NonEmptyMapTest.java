@@ -241,6 +241,15 @@ class NonEmptyMapTest {
         assertThat(merged.get("alice").get()).isEqualTo(15);
     }
 
+    @Test
+    void merge_shouldThrowNPE_whenMergeFunctionReturnsNull() {
+        NonEmptyMap<String, Integer> a = NonEmptyMap.singleton("alice", 10);
+        NonEmptyMap<String, Integer> b = NonEmptyMap.singleton("alice", 5);
+        assertThatThrownBy(() -> a.merge(b, (v1, v2) -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mergeFunction must not return null");
+    }
+
     // -------------------------------------------------------------------------
     // keySet()
     // -------------------------------------------------------------------------

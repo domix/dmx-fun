@@ -301,15 +301,20 @@ public final class NonEmptyMap<K, V> {
      * When both maps contain the same key, {@code mergeFunction} is applied to the two values.
      *
      * @param other         the other map; must not be {@code null}
-     * @param mergeFunction function to resolve value conflicts; must not be {@code null}
+     * @param mergeFunction function to resolve value conflicts; must not be {@code null};
+     *                      must not return {@code null} (a null return would violate the
+     *                      non-null value contract and is rejected immediately)
      * @return a new {@code NonEmptyMap} containing all entries from both maps
-     * @throws NullPointerException if {@code other} or {@code mergeFunction} is {@code null}
+     * @throws NullPointerException if {@code other}, {@code mergeFunction}, or the result
+     *                              of {@code mergeFunction} is {@code null}
      */
     public NonEmptyMap<K, V> merge(NonEmptyMap<K, V> other, BinaryOperator<V> mergeFunction) {
         Objects.requireNonNull(other,         "other must not be null");
         Objects.requireNonNull(mergeFunction, "mergeFunction must not be null");
         Map<K, V> combined = new LinkedHashMap<>(this.toMap());
-        other.toMap().forEach((k, v) -> combined.merge(k, v, mergeFunction));
+        other.toMap().forEach((k, v) -> combined.merge(k, v,
+            (oldVal, newVal) -> Objects.requireNonNull(
+                mergeFunction.apply(oldVal, newVal), "mergeFunction must not return null")));
         return fromMapUnsafe(combined);
     }
 
