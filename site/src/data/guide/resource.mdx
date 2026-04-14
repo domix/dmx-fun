@@ -9,7 +9,10 @@ import {Content as CreatingInstances} from '../code/guide/resource/creating-inst
 import {Content as Use}               from '../code/guide/resource/use.mdx';
 import {Content as ExceptionContract} from '../code/guide/resource/exception-contract.mdx';
 import {Content as Map}               from '../code/guide/resource/map.mdx';
+import {Content as MapTry}            from '../code/guide/resource/map-try.mdx';
 import {Content as FlatMap}           from '../code/guide/resource/flat-map.mdx';
+import {Content as Eval}              from '../code/guide/resource/eval.mdx';
+import {Content as UseAsResult}       from '../code/guide/resource/use-as-result.mdx';
 import {Content as RealWorldExample}  from '../code/guide/resource/real-world-example.mdx';
 
 > **Runnable example:** [`ResourceSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/ResourceSample.java)
@@ -63,6 +66,15 @@ If `fn` throws, the underlying resource is still released.
 
 <Map/>
 
+### `mapTry(fn)`
+
+Like `map`, but the mapping function returns a `Try<R>`.
+Useful when the transformation is itself a fallible operation already wrapped in a `Try`
+(e.g., parsing, validation, or a `Try.of(...)`-wrapped API call).
+If `fn` returns a failure, the underlying resource is still released.
+
+<MapTry/>
+
 ### `flatMap(fn)`
 
 Sequences two resources. The inner resource is derived from the outer resource's value.
@@ -79,7 +91,7 @@ so you can build resource pipelines without deep nesting.
 |--------------------------|---------------------------------|-------------------------------------------|
 | Guaranteed release       | Yes                             | Yes                                       |
 | Composable               | Nested blocks only              | `map` / `flatMap` as values               |
-| Result as value          | No — exceptions propagate       | Yes — `Try<R>` returned                   |
+| Result as value          | No — exceptions propagate       | Yes — `Try<R>` or `Result<R,E>` returned  |
 | Multiple resources       | Separate `try` blocks           | `flatMap` chain                           |
 | Reusable                 | No                              | Yes — each `use()` is independent         |
 | Works with non-closeable | No — requires `AutoCloseable`   | Yes — any acquire/release pair            |
@@ -87,6 +99,23 @@ so you can build resource pipelines without deep nesting.
 Use `Resource<T>` when you need to **compose** multiple resources, reuse the acquire/release
 description across multiple call sites, or integrate with the dmx-fun type system.
 Use `try-with-resources` for simple, local, one-off resource management.
+
+## Interoperability
+
+### `Resource.eval(Try<T>, release)` — factory from a pre-computed `Try`
+
+Use this when acquisition has already been attempted and the result is a `Try<T>`.
+If the `Try` is a failure, `use` returns that failure immediately and `release` is never called.
+
+<Eval/>
+
+### `useAsResult(body, onError)` — Result-integrated execution
+
+The `Result`-counterpart of `use()`. The body returns a `Result<R, E>` directly.
+Any `Throwable` from acquire, release, or an unexpected body exception is mapped to `E` via
+`onError`, eliminating the `Try<Result<R, E>>` nesting.
+
+<UseAsResult/>
 
 ## Real-world example
 

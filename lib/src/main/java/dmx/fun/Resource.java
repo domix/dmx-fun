@@ -114,6 +114,42 @@ public final class Resource<T> {
         return of(acquire, AutoCloseable::close);
     }
 
+    /**
+     * Creates a {@code Resource<T>} from a pre-computed {@link Try Try&lt;T&gt;} and a release
+     * function.
+     *
+     * <p>If {@code acquired} is already a failure, {@code use} returns that failure immediately
+     * and the {@code release} function is <em>never called</em> — there is nothing to release.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Try<Connection> tryConn = Try.of(() -> dataSource.getConnection());
+     * Resource<Connection> conn = Resource.eval(tryConn, Connection::close);
+     * Try<List<User>> users = conn.use(c -> fetchUsers(c));
+     * }</pre>
+     *
+     * @param <T>      the resource type
+     * @param acquired the pre-computed result of an acquire attempt; if failure, release is skipped
+     * @param release  consumer that frees the resource when acquired successfully
+     * @return a new {@code Resource<T>}
+     * @throws NullPointerException if {@code acquired} or {@code release} is {@code null}
+     */
+    public static <T> Resource<T> eval(
+            Try<? extends T> acquired,
+            CheckedConsumer<? super T> release) {
+        Objects.requireNonNull(acquired, "acquired");
+        Objects.requireNonNull(release, "release");
+        return new Resource<>(new Effect<T>() {
+            @Override
+            public <R> Try<R> run(CheckedFunction<? super T, ? extends R> body) {
+                if (acquired.isFailure()) {
+                    return Try.failure(acquired.getCause());
+                }
+                return runBody(acquired.get(), body, release);
+            }
+        });
+    }
+
     // -------------------------------------------------------------------------
     // Core operation
     // -------------------------------------------------------------------------
@@ -133,6 +169,54 @@ public final class Resource<T> {
     public <R> Try<R> use(CheckedFunction<? super T, ? extends R> body) {
         Objects.requireNonNull(body, "body");
         return effect.run(body);
+    }
+
+    /**
+     * Acquires the resource, applies {@code body} to produce a {@link Result}, releases the
+     * resource, and returns a {@code Result<R, E>}.
+     *
+     * <p>This is the {@code Result}-integrated variant of {@link #use(CheckedFunction) use()}.
+     * It is useful when the domain layer models failures as typed {@code Result} values rather
+     * than {@code Throwable}.
+     *
+     * <ul>
+     *   <li>If acquire or release throws a {@code Throwable}, it is mapped to {@code E} via
+     *       {@code onError} and returned as {@code Result.err(e)}.</li>
+     *   <li>If the body returns {@code Result.err(e)}, that error is returned as-is.</li>
+     *   <li>If both body and release fail, the release exception is suppressed onto the body
+     *       exception and the combined throwable is passed to {@code onError}.</li>
+     * </ul>
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Result<List<User>, DbError> users = connResource.useAsResult(
+     *     conn -> fetchUsers(conn),
+     *     ex   -> new DbError.QueryFailed(ex.getMessage())
+     * );
+     * }</pre>
+     *
+     * @param <R>     the success type
+     * @param <E>     the error type
+     * @param body    function applied to the live resource; returns a {@code Result}
+     * @param onError maps any {@code Throwable} from acquire/release/body to {@code E}
+     * @return {@code Result.ok(value)} on success, or {@code Result.err(error)} on any failure
+     * @throws NullPointerException if {@code body} or {@code onError} is {@code null}
+     */
+    public <R, E> Result<R, E> useAsResult(
+            Function<? super T, ? extends Result<? extends R, ? extends E>> body,
+            Function<? super Throwable, ? extends E> onError) {
+        Objects.requireNonNull(body, "body");
+        Objects.requireNonNull(onError, "onError");
+        Try<Result<R, E>> tryResult = use(t -> {
+            @SuppressWarnings("unchecked")
+            Result<R, E> r = (Result<R, E>) Objects.requireNonNull(
+                body.apply(t), "useAsResult body must not return null");
+            return r;
+        });
+        if (tryResult.isSuccess()) {
+            return tryResult.get();
+        }
+        return Result.err(onError.apply(tryResult.getCause()));
     }
 
     // -------------------------------------------------------------------------
@@ -207,6 +291,48 @@ public final class Resource<T> {
                         sneakyThrow(innerResult.getCause());
                     }
                     return innerResult.get();
+                });
+            }
+        });
+    }
+
+    /**
+     * Returns a new {@code Resource<R>} whose value is obtained by applying a
+     * {@link Try}-returning function to the acquired value.
+     *
+     * <p>This is the {@link Try}-integrated counterpart of {@link #map(Function) map()}.
+     * It is useful when the transformation itself is a fallible operation already wrapped in
+     * a {@code Try} (e.g., parsing, validation, or a call to a {@code Try.of(...)}-wrapped API).
+     * If {@code fn} returns a failure, the underlying resource is still released and the
+     * failure is propagated.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Resource<Config> config = rawTextResource.mapTry(text ->
+     *     Try.of(() -> Config.parse(text))
+     * );
+     * Try<Integer> port = config.use(c -> c.port());
+     * }</pre>
+     *
+     * @param <R> the mapped resource type
+     * @param fn  function returning a {@code Try<R>}; must not be {@code null} or return
+     *            {@code null}
+     * @return a new {@code Resource<R>}
+     * @throws NullPointerException if {@code fn} is {@code null}
+     */
+    public <R> Resource<R> mapTry(Function<? super T, ? extends Try<? extends R>> fn) {
+        Objects.requireNonNull(fn, "fn");
+        Effect<T> self = this.effect;
+        return new Resource<>(new Effect<>() {
+            @Override
+            public <S> Try<S> run(CheckedFunction<? super R, ? extends S> body) {
+                return self.run(t -> {
+                    Try<? extends R> inner = Objects.requireNonNull(
+                        fn.apply(t), "mapTry fn must not return null");
+                    if (inner.isFailure()) {
+                        sneakyThrow(inner.getCause());
+                    }
+                    return body.apply(inner.get());
                 });
             }
         });

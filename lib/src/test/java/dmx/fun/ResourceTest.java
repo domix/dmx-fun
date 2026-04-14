@@ -292,4 +292,173 @@ class ResourceTest {
         assertThat(acquireCount.get()).isEqualTo(2);
         assertThat(releaseCount.get()).isEqualTo(2);
     }
+
+    // -------------------------------------------------------------------------
+    // eval — factory from pre-computed Try
+    // -------------------------------------------------------------------------
+
+    @Test
+    void eval_shouldRunBodyAndRelease_whenTryIsSuccess() {
+        AtomicBoolean released = new AtomicBoolean(false);
+        Resource<String> r = Resource.eval(Try.success("hello"), s -> released.set(true));
+        Try<Integer> result = r.use(String::length);
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo(5);
+        assertThat(released.get()).isTrue();
+    }
+
+    @Test
+    void eval_shouldReturnFailure_andSkipRelease_whenTryIsFailure() {
+        AtomicBoolean released = new AtomicBoolean(false);
+        RuntimeException acquireEx = new RuntimeException("acquire failed");
+        Resource<String> r = Resource.eval(Try.failure(acquireEx), s -> released.set(true));
+        Try<Integer> result = r.use(String::length);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(acquireEx);
+        assertThat(released.get()).isFalse();
+    }
+
+    @Test
+    void eval_shouldAlwaysCallRelease_whenBodyThrows() {
+        AtomicBoolean released = new AtomicBoolean(false);
+        RuntimeException bodyEx = new RuntimeException("body");
+        Resource<String> r = Resource.eval(Try.success("hello"), s -> released.set(true));
+        Try<Integer> result = r.use(s -> { throw bodyEx; });
+        assertThat(released.get()).isTrue();
+        assertThat(result.getCause()).isSameAs(bodyEx);
+    }
+
+    @Test
+    void eval_shouldThrowNPE_whenAcquiredIsNull() {
+        assertThatThrownBy(() -> Resource.eval(null, s -> {}))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("acquired");
+    }
+
+    @Test
+    void eval_shouldThrowNPE_whenReleaseIsNull() {
+        assertThatThrownBy(() -> Resource.eval(Try.success("x"), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("release");
+    }
+
+    // -------------------------------------------------------------------------
+    // useAsResult — Result-integrated use
+    // -------------------------------------------------------------------------
+
+    @Test
+    void useAsResult_shouldReturnOk_whenBodyReturnsOk() {
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        Result<Integer, String> result = r.useAsResult(
+            s -> Result.ok(s.length()),
+            Throwable::getMessage
+        );
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo(5);
+    }
+
+    @Test
+    void useAsResult_shouldReturnErr_whenBodyReturnsErr() {
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        Result<Integer, String> result = r.useAsResult(
+            s -> Result.err("domain error"),
+            Throwable::getMessage
+        );
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("domain error");
+    }
+
+    @Test
+    void useAsResult_shouldMapToErr_whenAcquireThrows() {
+        RuntimeException acquireEx = new RuntimeException("acquire");
+        Resource<String> r = Resource.of(() -> { throw acquireEx; }, s -> {});
+        Result<Integer, String> result = r.useAsResult(
+            s -> Result.ok(s.length()),
+            Throwable::getMessage
+        );
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("acquire");
+    }
+
+    @Test
+    void useAsResult_shouldMapToErr_whenBodyThrowsUnexpectedly() {
+        RuntimeException bodyEx = new RuntimeException("unexpected");
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        Result<Integer, String> result = r.useAsResult(
+            s -> { throw bodyEx; },
+            Throwable::getMessage
+        );
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("unexpected");
+    }
+
+    @Test
+    void useAsResult_shouldAlwaysRelease_whenBodyThrowsUnexpectedly() {
+        AtomicBoolean released = new AtomicBoolean(false);
+        Resource<String> r = Resource.of(() -> "hello", s -> released.set(true));
+        r.useAsResult(s -> { throw new RuntimeException("oops"); }, Throwable::getMessage);
+        assertThat(released.get()).isTrue();
+    }
+
+    @Test
+    void useAsResult_shouldThrowNPE_whenBodyIsNull() {
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        assertThatThrownBy(() -> r.useAsResult(null, Throwable::getMessage))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("body");
+    }
+
+    @Test
+    void useAsResult_shouldThrowNPE_whenOnErrorIsNull() {
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        assertThatThrownBy(() -> r.useAsResult(s -> Result.ok(s.length()), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onError");
+    }
+
+    // -------------------------------------------------------------------------
+    // mapTry — transform resource value with Try-returning function
+    // -------------------------------------------------------------------------
+
+    @Test
+    void mapTry_shouldApplyBody_whenFnReturnsSuccess() {
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        Resource<Integer> mapped = r.mapTry(s -> Try.success(s.length()));
+        Try<String> result = mapped.use(n -> "len=" + n);
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("len=5");
+    }
+
+    @Test
+    void mapTry_shouldReturnFailure_whenFnReturnsFailure() {
+        RuntimeException parseEx = new RuntimeException("parse failed");
+        Resource<String> r = Resource.of(() -> "bad", s -> {});
+        Resource<Integer> mapped = r.mapTry(s -> Try.failure(parseEx));
+        Try<String> result = mapped.use(n -> "len=" + n);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(parseEx);
+    }
+
+    @Test
+    void mapTry_shouldReleaseResource_whenFnReturnsFailure() {
+        AtomicBoolean released = new AtomicBoolean(false);
+        Resource<String> r = Resource.of(() -> "hello", s -> released.set(true));
+        r.mapTry(s -> Try.failure(new RuntimeException("fail"))).use(n -> n);
+        assertThat(released.get()).isTrue();
+    }
+
+    @Test
+    void mapTry_shouldThrowNPE_whenFnIsNull() {
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        assertThatThrownBy(() -> r.mapTry(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void mapTry_shouldThrowNPE_whenFnReturnsNull() {
+        Resource<String> r = Resource.of(() -> "hello", s -> {});
+        Try<Integer> result = r.<Integer>mapTry(s -> null).use(n -> n);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(NullPointerException.class);
+    }
 }

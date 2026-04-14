@@ -1,0 +1,27 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+sealed interface DbError {
+    record QueryFailed(String message) implements DbError {}
+    record ConnectionFailed(String message) implements DbError {}
+}
+
+Resource<Connection> connResource = Resource.of(
+    () -> dataSource.getConnection(),
+    Connection::close
+);
+
+// Body returns Result<R, E> — acquire/release Throwables are mapped to E via onError
+Result<List<User>, DbError> users = connResource.useAsResult(
+    conn  -> fetchUsers(conn),                          // returns Result<List<User>, DbError>
+    ex    -> new DbError.ConnectionFailed(ex.getMessage())
+);
+
+// No Try wrapping needed — result is already in the domain error type
+switch (users) {
+    case Ok<List<User>, DbError>  ok  -> ok.value().forEach(System.out::println);
+    case Err<List<User>, DbError> err -> System.err.println("DB error: " + err.error());
+}
+```
