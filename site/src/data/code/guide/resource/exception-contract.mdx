@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+RuntimeException bodyEx    = new RuntimeException("query failed");
+RuntimeException releaseEx = new RuntimeException("close failed");
+
+Resource<Connection> conn = Resource.of(
+    () -> openConnection(),
+    c  -> { c.close(); throw releaseEx; }   // release always runs, but it may throw
+);
+
+// Body throws, release also throws → release is suppressed onto body
+Try<Void> result = conn.use(c -> { throw bodyEx; });
+
+Throwable cause = result.getCause();
+System.out.println(cause.getMessage());                    // query failed
+System.out.println(cause.getSuppressed()[0].getMessage()); // close failed
+```

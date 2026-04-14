@@ -84,6 +84,14 @@ const types = [
         tag: 'Collections',
     },
     {
+        name: 'Resource<T>',
+        href: `${base}guide/resource`,
+        summary: 'A composable managed resource: acquire, use, and release with a guaranteed cleanup guarantee.',
+        whenToUse: 'You need to bracket an operation around a resource (file, connection, lock) and want to compose multiple resources safely.',
+        avoidWhen: 'A simple try-with-resources block suffices and no composition is needed.',
+        tag: 'Resource management',
+    },
+    {
         name: 'Checked interfaces',
         href: `${base}guide/checked-interfaces`,
         summary: 'Checked variants of Function, Supplier, Consumer, Runnable, plus TriFunction/QuadFunction.',

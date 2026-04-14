@@ -1,0 +1,22 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Resource<Connection> connResource = Resource.of(
+    () -> dataSource.getConnection(),
+    Connection::close
+);
+
+// Sequence two resources — inner depends on outer
+Resource<PreparedStatement> stmtResource = connResource.flatMap(conn ->
+    Resource.of(
+        () -> conn.prepareStatement("SELECT * FROM users"),
+        PreparedStatement::close
+    )
+);
+
+// Acquire order:  Connection → PreparedStatement
+// Release order:  PreparedStatement → Connection  (reverse)
+Try<List<User>> users = stmtResource.use(ps -> mapRows(ps.executeQuery()));
+```

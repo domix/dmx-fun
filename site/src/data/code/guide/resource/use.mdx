@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Resource<Connection> conn = Resource.of(
+    () -> dataSource.getConnection(),
+    Connection::close
+);
+
+// Resource is acquired, body runs, resource is always released
+Try<List<User>> users = conn.use(c -> fetchUsers(c));
+
+// Result is a Try — success or failure, release always happens
+users.onSuccess(list -> System.out.println("Users: " + list.size()))
+     .onFailure(ex  -> System.err.println("Failed: " + ex.getMessage()));
+```

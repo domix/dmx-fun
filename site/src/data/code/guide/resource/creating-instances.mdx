@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Explicit acquire + release
+Resource<Connection> conn = Resource.of(
+    () -> dataSource.getConnection(),
+    Connection::close
+);
+
+// AutoCloseable — close() is used as the release function
+Resource<BufferedReader> reader = Resource.fromAutoCloseable(
+    () -> new BufferedReader(new FileReader(path))
+);
+```

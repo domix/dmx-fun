@@ -1,0 +1,95 @@
+---
+title: "Resource<T> — Developer Guide"
+description: "Comprehensive guide to Resource<T>: composable managed resources, guaranteed release, and real-world pipelines."
+order: 11
+h1: "Resource<T>"
+---
+
+import {Content as CreatingInstances} from '../code/guide/resource/creating-instances.mdx';
+import {Content as Use}               from '../code/guide/resource/use.mdx';
+import {Content as ExceptionContract} from '../code/guide/resource/exception-contract.mdx';
+import {Content as Map}               from '../code/guide/resource/map.mdx';
+import {Content as FlatMap}           from '../code/guide/resource/flat-map.mdx';
+import {Content as RealWorldExample}  from '../code/guide/resource/real-world-example.mdx';
+
+> **Runnable example:** [`ResourceSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/ResourceSample.java)
+
+## What is Resource&lt;T&gt;?
+
+`Resource<T>` models a value that must be **acquired before use** and **released afterwards**.
+It is the composable alternative to Java's `try-with-resources` statement.
+
+Acquisition and release are declared together at construction time.
+The resource is only live during the execution of `use(fn)` — it is acquired just before the
+body runs, and the release function is _always_ called when the body completes, whether it
+succeeds or throws.
+
+The result is returned as a `Try<R>`, making both success and failure explicit values.
+
+## Creating instances
+
+<CreatingInstances/>
+
+Both `of` and `fromAutoCloseable` reject `null` arguments immediately with a
+`NullPointerException` that names the offending parameter.
+
+## Using a resource
+
+<Use/>
+
+Each call to `use()` is independent: it acquires the resource, runs the body, and releases the
+resource. The same `Resource<T>` can be used multiple times — each call goes through the full
+acquire/run/release cycle.
+
+## Exception-merging contract
+
+`Resource<T>` follows the same exception-suppression semantics as `try-with-resources`:
+
+| Body     | Release  | Outcome                                                                  |
+|----------|----------|--------------------------------------------------------------------------|
+| Success  | Success  | `Try.success(result)`                                                    |
+| Success  | Throws   | `Try.failure(releaseException)`                                          |
+| Throws   | Success  | `Try.failure(bodyException)`                                             |
+| Throws   | Throws   | `Try.failure(bodyException)` — release exception suppressed onto body    |
+
+<ExceptionContract/>
+
+## Transformations
+
+### `map(fn)`
+
+Transforms the resource value without changing acquire/release.
+If `fn` throws, the underlying resource is still released.
+
+<Map/>
+
+### `flatMap(fn)`
+
+Sequences two resources. The inner resource is derived from the outer resource's value.
+Both resources are released in **reverse acquisition order**: inner first, then outer.
+
+<FlatMap/>
+
+This mirrors nested `try-with-resources` blocks but composes as a value,
+so you can build resource pipelines without deep nesting.
+
+## Resource vs try-with-resources
+
+|                          | `try-with-resources`            | `Resource<T>`                             |
+|--------------------------|---------------------------------|-------------------------------------------|
+| Guaranteed release       | Yes                             | Yes                                       |
+| Composable               | Nested blocks only              | `map` / `flatMap` as values               |
+| Result as value          | No — exceptions propagate       | Yes — `Try<R>` returned                   |
+| Multiple resources       | Separate `try` blocks           | `flatMap` chain                           |
+| Reusable                 | No                              | Yes — each `use()` is independent         |
+| Works with non-closeable | No — requires `AutoCloseable`   | Yes — any acquire/release pair            |
+
+Use `Resource<T>` when you need to **compose** multiple resources, reuse the acquire/release
+description across multiple call sites, or integrate with the dmx-fun type system.
+Use `try-with-resources` for simple, local, one-off resource management.
+
+## Real-world example
+
+A database query that composes a `Connection` and a `PreparedStatement`:
+
+<RealWorldExample/>
