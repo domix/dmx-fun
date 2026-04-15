@@ -1,0 +1,59 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+BinaryOperator<List<String>> concat = (a, b) -> {
+    var merged = new ArrayList<>(a);
+    merged.addAll(b);
+    return merged;
+};
+
+// ---- combine — two independent accumulators ----
+
+Accumulator<List<String>, String>  userAcc  = fetchUser(id);    // ("Alice", ["user loaded"])
+Accumulator<List<String>, Integer> scoreAcc = fetchScore(id);   // (98, ["score loaded"])
+
+Accumulator<List<String>, String> dashboard =
+    userAcc.combine(scoreAcc, concat, (name, score) -> name + " — score: " + score);
+
+dashboard.value();        // "Alice — score: 98"
+dashboard.accumulated();  // ["user loaded", "score loaded"]
+
+// ---- sequence — fold a list ----
+
+List<Accumulator<List<String>, Integer>> steps = List.of(
+    Accumulator.of(10, List.of("step A")),
+    Accumulator.of(20, List.of("step B")),
+    Accumulator.of(30, List.of("step C"))
+);
+
+Accumulator<List<String>, List<Integer>> all = Accumulator.sequence(steps, concat, List.of());
+all.value();        // [10, 20, 30]
+all.accumulated();  // ["step A", "step B", "step C"]
+
+// ---- toOption — discard accumulation ----
+
+Accumulator.of(42, List.of("log")).toOption();    // Some(42)
+Accumulator.tell(List.of("entry")).toOption();    // None
+
+// ---- liftOption — log present / absent paths ----
+
+Accumulator<List<String>, Option<String>> acc = Accumulator.liftOption(
+    userRepo.findName(id),
+    name -> List.of("found: " + name),       // called when Some
+    List.of("not found")                     // used when None
+);
+// Some("Alice") → ("Some(Alice)", ["found: Alice"])
+// None          → ("None",        ["not found"])
+
+// ---- liftTry — log success / failure ----
+
+Accumulator<List<String>, Try<Config>> loaded = Accumulator.liftTry(
+    Try.of(() -> ConfigLoader.load(path)),
+    cfg -> List.of("config loaded from " + path),
+    ex  -> List.of("config load failed: " + ex.getMessage())
+);
+loaded.accumulated();  // always set — success or failure
+loaded.value();        // Try<Config> — caller decides what to do with it
+```

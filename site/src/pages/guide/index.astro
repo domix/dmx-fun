@@ -100,6 +100,14 @@ const types = [
         tag: 'Resource management',
     },
     {
+        name: 'Accumulator<E, A>',
+        href: `${base}guide/accumulator`,
+        summary: 'A value paired with a side-channel accumulation (log, metrics, audit trail). The functional alternative to mutable shared state for cross-cutting concerns.',
+        whenToUse: 'You need to thread log entries, counters, or audit events through a pure computation chain without shared mutable state.',
+        avoidWhen: 'A step can fail — use Result for error handling, or Validated to accumulate validation errors.',
+        tag: 'Tracing',
+    },
+    {
         name: 'Checked interfaces',
         href: `${base}guide/checked-interfaces`,
         summary: 'Checked variants of Function, Supplier, Consumer, Runnable, plus TriFunction/QuadFunction.',

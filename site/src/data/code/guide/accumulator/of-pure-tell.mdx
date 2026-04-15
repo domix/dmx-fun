@@ -1,0 +1,29 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+BinaryOperator<List<String>> concat = (a, b) -> {
+    var merged = new ArrayList<>(a);
+    merged.addAll(b);
+    return merged;
+};
+
+// of — value + initial accumulation
+Accumulator<List<String>, Integer> a = Accumulator.of(42, List.of("computed answer"));
+a.value();        // 42
+a.accumulated();  // ["computed answer"]
+
+// pure — value with empty accumulation (caller provides the empty)
+Accumulator<List<String>, Integer> p = Accumulator.pure(42, List.of());
+p.value();        // 42
+p.accumulated();  // []
+
+// tell — record without producing a value
+Accumulator<List<String>, Integer> t =
+    Accumulator.tell(List.of("pre-check passed"))
+        .flatMap(__ -> Accumulator.of(42, List.of("value computed")), concat);
+
+t.value();        // 42
+t.accumulated();  // ["pre-check passed", "value computed"]
+```

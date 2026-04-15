@@ -1,0 +1,28 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+BinaryOperator<List<String>> concat = (a, b) -> {
+    var merged = new ArrayList<>(a);
+    merged.addAll(b);
+    return merged;
+};
+
+Accumulator<List<String>, Integer> result =
+    Accumulator.of(10, List.of("step 1"))
+        .flatMap(v -> Accumulator.of(v * 2, List.of("step 2")), concat)
+        .flatMap(v -> Accumulator.of(v + 5, List.of("step 3")), concat);
+
+result.value();        // 25
+result.accumulated();  // ["step 1", "step 2", "step 3"]
+
+// With NonEmptyList — mirrors the Validated error accumulation pattern
+Accumulator<NonEmptyList<String>, Integer> nel =
+    Accumulator.of(1, NonEmptyList.of("a", List.of()))
+        .flatMap(v -> Accumulator.of(v + 1, NonEmptyList.of("b", List.of())), NonEmptyList::concat)
+        .flatMap(v -> Accumulator.of(v + 1, NonEmptyList.of("c", List.of())), NonEmptyList::concat);
+
+nel.value();                   // 3
+nel.accumulated().toList();    // ["a", "b", "c"]
+```

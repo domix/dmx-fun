@@ -1,0 +1,39 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+record Order(String id, double basePrice) {}
+record PricedOrder(String id, double price, String currency) {}
+
+BinaryOperator<List<String>> concat = (a, b) -> {
+    var merged = new ArrayList<>(a);
+    merged.addAll(b);
+    return merged;
+};
+
+Accumulator<List<String>, PricedOrder> priced =
+    Accumulator.of(new Order("ord-7", 100.0), List.of("order loaded"))
+        .flatMap(o -> {
+            double discounted = o.basePrice() * 0.85;
+            return Accumulator.of(
+                new Order(o.id(), discounted),
+                List.of("15% discount applied → " + discounted)
+            );
+        }, concat)
+        .flatMap(o -> {
+            double taxed = o.basePrice() * 1.21;
+            return Accumulator.of(
+                new PricedOrder(o.id(), Math.round(taxed * 100.0) / 100.0, "USD"),
+                List.of("21% VAT applied → " + Math.round(taxed * 100.0) / 100.0)
+            );
+        }, concat);
+
+System.out.println(priced.value());
+// PricedOrder[id=ord-7, price=102.85, currency=USD]
+
+priced.accumulated().forEach(e -> System.out.println("  - " + e));
+// - order loaded
+// - 15% discount applied → 85.0
+// - 21% VAT applied → 102.85
+```
