@@ -55,15 +55,15 @@ Prefer exhaustive switch patterns — the compiler enforces that both tracks are
 
 ## Extracting values
 
-| Method                        | When `Invalid`                      | Notes                                                          |
-|-------------------------------|-------------------------------------|----------------------------------------------------------------|
-| `get()`                       | Throws `NoSuchElementException`     | Only safe after an `isValid()` check; prefer alternatives.     |
-| `getError()`                  | N/A — throws if `Valid`             | Retrieves the error; unsafe on the valid track.                |
-| `getOrElse(fallback)`         | Returns `fallback`                  | Fallback is always evaluated eagerly.                          |
-| `getOrElseGet(supplier)`      | Calls supplier                      | Lazily computed fallback.                                      |
-| `getOrNull()`                 | Returns `null`                      | Bridge to null-expecting APIs.                                 |
-| `getOrThrow(exMapper)`        | Throws mapped `RuntimeException`    | Maps the error to an exception at the call site.               |
-| `fold(onValid, onInvalid)`    | Calls `onInvalid`                   | The most expressive extractor: forces both tracks to be handled. |
+| Method                     | When `Invalid`                   | Notes                                                            |
+|----------------------------|----------------------------------|------------------------------------------------------------------|
+| `get()`                    | Throws `NoSuchElementException`  | Only safe after an `isValid()` check; prefer alternatives.       |
+| `getError()`               | N/A — throws if `Valid`          | Retrieves the error; unsafe on the valid track.                  |
+| `getOrElse(fallback)`      | Returns `fallback`               | Fallback is always evaluated eagerly.                            |
+| `getOrElseGet(supplier)`   | Calls supplier                   | Lazily computed fallback.                                        |
+| `getOrNull()`              | Returns `null`                   | Bridge to null-expecting APIs.                                   |
+| `getOrThrow(exMapper)`     | Throws mapped `RuntimeException` | Maps the error to an exception at the call site.                 |
+| `fold(onValid, onInvalid)` | Calls `onInvalid`                | The most expressive extractor: forces both tracks to be handled. |
 
 <ExtractingValues/>
 
@@ -101,11 +101,11 @@ Use `combine` in most cases.
 For three or four independent fields, `combine3` / `combine4` collapse the chain
 into a single flat call — no intermediate `Tuple2` nesting, no manual unpacking.
 
-| Method | Inputs | Value merger |
-|--------|--------|--------------|
-| `combine(other, errMerge, valueMerge)` | 2 | `BiFunction<A, B, R>` |
-| `Validated.combine3(va, vb, vc, errMerge, valueMerge)` | 3 | `TriFunction<A, B, C, R>` |
-| `Validated.combine4(va, vb, vc, vd, errMerge, valueMerge)` | 4 | `QuadFunction<A, B, C, D, R>` |
+| Method                                                     | Inputs | Value merger                  |
+|------------------------------------------------------------|--------|-------------------------------|
+| `combine(other, errMerge, valueMerge)`                     | 2      | `BiFunction<A, B, R>`         |
+| `Validated.combine3(va, vb, vc, errMerge, valueMerge)`     | 3      | `TriFunction<A, B, C, R>`     |
+| `Validated.combine4(va, vb, vc, vd, errMerge, valueMerge)` | 4      | `QuadFunction<A, B, C, D, R>` |
 
 All inputs are always evaluated — no short-circuit. All errors are accumulated.
 
@@ -132,15 +132,15 @@ streams and the standard `Stream.collect` API.
 
 ## Interoperability
 
-| Conversion                           | Method                                         |
-|--------------------------------------|------------------------------------------------|
-| `Validated` → `Result`               | `v.toResult()`                                 |
-| `Validated` → `Try`                  | `v.toTry(errorMapper)`                         |
-| `Validated` → `Either`               | `v.toEither()`                                 |
-| `Validated` → `Option`               | `v.toOption()`                                 |
-| `Result` → `Validated`               | `Validated.fromResult(result)`                 |
-| `Option` → `Validated`               | `Validated.fromOption(option, errorIfNone)`    |
-| `Try` → `Validated`                  | `Validated.fromTry(t, errorMapper)`            |
+| Conversion             | Method                                      |
+|------------------------|---------------------------------------------|
+| `Validated` → `Result` | `v.toResult()`                              |
+| `Validated` → `Try`    | `v.toTry(errorMapper)`                      |
+| `Validated` → `Either` | `v.toEither()`                              |
+| `Validated` → `Option` | `v.toOption()`                              |
+| `Result` → `Validated` | `Validated.fromResult(result)`              |
+| `Option` → `Validated` | `Validated.fromOption(option, errorIfNone)` |
+| `Try` → `Validated`    | `Validated.fromTry(t, errorMapper)`         |
 
 <InteropConversions/>
 
@@ -148,13 +148,13 @@ See the [Combining Types](combining-types) page for the full conversion matrix.
 
 ## Validated vs Result — when to use each
 
-| Scenario                                         | Use              |
-|--------------------------------------------------|------------------|
-| Stop at the first error; further steps depend on success | `Result`  |
-| Collect all errors; report everything at once    | `Validated`      |
-| Wrap throwing legacy code                        | `Try`            |
-| Independent field validations (form, config)     | `Validated`      |
-| Pipeline where each step feeds the next          | `Result`         |
+| Scenario                                                 | Use         |
+|----------------------------------------------------------|-------------|
+| Stop at the first error; further steps depend on success | `Result`    |
+| Collect all errors; report everything at once            | `Validated` |
+| Wrap throwing legacy code                                | `Try`       |
+| Independent field validations (form, config)             | `Validated` |
+| Pipeline where each step feeds the next                  | `Result`    |
 
 ## Common pitfalls
 

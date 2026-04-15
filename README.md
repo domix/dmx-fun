@@ -77,20 +77,20 @@ testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
 
 ## Types
 
-| Type               | Tag                   | When to use                                                                                              |
-|--------------------|-----------------------|----------------------------------------------------------------------------------------------------------|
-| `Option<T>`        | Nullability           | A value that may or may not be present. The null-safe alternative to `@Nullable`.                        |
-| `Result<V, E>`     | Error handling        | An operation that can succeed or fail with a typed error.                                                |
-| `Try<V>`           | Exception handling    | Wraps a computation that may throw. Turns exceptions into values.                                        |
-| `Validated<E, A>`  | Validation            | Like `Result` but accumulates all errors instead of failing on the first.                                |
-| `Either<L, R>`     | Disjoint union        | A value that is one of two types with no success/failure semantics.                                      |
-| `Lazy<T>`          | Deferred computation  | A value computed at most once, on first access. Thread-safe memoization.                                 |
-| `Tuple2/3/4`       | Product types         | Typed heterogeneous tuples without a dedicated class.                                                    |
-| `NonEmptyList<T>`  | Collections           | A list guaranteed to have at least one element at compile time.                                          |
-| `NonEmptyMap<K,V>` | Collections           | A map guaranteed to have at least one entry at compile time. Insertion order preserved.                  |
-| `NonEmptySet<T>`   | Collections           | A set guaranteed to have at least one element at compile time. No duplicates, insertion order preserved. |
-| `Guard<T>`         | Validation            | A composable, named predicate that produces a `Validated` result — the reusable building block for validation pipelines. |
-| `Resource<T>`      | Resource management   | A composable managed resource: acquire, use, and release with a guaranteed cleanup guarantee.            |
+| Type               | Tag                   | When to use                                                                                                                                                               |
+|--------------------|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Option<T>`        | Nullability           | A value that may or may not be present. The null-safe alternative to `@Nullable`.                                                                                         |
+| `Result<V, E>`     | Error handling        | An operation that can succeed or fail with a typed error.                                                                                                                 |
+| `Try<V>`           | Exception handling    | Wraps a computation that may throw. Turns exceptions into values.                                                                                                         |
+| `Validated<E, A>`  | Validation            | Like `Result` but accumulates all errors instead of failing on the first.                                                                                                 |
+| `Either<L, R>`     | Disjoint union        | A value that is one of two types with no success/failure semantics.                                                                                                       |
+| `Lazy<T>`          | Deferred computation  | A value computed at most once, on first access. Thread-safe memoization.                                                                                                  |
+| `Tuple2/3/4`       | Product types         | Typed heterogeneous tuples without a dedicated class.                                                                                                                     |
+| `NonEmptyList<T>`  | Collections           | A list guaranteed to have at least one element at compile time.                                                                                                           |
+| `NonEmptyMap<K,V>` | Collections           | A map guaranteed to have at least one entry at compile time. Insertion order preserved.                                                                                   |
+| `NonEmptySet<T>`   | Collections           | A set guaranteed to have at least one element at compile time. No duplicates, insertion order preserved.                                                                  |
+| `Guard<T>`         | Validation            | A composable, named predicate that produces a `Validated` result — the reusable building block for validation pipelines.                                                  |
+| `Resource<T>`      | Resource management   | A composable managed resource: acquire, use, and release with a guaranteed cleanup guarantee.                                                                             |
 | `Accumulator<E,A>` | Tracing               | A value paired with a side-channel accumulation (log, metrics, audit trail). Threads cross-cutting concerns through pure computation chains without shared mutable state. |
 
 ---

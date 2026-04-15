@@ -37,11 +37,11 @@ This type is sometimes called the **Writer monad** in functional programming lit
 
 **Summary:**
 
-| Factory | Value | Accumulated |
-|---|---|---|
-| `Accumulator.of(value, log)` | provided | provided |
-| `Accumulator.pure(value, empty)` | provided | empty (identity) |
-| `Accumulator.tell(log)` | `null` (`Void`) | provided |
+| Factory                          | Value           | Accumulated      |
+|----------------------------------|-----------------|------------------|
+| `Accumulator.of(value, log)`     | provided        | provided         |
+| `Accumulator.pure(value, empty)` | provided        | empty (identity) |
+| `Accumulator.tell(log)`          | `null` (`Void`) | provided         |
 
 For `pure`, the caller provides the empty / identity value because Java does not have type
 classes. Common choices: `List.of()`, `0`, `""`, `NonEmptyList` with a starting element.
@@ -62,12 +62,12 @@ produce a real value first.
 
 The merge function determines how accumulations combine. Common choices:
 
-| Accumulation type | Merge function |
-|---|---|
-| `List<T>` | list concatenation (new list + addAll) |
-| `NonEmptyList<T>` | `NonEmptyList::concat` |
-| `int` / `long` | `Integer::sum` / `Long::sum` |
-| `String` | `String::concat` or `(a, b) -> a + "\n" + b` |
+| Accumulation type | Merge function                               |
+|-------------------|----------------------------------------------|
+| `List<T>`         | list concatenation (new list + addAll)       |
+| `NonEmptyList<T>` | `NonEmptyList::concat`                       |
+| `int` / `long`    | `Integer::sum` / `Long::sum`                 |
+| `String`          | `String::concat` or `(a, b) -> a + "\n" + b` |
 
 ## `map` and `mapAccumulated`
 
@@ -81,17 +81,17 @@ log entries (`List::size`) or to convert raw strings to structured event objects
 
 <Interop/>
 
-| Method / Factory | Returns | Use case |
-|---|---|---|
-| `combine(other, merge, f)` | `Accumulator<E, C>` | Combine two independent accumulators; both logs merged |
-| `sequence(list, merge, empty)` | `Accumulator<E, List<A>>` | Fold a list of accumulators into one |
-| `toOption()` | `Option<A>` | Extract value as Option; `None` for `tell` results; accumulation discarded |
-| `liftOption(opt, someLog, noneLog)` | `Accumulator<E, Option<A>>` | Log the presence or absence of an Option value |
-| `liftTry(t, successLog, failureLog)` | `Accumulator<E, Try<A>>` | Log the success or failure of a Try; the Try itself is the value |
-| `toTuple2()` | `Tuple2<E, A>` | Structural decomposition; `_1` is accumulated, `_2` is value |
-| `hasValue()` | `boolean` | Distinguish `of`/`pure` results from `tell` results |
-| `value()` | `@Nullable A` | Extract the value; `null` for `tell` results |
-| `accumulated()` | `E` | Extract the accumulation; always non-null |
+| Method / Factory                     | Returns                     | Use case                                                                   |
+|--------------------------------------|-----------------------------|----------------------------------------------------------------------------|
+| `combine(other, merge, f)`           | `Accumulator<E, C>`         | Combine two independent accumulators; both logs merged                     |
+| `sequence(list, merge, empty)`       | `Accumulator<E, List<A>>`   | Fold a list of accumulators into one                                       |
+| `toOption()`                         | `Option<A>`                 | Extract value as Option; `None` for `tell` results; accumulation discarded |
+| `liftOption(opt, someLog, noneLog)`  | `Accumulator<E, Option<A>>` | Log the presence or absence of an Option value                             |
+| `liftTry(t, successLog, failureLog)` | `Accumulator<E, Try<A>>`    | Log the success or failure of a Try; the Try itself is the value           |
+| `toTuple2()`                         | `Tuple2<E, A>`              | Structural decomposition; `_1` is accumulated, `_2` is value               |
+| `hasValue()`                         | `boolean`                   | Distinguish `of`/`pure` results from `tell` results                        |
+| `value()`                            | `@Nullable A`               | Extract the value; `null` for `tell` results                               |
+| `accumulated()`                      | `E`                         | Extract the accumulation; always non-null                                  |
 
 ## Real-world example
 
@@ -105,20 +105,20 @@ The caller decides what to do with it — print it, persist it, or discard it.
 
 ## When to use Accumulator
 
-| Scenario | Right tool |
-|---|---|
-| Record log entries alongside a computation | `Accumulator<List<String>, T>` |
-| Count steps or operations without a counter field | `Accumulator<Integer, T>` |
-| Thread domain audit events through a pipeline | `Accumulator<NonEmptyList<AuditEvent>, T>` |
-| Collect warnings without aborting the computation | `Accumulator<List<Warning>, T>` |
-| A step can fail — caller needs error handling | [`Result<T, E>`](result) instead |
-| Multiple independent validations accumulating errors | [`Validated<E, A>`](validated) instead |
+| Scenario                                             | Right tool                                 |
+|------------------------------------------------------|--------------------------------------------|
+| Record log entries alongside a computation           | `Accumulator<List<String>, T>`             |
+| Count steps or operations without a counter field    | `Accumulator<Integer, T>`                  |
+| Thread domain audit events through a pipeline        | `Accumulator<NonEmptyList<AuditEvent>, T>` |
+| Collect warnings without aborting the computation    | `Accumulator<List<Warning>, T>`            |
+| A step can fail — caller needs error handling        | [`Result<T, E>`](result) instead           |
+| Multiple independent validations accumulating errors | [`Validated<E, A>`](validated) instead     |
 
 ## Accumulator vs Result vs Validated
 
-|                        | `Accumulator<E, A>`      | `Result<V, E>`             | `Validated<E, A>`         |
-|------------------------|--------------------------|----------------------------|---------------------------|
-| Always succeeds?       | Yes                      | No — can be `Err`          | No — can be `Invalid`     |
-| Accumulates per step?  | Yes — always             | No — stops at first error  | Yes — collects all errors |
-| Accumulation purpose   | Side-channel (log, trace)| Error reporting             | Validation errors          |
-| Composition            | `flatMap` + merge        | `flatMap` (short-circuit)  | `combine` (parallel)       |
+|                       | `Accumulator<E, A>`       | `Result<V, E>`            | `Validated<E, A>`         |
+|-----------------------|---------------------------|---------------------------|---------------------------|
+| Always succeeds?      | Yes                       | No — can be `Err`         | No — can be `Invalid`     |
+| Accumulates per step? | Yes — always              | No — stops at first error | Yes — collects all errors |
+| Accumulation purpose  | Side-channel (log, trace) | Error reporting           | Validation errors         |
+| Composition           | `flatMap` + merge         | `flatMap` (short-circuit) | `combine` (parallel)      |

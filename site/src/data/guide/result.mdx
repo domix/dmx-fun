@@ -150,16 +150,16 @@ The downstream variant `groupingBy(classifier, downstream)` applies a
 
 ## Interoperability
 
-| Conversion                          | Method                            |
-|-------------------------------------|-----------------------------------|
-| `Result` → `Option`                 | `result.toOption()`               |
-| `Result` → `Try`                    | `result.toTry(errorMapper)`       |
-| `Result` → `Either`                 | `result.toEither()`               |
-| `Result` → `CompletableFuture`      | `result.toFuture()`               |
-| `Option` → `Result`                 | `option.toResult(errorSupplier)`  |
-| `Try` → `Result`                    | `tryVal.toResult()`               |
-| `Optional` → `Result`               | `Result.fromOptional(optional)`   |
-| `CompletableFuture` → `Result`      | `Result.fromFuture(future)`       |
+| Conversion                     | Method                           |
+|--------------------------------|----------------------------------|
+| `Result` → `Option`            | `result.toOption()`              |
+| `Result` → `Try`               | `result.toTry(errorMapper)`      |
+| `Result` → `Either`            | `result.toEither()`              |
+| `Result` → `CompletableFuture` | `result.toFuture()`              |
+| `Option` → `Result`            | `option.toResult(errorSupplier)` |
+| `Try` → `Result`               | `tryVal.toResult()`              |
+| `Optional` → `Result`          | `Result.fromOptional(optional)`  |
+| `CompletableFuture` → `Result` | `Result.fromFuture(future)`      |
 
 <InteropConversions/>
 
@@ -167,13 +167,13 @@ See the [Combining Types](combining-types) page for the full conversion matrix a
 
 ## Result vs Try vs exceptions
 
-|                             | Exceptions                    | `Try<V>`                         | `Result<V, E>`                          |
-|-----------------------------|-------------------------------|----------------------------------|-----------------------------------------|
-| Error type                  | `Throwable` — implicit        | `Throwable` — explicit value     | Any type — explicit and domain-specific |
-| Forces handling             | Only checked exceptions       | Yes — via API                    | Yes — via API and switch patterns       |
-| Branch on error subtype     | Via `catch` clauses           | Via `instanceof`                 | Via sealed subtype and switch patterns  |
-| Interop with throwing code  | Native                        | Excellent — `Try.of(() -> ...)`  | Indirect — wrap with Try first          |
-| Best for                    | Truly exceptional situations  | Wrapping legacy/third-party code | Domain logic with typed failure modes   |
+|                            | Exceptions                   | `Try<V>`                         | `Result<V, E>`                          |
+|----------------------------|------------------------------|----------------------------------|-----------------------------------------|
+| Error type                 | `Throwable` — implicit       | `Throwable` — explicit value     | Any type — explicit and domain-specific |
+| Forces handling            | Only checked exceptions      | Yes — via API                    | Yes — via API and switch patterns       |
+| Branch on error subtype    | Via `catch` clauses          | Via `instanceof`                 | Via sealed subtype and switch patterns  |
+| Interop with throwing code | Native                       | Excellent — `Try.of(() -> ...)`  | Indirect — wrap with Try first          |
+| Best for                   | Truly exceptional situations | Wrapping legacy/third-party code | Domain logic with typed failure modes   |
 
 ## Common pitfalls
 

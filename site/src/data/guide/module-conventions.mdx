@@ -57,11 +57,11 @@ And add its source directory to the `aggregateJavadoc` task's `--module-source-p
 
 Four workflow files reference module paths — update all of them:
 
-| Workflow | Where to add |
-|---|---|
-| `.github/workflows/gradle.yml` | `paths:` block (push) and `dorny/paths-filter` filters |
-| `.github/workflows/publish.yml` | `paths:` block |
-| `.github/workflows/publish-snapshot.yml` | `paths:` block |
+| Workflow                                 | Where to add                                           |
+|------------------------------------------|--------------------------------------------------------|
+| `.github/workflows/gradle.yml`           | `paths:` block (push) and `dorny/paths-filter` filters |
+| `.github/workflows/publish.yml`          | `paths:` block                                         |
+| `.github/workflows/publish-snapshot.yml` | `paths:` block                                         |
 
 ### 5. Add a compatibility matrix workflow
 
@@ -103,11 +103,11 @@ Add a card to the `modules` array in `site/src/pages/guide/index.astro`:
 
 ## Naming conventions
 
-| Artifact | Pattern | Example |
-|---|---|---|
-| Directory | `{integration-name}` | `fun-spring` |
-| `artifactId` | `fun-{integration-name}` | `fun-spring` |
-| POM `name` | `dmx-fun {Integration} integration` | `dmx-fun Spring integration` |
-| Java module name | `dmx.fun.{integration}` | `dmx.fun.spring` |
-| Base package | `dmx.fun.{integration}` | `dmx.fun.spring` |
-| Guide slug | `{integration-name}` | `/guide/fun-spring` |
+| Artifact         | Pattern                             | Example                      |
+|------------------|-------------------------------------|------------------------------|
+| Directory        | `{integration-name}`                | `fun-spring`                 |
+| `artifactId`     | `fun-{integration-name}`            | `fun-spring`                 |
+| POM `name`       | `dmx-fun {Integration} integration` | `dmx-fun Spring integration` |
+| Java module name | `dmx.fun.{integration}`             | `dmx.fun.spring`             |
+| Base package     | `dmx.fun.{integration}`             | `dmx.fun.spring`             |
+| Guide slug       | `{integration-name}`                | `/guide/fun-spring`          |

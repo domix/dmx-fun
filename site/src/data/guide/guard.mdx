@@ -74,13 +74,13 @@ Validated<NonEmptyList<String>, Form> form =
 
 ## Interoperability
 
-| Method | Returns | Use case |
-|---|---|---|
-| `asPredicate()` | `Predicate<T>` | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
-| `contramap(fn)` | `Guard<U>` | Adapt a field guard to validate the enclosing object type |
-| `checkToResult(value)` | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic |
-| `checkToResult(value, mapper)` | `Result<T, E>` | Map errors to a domain-specific error type at service boundaries |
-| `checkToOption(value)` | `Option<T>` | Discard errors — keep only valid values (stream filtering) |
+| Method                         | Returns                           | Use case                                                                |
+|--------------------------------|-----------------------------------|-------------------------------------------------------------------------|
+| `asPredicate()`                | `Predicate<T>`                    | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
+| `contramap(fn)`                | `Guard<U>`                        | Adapt a field guard to validate the enclosing object type               |
+| `checkToResult(value)`         | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic                       |
+| `checkToResult(value, mapper)` | `Result<T, E>`                    | Map errors to a domain-specific error type at service boundaries        |
+| `checkToOption(value)`         | `Option<T>`                       | Discard errors — keep only valid values (stream filtering)              |
 
 <Interop/>
 
@@ -92,13 +92,13 @@ A registration form validator that composes rules across three fields:
 
 ## Guard vs raw Validated
 
-|                          | Raw `Validated.invalidNel`      | `Guard<T>`                              |
-|--------------------------|---------------------------------|-----------------------------------------|
-| Rule definition          | Inline `if`/`invalidNel`        | Named value — defined once, used anywhere |
-| Reuse across call sites  | Copy-paste                      | Reference the same `Guard` constant     |
-| Composition              | Manual chaining                 | `and`, `or`, `negate`                   |
-| Error accumulation       | Explicit `combine` calls        | Built into `and` / `or`                 |
-| Dynamic error messages   | Inline string interpolation     | `Guard.of(pred, value -> "... " + value)` |
+|                         | Raw `Validated.invalidNel`  | `Guard<T>`                                |
+|-------------------------|-----------------------------|-------------------------------------------|
+| Rule definition         | Inline `if`/`invalidNel`    | Named value — defined once, used anywhere |
+| Reuse across call sites | Copy-paste                  | Reference the same `Guard` constant       |
+| Composition             | Manual chaining             | `and`, `or`, `negate`                     |
+| Error accumulation      | Explicit `combine` calls    | Built into `and` / `or`                   |
+| Dynamic error messages  | Inline string interpolation | `Guard.of(pred, value -> "... " + value)` |
 
 Use `Guard` when the same rule appears in more than one place, when rules are composed
 from smaller building blocks, or when you want a named, self-documenting validation vocabulary.

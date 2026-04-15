@@ -37,17 +37,17 @@ without any explicit wiring.
 
 ## JSON shapes
 
-| Type                | Success / present                  | Failure / absent                  |
-|---------------------|------------------------------------|-----------------------------------|
-| `Option<T>`         | `v` (unwrapped)                    | `null`                            |
-| `Result<V, E>`      | `{"ok": v}`                        | `{"err": e}`                      |
-| `Try<V>`            | `v` (unwrapped)                    | `{"error": "message"}`            |
-| `Validated<E, A>`   | `{"valid": a}`                     | `{"invalid": e}`                  |
-| `Either<L, R>`      | `{"right": v}`                     | `{"left": v}`                     |
-| `Tuple2<A, B>`      | `[a, b]`                           | —                                 |
-| `Tuple3<A, B, C>`   | `[a, b, c]`                        | —                                 |
-| `Tuple4<A, B, C, D>`| `[a, b, c, d]`                     | —                                 |
-| `NonEmptyList<T>`   | `[head, ...tail]`                  | —                                 |
+| Type                 | Success / present | Failure / absent       |
+|----------------------|-------------------|------------------------|
+| `Option<T>`          | `v` (unwrapped)   | `null`                 |
+| `Result<V, E>`       | `{"ok": v}`       | `{"err": e}`           |
+| `Try<V>`             | `v` (unwrapped)   | `{"error": "message"}` |
+| `Validated<E, A>`    | `{"valid": a}`    | `{"invalid": e}`       |
+| `Either<L, R>`       | `{"right": v}`    | `{"left": v}`          |
+| `Tuple2<A, B>`       | `[a, b]`          | —                      |
+| `Tuple3<A, B, C>`    | `[a, b, c]`       | —                      |
+| `Tuple4<A, B, C, D>` | `[a, b, c, d]`    | —                      |
+| `NonEmptyList<T>`    | `[head, ...tail]` | —                      |
 
 ## Round-trip examples
 

@@ -58,27 +58,27 @@ until the terminal `get()` is invoked on the result.
 
 ## Interoperability
 
-| Method / Factory                    | Forces evaluation? | Returns                               | Notes                                              |
-|-------------------------------------|--------------------|---------------------------------------|----------------------------------------------------|
-| `get()`                             | Yes                | `T`                                   | Rethrows supplier exceptions.                      |
-| `toTry()`                           | Yes                | `Try<T>`                              | Captures exceptions as `Failure`; result memoized. |
-| `toResult()`                        | Yes                | `Result<T, Throwable>`                | Exception becomes `Err`.                           |
-| `toResult(errorMapper)`             | Yes                | `Result<T, E>`                        | Maps exception to a domain error.                  |
-| `toOption()`                        | Yes                | `Option<T>`                           | Throws if supplier throws.                         |
-| `toFuture()`                        | If already cached  | `CompletableFuture<T>`                | Returns completed future if cached; async otherwise. |
-| `Lazy.fromFuture(future)`           | No                 | `Lazy<T>`                             | Defers the blocking join to `get()` time.          |
+| Method / Factory          | Forces evaluation? | Returns                | Notes                                                |
+|---------------------------|--------------------|------------------------|------------------------------------------------------|
+| `get()`                   | Yes                | `T`                    | Rethrows supplier exceptions.                        |
+| `toTry()`                 | Yes                | `Try<T>`               | Captures exceptions as `Failure`; result memoized.   |
+| `toResult()`              | Yes                | `Result<T, Throwable>` | Exception becomes `Err`.                             |
+| `toResult(errorMapper)`   | Yes                | `Result<T, E>`         | Maps exception to a domain error.                    |
+| `toOption()`              | Yes                | `Option<T>`            | Throws if supplier throws.                           |
+| `toFuture()`              | If already cached  | `CompletableFuture<T>` | Returns completed future if cached; async otherwise. |
+| `Lazy.fromFuture(future)` | No                 | `Lazy<T>`              | Defers the blocking join to `get()` time.            |
 
 <InteropConversions/>
 
 ## When to use `Lazy`
 
-| Scenario                                                          | Recommendation              |
-|-------------------------------------------------------------------|-----------------------------|
-| Expensive singleton computed once across the app                  | `Lazy<T>` as a static field |
-| Default value that is expensive to compute                        | `getOrElseGet(lazy::get)`   |
-| Optional expensive computation (result may be absent)             | `Lazy<Option<T>>`           |
-| Computation that should repeat on every call                      | Plain supplier — not `Lazy` |
-| Async computation whose result you want to defer                  | `Lazy.fromFuture(...)`      |
+| Scenario                                              | Recommendation              |
+|-------------------------------------------------------|-----------------------------|
+| Expensive singleton computed once across the app      | `Lazy<T>` as a static field |
+| Default value that is expensive to compute            | `getOrElseGet(lazy::get)`   |
+| Optional expensive computation (result may be absent) | `Lazy<Option<T>>`           |
+| Computation that should repeat on every call          | Plain supplier — not `Lazy` |
+| Async computation whose result you want to defer      | `Lazy.fromFuture(...)`      |
 
 ## Common pitfalls
 

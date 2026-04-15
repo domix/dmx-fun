@@ -44,13 +44,13 @@ Use it when:
 
 ## Creating instances
 
-| Factory                                            | When input is empty?          |
-|----------------------------------------------------|-------------------------------|
-| `NonEmptyList.of(head, tail)`                      | N/A — head is always required |
-| `NonEmptyList.singleton(head)`                     | N/A — always one element      |
-| `NonEmptyList.fromList(list)`                      | Returns `None`                |
-| `stream.collect(NonEmptyList.collector())`         | Returns `None`                |
-| `stream.collect(NonEmptyList.toNonEmptyList())`    | Returns `None`                |
+| Factory                                         | When input is empty?          |
+|-------------------------------------------------|-------------------------------|
+| `NonEmptyList.of(head, tail)`                   | N/A — head is always required |
+| `NonEmptyList.singleton(head)`                  | N/A — always one element      |
+| `NonEmptyList.fromList(list)`                   | Returns `None`                |
+| `stream.collect(NonEmptyList.collector())`      | Returns `None`                |
+| `stream.collect(NonEmptyList.toNonEmptyList())` | Returns `None`                |
 
 <CreatingInstances/>
 
@@ -120,13 +120,13 @@ are equal if and only if their element sequences are equal.
 
 ## When to use `NonEmptyList` vs plain `List`
 
-| Scenario                                              | Recommendation                               |
-|-------------------------------------------------------|----------------------------------------------|
-| At least one element required by contract             | `NonEmptyList<T>`                            |
-| Collection may legitimately be empty                  | `List<T>`                                    |
-| Accumulating validation errors                        | `Validated<NonEmptyList<E>, A>`              |
-| Reading from a source that could be empty             | `NonEmptyList.fromList(list)` → handle `None`|
-| Stream whose emptiness depends on runtime data        | `.collect(NonEmptyList.collector())`         |
+| Scenario                                       | Recommendation                                |
+|------------------------------------------------|-----------------------------------------------|
+| At least one element required by contract      | `NonEmptyList<T>`                             |
+| Collection may legitimately be empty           | `List<T>`                                     |
+| Accumulating validation errors                 | `Validated<NonEmptyList<E>, A>`               |
+| Reading from a source that could be empty      | `NonEmptyList.fromList(list)` → handle `None` |
+| Stream whose emptiness depends on runtime data | `.collect(NonEmptyList.collector())`          |
 
 ## Real-world example
 

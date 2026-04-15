@@ -34,10 +34,10 @@ for use at those boundaries, not inside tight numeric loops.
 
 Two specific operations may show measurable cost under extreme conditions:
 
-| Type / operation                               | Condition                                   | Reason                                                        |
-|------------------------------------------------|---------------------------------------------|---------------------------------------------------------------|
-| `Lazy<T>.get()`                                | Very high concurrent thread contention      | Internal `synchronized` block (double-checked locking)        |
-| `Validated.sequence` / `Validated.traverse`    | Collections larger than ~10 000 elements    | Repeated `NonEmptyList::concat` copies the error list on each merge |
+| Type / operation                            | Condition                                | Reason                                                              |
+|---------------------------------------------|------------------------------------------|---------------------------------------------------------------------|
+| `Lazy<T>.get()`                             | Very high concurrent thread contention   | Internal `synchronized` block (double-checked locking)              |
+| `Validated.sequence` / `Validated.traverse` | Collections larger than ~10 000 elements | Repeated `NonEmptyList::concat` copies the error list on each merge |
 
 **`Lazy<T>` under contention**: the `volatile` read on the happy path (already
 evaluated) is cheap. Cost only appears when many threads race to evaluate the
