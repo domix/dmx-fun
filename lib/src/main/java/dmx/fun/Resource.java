@@ -121,17 +121,25 @@ public final class Resource<T> {
      * <p>If {@code acquired} is already a failure, {@code use} returns that failure immediately
      * and the {@code release} function is <em>never called</em> — there is nothing to release.
      *
+     * <p><b>One-shot contract:</b> because the resource value is pre-computed rather than
+     * freshly acquired on each call, invoking {@link #use(CheckedFunction) use()} more than
+     * once on the returned {@code Resource} will call {@code release} on the <em>same</em>
+     * underlying value each time. If the resource is not idempotent with respect to release
+     * (e.g., a JDBC {@code Connection} or an I/O stream), calling {@code use()} more than once
+     * produces undefined behaviour. Prefer {@link #of(CheckedSupplier, CheckedConsumer) of()}
+     * when reuse is required, as it acquires a fresh resource on every call.
+     *
      * <p>Example:
      * <pre>{@code
      * Try<Connection> tryConn = Try.of(() -> dataSource.getConnection());
      * Resource<Connection> conn = Resource.eval(tryConn, Connection::close);
-     * Try<List<User>> users = conn.use(c -> fetchUsers(c));
+     * Try<List<User>> users = conn.use(c -> fetchUsers(c)); // call use() exactly once
      * }</pre>
      *
      * @param <T>      the resource type
      * @param acquired the pre-computed result of an acquire attempt; if failure, release is skipped
      * @param release  consumer that frees the resource when acquired successfully
-     * @return a new {@code Resource<T>}
+     * @return a new {@code Resource<T>} backed by the pre-computed {@code acquired} value
      * @throws NullPointerException if {@code acquired} or {@code release} is {@code null}
      */
     public static <T> Resource<T> eval(
