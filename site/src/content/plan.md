@@ -3,10 +3,10 @@
 
 1. What is functional programming and why is it still relevant?
 2. Imperative programming vs functional programming
-3. Immutability: the foundation of functional programming
+3. ~~Immutability: the foundation of functional programming~~ [31]
 4. Pure functions and side effects
 5. What referential transparency really means
-6. Declarative vs imperative: how the mindset changes [94]
+6. ~~Declarative vs imperative: how the mindset changes~~ [94]
 7. First steps with function composition
 8. Higher-order functions explained with real examples
 9. map, filter, and reduce beyond the basic tutorial
@@ -15,7 +15,7 @@
 ### Practical topics
 
 11. How to write more predictable code with functional programming
-12. Refactoring object-oriented code toward a functional style
+12. ~~Refactoring object-oriented code toward a functional style~~ [241]
 13. How to model data transformation pipelines
 14. Data validation with a functional approach
 15. Error handling without overusing exceptions
@@ -23,7 +23,7 @@
 17. How immutability helps reduce bugs
 18. Real-world cases where functional programming actually adds value
 19. When to use functional programming and when not to
-20. Common anti-patterns when trying to write functional code
+20. ~~Common anti-patterns when trying to write functional code~~ [107]
 
 ### Intermediate topics
 
@@ -43,7 +43,7 @@
 31. Functional programming applied to hexagonal architecture
 32. Functional core, imperative shell
 33. How to model side effects in a controlled way
-34. Event-driven architecture from a functional perspective [111]
+34. ~~Event-driven architecture from a functional perspective~~ [101]
 35. Domain-driven design and functional programming: allies or rivals?
 36. How to design business flows with types instead of if statements
 37. Lazy evaluation: when it helps and when it complicates things
@@ -57,7 +57,7 @@
 42. How to introduce functional programming into a legacy codebase
 43. Functional design of business rules
 44. Separating pure logic from infrastructure
-45. Testing in functional programming: why it is often simpler
+45. ~~Testing in functional programming: why it is often simpler~~ [160]
 46. How functional programming improves maintainability
 47. Coupling and cohesion from a functional perspective
 48. Functional programming for microservices
@@ -77,11 +77,11 @@
 56. Is functional programming overrated?
 57. Common mistakes when learning functional programming
 58. Why so many developers reject functional programming
-59. Pragmatic functional programming vs academic purism [74]
+59. ~~Pragmatic functional programming vs academic purism~~ [74]
 60. The problem with explaining monads too early
 61. When “making it functional” actually makes the code worse
 62. FP in real teams: resistance, adoption, and learning
-63. Should all business logic be pure?
+63. ~~Should all business logic be pure?~~ [205]
 64. The cognitive cost of functional abstraction
 65. How to teach functional programming without scaring people away
 
@@ -95,6 +95,11 @@
 * **Functional core, imperative shell applied to a real service**
 
 
+[31]: https://github.com/domix/dmx-fun/pull/31
 [74]: https://github.com/domix/dmx-fun/pull/74
 [94]: https://github.com/domix/dmx-fun/pull/94
-[111]: https://github.com/domix/dmx-fun/pull/111
+[107]: https://github.com/domix/dmx-fun/pull/107
+[101]: https://github.com/domix/dmx-fun/pull/101
+[160]: https://github.com/domix/dmx-fun/pull/160
+[205]: https://github.com/domix/dmx-fun/pull/205
+[241]: https://github.com/domix/dmx-fun/pull/241
