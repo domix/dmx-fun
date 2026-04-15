@@ -6,7 +6,7 @@ import org.jspecify.annotations.NullMarked;
 
 /**
  * A functional managed resource: a value that must be acquired before use and released
- * afterwards. {@code Resource<T>} is the composable alternative to {@code try-with-resources}.
+ * afterward. {@code Resource<T>} is the composable alternative to {@code try-with-resources}.
  *
  * <p>Acquisition and release are declared together at construction time. The resource is only
  * live during the execution of {@link #use(CheckedFunction) use(fn)} — it is acquired just
@@ -370,7 +370,21 @@ public final class Resource<T> {
         return bodyEx != null ? Try.failure(bodyEx) : Try.success(result);
     }
 
-    /** Bypasses the checked-exception compiler check to rethrow any {@link Throwable}. */
+    /**
+     * Rethrows any {@link Throwable} without wrapping it, bypassing the compiler's
+     * checked-exception enforcement.
+     *
+     * <p><b>How it works:</b> the unchecked cast {@code (E) t} is a <em>no-op at runtime</em>
+     * because generic type parameters are erased — the JVM sees a plain {@code throw t}.
+     * The compiler, however, believes it must only throw the checked {@code E}, so it does not
+     * require callers inside a {@code CheckedFunction} lambda to declare the rethrown type.
+     * The {@code @SuppressWarnings("unchecked")} suppresses the unavoidable unchecked-cast
+     * warning that results from this intentional use of type erasure.
+     *
+     * <p><b>Safety:</b> the original {@code Throwable} is rethrown unchanged — no wrapping,
+     * no information loss. The return type {@code R} is declared only so the method can appear
+     * in throw position in expressions that require a value (e.g., {@code return sneakyThrow(t)}).
+     */
     @SuppressWarnings("unchecked")
     private static <E extends Throwable, R> R sneakyThrow(Throwable t) throws E {
         throw (E) t;

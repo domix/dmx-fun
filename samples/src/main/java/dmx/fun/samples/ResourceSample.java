@@ -123,7 +123,7 @@ public class ResourceSample {
 
         System.out.println("\n=== guaranteed release on failure ===");
 
-        var events = new ArrayList<>();
+        List<String> events = new ArrayList<>();
         var tracked = Resource.of(
             () -> {
                 events.add("acquire");

@@ -28,9 +28,8 @@ class ResourceTest {
     }
 
     static Resource<Tracked> tracked(String name) {
-        Tracked t = new Tracked(name);
         return Resource.of(
-            () -> { t.open(); return t; },
+            () -> { Tracked t = new Tracked(name); t.open(); return t; },
             r -> r.close()
         );
     }

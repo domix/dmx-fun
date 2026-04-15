@@ -21,9 +21,10 @@ Resource<PreparedStatement> stmtResource = connResource.flatMap(conn ->
 
 Try<List<OrderSummary>> result = stmtResource.use(ps -> {
     List<OrderSummary> rows = new ArrayList<>();
-    ResultSet rs = ps.executeQuery();
-    while (rs.next()) {
-        rows.add(new OrderSummary(rs.getLong("id"), rs.getString("name")));
+    try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            rows.add(new OrderSummary(rs.getLong("id"), rs.getString("name")));
+        }
     }
     return rows;
 });
