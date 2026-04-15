@@ -4,7 +4,7 @@
 
 A Java library of functional types that make failures, absence, and validation explicit in the type system — without ceremony.
 
-`Option<T>`, `Result<V, E>`, `Try<V>`, `Validated<E, A>`, `Either<L, R>`, `Lazy<T>`, `Tuple2/3/4`, `NonEmptyList<T>`, `NonEmptyMap<K, V>`, and `NonEmptySet<T>` — each designed to compose cleanly with the others and with the Java standard library.
+`Option<T>`, `Result<V, E>`, `Try<V>`, `Validated<E, A>`, `Either<L, R>`, `Lazy<T>`, `Tuple2/3/4`, `NonEmptyList<T>`, `NonEmptyMap<K, V>`, `NonEmptySet<T>`, `Guard<T>`, and `Resource<T>` — each designed to compose cleanly with the others and with the Java standard library.
 
 ---
 
@@ -89,6 +89,8 @@ testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
 | `NonEmptyList<T>`  | Collections           | A list guaranteed to have at least one element at compile time.                                          |
 | `NonEmptyMap<K,V>` | Collections           | A map guaranteed to have at least one entry at compile time. Insertion order preserved.                  |
 | `NonEmptySet<T>`   | Collections           | A set guaranteed to have at least one element at compile time. No duplicates, insertion order preserved. |
+| `Guard<T>`         | Validation            | A composable, named predicate that produces a `Validated` result — the reusable building block for validation pipelines. |
+| `Resource<T>`      | Resource management   | A composable managed resource: acquire, use, and release with a guaranteed cleanup guarantee.            |
 
 ---
 
