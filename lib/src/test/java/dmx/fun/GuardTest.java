@@ -1,5 +1,6 @@
 package dmx.fun;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -241,6 +242,144 @@ class GuardTest {
         Validated<NonEmptyList<String>, String> threeErrors = username.check("  ");
         assertThat(threeErrors.isValid()).isFalse();
         assertThat(threeErrors.getError().size()).isEqualTo(3);
+    }
+
+    // -------------------------------------------------------------------------
+    // asPredicate
+    // -------------------------------------------------------------------------
+
+    @Test
+    void asPredicate_returnsTrue_whenGuardPasses() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        assertThat(g.asPredicate().test("hello")).isTrue();
+    }
+
+    @Test
+    void asPredicate_returnsFalse_whenGuardFails() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        assertThat(g.asPredicate().test("   ")).isFalse();
+    }
+
+    @Test
+    void asPredicate_usefulForStreamFilter() {
+        Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+        List<String> valid = List.of("alice", "  ", "bob", "").stream()
+            .filter(notBlank.asPredicate())
+            .toList();
+        assertThat(valid).containsExactly("alice", "bob");
+    }
+
+    // -------------------------------------------------------------------------
+    // contramap
+    // -------------------------------------------------------------------------
+
+    record User(String name) {}
+
+    @Test
+    void contramap_returnsValid_whenProjectedValuePasses() {
+        Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+        Guard<User> userGuard = notBlank.contramap(User::name);
+        Validated<NonEmptyList<String>, User> result = userGuard.check(new User("alice"));
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get().name()).isEqualTo("alice");
+    }
+
+    @Test
+    void contramap_returnsInvalid_withOriginalErrors_whenProjectedValueFails() {
+        Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "username must not be blank");
+        Guard<User> userGuard = notBlank.contramap(User::name);
+        Validated<NonEmptyList<String>, User> result = userGuard.check(new User("  "));
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("username must not be blank");
+    }
+
+    @Test
+    void contramap_preservesOriginalInputOnSuccess() {
+        Guard<Integer> positive = Guard.of(n -> n > 0, "must be positive");
+        Guard<User> userGuard = positive.contramap(u -> u.name().length());
+        User user = new User("hi");
+        Validated<NonEmptyList<String>, User> result = userGuard.check(user);
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isSameAs(user); // original U value preserved
+    }
+
+    @Test
+    void contramap_shouldThrowNPE_whenMapperIsNull() {
+        Guard<String> g = Guard.of(s -> true, "msg");
+        assertThatThrownBy(() -> g.contramap(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    // -------------------------------------------------------------------------
+    // checkToResult
+    // -------------------------------------------------------------------------
+
+    @Test
+    void checkToResult_noMapper_returnsOk_whenGuardPasses() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        Result<String, NonEmptyList<String>> result = g.checkToResult("hello");
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void checkToResult_noMapper_returnsErr_whenGuardFails() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        Result<String, NonEmptyList<String>> result = g.checkToResult("   ");
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError().toList()).containsExactly("must not be blank");
+    }
+
+    @Test
+    void checkToResult_withMapper_returnsOk_whenGuardPasses() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        Result<String, String> result = g.checkToResult("hello", errors -> String.join(", ", errors.toList()));
+        assertThat(result.isSuccess()).isTrue();
+    }
+
+    @Test
+    void checkToResult_withMapper_mapsErrors_whenGuardFails() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        Result<String, String> result = g.checkToResult("   ", errors -> String.join(", ", errors.toList()));
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("must not be blank");
+    }
+
+    @Test
+    void checkToResult_withMapper_shouldThrowNPE_whenMapperIsNull() {
+        Guard<String> g = Guard.of(s -> true, "msg");
+        assertThatThrownBy(() -> g.checkToResult("x", (java.util.function.Function<NonEmptyList<String>, String>) null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("toError");
+    }
+
+    // -------------------------------------------------------------------------
+    // checkToOption
+    // -------------------------------------------------------------------------
+
+    @Test
+    void checkToOption_returnsSome_whenGuardPasses() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        Option<String> result = g.checkToOption("hello");
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void checkToOption_returnsNone_whenGuardFails() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        Option<String> result = g.checkToOption("   ");
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void checkToOption_usefulForStreamFlatMap() {
+        Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+        List<String> valid = List.of("alice", "  ", "bob").stream()
+            .flatMap(s -> notBlank.checkToOption(s).stream())
+            .toList();
+        assertThat(valid).containsExactly("alice", "bob");
     }
 
     @Test

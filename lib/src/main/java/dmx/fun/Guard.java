@@ -211,4 +211,135 @@ public interface Guard<T> {
             ? Validated.invalidNel(errorMessage)
             : Validated.valid(value);
     }
+
+    // -------------------------------------------------------------------------
+    // Interoperability
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns a standard {@link Predicate Predicate&lt;T&gt;} that returns {@code true} when this
+     * guard passes and {@code false} when it fails.
+     *
+     * <p>Use this to integrate guards with standard Java APIs that accept {@code Predicate}
+     * (e.g., {@link java.util.stream.Stream#filter Stream.filter},
+     * {@link java.util.Collection#removeIf Collection.removeIf}).
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+     *
+     * List<String> valid = Stream.of("alice", "  ", "bob", "")
+     *     .filter(notBlank.asPredicate())
+     *     .toList();
+     * // ["alice", "bob"]
+     * }</pre>
+     *
+     * @return a {@code Predicate<T>} backed by this guard
+     */
+    default Predicate<T> asPredicate() {
+        return value -> this.check(value).isValid();
+    }
+
+    /**
+     * Returns a {@code Guard<U>} that applies {@code mapper} to its input before checking.
+     *
+     * <p>This is the <em>contravariant map</em> operation: it adapts a guard written for type
+     * {@code T} to work on an enclosing type {@code U} by projecting {@code U → T} first.
+     * It is the idiomatic way to reuse field-level guards on whole objects.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "username must not be blank");
+     *
+     * // Lift notBlank to validate User objects by their username field
+     * Guard<User> userGuard = notBlank.contramap(User::username);
+     *
+     * userGuard.check(new User("alice")); // Valid(user)
+     * userGuard.check(new User("   "));   // Invalid(["username must not be blank"])
+     * }</pre>
+     *
+     * @param <U>    the input type of the returned guard
+     * @param mapper function that extracts the {@code T} value from a {@code U}; must not be
+     *               {@code null}
+     * @return a new {@code Guard<U>} that projects {@code U → T} before checking
+     * @throws NullPointerException if {@code mapper} is {@code null}
+     */
+    default <U> Guard<U> contramap(Function<? super U, ? extends T> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
+        return u -> {
+            Validated<NonEmptyList<String>, T> result = this.check(mapper.apply(u));
+            return result.isValid() ? Validated.valid(u) : Validated.invalid(result.getError());
+        };
+    }
+
+    /**
+     * Applies this guard to {@code value} and returns a
+     * {@code Result<T, NonEmptyList<String>>}.
+     *
+     * <p>Equivalent to {@code this.check(value).toResult()} but removes the need to import and
+     * chain the conversion manually.
+     *
+     * @param value the value to validate
+     * @return {@code Result.ok(value)} if the guard passes, or
+     *         {@code Result.err(errors)} if it fails
+     */
+    default Result<T, NonEmptyList<String>> checkToResult(T value) {
+        return this.check(value).toResult();
+    }
+
+    /**
+     * Applies this guard to {@code value} and returns a {@code Result<T, E>}, mapping the
+     * accumulated error list to a domain-specific error type via {@code toError}.
+     *
+     * <p>Use this at domain service boundaries where {@code Result} is the preferred
+     * container and the error type is richer than a plain list of strings.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> username = notBlank.and(minLength3);
+     *
+     * Result<String, ValidationException> result = username.checkToResult(
+     *     input,
+     *     errors -> new ValidationException("username", errors.toList())
+     * );
+     * }</pre>
+     *
+     * @param <E>     the domain error type
+     * @param value   the value to validate
+     * @param toError function mapping the accumulated error list to {@code E}
+     * @return {@code Result.ok(value)} on success, or {@code Result.err(toError(errors))} on
+     *         failure
+     * @throws NullPointerException if {@code toError} is {@code null}
+     */
+    default <E> Result<T, E> checkToResult(T value, Function<NonEmptyList<String>, E> toError) {
+        Objects.requireNonNull(toError, "toError");
+        return this.check(value).mapError(toError).toResult();
+    }
+
+    /**
+     * Applies this guard to {@code value} and returns an {@link Option Option&lt;T&gt;}.
+     *
+     * <p>Returns {@code Some(value)} when the guard passes and {@link Option#none() None} when
+     * it fails, discarding the error details. Use this when you only need to know whether a
+     * value is valid, not why it is not.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+     *
+     * // Filter a stream keeping only valid values
+     * List<String> valid = Stream.of("alice", "  ", "bob")
+     *     .flatMap(s -> notBlank.checkToOption(s).stream())
+     *     .toList();
+     * // ["alice", "bob"]
+     * }</pre>
+     *
+     * @param value the value to validate
+     * @return {@code Option.some(value)} if the guard passes, or {@code Option.none()} if it
+     *         fails
+     */
+    default Option<T> checkToOption(T value) {
+        Validated<NonEmptyList<String>, T> result = this.check(value);
+        return result.isValid() ? Option.some(result.get()) : Option.none();
+    }
 }

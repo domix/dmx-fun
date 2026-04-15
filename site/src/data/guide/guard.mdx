@@ -9,6 +9,7 @@ import {Content as CreatingGuards}   from '../code/guide/guard/creating-guards.m
 import {Content as And}              from '../code/guide/guard/and.mdx';
 import {Content as Or}               from '../code/guide/guard/or.mdx';
 import {Content as Negate}           from '../code/guide/guard/negate.mdx';
+import {Content as Interop}          from '../code/guide/guard/interop.mdx';
 import {Content as RealWorldExample} from '../code/guide/guard/real-world-example.mdx';
 
 > **Runnable example:** [`GuardSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/GuardSample.java)
@@ -70,6 +71,18 @@ Validated<NonEmptyList<String>, Form> form =
     username.combine(email, NonEmptyList::concat, Form::new);
 // Invalid(["min 3 chars", "must be alphanumeric", "invalid email format"])
 ```
+
+## Interoperability
+
+| Method | Returns | Use case |
+|---|---|---|
+| `asPredicate()` | `Predicate<T>` | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
+| `contramap(fn)` | `Guard<U>` | Adapt a field guard to validate the enclosing object type |
+| `checkToResult(value)` | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic |
+| `checkToResult(value, mapper)` | `Result<T, E>` | Map errors to a domain-specific error type at service boundaries |
+| `checkToOption(value)` | `Option<T>` | Discard errors — keep only valid values (stream filtering) |
+
+<Interop/>
 
 ## Real-world example
 

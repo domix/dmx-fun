@@ -2,7 +2,10 @@ package dmx.fun.samples;
 
 import dmx.fun.Guard;
 import dmx.fun.NonEmptyList;
+import dmx.fun.Option;
+import dmx.fun.Result;
 import dmx.fun.Validated;
+import java.util.List;
 
 /**
  * Demonstrates Guard<T>: composable, named predicates that produce Validated results.
@@ -11,6 +14,7 @@ import dmx.fun.Validated;
 public class GuardSample {
 
     record RegistrationForm(String username, String email, int age) {}
+    record User(String name) {}
 
     static void main() {
 
@@ -96,5 +100,45 @@ public class GuardSample {
         // Error: must be alphanumeric
         // Error: must contain @
         // Error: age must be positive
+
+        // ---- asPredicate — Java stdlib interop ----
+
+        System.out.println("\n=== asPredicate ===");
+
+        List<String> valid = List.of("alice", "  ", "bob", "").stream()
+            .filter(notBlank.asPredicate())
+            .toList();
+        System.out.println("Valid names: " + valid); // [alice, bob]
+
+        // ---- contramap — adapt a field guard to a whole object ----
+
+        System.out.println("\n=== contramap ===");
+
+        Guard<User> userGuard = notBlank.contramap(User::name);
+        System.out.println(userGuard.check(new User("alice")).isValid());  // true
+        System.out.println(userGuard.check(new User("  ")).isValid());     // false
+
+        // ---- checkToResult — Result integration ----
+
+        System.out.println("\n=== checkToResult ===");
+
+        Result<String, NonEmptyList<String>> r1 = username.checkToResult("alice");
+        System.out.println("checkToResult ok: " + r1.isSuccess()); // true
+
+        Result<String, String> r2 = username.checkToResult(
+            "a!", errors -> String.join("; ", errors.toList()));
+        System.out.println("checkToResult err: " + r2.getError()); // min 3 chars; must be alphanumeric
+
+        // ---- checkToOption — discard errors ----
+
+        System.out.println("\n=== checkToOption ===");
+
+        Option<String> opt1 = username.checkToOption("alice");
+        System.out.println("checkToOption some: " + opt1.isDefined()); // true
+
+        List<String> validOnly = List.of("alice", "a!", "bob").stream()
+            .flatMap(s -> username.checkToOption(s).stream())
+            .toList();
+        System.out.println("Valid only: " + validOnly); // [alice, bob]
     }
 }
