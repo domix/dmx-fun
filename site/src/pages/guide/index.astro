@@ -84,6 +84,14 @@ const types = [
         tag: 'Collections',
     },
     {
+        name: 'Guard<T>',
+        href: `${base}guide/guard`,
+        summary: 'A composable, named predicate that produces a Validated result — the reusable building block for validation pipelines.',
+        whenToUse: 'You have repeated if/invalidNel validation patterns that should be defined once and composed declaratively.',
+        avoidWhen: 'A single ad-hoc check is simpler — Guard shines when rules are reused or composed.',
+        tag: 'Validation',
+    },
+    {
         name: 'Resource<T>',
         href: `${base}guide/resource`,
         summary: 'A composable managed resource: acquire, use, and release with a guaranteed cleanup guarantee.',

@@ -1,0 +1,36 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// ---- Define reusable rules once ----
+
+Guard<String> notBlank     = Guard.of(s -> !s.isBlank(),              "must not be blank");
+Guard<String> minLength3   = Guard.of(s -> s.length() >= 3,           "min 3 chars");
+Guard<String> maxLength50  = Guard.of(s -> s.length() <= 50,          "max 50 chars");
+Guard<String> alphanumeric = Guard.of(s -> s.matches("[a-zA-Z0-9_]+"), "must be alphanumeric or _");
+Guard<String> emailFormat  = Guard.of(s -> s.contains("@") && s.contains("."), "invalid email format");
+Guard<Integer> adultAge    = Guard.of(n -> n >= 18, "must be at least 18");
+
+// ---- Compose into domain rules ----
+
+Guard<String> usernameGuard = notBlank.and(minLength3).and(maxLength50).and(alphanumeric);
+Guard<String> emailGuard    = notBlank.and(emailFormat);
+
+// ---- Validate all fields and accumulate errors ----
+
+static Validated<NonEmptyList<String>, RegistrationForm> validate(
+        String rawUsername, String rawEmail, int age) {
+
+    Validated<NonEmptyList<String>, String>  username = usernameGuard.check(rawUsername);
+    Validated<NonEmptyList<String>, String>  email    = emailGuard.check(rawEmail);
+    Validated<NonEmptyList<String>, Integer> ageV     = adultAge.check(age);
+
+    return username
+        .combine(email,  NonEmptyList::concat, Tuple2::new)
+        .combine(ageV,   NonEmptyList::concat, (ue, a) -> new RegistrationForm(ue._1(), ue._2(), a));
+}
+
+// validate("al", "not-an-email", 15)
+// → Invalid(["min 3 chars", "invalid email format", "must be at least 18"])
+```

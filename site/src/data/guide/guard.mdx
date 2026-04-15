@@ -1,0 +1,105 @@
+---
+title: "Guard<T> — Developer Guide"
+description: "Comprehensive guide to Guard<T>: composable predicate blocks for Validated pipelines, and, or, negate combinators."
+order: 5
+h1: "Guard<T>"
+---
+
+import {Content as CreatingGuards}   from '../code/guide/guard/creating-guards.mdx';
+import {Content as And}              from '../code/guide/guard/and.mdx';
+import {Content as Or}               from '../code/guide/guard/or.mdx';
+import {Content as Negate}           from '../code/guide/guard/negate.mdx';
+import {Content as Interop}          from '../code/guide/guard/interop.mdx';
+import {Content as RealWorldExample} from '../code/guide/guard/real-world-example.mdx';
+
+> **Runnable example:** [`GuardSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/GuardSample.java)
+
+## What is Guard&lt;T&gt;?
+
+`Guard<T>` is a `@FunctionalInterface` that wraps a single validation rule:
+a predicate over `T` with an associated error message.
+Applying a guard via `check(value)` returns a
+`Validated<NonEmptyList<String>, T>` — `Valid(value)` when the rule passes,
+or `Invalid(errors)` when it fails.
+
+Guards are the composable building block for [`Validated`](validated) pipelines.
+Instead of writing repeated `if`/`Validated.invalidNel(...)` branches, define each
+rule once as a `Guard` and compose them with `and`, `or`, and `negate`.
+
+## Creating guards
+
+<CreatingGuards/>
+
+Both factory overloads throw `NullPointerException` for `null` predicate or message arguments.
+
+## `and(other)` — accumulate all errors
+
+Both guards are **always evaluated** — `and` is not fail-fast.
+Errors from all failing guards are accumulated into a single `NonEmptyList` so the caller
+receives a complete picture of every violation.
+
+<And/>
+
+## `or(other)` — pass on first success
+
+Evaluation is **short-circuit**: if the left guard passes, the right guard is never evaluated.
+If all guards fail, errors from all of them are accumulated.
+
+<Or/>
+
+Use `or` when a value is allowed to satisfy any one of several alternative formats
+(e.g., email or phone number, UUID or slug).
+
+## `negate()` / `negate(message)`
+
+Inverts the predicate. Use `negate(message)` to supply a domain-specific error
+message; `negate()` falls back to the generic message `"must not satisfy the condition"`.
+
+<Negate/>
+
+## Integrating with `Validated.combine`
+
+Guards produce `Validated<NonEmptyList<String>, T>` values, which compose naturally with
+[`Validated.combine`](validated#combining-results). Apply one guard per field, then combine
+them to accumulate errors across an entire form or command object:
+
+```java
+Validated<NonEmptyList<String>, String>  username = usernameGuard.check(rawUsername);
+Validated<NonEmptyList<String>, String>  email    = emailGuard.check(rawEmail);
+
+Validated<NonEmptyList<String>, Form> form =
+    username.combine(email, NonEmptyList::concat, Form::new);
+// Invalid(["min 3 chars", "must be alphanumeric", "invalid email format"])
+```
+
+## Interoperability
+
+| Method | Returns | Use case |
+|---|---|---|
+| `asPredicate()` | `Predicate<T>` | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
+| `contramap(fn)` | `Guard<U>` | Adapt a field guard to validate the enclosing object type |
+| `checkToResult(value)` | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic |
+| `checkToResult(value, mapper)` | `Result<T, E>` | Map errors to a domain-specific error type at service boundaries |
+| `checkToOption(value)` | `Option<T>` | Discard errors — keep only valid values (stream filtering) |
+
+<Interop/>
+
+## Real-world example
+
+A registration form validator that composes rules across three fields:
+
+<RealWorldExample/>
+
+## Guard vs raw Validated
+
+|                          | Raw `Validated.invalidNel`      | `Guard<T>`                              |
+|--------------------------|---------------------------------|-----------------------------------------|
+| Rule definition          | Inline `if`/`invalidNel`        | Named value — defined once, used anywhere |
+| Reuse across call sites  | Copy-paste                      | Reference the same `Guard` constant     |
+| Composition              | Manual chaining                 | `and`, `or`, `negate`                   |
+| Error accumulation       | Explicit `combine` calls        | Built into `and` / `or`                 |
+| Dynamic error messages   | Inline string interpolation     | `Guard.of(pred, value -> "... " + value)` |
+
+Use `Guard` when the same rule appears in more than one place, when rules are composed
+from smaller building blocks, or when you want a named, self-documenting validation vocabulary.
+For a single, one-off check, a direct `Validated.invalidNel` is simpler.

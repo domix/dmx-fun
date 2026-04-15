@@ -1,0 +1,15 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Guard<String> email = Guard.of(s -> s.contains("@"),   "must contain @");
+Guard<String> phone = Guard.of(s -> s.matches("\\d+"), "must be all digits");
+
+// First passing guard short-circuits; all errors accumulated on total failure
+Guard<String> contact = email.or(phone);
+
+contact.check("alice@example.com");  // Valid — email passes, phone not evaluated
+contact.check("12345");              // Valid — phone passes
+contact.check("hello");             // Invalid(["must contain @", "must be all digits"])
+```
