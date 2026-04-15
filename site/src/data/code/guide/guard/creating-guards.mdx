@@ -1,0 +1,20 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Static error message
+Guard<String> notBlank   = Guard.of(s -> !s.isBlank(),    "must not be blank");
+Guard<String> minLength3 = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+
+// Dynamic error message — the failing value is passed to the function
+Guard<Integer> max = Guard.of(
+    n -> n <= 100,
+    n -> "must be ≤ 100, got " + n
+);
+
+// Apply
+notBlank.check("hello"); // Valid("hello")
+notBlank.check("   ");   // Invalid(["must not be blank"])
+max.check(150);          // Invalid(["must be ≤ 100, got 150"])
+```
