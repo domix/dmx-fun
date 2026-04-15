@@ -4,6 +4,7 @@ import dmx.fun.Guard;
 import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
 import dmx.fun.Result;
+import dmx.fun.Tuple2;
 import dmx.fun.Validated;
 import java.util.List;
 
@@ -90,8 +91,8 @@ public class GuardSample {
 
         // Combine all three — errors accumulate across fields
         Validated<NonEmptyList<String>, RegistrationForm> form =
-            usernameV.combine(emailV, NonEmptyList::concat, (u, e) -> u + "/" + e)
-                     .combine(ageV,   NonEmptyList::concat, (ue, age) -> new RegistrationForm(ue, ue, age));
+            usernameV.combine(emailV, NonEmptyList::concat, Tuple2::new)
+                     .combine(ageV,   NonEmptyList::concat, (ue, age) -> new RegistrationForm(ue._1(), ue._2(), age));
 
         System.out.println("Valid: " + form.isValid());                       // false
         form.peekError(errors -> errors.toList().forEach(

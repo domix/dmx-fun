@@ -124,12 +124,14 @@ public interface Guard<T> {
      *
      * <p>Example:
      * <pre>{@code
-     * Guard<Integer> positive    = Guard.of(n -> n > 0,   "must be positive");
-     * Guard<Integer> lessThan100 = Guard.of(n -> n < 100, "must be less than 100");
-     * Guard<Integer> range = positive.and(lessThan100);
+     * Guard<Integer> positive = Guard.of(n -> n > 0,      "must be positive");
+     * Guard<Integer> even     = Guard.of(n -> n % 2 == 0, "must be even");
+     * Guard<Integer> positiveEven = positive.and(even);
      *
-     * range.check(-5);  // Invalid(["must be positive", "must be less than 100"])
-     *                   //  — both guards evaluated, both errors collected
+     * positiveEven.check(4);   // Valid(4)
+     * positiveEven.check(3);   // Invalid(["must be even"])
+     * positiveEven.check(-1);  // Invalid(["must be positive", "must be even"])
+     *                          //  — both guards evaluated, both errors collected
      * }</pre>
      *
      * @param other the guard that must also pass; must not be {@code null}
