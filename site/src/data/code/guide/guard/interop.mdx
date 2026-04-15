@@ -1,0 +1,40 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Guard<String> notBlank   = Guard.of(s -> !s.isBlank(),    "must not be blank");
+Guard<String> minLength3 = Guard.of(s -> s.length() >= 3, "min 3 chars");
+Guard<String> username   = notBlank.and(minLength3);
+
+// asPredicate() — Java stdlib interop
+List<String> validNames = Stream.of("alice", "  ", "bob")
+    .filter(notBlank.asPredicate())   // standard Predicate<String>
+    .toList();
+// ["alice", "bob"]
+
+// contramap(fn) — adapt a field guard to an enclosing type
+record User(String name) {}
+Guard<User> userGuard = notBlank.contramap(User::name);
+userGuard.check(new User("alice")); // Valid(User[name=alice])
+userGuard.check(new User("   "));  // Invalid(["must not be blank"])
+
+// checkToResult(value) — direct Result<T, NonEmptyList<String>>
+Result<String, NonEmptyList<String>> r1 = username.checkToResult("alice");
+// Result.ok("alice")
+
+// checkToResult(value, mapper) — map errors to a domain type
+Result<String, String> r2 = username.checkToResult(
+    "a!", errors -> String.join("; ", errors.toList()));
+// Result.err("min 3 chars")
+
+// checkToOption(value) — discard errors, keep value or None
+Option<String> opt = username.checkToOption("alice");   // Some("alice")
+username.checkToOption("a!");                           // None
+
+// flatMap over a stream, keeping only valid values
+List<String> valid = Stream.of("alice", "a!", "bob")
+    .flatMap(s -> username.checkToOption(s).stream())
+    .toList();
+// ["alice", "bob"]
+```

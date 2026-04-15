@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// negate(message) — inverts the predicate with a domain-specific error
+Guard<String> noAdmin = Guard.<String>of(s -> s.equals("admin"), "reserved")
+    .negate("username must not be 'admin'");
+
+noAdmin.check("alice"); // Valid("alice")
+noAdmin.check("admin"); // Invalid(["username must not be 'admin'"])
+
+// negate() with no argument uses a generic message
+Guard<String> notReserved = Guard.<String>of(s -> s.equals("root"), "is root").negate();
+notReserved.check("root"); // Invalid(["must not satisfy the condition"])
+```

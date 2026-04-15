@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Guard<String> notBlank    = Guard.of(s -> !s.isBlank(),             "must not be blank");
+Guard<String> minLength3  = Guard.of(s -> s.length() >= 3,          "min 3 chars");
+Guard<String> alphanumeric = Guard.of(s -> s.matches("[a-zA-Z0-9]+"), "must be alphanumeric");
+
+// Both guards are always evaluated — errors accumulate (not fail-fast)
+Guard<String> username = notBlank.and(minLength3).and(alphanumeric);
+
+username.check("alice");  // Valid("alice")
+username.check("a!");     // Invalid(["min 3 chars", "must be alphanumeric"])
+username.check("  ");     // Invalid(["must not be blank", "min 3 chars", "must be alphanumeric"])
+```
