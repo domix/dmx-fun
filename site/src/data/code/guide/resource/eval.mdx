@@ -1,0 +1,14 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// You already have a Try<Connection> from wrapping legacy code
+Try<Connection> tryConn = Try.of(() -> dataSource.getConnection());
+
+// Lift it into a Resource — release is skipped if acquisition already failed
+Resource<Connection> conn = Resource.eval(tryConn, Connection::close);
+
+Try<List<User>> users = conn.use(c -> fetchUsers(c));
+// If tryConn was a failure, users carries that failure and Connection::close is never called
+```

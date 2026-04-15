@@ -1,0 +1,16 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+Resource<Connection> conn = Resource.of(
+    () -> dataSource.getConnection(),
+    Connection::close
+);
+
+// Transform the resource value — acquire/release lifecycle is unchanged
+Resource<String> schema = conn.map(c -> c.getSchema());
+
+Try<Integer> len = schema.use(String::length);
+// Connection was opened, getSchema() was called, connection was closed
+```

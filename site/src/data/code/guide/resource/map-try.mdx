@@ -1,0 +1,17 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// rawText resource acquires a file and reads its content
+Resource<String> rawText = Resource.fromAutoCloseable(
+    () -> new BufferedReader(new FileReader(configPath))
+).map(reader -> reader.lines().collect(joining("\n")));
+
+// mapTry chains a Try-returning function — if parsing fails, the resource is still released
+Resource<Config> configResource = rawText.mapTry(text ->
+    Try.of(() -> Config.parse(text))
+);
+
+Try<Integer> port = configResource.use(Config::port);
+```

@@ -1,0 +1,36 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Acquire a connection and a prepared statement, run a query, release both
+Resource<Connection>        connResource = Resource.of(
+    () -> dataSource.getConnection(), Connection::close);
+
+Resource<PreparedStatement> stmtResource = connResource.flatMap(conn ->
+    Resource.of(
+        () -> {
+            PreparedStatement ps = conn.prepareStatement(
+                "SELECT id, name FROM orders WHERE customer_id = ?");
+            ps.setLong(1, customerId);
+            return ps;
+        },
+        PreparedStatement::close
+    )
+);
+
+Try<List<OrderSummary>> result = stmtResource.use(ps -> {
+    List<OrderSummary> rows = new ArrayList<>();
+    try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            rows.add(new OrderSummary(rs.getLong("id"), rs.getString("name")));
+        }
+    }
+    return rows;
+});
+
+// Both resources are released regardless of whether the body succeeded
+result
+    .onSuccess(orders -> orders.forEach(System.out::println))
+    .onFailure(ex     -> log.error("Query failed", ex));
+```

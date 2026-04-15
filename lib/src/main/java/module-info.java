@@ -21,6 +21,7 @@
  *   <li>{@link dmx.fun.NonEmptyList} — list guaranteed to contain at least one element</li>
  *   <li>{@link dmx.fun.NonEmptyMap}  — map guaranteed to contain at least one entry</li>
  *   <li>{@link dmx.fun.NonEmptySet}  — set guaranteed to contain at least one element</li>
+ *   <li>{@link dmx.fun.Resource}     — composable managed resource with guaranteed release</li>
  * </ul>
  *
  * <p>The entire module is {@code @NullMarked}: all API types are non-null by default.
