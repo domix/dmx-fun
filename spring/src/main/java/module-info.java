@@ -6,7 +6,7 @@
  * transaction management via Spring's {@code @Transactional}.
  *
  * <p>Spring is declared as {@code compileOnly} — consumers bring their own Spring
- * dependency. Supported Spring release lines: 6.0.x, 6.1.x, 6.2.x.
+ * dependency. Supported Spring release lines: 6.0.x, 6.1.x, 6.2.x, 7.0.x.
  */
 module dmx.fun.spring {
     requires dmx.fun;
@@ -14,5 +14,5 @@ module dmx.fun.spring {
     requires spring.context;
     requires org.jspecify;
 
-    // exports dmx.fun.spring; — uncomment when implementation classes are added (#125, #126)
+    exports dmx.fun.spring;
 }

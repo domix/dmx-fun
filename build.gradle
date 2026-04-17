@@ -43,24 +43,45 @@ tasks.register('aggregateJavadoc', Exec) {
     def javadocToolProvider = javaToolchains.javadocToolFor {
         languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get().toInteger()))
     }
+    def modules = [
+        ':lib',
+        ':assertj',
+        ':jackson',
+        ':spring',
+    ]
+    def moduleSources = modules.collect {
+        [
+            name:it,
+            location: project(it).file('src/main/java')
+        ]
+    }
     def libSrc     = project(':lib').file('src/main/java')
     def assertjSrc = project(':assertj').file('src/main/java')
     def jacksonSrc = project(':jackson').file('src/main/java')
+    def springSrc = project(':spring').file('src/main/java')
     def destDir    = file('build/reports/javadoc')
     // Only external dependencies on the module-path; the three documented modules
     // are found via --module-source-path so their artifacts must NOT appear here.
-    def internalDirs = [
-        project(':lib').projectDir.absolutePath,
-        project(':assertj').projectDir.absolutePath,
-        project(':jackson').projectDir.absolutePath,
-    ]
-    def externalDepsConfigs = [
-        project(':lib').configurations.compileClasspath,
-        project(':assertj').configurations.compileClasspath,
-        project(':jackson').configurations.compileClasspath,
-    ]
-
-    inputs.files fileTree(libSrc), fileTree(assertjSrc), fileTree(jacksonSrc)
+    def internalDirs = modules.collect {
+        project(it).projectDir.absolutePath
+    }
+//    def internalDirs = [
+//        project(':lib').projectDir.absolutePath,
+//        project(':assertj').projectDir.absolutePath,
+//        project(':jackson').projectDir.absolutePath,
+//    ]
+//    def externalDepsConfigs = [
+//        project(':lib').configurations.compileClasspath,
+//        project(':assertj').configurations.compileClasspath,
+//        project(':jackson').configurations.compileClasspath,
+//    ]
+    def externalDepsConfigs = modules.collect {
+        project(it).configurations.compileClasspath
+    }
+    modules.each {
+        inputs.files fileTree(it)
+    }
+    //inputs.files fileTree(libSrc), fileTree(assertjSrc), fileTree(jacksonSrc)
     outputs.dir destDir
 
     // Build the command at execution time (configs are not yet resolved at configuration time)
@@ -83,7 +104,13 @@ tasks.register('aggregateJavadoc', Exec) {
         args '--module-source-path', "dmx.fun=${libSrc.absolutePath}"
         args '--module-source-path', "dmx.fun.assertj=${assertjSrc.absolutePath}"
         args '--module-source-path', "dmx.fun.jackson=${jacksonSrc.absolutePath}"
-        args '--module',             'dmx.fun,dmx.fun.assertj,dmx.fun.jackson'
+        args '--module-source-path', "dmx.fun.spring=${springSrc.absolutePath}"
+        args '--module',             'dmx.fun,dmx.fun.assertj,dmx.fun.jackson,dmx.fun.spring'
+
+//        moduleSources.each {
+//            args '--module-source-path', "dmx.${it.name}=${it.location.absolutePath}"
+//        }
+
         args '-d',                   destDir.absolutePath
         args '-doctitle',            'dmx-fun API'
         args '-windowtitle',         'dmx-fun API'

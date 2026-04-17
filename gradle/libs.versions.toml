@@ -4,7 +4,10 @@
 java = "25"
 assertj = "3.27.7"
 jackson = "2.21.2"
-spring = "6.2.6"
+spring = "7.0.6"
+h2 = "2.4.240"
+postgresql = "42.7.10"
+testcontainers = "1.21.4"
 jspecify = "1.0.0"
 junit = "6.0.3"
 
@@ -16,4 +19,9 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
+spring-jdbc = { module = "org.springframework:spring-jdbc", version.ref = "spring" }
 spring-tx = { module = "org.springframework:spring-tx", version.ref = "spring" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+testcontainers-junit5 = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
