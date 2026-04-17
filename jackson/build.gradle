@@ -1,10 +1,20 @@
+// ── Jackson integration module ────────────────────────────────────────────────
+// Optional module — users must already have Jackson on their classpath.
+// Provides serializers and deserializers for all dmx-fun types.
 plugins {
     id 'dmx-fun.java-module'
 }
 
 dependencies {
+    // Exposes dmx-fun types to callers; they only need one dependency declaration.
     api project(':lib')
+
+    // Jackson is an optional peer dependency: declared compileOnly so it is not
+    // pulled in transitively. Users bring their own version.
     compileOnly libs.jackson.databind
+
+    // Tests run against the version passed via -PjacksonVersion=X.Y.Z (used by
+    // the CI compatibility matrix), falling back to the catalog version locally.
     testImplementation "com.fasterxml.jackson.core:jackson-databind:${findProperty('jacksonVersion') ?: libs.versions.jackson.get()}"
 }
 

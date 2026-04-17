@@ -1,12 +1,19 @@
+// ── Core library module ───────────────────────────────────────────────────────
+// The dmx.fun module is the only artifact that end users must always declare.
+// All other modules (assertj, jackson, spring, …) depend on it via `api project(':lib')`.
 plugins {
     id 'dmx-fun.java-module'
 }
 
 dependencies {
-    // Null-safety annotations (part of the public API)
+    // JSpecify null-safety annotations (@NullMarked, @Nullable) are part of the
+    // public API contract — callers need them on their compile classpath.
     api libs.jspecify
 }
 
+// java.net.http is used in tests that exercise Try/Result with HttpClient.
+// extraModules makes it visible to the patched test module at both compile and
+// runtime; extraReads grants the module permission to read java.net.http types.
 jpmsTest {
     moduleName   = 'dmx.fun'
     extraModules = ['java.net.http']

@@ -1,20 +1,40 @@
+// ── Spring integration module ─────────────────────────────────────────────────
+// Optional module — users must already have Spring Framework on their classpath.
+// Provides transaction-aware wrappers (TxResult, TxTry, TxValidated) that execute
+// actions inside a Spring-managed transaction and return dmx-fun types instead of
+// throwing exceptions.
 plugins {
     id 'dmx-fun.java-module'
 }
 
 dependencies {
+    // Exposes dmx-fun types to callers; they only need one dependency declaration.
     api project(':lib')
-    compileOnly libs.spring.tx
-    compileOnly libs.spring.context
+
+    // Spring is an optional peer dependency: declared compileOnly so it is not
+    // pulled in transitively. Users bring their own Spring version.
+    compileOnly libs.spring.tx       // PlatformTransactionManager, TransactionTemplate
+    compileOnly libs.spring.context  // @Component for TxResult / TxTry / TxValidated
+
+    // Tests run against the version passed via -PspringVersion=X.Y.Z (used by
+    // the CI compatibility matrix), falling back to the catalog version locally.
     testImplementation "org.springframework:spring-tx:${findProperty('springVersion') ?: libs.versions.spring.get()}"
     testImplementation "org.springframework:spring-context:${findProperty('springVersion') ?: libs.versions.spring.get()}"
     testImplementation "org.springframework:spring-jdbc:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+
+    // Integration tests use H2 for lightweight unit tests and Testcontainers +
+    // PostgreSQL to verify real rollback/commit behaviour across isolation levels.
     testImplementation libs.h2
     testImplementation libs.testcontainers.junit5
     testImplementation libs.testcontainers.postgresql
-    testRuntimeOnly libs.postgresql
+    testRuntimeOnly    libs.postgresql
 }
 
+// java.sql is required at both compile and runtime because Spring's transaction
+// infrastructure uses JDBC types (Connection, DataSource) that live in java.sql.
+// extraOpens allows Spring's reflection-heavy internals (spring.core, spring.beans,
+// spring.context) and JUnit's unnamed module to access test classes that are
+// patched into the named dmx.fun.spring module.
 jpmsTest {
     moduleName   = 'dmx.fun.spring'
     extraModules = ['java.sql']
