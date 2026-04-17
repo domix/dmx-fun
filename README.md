@@ -17,6 +17,7 @@ All modules are published to Maven Central. Add only what you need.
 | `fun`         | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                 |
 | `fun-jackson` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson) |
 | `fun-assertj` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj) |
+| `fun-spring`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)   |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
 
@@ -52,6 +53,24 @@ Serializers and deserializers for all dmx-fun types.
 **Gradle**
 ```groovy
 implementation("codes.domix:fun-jackson:LATEST_VERSION")
+```
+
+### Spring integration (optional)
+
+Transaction support for `Result`, `Try`, `Option`, and `Validated` — use dmx-fun idiomatically without giving up `@Transactional`. Spring Framework is declared as `compileOnly`; bring your own Spring dependency.
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-spring</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-spring:LATEST_VERSION")
 ```
 
 ### AssertJ integration (optional, test scope)

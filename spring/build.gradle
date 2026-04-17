@@ -1,0 +1,35 @@
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    api project(':lib')
+    compileOnly libs.spring.tx
+    compileOnly libs.spring.context
+    testImplementation "org.springframework:spring-tx:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+    testImplementation "org.springframework:spring-context:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+}
+
+compileTestJava {
+    def mainClassesDirs = sourceSets.main.output.classesDirs
+    def apiDeps = configurations.compileClasspath
+    def testSrcPath = files(sourceSets.test.java.srcDirs).asPath
+
+    classpath = classpath.filter { f -> !mainClassesDirs.contains(f) && !apiDeps.contains(f) }
+
+    def modulePath = (mainClassesDirs + apiDeps).asPath
+    options.compilerArgs += [
+        '--module-path', modulePath,
+        '--add-modules', 'dmx.fun.spring',
+        '--patch-module', "dmx.fun.spring=${testSrcPath}",
+        '--add-reads', 'dmx.fun.spring=ALL-UNNAMED',
+    ]
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-spring", "${project.version}")
+    pom {
+        name = 'dmx-fun Spring integration'
+        description = 'Spring module for dmx-fun: transaction support for Result, Try, Option, and Validated without giving up declarative transaction management.'
+    }
+}

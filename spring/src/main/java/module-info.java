@@ -1,0 +1,18 @@
+/**
+ * Spring Framework integration for dmx-fun types.
+ *
+ * <p>Provides transaction support so applications can use {@code Result}, {@code Try},
+ * {@code Option}, and {@code Validated} idiomatically without giving up declarative
+ * transaction management via Spring's {@code @Transactional}.
+ *
+ * <p>Spring is declared as {@code compileOnly} — consumers bring their own Spring
+ * dependency. Supported Spring release lines: 6.0.x, 6.1.x, 6.2.x.
+ */
+module dmx.fun.spring {
+    requires dmx.fun;
+    requires spring.tx;
+    requires spring.context;
+    requires org.jspecify;
+
+    // exports dmx.fun.spring; — uncomment when implementation classes are added (#125, #126)
+}
