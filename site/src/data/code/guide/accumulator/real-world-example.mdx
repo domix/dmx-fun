@@ -1,0 +1,44 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+record Order(String id, BigDecimal basePrice) {}
+record PricedOrder(String id, BigDecimal price, String currency) {}
+
+BinaryOperator<List<String>> concat = (a, b) -> {
+    var merged = new ArrayList<>(a);
+    merged.addAll(b);
+    return merged;
+};
+
+Accumulator<List<String>, PricedOrder> priced =
+    Accumulator.of(new Order("ord-7", BigDecimal.valueOf(100.0)), List.of("order loaded"))
+        .flatMap(o -> {
+            BigDecimal discounted = o.basePrice().multiply(BigDecimal.valueOf(0.85));
+            return Accumulator.of(
+                new Order(o.id(), discounted),
+                List.of("15% discount applied → " + discounted)
+            );
+        }, concat)
+        .flatMap(o -> {
+            BigDecimal taxed = o.basePrice()
+                .multiply(BigDecimal.valueOf(1.21))
+                .setScale(2, RoundingMode.HALF_UP);
+            return Accumulator.of(
+                new PricedOrder(o.id(), taxed, "USD"),
+                List.of("21% VAT applied → " + taxed)
+            );
+        }, concat);
+
+System.out.println(priced.value());
+// PricedOrder[id=ord-7, price=102.85, currency=USD]
+
+priced.accumulated().forEach(e -> System.out.println("  - " + e));
+// - order loaded
+// - 15% discount applied → 85.00
+// - 21% VAT applied → 102.85
+```

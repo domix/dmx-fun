@@ -11,14 +11,14 @@ All CI/CD is handled by GitHub Actions. The workflows live in `.github/workflows
 
 ## Workflow overview
 
-| Workflow file | Trigger | Purpose |
-|---|---|---|
-| `gradle.yml` | push / PR to `main` (code paths) | Full build, tests, coverage, Javadoc, dependency graph submission |
-| `publish.yml` | push to `main` — stable version only | Publish all modules to Maven Central, create git tag and GitHub Release |
-| `publish-snapshot.yml` | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central |
-| `jackson-compatibility.yaml` | PR touching `jackson/**` | Matrix test against Jackson 2.13.x – 2.21.x |
-| `assertj-compatibility.yaml` | PR touching `assertj/**` | Matrix test against AssertJ 3.21.x – 3.27.x |
-| `pages.yml` | push to `main` | Build and deploy the documentation site to GitHub Pages |
+| Workflow file                | Trigger                                | Purpose                                                                 |
+|------------------------------|----------------------------------------|-------------------------------------------------------------------------|
+| `gradle.yml`                 | push / PR to `main` (code paths)       | Full build, tests, coverage, Javadoc, dependency graph submission       |
+| `publish.yml`                | push to `main` — stable version only   | Publish all modules to Maven Central, create git tag and GitHub Release |
+| `publish-snapshot.yml`       | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central                             |
+| `jackson-compatibility.yaml` | PR touching `jackson/**`               | Matrix test against Jackson 2.13.x – 2.21.x                             |
+| `assertj-compatibility.yaml` | PR touching `assertj/**`               | Matrix test against AssertJ 3.21.x – 3.27.x                             |
+| `pages.yml`                  | push to `main`                         | Build and deploy the documentation site to GitHub Pages                 |
 
 ---
 
@@ -63,13 +63,13 @@ Only stable versions (e.g. `0.0.13`) proceed.
 
 **Secrets required**:
 
-| Secret | Purpose |
-|---|---|
-| `MAVEN_CENTRAL_USERNAME` | Maven Central portal username |
-| `MAVEN_CENTRAL_PASSWORD` | Maven Central portal password / token |
-| `SIGNING_KEY_ID` | GPG key ID (last 8 characters) |
-| `SIGNING_KEY` | GPG private key (armored, base64-encoded) |
-| `SIGNING_KEY_PASSWORD` | Passphrase for the GPG key |
+| Secret                   | Purpose                                   |
+|--------------------------|-------------------------------------------|
+| `MAVEN_CENTRAL_USERNAME` | Maven Central portal username             |
+| `MAVEN_CENTRAL_PASSWORD` | Maven Central portal password / token     |
+| `SIGNING_KEY_ID`         | GPG key ID (last 8 characters)            |
+| `SIGNING_KEY`            | GPG private key (armored, base64-encoded) |
+| `SIGNING_KEY_PASSWORD`   | Passphrase for the GPG key                |
 
 **Local equivalent** (dry-run only — do not publish locally):
 ```bash
@@ -103,16 +103,16 @@ Runs only on pull requests — not on push to `main`.
 **What it does**: runs `:jackson:test` for each Jackson version in the matrix:
 
 | Jackson version | Status |
-|---|---|
-| 2.13.5 | tested |
-| 2.14.3 | tested |
-| 2.15.4 | tested |
-| 2.16.2 | tested |
-| 2.17.3 | tested |
-| 2.18.2 | tested |
-| 2.19.4 | tested |
-| 2.20.2 | tested |
-| 2.21.2 | tested |
+|-----------------|--------|
+| 2.13.5          | tested |
+| 2.14.3          | tested |
+| 2.15.4          | tested |
+| 2.16.2          | tested |
+| 2.17.3          | tested |
+| 2.18.2          | tested |
+| 2.19.4          | tested |
+| 2.20.2          | tested |
+| 2.21.2          | tested |
 
 **Local equivalent**:
 ```bash
@@ -132,14 +132,14 @@ Runs only on pull requests — not on push to `main`.
 **What it does**: runs `:assertj:test` for each AssertJ version in the matrix:
 
 | AssertJ version | Status |
-|---|---|
-| 3.21.0 | tested |
-| 3.22.0 | tested |
-| 3.23.1 | tested |
-| 3.24.2 | tested |
-| 3.25.3 | tested |
-| 3.26.3 | tested |
-| 3.27.7 | tested |
+|-----------------|--------|
+| 3.21.0          | tested |
+| 3.22.0          | tested |
+| 3.23.1          | tested |
+| 3.24.2          | tested |
+| 3.25.3          | tested |
+| 3.26.3          | tested |
+| 3.27.7          | tested |
 
 **Local equivalent**:
 ```bash

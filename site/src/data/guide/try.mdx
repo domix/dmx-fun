@@ -57,16 +57,16 @@ the compiler enforces that both tracks are handled.
 
 ## Extracting values
 
-| Method                        | When `Failure`                       | Notes                                                            |
-|-------------------------------|--------------------------------------|------------------------------------------------------------------|
-| `get()`                       | Throws `NoSuchElementException`      | Only safe after an `isSuccess()` check; prefer alternatives.     |
-| `getCause()`                  | N/A — throws if `Success`            | Retrieves the exception; unsafe on the success track.            |
-| `getOrElse(fallback)`         | Returns `fallback`                   | Fallback is always evaluated eagerly.                            |
-| `getOrElseGet(supplier)`      | Calls supplier                       | Lazily computed fallback.                                        |
-| `getOrNull()`                 | Returns `null`                       | Ambiguous for `Try<Void>` — avoid when possible.                 |
-| `getOrThrow()`                | Rethrows the original exception      | Rethrows `Exception` as-is; wraps `Error`/`Throwable`.           |
-| `getOrThrow(exMapper)`        | Throws mapped `RuntimeException`     | Maps the cause to a domain exception at the call site.           |
-| `fold(onSuccess, onFailure)`  | Calls `onFailure`                    | The most expressive extractor: forces both tracks to be handled. |
+| Method                       | When `Failure`                   | Notes                                                            |
+|------------------------------|----------------------------------|------------------------------------------------------------------|
+| `get()`                      | Throws `NoSuchElementException`  | Only safe after an `isSuccess()` check; prefer alternatives.     |
+| `getCause()`                 | N/A — throws if `Success`        | Retrieves the exception; unsafe on the success track.            |
+| `getOrElse(fallback)`        | Returns `fallback`               | Fallback is always evaluated eagerly.                            |
+| `getOrElseGet(supplier)`     | Calls supplier                   | Lazily computed fallback.                                        |
+| `getOrNull()`                | Returns `null`                   | Ambiguous for `Try<Void>` — avoid when possible.                 |
+| `getOrThrow()`               | Rethrows the original exception  | Rethrows `Exception` as-is; wraps `Error`/`Throwable`.           |
+| `getOrThrow(exMapper)`       | Throws mapped `RuntimeException` | Maps the cause to a domain exception at the call site.           |
+| `fold(onSuccess, onFailure)` | Calls `onFailure`                | The most expressive extractor: forces both tracks to be handled. |
 
 <ExtractingValues/>
 
@@ -129,15 +129,15 @@ so `null` elements in successful results are preserved.
 
 ## Interoperability
 
-| Conversion                      | Method                              |
-|---------------------------------|-------------------------------------|
-| `Try` → `Option`                | `tryVal.toOption()`                 |
-| `Try` → `Result<V, Throwable>`  | `tryVal.toResult()`                 |
-| `Try` → `Result<V, E>`          | `tryVal.toResult(errorMapper)`      |
-| `Try` → `Either<Throwable, V>`  | `tryVal.toEither()`                 |
-| `Try` → `Stream<V>`             | `tryVal.stream()`                   |
-| `Option` → `Try`                | `option.toTry(exceptionSupplier)`   |
-| `Result` → `Try`                | `result.toTry(errorMapper)`         |
+| Conversion                     | Method                            |
+|--------------------------------|-----------------------------------|
+| `Try` → `Option`               | `tryVal.toOption()`               |
+| `Try` → `Result<V, Throwable>` | `tryVal.toResult()`               |
+| `Try` → `Result<V, E>`         | `tryVal.toResult(errorMapper)`    |
+| `Try` → `Either<Throwable, V>` | `tryVal.toEither()`               |
+| `Try` → `Stream<V>`            | `tryVal.stream()`                 |
+| `Option` → `Try`               | `option.toTry(exceptionSupplier)` |
+| `Result` → `Try`               | `result.toTry(errorMapper)`       |
 
 <InteropConversions/>
 
@@ -145,13 +145,13 @@ See the [Combining Types](combining-types) page for the full conversion matrix a
 
 ## Try vs Result vs checked exceptions
 
-|                              | Checked exceptions             | `Try<V>`                             | `Result<V, E>`                          |
-|------------------------------|--------------------------------|--------------------------------------|-----------------------------------------|
-| Error type                   | Declared `throws` clause       | Always `Throwable`                   | Any domain type                         |
-| Forces handling              | Yes — compile time             | Yes — via API                        | Yes — via API and switch patterns       |
-| Branch on error subtype      | Via `catch` clauses            | Via `instanceof` / `recover(Class)`  | Via sealed subtype and switch patterns  |
-| Interop with throwing code   | Native                         | Excellent — `Try.of(() -> ...)`      | Indirect — wrap with `Try` first        |
-| Best for                     | Internal APIs you control      | Wrapping legacy/third-party code     | Domain logic with typed failure modes   |
+|                            | Checked exceptions        | `Try<V>`                            | `Result<V, E>`                         |
+|----------------------------|---------------------------|-------------------------------------|----------------------------------------|
+| Error type                 | Declared `throws` clause  | Always `Throwable`                  | Any domain type                        |
+| Forces handling            | Yes — compile time        | Yes — via API                       | Yes — via API and switch patterns      |
+| Branch on error subtype    | Via `catch` clauses       | Via `instanceof` / `recover(Class)` | Via sealed subtype and switch patterns |
+| Interop with throwing code | Native                    | Excellent — `Try.of(() -> ...)`     | Indirect — wrap with `Try` first       |
+| Best for                   | Internal APIs you control | Wrapping legacy/third-party code    | Domain logic with typed failure modes  |
 
 ## Time-bounded execution — `Try.withTimeout`
 

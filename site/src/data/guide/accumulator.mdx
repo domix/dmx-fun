@@ -1,0 +1,125 @@
+---
+title: "Accumulator<E, A> — Developer Guide"
+description: "Comprehensive guide to Accumulator<E, A>: threading a side-channel accumulation (log, metrics, audit trail) through a computation chain without shared mutable state."
+order: 12
+h1: "Accumulator<E, A>"
+---
+
+import {Content as OfPureTell}        from '../code/guide/accumulator/of-pure-tell.mdx';
+import {Content as FlatMap}           from '../code/guide/accumulator/flat-map.mdx';
+import {Content as MapAccumulated}    from '../code/guide/accumulator/map-accumulated.mdx';
+import {Content as Interop}           from '../code/guide/accumulator/interop.mdx';
+import {Content as RealWorldExample}  from '../code/guide/accumulator/real-world-example.mdx';
+
+> **Runnable example:** [`AccumulatorSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/AccumulatorSample.java)
+
+## What is Accumulator&lt;E, A&gt;?
+
+`Accumulator<E, A>` pairs a computed value `A` with a side-channel accumulation `E`
+(log entries, metrics, warnings, audit trail). It is the functional alternative to mutable
+global state for cross-cutting concerns:
+
+- Instead of calling `logger.info(...)` inside a method body, return the log entries as part of the result.
+- Instead of incrementing a shared counter, accumulate a count alongside the value.
+- Instead of writing to an audit log as a side effect, thread audit events through the return type.
+
+The key invariant: **accumulation always continues**. Unlike [`Result`](result) or
+[`Try`](try), there is no failure path — every step contributes to both the value and
+the accumulation. This makes `Accumulator` unsuitable for error handling (use
+[`Result`](result) for that) and ideal for scenarios where every step always produces
+something, but you also want a trace of what happened along the way.
+
+This type is sometimes called the **Writer monad** in functional programming literature.
+
+## Factories
+
+<OfPureTell/>
+
+**Summary:**
+
+| Factory                          | Value           | Accumulated      |
+|----------------------------------|-----------------|------------------|
+| `Accumulator.of(value, log)`     | provided        | provided         |
+| `Accumulator.pure(value, empty)` | provided        | empty (identity) |
+| `Accumulator.tell(log)`          | `null` (`Void`) | provided         |
+
+For `pure`, the caller provides the empty / identity value because Java does not have type
+classes. Common choices: `List.of()`, `0`, `""`.
+
+For `tell`, the value is always `null`. Call `hasValue()` to distinguish `tell` results
+from `of`/`pure` results. Do **not** call `map` on a `tell` result — use `flatMap` to
+produce a real value first.
+
+## `flatMap` — chain and merge
+
+`flatMap` is the primary composition combinator. It:
+
+1. Passes the current value to `f`.
+2. Gets back the next `Accumulator<E, B>`.
+3. Merges the two accumulations using the provided `BinaryOperator<E>`.
+
+<FlatMap/>
+
+The merge function determines how accumulations combine. Common choices:
+
+| Accumulation type | Merge function                               |
+|-------------------|----------------------------------------------|
+| `List<T>`         | list concatenation (new list + addAll)       |
+| `NonEmptyList<T>` | `NonEmptyList::concat`                       |
+| `int` / `long`    | `Integer::sum` / `Long::sum`                 |
+| `String`          | `String::concat` or `(a, b) -> a + "\n" + b` |
+
+## `map` and `mapAccumulated`
+
+<MapAccumulated/>
+
+Use `map` for pure value transformations where the accumulation is unchanged.
+Use `mapAccumulated` to convert between accumulation types — for example, to count
+log entries (`List::size`) or to convert raw strings to structured event objects.
+
+## Interoperability
+
+<Interop/>
+
+| Method / Factory                     | Returns                     | Use case                                                                   |
+|--------------------------------------|-----------------------------|----------------------------------------------------------------------------|
+| `combine(other, merge, f)`           | `Accumulator<E, C>`         | Combine two independent accumulators; both logs merged                     |
+| `sequence(list, merge, empty)`       | `Accumulator<E, List<A>>`   | Fold a list of accumulators into one                                       |
+| `toOption()`                         | `Option<A>`                 | Extract value as Option; `None` for `tell` results; accumulation discarded |
+| `liftOption(opt, someLog, noneLog)`  | `Accumulator<E, Option<A>>` | Log the presence or absence of an Option value                             |
+| `liftTry(t, successLog, failureLog)` | `Accumulator<E, Try<A>>`    | Log the success or failure of a Try; the Try itself is the value           |
+| `toResult()`                         | `Result<A, E>`              | `Ok(value)` when has value; `Err(accumulated)` for `tell` results          |
+| `toTuple2()`                         | `Tuple2<E, A>`              | Structural decomposition; `_1` is accumulated, `_2` is value               |
+| `hasValue()`                         | `boolean`                   | Distinguish `of`/`pure` results from `tell` results                        |
+| `value()`                            | `@Nullable A`               | Extract the value; `null` for `tell` results                               |
+| `accumulated()`                      | `E`                         | Extract the accumulation; always non-null                                  |
+
+## Real-world example
+
+Pricing pipeline that threads an audit log through each transformation step:
+
+<RealWorldExample/>
+
+Every method in the pipeline is a pure function: no logger injection, no shared state,
+no side effects. The audit log is assembled as a first-class value alongside the result.
+The caller decides what to do with it — print it, persist it, or discard it.
+
+## When to use Accumulator
+
+| Scenario                                             | Right tool                                 |
+|------------------------------------------------------|--------------------------------------------|
+| Record log entries alongside a computation           | `Accumulator<List<String>, T>`             |
+| Count steps or operations without a counter field    | `Accumulator<Integer, T>`                  |
+| Thread domain audit events through a pipeline        | `Accumulator<NonEmptyList<AuditEvent>, T>` |
+| Collect warnings without aborting the computation    | `Accumulator<List<Warning>, T>`            |
+| A step can fail — caller needs error handling        | [`Result<T, E>`](result) instead           |
+| Multiple independent validations accumulating errors | [`Validated<E, A>`](validated) instead     |
+
+## Accumulator vs Result vs Validated
+
+|                       | `Accumulator<E, A>`       | `Result<V, E>`            | `Validated<E, A>`         |
+|-----------------------|---------------------------|---------------------------|---------------------------|
+| Always succeeds?      | Yes                       | No — can be `Err`         | No — can be `Invalid`     |
+| Accumulates per step? | Yes — always              | No — stops at first error | Yes — collects all errors |
+| Accumulation purpose  | Side-channel (log, trace) | Error reporting           | Validation errors         |
+| Composition           | `flatMap` + merge         | `flatMap` (short-circuit) | `combine` (parallel)      |

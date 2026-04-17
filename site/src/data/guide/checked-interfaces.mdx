@@ -27,12 +27,12 @@ so that throwing method references can be used directly.
 
 ## Checked functional interfaces
 
-| Interface                  | Checked equivalent of     | Signature                          |
-|----------------------------|---------------------------|------------------------------------|
-| `CheckedFunction<T, R>`    | `Function<T, R>`          | `R apply(T t) throws Exception`    |
-| `CheckedSupplier<T>`       | `Supplier<T>`             | `T get() throws Exception`         |
-| `CheckedConsumer<T>`       | `Consumer<T>`             | `void accept(T t) throws Exception`|
-| `CheckedRunnable`          | `Runnable`                | `void run() throws Exception`      |
+| Interface               | Checked equivalent of | Signature                           |
+|-------------------------|-----------------------|-------------------------------------|
+| `CheckedFunction<T, R>` | `Function<T, R>`      | `R apply(T t) throws Exception`     |
+| `CheckedSupplier<T>`    | `Supplier<T>`         | `T get() throws Exception`          |
+| `CheckedConsumer<T>`    | `Consumer<T>`         | `void accept(T t) throws Exception` |
+| `CheckedRunnable`       | `Runnable`            | `void run() throws Exception`       |
 
 All four are `@FunctionalInterface` and `@NullMarked`.
 
@@ -63,15 +63,15 @@ standard library interfaces.
 
 ## When to use each
 
-| Scenario                                                         | Interface                      |
-|------------------------------------------------------------------|--------------------------------|
-| Pass a throwing method reference to a functional API             | `CheckedFunction` / `CheckedSupplier` |
-| Wrap a throwing void action (e.g. DB migration, file write)      | `CheckedRunnable`              |
-| Side-effecting loop body that throws                             | `CheckedConsumer`              |
-| Feed a throwing supplier into `Try.of()`                        | `CheckedSupplier`              |
-| Collapse a `Tuple3` into a single value                         | `TriFunction`                  |
-| Collapse a `Tuple4` into a single value                         | `QuadFunction`                 |
-| Combine more than two values in a `Validated.combine` chain     | `TriFunction` / `QuadFunction` |
+| Scenario                                                    | Interface                             |
+|-------------------------------------------------------------|---------------------------------------|
+| Pass a throwing method reference to a functional API        | `CheckedFunction` / `CheckedSupplier` |
+| Wrap a throwing void action (e.g. DB migration, file write) | `CheckedRunnable`                     |
+| Side-effecting loop body that throws                        | `CheckedConsumer`                     |
+| Feed a throwing supplier into `Try.of()`                    | `CheckedSupplier`                     |
+| Collapse a `Tuple3` into a single value                     | `TriFunction`                         |
+| Collapse a `Tuple4` into a single value                     | `QuadFunction`                        |
+| Combine more than two values in a `Validated.combine` chain | `TriFunction` / `QuadFunction`        |
 
 ## Real-world example
 

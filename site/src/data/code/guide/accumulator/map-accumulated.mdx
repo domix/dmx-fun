@@ -1,0 +1,19 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// map — transform the value, accumulation unchanged
+Accumulator<List<String>, String> str =
+    Accumulator.of(42, List.of("step 1")).map(Object::toString);
+
+str.value();        // "42"
+str.accumulated();  // ["step 1"]
+
+// mapAccumulated — transform the accumulation, value unchanged
+Accumulator<Integer, Integer> countOnly =
+    Accumulator.of(42, List.of("a", "b", "c")).mapAccumulated(List::size);
+
+countOnly.value();        // 42
+countOnly.accumulated();  // 3
+```

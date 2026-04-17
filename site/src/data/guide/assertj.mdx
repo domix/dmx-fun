@@ -44,14 +44,14 @@ in the same test class without naming conflict, because the argument types diffe
 
 ## Assertions reference
 
-| Type | Methods |
-|------|---------|
-| `Option<T>` | `isSome()`, `isNone()`, `containsValue(expected)`, `hasValueSatisfying(consumer)` |
-| `Result<V, E>` | `isOk()`, `isErr()`, `containsValue(expected)`, `containsError(expected)` |
-| `Try<V>` | `isSuccess()`, `isFailure()`, `containsValue(expected)`, `failsWith(exceptionType)` |
-| `Validated<E, A>` | `isValid()`, `isInvalid()`, `containsValue(expected)`, `hasError(expected)` |
-| `Tuple2<A, B>` | `hasFirst(expected)`, `hasSecond(expected)` |
-| `Tuple3<A, B, C>` | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)` |
+| Type                 | Methods                                                                                  |
+|----------------------|------------------------------------------------------------------------------------------|
+| `Option<T>`          | `isSome()`, `isNone()`, `containsValue(expected)`, `hasValueSatisfying(consumer)`        |
+| `Result<V, E>`       | `isOk()`, `isErr()`, `containsValue(expected)`, `containsError(expected)`                |
+| `Try<V>`             | `isSuccess()`, `isFailure()`, `containsValue(expected)`, `failsWith(exceptionType)`      |
+| `Validated<E, A>`    | `isValid()`, `isInvalid()`, `containsValue(expected)`, `hasError(expected)`              |
+| `Tuple2<A, B>`       | `hasFirst(expected)`, `hasSecond(expected)`                                              |
+| `Tuple3<A, B, C>`    | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)`                        |
 | `Tuple4<A, B, C, D>` | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)`, `hasFourth(expected)` |
 
 ## `Option<T>` assertions

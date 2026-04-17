@@ -48,12 +48,12 @@ acquire/run/release cycle.
 
 `Resource<T>` follows the same exception-suppression semantics as `try-with-resources`:
 
-| Body     | Release  | Outcome                                                                  |
-|----------|----------|--------------------------------------------------------------------------|
-| Success  | Success  | `Try.success(result)`                                                    |
-| Success  | Throws   | `Try.failure(releaseException)`                                          |
-| Throws   | Success  | `Try.failure(bodyException)`                                             |
-| Throws   | Throws   | `Try.failure(bodyException)` — release exception suppressed onto body    |
+| Body    | Release | Outcome                                                               |
+|---------|---------|-----------------------------------------------------------------------|
+| Success | Success | `Try.success(result)`                                                 |
+| Success | Throws  | `Try.failure(releaseException)`                                       |
+| Throws  | Success | `Try.failure(bodyException)`                                          |
+| Throws  | Throws  | `Try.failure(bodyException)` — release exception suppressed onto body |
 
 <ExceptionContract/>
 
@@ -87,14 +87,14 @@ so you can build resource pipelines without deep nesting.
 
 ## Resource vs try-with-resources
 
-|                          | `try-with-resources`            | `Resource<T>`                             |
-|--------------------------|---------------------------------|-------------------------------------------|
-| Guaranteed release       | Yes                             | Yes                                       |
-| Composable               | Nested blocks only              | `map` / `flatMap` as values               |
-| Result as value          | No — exceptions propagate       | Yes — `Try<R>` or `Result<R,E>` returned  |
-| Multiple resources       | Separate `try` blocks           | `flatMap` chain                           |
-| Reusable                 | No                              | Yes — each `use()` is independent         |
-| Works with non-closeable | No — requires `AutoCloseable`   | Yes — any acquire/release pair            |
+|                          | `try-with-resources`          | `Resource<T>`                            |
+|--------------------------|-------------------------------|------------------------------------------|
+| Guaranteed release       | Yes                           | Yes                                      |
+| Composable               | Nested blocks only            | `map` / `flatMap` as values              |
+| Result as value          | No — exceptions propagate     | Yes — `Try<R>` or `Result<R,E>` returned |
+| Multiple resources       | Separate `try` blocks         | `flatMap` chain                          |
+| Reusable                 | No                            | Yes — each `use()` is independent        |
+| Works with non-closeable | No — requires `AutoCloseable` | Yes — any acquire/release pair           |
 
 Use `Resource<T>` when you need to **compose** multiple resources, reuse the acquire/release
 description across multiple call sites, or integrate with the dmx-fun type system.

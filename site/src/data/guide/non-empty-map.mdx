@@ -39,11 +39,11 @@ Use it when:
 
 ## Creating instances
 
-| Factory                                       | When input is empty?          |
-|-----------------------------------------------|-------------------------------|
-| `NonEmptyMap.of(key, value, rest)`            | N/A — head entry is always required |
-| `NonEmptyMap.singleton(key, value)`           | N/A — always one entry        |
-| `NonEmptyMap.fromMap(map)`                    | Returns `None`                |
+| Factory                             | When input is empty?                |
+|-------------------------------------|-------------------------------------|
+| `NonEmptyMap.of(key, value, rest)`  | N/A — head entry is always required |
+| `NonEmptyMap.singleton(key, value)` | N/A — always one entry              |
+| `NonEmptyMap.fromMap(map)`          | Returns `None`                      |
 
 <CreatingInstances/>
 
@@ -83,13 +83,13 @@ no `Option` wrapping needed.
 Cross-type conversions bridge `NonEmptyMap` with `NonEmptySet`, `NonEmptyList`, and the
 standard Java collections.
 
-| Method | Returns | Notes |
-|--------|---------|-------|
-| `keySet()` | `NonEmptySet<K>` | All keys as a non-empty set; head key becomes set head |
-| `values()` | `NonEmptyList<V>` | All values in insertion order; duplicates preserved |
-| `toMap()` | `Map<K, V>` | Unmodifiable `java.util.Map` for standard API interop |
-| `toNonEmptyList()` | `NonEmptyList<Map.Entry<K,V>>` | All entries in insertion order |
-| `fromMap(map)` | `Option<NonEmptyMap<K,V>>` | Safe bridge from a plain `Map`; `None` if empty |
+| Method             | Returns                        | Notes                                                  |
+|--------------------|--------------------------------|--------------------------------------------------------|
+| `keySet()`         | `NonEmptySet<K>`               | All keys as a non-empty set; head key becomes set head |
+| `values()`         | `NonEmptyList<V>`              | All values in insertion order; duplicates preserved    |
+| `toMap()`          | `Map<K, V>`                    | Unmodifiable `java.util.Map` for standard API interop  |
+| `toNonEmptyList()` | `NonEmptyList<Map.Entry<K,V>>` | All entries in insertion order                         |
+| `fromMap(map)`     | `Option<NonEmptyMap<K,V>>`     | Safe bridge from a plain `Map`; `None` if empty        |
 
 <Interop/>
 

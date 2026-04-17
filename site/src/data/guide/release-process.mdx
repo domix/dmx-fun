@@ -15,13 +15,13 @@ This page documents the exact steps and what happens at each stage.
 Before any release can be published, these five secrets must be configured in
 **GitHub → Settings → Secrets and variables → Actions**:
 
-| Secret | Purpose |
-|---|---|
-| `MAVEN_CENTRAL_USERNAME` | Maven Central portal username |
-| `MAVEN_CENTRAL_PASSWORD` | Maven Central portal password / token |
-| `SIGNING_KEY_ID` | GPG key ID (last 8 hex characters) |
-| `SIGNING_KEY` | GPG private key — armored, base64-encoded |
-| `SIGNING_KEY_PASSWORD` | Passphrase protecting the GPG key |
+| Secret                   | Purpose                                   |
+|--------------------------|-------------------------------------------|
+| `MAVEN_CENTRAL_USERNAME` | Maven Central portal username             |
+| `MAVEN_CENTRAL_PASSWORD` | Maven Central portal password / token     |
+| `SIGNING_KEY_ID`         | GPG key ID (last 8 hex characters)        |
+| `SIGNING_KEY`            | GPG private key — armored, base64-encoded |
+| `SIGNING_KEY_PASSWORD`   | Passphrase protecting the GPG key         |
 
 These secrets are consumed by `publish.yml` and `publish-snapshot.yml`.
 They are never printed in logs.

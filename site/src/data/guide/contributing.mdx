@@ -14,12 +14,12 @@ This page covers everything you need to go from a fresh clone to a passing build
 
 ## Prerequisites
 
-| Tool | Version | Notes |
-|---|---|---|
-| Java | 25+ | Use the Gradle toolchain — no manual install needed if you have a JDK provider |
-| Gradle | wrapper (`./gradlew`) | Never install Gradle globally; always use the wrapper |
-| Node.js | 18+ | Only needed to run or build the documentation site |
-| npm | bundled with Node.js | Run from the `site/` directory |
+| Tool    | Version               | Notes                                                                          |
+|---------|-----------------------|--------------------------------------------------------------------------------|
+| Java    | 25+                   | Use the Gradle toolchain — no manual install needed if you have a JDK provider |
+| Gradle  | wrapper (`./gradlew`) | Never install Gradle globally; always use the wrapper                          |
+| Node.js | 18+                   | Only needed to run or build the documentation site                             |
+| npm     | bundled with Node.js  | Run from the `site/` directory                                                 |
 
 No other global tools are required.
 
@@ -84,15 +84,15 @@ void emptyOption_mapReturnsNone() { ... }
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
-| Type | When to use |
-|---|---|
-| `feat` | New public API or behaviour |
-| `fix` | Bug fix |
-| `docs` | Documentation only |
+| Type       | When to use                          |
+|------------|--------------------------------------|
+| `feat`     | New public API or behaviour          |
+| `fix`      | Bug fix                              |
+| `docs`     | Documentation only                   |
 | `refactor` | Code change with no behaviour change |
-| `test` | Adding or updating tests |
-| `chore` | Build, CI, dependencies |
-| `perf` | Performance improvement |
+| `test`     | Adding or updating tests             |
+| `chore`    | Build, CI, dependencies              |
+| `perf`     | Performance improvement              |
 
 Always reference the issue number: `feat(option): add mapBoth combinator (close #42)`.
 

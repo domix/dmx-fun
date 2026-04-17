@@ -43,11 +43,11 @@ Use it when:
 
 ## Creating instances
 
-| Factory                                       | When input is empty?          |
-|-----------------------------------------------|-------------------------------|
-| `NonEmptySet.of(head, rest)`                  | N/A — head is always required |
-| `NonEmptySet.singleton(head)`                 | N/A — always one element      |
-| `NonEmptySet.fromSet(set)`                    | Returns `None`                |
+| Factory                       | When input is empty?          |
+|-------------------------------|-------------------------------|
+| `NonEmptySet.of(head, rest)`  | N/A — head is always required |
+| `NonEmptySet.singleton(head)` | N/A — always one element      |
+| `NonEmptySet.fromSet(set)`    | Returns `None`                |
 
 <CreatingInstances/>
 
@@ -88,12 +88,12 @@ not just `NonEmptySet`.
 Cross-type conversions bridge `NonEmptySet` with `NonEmptyMap`, `NonEmptyList`, and the
 standard Java collections.
 
-| Method | Returns | Notes |
-|--------|---------|-------|
-| `toNonEmptyMap(valueMapper)` | `NonEmptyMap<T, V>` | Elements become keys; mapper produces values |
-| `toNonEmptyList()` | `NonEmptyList<T>` | Ordered snapshot; head element preserved |
-| `toSet()` | `Set<T>` | Unmodifiable `java.util.Set` for standard API interop |
-| `fromSet(set)` | `Option<NonEmptySet<T>>` | Safe bridge from a plain `Set`; `None` if empty |
+| Method                       | Returns                  | Notes                                                 |
+|------------------------------|--------------------------|-------------------------------------------------------|
+| `toNonEmptyMap(valueMapper)` | `NonEmptyMap<T, V>`      | Elements become keys; mapper produces values          |
+| `toNonEmptyList()`           | `NonEmptyList<T>`        | Ordered snapshot; head element preserved              |
+| `toSet()`                    | `Set<T>`                 | Unmodifiable `java.util.Set` for standard API interop |
+| `fromSet(set)`               | `Option<NonEmptySet<T>>` | Safe bridge from a plain `Set`; `None` if empty       |
 
 <Interop/>
 
