@@ -28,6 +28,13 @@ dependencies {
     testImplementation libs.testcontainers.junit5
     testImplementation libs.testcontainers.postgresql
     testRuntimeOnly    libs.postgresql
+
+    // Fluent assertions for dmx-fun types (ResultAssert, TryAssert, etc.).
+    // compileOnly puts dmx.fun.assertj on compileClasspath so the JPMS module-path
+    // plugin can expose it to compileTestJava; testImplementation covers test runtime.
+    // assertj-core is already on the classpath via dmx-fun.java-base.
+    compileOnly        project(':assertj')
+    testImplementation project(':assertj')
 }
 
 // java.sql is required at both compile and runtime because Spring's transaction
@@ -37,9 +44,15 @@ dependencies {
 // patched into the named dmx.fun.spring module.
 jpmsTest {
     moduleName   = 'dmx.fun.spring'
-    extraModules = ['java.sql']
-    extraReads   = ['java.sql']
+    extraModules = ['java.sql', 'dmx.fun.assertj']
+    extraReads   = ['java.sql', 'dmx.fun.assertj']
     extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context']
+}
+
+// assertj-core is on the classpath (unnamed module) at compile time but dmx.fun.assertj
+// is on the module path and requires it. This read allows the compiler to resolve it.
+tasks.named('compileTestJava') {
+    options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
 }
 
 mavenPublishing {

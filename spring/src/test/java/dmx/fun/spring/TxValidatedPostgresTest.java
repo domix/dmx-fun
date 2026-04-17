@@ -12,6 +12,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -57,7 +58,7 @@ class TxValidatedPostgresTest {
             return Validated.valid(1);
         });
 
-        assertThat(result.isValid()).isTrue();
+        assertThat(result).isValid();
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -68,7 +69,7 @@ class TxValidatedPostgresTest {
             return Validated.invalid("validation error");
         });
 
-        assertThat(result.isInvalid()).isTrue();
+        assertThat(result).isInvalid();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -91,7 +92,7 @@ class TxValidatedPostgresTest {
             return Validated.invalid("rollback");
         });
 
-        assertThat(result.isInvalid()).isTrue();
+        assertThat(result).isInvalid();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -103,7 +104,7 @@ class TxValidatedPostgresTest {
             return Validated.invalid("partial");
         });
 
-        assertThat(result.isInvalid()).isTrue();
+        assertThat(result).isInvalid();
         assertThat(countRows()).isEqualTo(0);
     }
 }

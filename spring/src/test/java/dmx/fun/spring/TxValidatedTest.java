@@ -11,6 +11,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -63,8 +64,7 @@ class TxValidatedTest {
             return Validated.valid(1);
         });
 
-        assertThat(result.isValid()).isTrue();
-        assertThat(result.get()).isEqualTo(1);
+        assertThat(result).isValid().containsValue(1);
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -75,8 +75,7 @@ class TxValidatedTest {
             return Validated.invalid("validation failed");
         });
 
-        assertThat(result.isInvalid()).isTrue();
-        assertThat(result.getError()).isEqualTo("validation failed");
+        assertThat(result).isInvalid().hasError("validation failed");
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -116,7 +115,7 @@ class TxValidatedTest {
             return Validated.valid(4);
         });
 
-        assertThat(result.isValid()).isTrue();
+        assertThat(result).isValid();
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -128,7 +127,7 @@ class TxValidatedTest {
             return Validated.invalid("rollback me");
         });
 
-        assertThat(result.isInvalid()).isTrue();
+        assertThat(result).isInvalid();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -158,7 +157,7 @@ class TxValidatedTest {
             return Validated.invalid("partial work");
         });
 
-        assertThat(result.isInvalid()).isTrue();
+        assertThat(result).isInvalid();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -170,7 +169,7 @@ class TxValidatedTest {
             return Validated.valid(2);
         });
 
-        assertThat(result.isValid()).isTrue();
+        assertThat(result).isValid();
         assertThat(countRows()).isEqualTo(2);
     }
 }
