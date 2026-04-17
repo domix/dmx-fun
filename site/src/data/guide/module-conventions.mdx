@@ -75,8 +75,9 @@ jpmsTest {
     moduleName   = 'dmx.fun.newmod'
     extraModules = ['java.sql']            // added to --add-modules
     extraReads   = ['java.sql']            // generates --add-reads moduleName=X
-    extraOpens   = ['ALL-UNNAMED',         // generates --add-opens moduleName/moduleName=X
-                    'spring.core']
+    extraOpens   = ['ALL-UNNAMED',         // plain string → opens module's root package to target
+                    'spring.core',         //   (--add-opens moduleName/moduleName=target)
+                    'dmx.fun.x=spring.tx'] // 'pkg=target' form → opens pkg to target
 }
 ```
 
@@ -85,7 +86,7 @@ jpmsTest {
 | `moduleName`  | `String`       | yes      | JPMS module name (`dmx.fun.*`)                               |
 | `extraModules`| `List<String>` | no       | Extra `--add-modules` entries needed at test compile/runtime |
 | `extraReads`  | `List<String>` | no       | Extra `--add-reads moduleName=X` entries                     |
-| `extraOpens`  | `List<String>` | no       | Extra `--add-opens moduleName/moduleName=X` entries          |
+| `extraOpens`  | `List<String>` | no       | Plain string: `--add-opens moduleName/moduleName=target` (root package only). `'pkg=target'` form: `--add-opens moduleName/pkg=target` (named subpackage) |
 
 ### 5. Expand CI path triggers
 

@@ -74,9 +74,17 @@ tasks.register('aggregateJavadoc', Exec) {
     // own module-path during javadoc generation).
     def internalDirs = moduleMap.keySet().collect { project(it).projectDir.absolutePath }
 
-    // Resolved compile classpaths — provide the external dependencies (e.g.
-    // JSpecify, Spring TX) that javadoc needs on the module-path.
-    def externalDepsConfigs = moduleMap.keySet().collect { project(it).configurations.compileClasspath }
+    // Resolved external module-path: all compile-classpath jars across submodules,
+    // filtered to exclude the submodules' own project directories (those come via
+    // --module-source-path), uniqued, and joined into a path string.
+    // Resolved here at configuration time so doFirst never touches Configuration
+    // objects — required for Gradle configuration-cache compliance.
+    def externalModulePath = moduleMap.keySet()
+        .collectMany { project(it).configurations.compileClasspath.files }
+        .findAll { f -> !internalDirs.any { dir -> f.absolutePath.startsWith(dir) } }
+        .collect { it.absolutePath }
+        .unique()
+        .join(File.pathSeparator)
 
     // jpmsName → absolute source directory, used for --module-source-path args.
     def sourceMap = moduleMap.collectEntries { proj, jpmsName ->
@@ -86,30 +94,18 @@ tasks.register('aggregateJavadoc', Exec) {
     // Comma-separated list of JPMS module names for the --module flag.
     def jpmsModules = moduleMap.values().join(',')
 
-    // Declare source directories as task inputs so Gradle detects changes and
-    // re-runs javadoc when sources are modified.
-    sourceMap.each { _, srcPath -> inputs.files fileTree(srcPath) }
+    // Declare Java source files as task inputs so Gradle detects changes and
+    // re-runs javadoc when sources are modified. Only *.java files are tracked
+    // to avoid spurious re-runs when non-source files change.
+    sourceMap.each { _, srcPath -> inputs.files fileTree(srcPath) { include '**/*.java' } }
     outputs.dir destDir
 
     // ── Execution ─────────────────────────────────────────────────────────────
     doFirst {
-        def sep = File.pathSeparator
-
-        // Build the external module-path: all compile-classpath jars that do NOT
-        // belong to one of the documented submodules (those come via --module-source-path).
-        def modulePath = externalDepsConfigs
-            .collectMany { cfg ->
-                cfg.files.findAll { f ->
-                    !internalDirs.any { dir -> f.absolutePath.startsWith(dir) }
-                }*.absolutePath
-            }
-            .unique()
-            .join(sep)
-
         destDir.mkdirs()
 
         executable javadocToolProvider.get().executablePath.asFile.absolutePath
-        args '--module-path', modulePath
+        args '--module-path', externalModulePath
 
         // One --module-source-path per module: tells javadoc where to find the
         // sources for each JPMS module instead of relying on compiled artifacts.

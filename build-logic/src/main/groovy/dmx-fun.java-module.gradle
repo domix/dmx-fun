@@ -60,8 +60,9 @@ mavenPublishing {
 //       moduleName   = 'dmx.fun.spring'       // JPMS module name (required)
 //       extraModules = ['java.sql']            // added to --add-modules
 //       extraReads   = ['java.sql']            // generates --add-reads moduleName=X
-//       extraOpens   = ['ALL-UNNAMED',         // generates --add-opens moduleName/moduleName=X
-//                       'spring.core']
+//       extraOpens   = ['ALL-UNNAMED',         // plain string → --add-opens moduleName/moduleName=target
+//                       'spring.core',         //   (opens the module's root package to that target)
+//                       'dmx.fun.x=spring.tx'] // 'pkg=target' form → --add-opens moduleName/pkg=target
 //   }
 //
 // The plugin wires compileTestJava and test automatically. No hand-written
@@ -114,5 +115,14 @@ tasks.named('test') {
     jvmArgs '--patch-module', "${mod}=${testClassesDirs}"
     jvmArgs '--add-reads',    "${mod}=ALL-UNNAMED"
     jpmsTestCfg.extraReads.each { r -> jvmArgs '--add-reads', "${mod}=${r}" }
-    jpmsTestCfg.extraOpens.each { o -> jvmArgs '--add-opens', "${mod}/${mod}=${o}" }
+    jpmsTestCfg.extraOpens.each { o ->
+        // 'pkg=target' form: opens the named package (within mod) to the target module.
+        // Plain string: opens the module's root package (same name as the module) to the target.
+        if (o.contains('=')) {
+            def parts = o.split('=', 2)
+            jvmArgs '--add-opens', "${mod}/${parts[0]}=${parts[1]}"
+        } else {
+            jvmArgs '--add-opens', "${mod}/${mod}=${o}"
+        }
+    }
 }
