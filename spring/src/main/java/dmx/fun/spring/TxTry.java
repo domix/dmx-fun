@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Spring component that executes a {@link Try}-returning action inside a managed transaction,
@@ -47,7 +46,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 public class TxTry {
 
-    private final PlatformTransactionManager txManager;
+    private final TxExecutor executor;
 
     /**
      * Creates a {@code TxTry} backed by the given transaction manager.
@@ -56,7 +55,7 @@ public class TxTry {
      * @throws NullPointerException if {@code txManager} is {@code null}
      */
     public TxTry(PlatformTransactionManager txManager) {
-        this.txManager = Objects.requireNonNull(txManager, "txManager");
+        this.executor = new TxExecutor(txManager);
     }
 
     /**
@@ -102,21 +101,7 @@ public class TxTry {
      * @throws NullPointerException if any argument is {@code null} or if {@code action}
      *                              returns {@code null}
      */
-    @SuppressWarnings("NullAway")
     public <V> Try<V> execute(TransactionDefinition def, Supplier<Try<V>> action) {
-        Objects.requireNonNull(def, "def");
-        Objects.requireNonNull(action, "action");
-        var template = new TransactionTemplate(txManager, def);
-        var result = template.execute(status -> {
-            var t = action.get();
-            Objects.requireNonNull(t, "action must not return null");
-            if (t.isFailure()) {
-                status.setRollbackOnly();
-            }
-            return t;
-        });
-        // template.execute() returns null only if the callback returns null;
-        // the requireNonNull inside the callback above prevents that.
-        return Objects.requireNonNull(result);
+        return executor.execute(def, action, Try::isFailure);
     }
 }

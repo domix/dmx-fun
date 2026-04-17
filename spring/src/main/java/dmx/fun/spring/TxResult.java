@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Spring component that executes a {@link Result}-returning action inside a managed transaction,
@@ -48,7 +47,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 public class TxResult {
 
-    private final PlatformTransactionManager txManager;
+    private final TxExecutor executor;
 
     /**
      * Creates a {@code TxResult} backed by the given transaction manager.
@@ -57,7 +56,7 @@ public class TxResult {
      * @throws NullPointerException if {@code txManager} is {@code null}
      */
     public TxResult(PlatformTransactionManager txManager) {
-        this.txManager = Objects.requireNonNull(txManager, "txManager");
+        this.executor = new TxExecutor(txManager);
     }
 
     /**
@@ -105,21 +104,7 @@ public class TxResult {
      * @throws NullPointerException if any argument is {@code null} or if {@code action}
      *                              returns {@code null}
      */
-    @SuppressWarnings("NullAway")
     public <V, E> Result<V, E> execute(TransactionDefinition def, Supplier<Result<V, E>> action) {
-        Objects.requireNonNull(def, "def");
-        Objects.requireNonNull(action, "action");
-        var template = new TransactionTemplate(txManager, def);
-        var result = template.execute(status -> {
-            var r = action.get();
-            Objects.requireNonNull(r, "action must not return null");
-            if (r.isError()) {
-                status.setRollbackOnly();
-            }
-            return r;
-        });
-        // template.execute() returns null only if the callback returns null;
-        // the requireNonNull inside the callback above prevents that.
-        return Objects.requireNonNull(result);
+        return executor.execute(def, action, Result::isError);
     }
 }
