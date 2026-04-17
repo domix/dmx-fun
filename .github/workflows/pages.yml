@@ -49,6 +49,9 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
       - name: Install
         run: npm ci
         working-directory: site
