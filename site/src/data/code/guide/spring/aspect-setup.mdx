@@ -1,0 +1,16 @@
+---
+fileName: 'AppConfig.java'
+---
+
+```java
+@Configuration
+@EnableAspectJAutoProxy
+public class AppConfig {
+
+    @Bean
+    public DmxTransactionalAspect dmxTransactionalAspect(
+            PlatformTransactionManager txManager, BeanFactory beanFactory) {
+        return new DmxTransactionalAspect(txManager, beanFactory);
+    }
+}
+```

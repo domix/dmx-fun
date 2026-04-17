@@ -1,0 +1,21 @@
+---
+fileName: 'PaymentService.java'
+---
+
+```java
+@Service
+public class PaymentService {
+
+    // Custom propagation, isolation, and timeout
+    @TransactionalResult(
+        propagation        = Propagation.REQUIRES_NEW,
+        isolation          = Isolation.SERIALIZABLE,
+        timeout            = 10
+    )
+    public Result<Receipt, PaymentError> charge(PaymentRequest req) { ... }
+
+    // Named transaction manager (multiple DataSources)
+    @TransactionalResult(transactionManager = "ledgerTxManager")
+    public Result<LedgerEntry, LedgerError> record(Receipt receipt) { ... }
+}
+```

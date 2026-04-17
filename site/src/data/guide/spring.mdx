@@ -1,16 +1,22 @@
 ---
 title: "Spring Integration — Developer Guide"
-description: "How to use TxResult, TxTry, and TxValidated for programmatic transaction management: rollback on error without exceptions, custom TransactionDefinition, and comparison with @Transactional."
+description: "How to use TxResult, TxTry, and TxValidated for programmatic transaction management, and @TransactionalResult, @TransactionalTry, @TransactionalValidated for declarative AOP: rollback on error without exceptions, custom TransactionDefinition, and comparison with @Transactional."
 order: 16
 h1: "Spring Integration"
 ---
 
-import {Content as Dependency}         from '../code/guide/spring/dependency.mdx';
-import {Content as TxResultSnippet}    from '../code/guide/spring/tx-result.mdx';
-import {Content as TxTrySnippet}       from '../code/guide/spring/tx-try.mdx';
-import {Content as TxValidatedSnippet} from '../code/guide/spring/tx-validated.mdx';
-import {Content as TxDefinition}       from '../code/guide/spring/tx-definition.mdx';
-import {Content as VsTransactional}    from '../code/guide/spring/vs-transactional.mdx';
+import {Content as Dependency}                    from '../code/guide/spring/dependency.mdx';
+import {Content as TxResultSnippet}               from '../code/guide/spring/tx-result.mdx';
+import {Content as TxTrySnippet}                  from '../code/guide/spring/tx-try.mdx';
+import {Content as TxValidatedSnippet}            from '../code/guide/spring/tx-validated.mdx';
+import {Content as TxDefinition}                  from '../code/guide/spring/tx-definition.mdx';
+import {Content as VsTransactional}               from '../code/guide/spring/vs-transactional.mdx';
+import {Content as AspectSetup}                   from '../code/guide/spring/aspect-setup.mdx';
+import {Content as TransactionalResultSnippet}    from '../code/guide/spring/transactional-result.mdx';
+import {Content as TransactionalTrySnippet}       from '../code/guide/spring/transactional-try.mdx';
+import {Content as TransactionalValidatedSnippet} from '../code/guide/spring/transactional-validated.mdx';
+import {Content as TransactionalAttributes}       from '../code/guide/spring/transactional-attributes.mdx';
+import {Content as ProgrammaticVsDeclarative}     from '../code/guide/spring/programmatic-vs-declarative.mdx';
 
 The `fun-spring` module adds first-class Spring transaction support for `Result<V,E>`,
 `Try<V>`, and `Validated<E,A>`. It is an **optional** dependency — the core `fun` library
@@ -111,12 +117,90 @@ isolation level, timeout, and read-only flag:
 
 **Rule of thumb:**
 
-- Use `TxResult` when your pipeline returns `Result<V,E>` for typed domain errors.
-- Use `TxTry` when your pipeline uses `Try<V>` to wrap exception-throwing code.
-- Use `TxValidated` when your pipeline accumulates multiple validation errors and you
+- Use `TxResult` / `@TransactionalResult` when your pipeline returns `Result<V,E>` for typed domain errors.
+- Use `TxTry` / `@TransactionalTry` when your pipeline uses `Try<V>` to wrap exception-throwing code.
+- Use `TxValidated` / `@TransactionalValidated` when your pipeline accumulates multiple validation errors and you
   want atomicity across all steps.
 - Use `@Transactional` when the method has no dmx-fun return type and rollback on
   unchecked exception is sufficient (void methods, simple queries).
+
+---
+
+## Declarative style with `@TransactionalResult`, `@TransactionalTry`, and `@TransactionalValidated`
+
+If you prefer annotation-driven transaction demarcation — the same style as Spring's own
+`@Transactional` — `fun-spring` ships three AOP annotations backed by
+`DmxTransactionalAspect`. They carry the same rollback contract as their programmatic
+counterparts: commit on success, roll back on failure, roll back and rethrow on unchecked exception.
+
+### Setup
+
+Add `aspectjweaver` to your classpath and register the aspect bean with
+`@EnableAspectJAutoProxy`:
+
+<AspectSetup/>
+
+**Spring Boot** — component scanning picks up `DmxTransactionalAspect` automatically
+(it is annotated `@Component`) as long as `aspectjweaver` is on the classpath and
+`@EnableAspectJAutoProxy` (or `spring.aop.auto=true`, the Boot default) is active. No
+explicit `@Bean` declaration is needed.
+
+### `@TransactionalResult`
+
+<TransactionalResultSnippet/>
+
+| Outcome | Transaction |
+|---|---|
+| Returns `Result.isOk()` | Commits |
+| Returns `Result.isError()` | Rolls back |
+| Throws unchecked exception | Rolls back, rethrows |
+
+### `@TransactionalTry`
+
+<TransactionalTrySnippet/>
+
+| Outcome | Transaction |
+|---|---|
+| Returns `Try.isSuccess()` | Commits |
+| Returns `Try.isFailure()` | Rolls back |
+| Throws unchecked exception | Rolls back, rethrows |
+
+### `@TransactionalValidated`
+
+<TransactionalValidatedSnippet/>
+
+| Outcome | Transaction |
+|---|---|
+| Returns `Validated.isValid()` | Commits |
+| Returns `Validated.isInvalid()` | Rolls back |
+| Throws unchecked exception | Rolls back, rethrows |
+
+### Transaction attributes
+
+All three annotations accept the same attributes as Spring's `@Transactional`:
+
+| Attribute | Type | Default |
+|---|---|---|
+| `propagation` | `Propagation` | `REQUIRED` |
+| `isolation` | `Isolation` | `DEFAULT` |
+| `timeout` | `int` (seconds) | platform default |
+| `transactionManager` | `String` (bean name) | primary `PlatformTransactionManager` |
+
+<TransactionalAttributes/>
+
+### Programmatic vs declarative
+
+<ProgrammaticVsDeclarative/>
+
+Choose **programmatic** (`TxResult` / `TxTry` / `TxValidated`) when:
+- You need the lowest possible overhead (no proxy creation).
+- You are using JPMS strict mode and prefer not to add `aspectjweaver` as a runtime module.
+- You want an explicit, testable object rather than advice-on-a-proxy.
+
+Choose **declarative** (`@TransactionalResult` / `@TransactionalTry` / `@TransactionalValidated`) when:
+- You prefer the familiar `@Transactional` annotation style.
+- The method is already a Spring bean and JDK-proxy or CGLIB overhead is acceptable.
+- You want to keep the service class free of `TxResult` constructor injection.
 
 ## Version compatibility
 
