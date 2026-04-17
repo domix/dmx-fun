@@ -4,15 +4,17 @@ plugins {
     id 'jacoco-report-aggregation'
 }
 
-dependencies {
-    def modules = [
-        ':lib',
-        ':assertj',
-        ':jackson',
-        ':spring',
-    ]
+// Single source of truth: Gradle project path → JPMS module name.
+// Add a new entry here to include a module in report aggregation and Javadoc.
+def moduleMap = [
+    ':lib'     : 'dmx.fun',
+    ':assertj' : 'dmx.fun.assertj',
+    ':jackson' : 'dmx.fun.jackson',
+    ':spring'  : 'dmx.fun.spring',
+]
 
-    modules.each {
+dependencies {
+    moduleMap.keySet().each {
         testReportAggregation project(it)
         jacocoAggregation project(it)
     }
@@ -35,56 +37,26 @@ tasks.named('check') {
 
 tasks.register('aggregateJavadoc', Exec) {
     group = 'documentation'
-    description = 'Generates aggregated multi-module Javadoc covering dmx.fun, dmx.fun.assertj, and dmx.fun.jackson.'
+    description = 'Generates aggregated multi-module Javadoc for all dmx-fun modules.'
 
-    dependsOn ':lib:compileJava', ':assertj:compileJava', ':jackson:compileJava'
+    dependsOn moduleMap.keySet().collect { "${it}:compileJava" }
 
-    // Capture all project-relative values at configuration time
     def javadocToolProvider = javaToolchains.javadocToolFor {
         languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get().toInteger()))
     }
-    def modules = [
-        ':lib',
-        ':assertj',
-        ':jackson',
-        ':spring',
-    ]
-    def moduleSources = modules.collect {
-        [
-            name:it,
-            location: project(it).file('src/main/java')
-        ]
+    def destDir = file('build/reports/javadoc')
+
+    // Capture all project-relative values at configuration time (config-cache safe).
+    def internalDirs      = moduleMap.keySet().collect { project(it).projectDir.absolutePath }
+    def externalDepsConfigs = moduleMap.keySet().collect { project(it).configurations.compileClasspath }
+    def sourceMap         = moduleMap.collectEntries { proj, jpmsName ->
+        [(jpmsName): project(proj).file('src/main/java').absolutePath]
     }
-    def libSrc     = project(':lib').file('src/main/java')
-    def assertjSrc = project(':assertj').file('src/main/java')
-    def jacksonSrc = project(':jackson').file('src/main/java')
-    def springSrc = project(':spring').file('src/main/java')
-    def destDir    = file('build/reports/javadoc')
-    // Only external dependencies on the module-path; the three documented modules
-    // are found via --module-source-path so their artifacts must NOT appear here.
-    def internalDirs = modules.collect {
-        project(it).projectDir.absolutePath
-    }
-//    def internalDirs = [
-//        project(':lib').projectDir.absolutePath,
-//        project(':assertj').projectDir.absolutePath,
-//        project(':jackson').projectDir.absolutePath,
-//    ]
-//    def externalDepsConfigs = [
-//        project(':lib').configurations.compileClasspath,
-//        project(':assertj').configurations.compileClasspath,
-//        project(':jackson').configurations.compileClasspath,
-//    ]
-    def externalDepsConfigs = modules.collect {
-        project(it).configurations.compileClasspath
-    }
-    modules.each {
-        inputs.files fileTree(it)
-    }
-    //inputs.files fileTree(libSrc), fileTree(assertjSrc), fileTree(jacksonSrc)
+    def jpmsModules       = moduleMap.values().join(',')
+
+    sourceMap.each { _, srcPath -> inputs.files fileTree(srcPath) }
     outputs.dir destDir
 
-    // Build the command at execution time (configs are not yet resolved at configuration time)
     doFirst {
         def sep = File.pathSeparator
 
@@ -100,20 +72,12 @@ tasks.register('aggregateJavadoc', Exec) {
         destDir.mkdirs()
 
         executable javadocToolProvider.get().executablePath.asFile.absolutePath
-        args '--module-path',        modulePath
-        args '--module-source-path', "dmx.fun=${libSrc.absolutePath}"
-        args '--module-source-path', "dmx.fun.assertj=${assertjSrc.absolutePath}"
-        args '--module-source-path', "dmx.fun.jackson=${jacksonSrc.absolutePath}"
-        args '--module-source-path', "dmx.fun.spring=${springSrc.absolutePath}"
-        args '--module',             'dmx.fun,dmx.fun.assertj,dmx.fun.jackson,dmx.fun.spring'
-
-//        moduleSources.each {
-//            args '--module-source-path', "dmx.${it.name}=${it.location.absolutePath}"
-//        }
-
-        args '-d',                   destDir.absolutePath
-        args '-doctitle',            'dmx-fun API'
-        args '-windowtitle',         'dmx-fun API'
+        args '--module-path', modulePath
+        sourceMap.each { jpmsName, srcPath -> args '--module-source-path', "${jpmsName}=${srcPath}" }
+        args '--module',      jpmsModules
+        args '-d',            destDir.absolutePath
+        args '-doctitle',     'dmx-fun API'
+        args '-windowtitle',  'dmx-fun API'
         args '-quiet'
         args '-notimestamp'
     }
