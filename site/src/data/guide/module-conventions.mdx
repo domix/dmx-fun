@@ -84,9 +84,14 @@ jpmsTest {
 | Property      | Type           | Required | Description                                                  |
 |---------------|----------------|----------|--------------------------------------------------------------|
 | `moduleName`  | `String`       | yes      | JPMS module name (`dmx.fun.*`)                               |
-| `extraModules`| `List<String>` | no       | Extra `--add-modules` entries needed at test compile/runtime |
+| `extraModules`| `List<String>` | no       | Extra `--add-modules` entries added at both compile and runtime |
 | `extraReads`  | `List<String>` | no       | Extra `--add-reads moduleName=X` entries                     |
-| `extraOpens`  | `List<String>` | no       | Plain string: `--add-opens moduleName/moduleName=target` (root package only). `'pkg=target'` form: `--add-opens moduleName/pkg=target` (named subpackage) |
+| `extraOpens`  | `List<String>` | no       | Plain string: `--add-opens moduleName/moduleName=target` (root package only). `'pkg=target'` form: `--add-opens moduleName/pkg=target` (named subpackage). Malformed `'pkg=target'` entries (empty package or target) throw a `GradleException` at configuration time. |
+
+> **`testRuntimeOnly` dependencies**: the `test` task builds the module-path from
+> `runtimeClasspath`, so `testRuntimeOnly` entries (e.g. a JDBC driver declared as
+> `testRuntimeOnly libs.postgresql`) are correctly visible to the JVM at test time.
+> No extra `jpmsTest` configuration is needed for runtime-only dependencies.
 
 ### 5. Expand CI path triggers
 
