@@ -8,26 +8,14 @@ dependencies {
     testImplementation "com.fasterxml.jackson.core:jackson-databind:${findProperty('jacksonVersion') ?: libs.versions.jackson.get()}"
 }
 
-compileTestJava {
-    def mainClassesDirs = sourceSets.main.output.classesDirs
-    def apiDeps = configurations.compileClasspath
-    def testSrcPath = files(sourceSets.test.java.srcDirs).asPath
-
-    classpath = classpath.filter { f -> !mainClassesDirs.contains(f) && !apiDeps.contains(f) }
-
-    def modulePath = (mainClassesDirs + apiDeps).asPath
-    options.compilerArgs += [
-        '--module-path', modulePath,
-        '--add-modules', 'dmx.fun.jackson',
-        '--patch-module', "dmx.fun.jackson=${testSrcPath}",
-        '--add-reads', 'dmx.fun.jackson=ALL-UNNAMED',
-    ]
+jpmsTest {
+    moduleName = 'dmx.fun.jackson'
 }
 
 mavenPublishing {
     coordinates("codes.domix", "fun-jackson", "${project.version}")
     pom {
         name = 'dmx-fun Jackson integration'
-        description = 'Optional Jackson module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
+        description = 'Jackson module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
     }
 }

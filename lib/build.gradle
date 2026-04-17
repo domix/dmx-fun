@@ -7,22 +7,10 @@ dependencies {
     api libs.jspecify
 }
 
-compileTestJava {
-    def mainClassesDirs = sourceSets.main.output.classesDirs
-    def apiDeps = configurations.compileClasspath   // api-scoped deps (jspecify)
-    def testSrcPath = files(sourceSets.test.java.srcDirs).asPath
-
-    // Move main output + api deps off the classpath → module-path to avoid split-package conflict
-    classpath = classpath.filter { f -> !mainClassesDirs.contains(f) && !apiDeps.contains(f) }
-
-    def modulePath = (mainClassesDirs + apiDeps).asPath
-    options.compilerArgs += [
-        '--module-path', modulePath,
-        '--add-modules', 'dmx.fun,java.net.http',
-        '--patch-module', "dmx.fun=${testSrcPath}",
-        '--add-reads', 'dmx.fun=ALL-UNNAMED',
-        '--add-reads', 'dmx.fun=java.net.http'
-    ]
+jpmsTest {
+    moduleName   = 'dmx.fun'
+    extraModules = ['java.net.http']
+    extraReads   = ['java.net.http']
 }
 
 mavenPublishing {
