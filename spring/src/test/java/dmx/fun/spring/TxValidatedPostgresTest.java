@@ -1,6 +1,7 @@
 package dmx.fun.spring;
 
 import dmx.fun.Validated;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,11 +26,11 @@ class TxValidatedPostgresTest {
     static final PostgreSQLContainer<?> POSTGRES =
         new PostgreSQLContainer<>("postgres:16-alpine");
 
-    JdbcTemplate jdbc;
-    TxValidated txValidated;
+    static JdbcTemplate jdbc;
+    static TxValidated txValidated;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUpOnce() {
         var dataSource = new DriverManagerDataSource(
             POSTGRES.getJdbcUrl(),
             POSTGRES.getUsername(),
@@ -37,13 +38,16 @@ class TxValidatedPostgresTest {
         );
         jdbc = new JdbcTemplate(dataSource);
         jdbc.execute("CREATE TABLE IF NOT EXISTS events (id INT PRIMARY KEY, label VARCHAR(255))");
-        jdbc.execute("TRUNCATE TABLE events");
         txValidated = new TxValidated(new DataSourceTransactionManager(dataSource));
     }
 
+    @BeforeEach
+    void truncate() {
+        jdbc.execute("TRUNCATE TABLE events");
+    }
+
     private int countRows() {
-        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
-        return count != null ? count : 0;
+        return jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class).intValue();
     }
 
     @Test

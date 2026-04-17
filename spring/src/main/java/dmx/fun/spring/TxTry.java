@@ -32,7 +32,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  *     public Try<Report> generate(ReportRequest req) {
  *         return tx.execute(() ->
  *             Try.of(() -> reportRepo.save(build(req)))
- *                .flatMap(r -> Try.of(() -> auditLog.record(r)))
+ *                .map(r -> { auditLog.record(r); return r; })
  *         );
  *     }
  * }

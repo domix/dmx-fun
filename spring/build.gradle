@@ -32,6 +32,22 @@ compileTestJava {
     ]
 }
 
+test {
+    def mainClassesDirs = sourceSets.main.output.classesDirs
+    def apiDeps = configurations.compileClasspath
+    def testClassesDirs = sourceSets.test.output.classesDirs.asPath
+    def modulePath = (mainClassesDirs + apiDeps).asPath
+
+    jvmArgs += [
+        '--module-path', modulePath,
+        '--add-modules', 'dmx.fun.spring,java.sql',
+        '--patch-module', "dmx.fun.spring=${testClassesDirs}",
+        '--add-reads', 'dmx.fun.spring=ALL-UNNAMED',
+        '--add-reads', 'dmx.fun.spring=java.sql',
+        '--add-opens', 'dmx.fun.spring/dmx.fun.spring=ALL-UNNAMED',
+    ]
+}
+
 mavenPublishing {
     coordinates("codes.domix", "fun-spring", "${project.version}")
     pom {

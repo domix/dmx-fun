@@ -30,8 +30,8 @@ error/failure/invalid outcome marks the transaction rollback-only before Spring 
 
 `fun-spring` declares `spring-tx` and `spring-context` as `compileOnly`. You must add
 them to your own classpath — typically they arrive transitively via `spring-webmvc` or
-`spring-boot-starter-data-jpa`. Any Spring Framework release from **6.0.x through 6.2.x**
-is supported (see [version compatibility](#version-compatibility) below).
+`spring-boot-starter-data-jpa`. Spring Framework releases **6.0.x, 6.1.x, 6.2.x, and 7.0.x**
+are supported (see [version compatibility](#version-compatibility) below).
 
 <Dependency/>
 
@@ -128,9 +128,10 @@ pull request that touches the `spring/` module:
 | 6.0.x          | tested  |
 | 6.1.x          | tested  |
 | 6.2.x          | tested  |
+| 7.0.x          | tested  |
 
 To test locally against a specific version:
 
 ```bash
-./gradlew :spring:test -PspringVersion=6.1.14
+./gradlew :spring:test -PspringVersion=7.0.6
 ```
