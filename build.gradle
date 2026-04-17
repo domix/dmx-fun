@@ -8,7 +8,8 @@ dependencies {
     def modules = [
         ':lib',
         ':assertj',
-        ':jackson'
+        ':jackson',
+        ':spring',
     ]
 
     modules.each {
