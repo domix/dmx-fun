@@ -40,20 +40,54 @@ Key rules:
 include('fun-spring')
 ```
 
-### 3. Add to the root `build.gradle` aggregation
+### 3. Register in the root `moduleMap`
 
-The root `build.gradle` aggregates test reports and Javadoc. Add the new module to both:
+The root `build.gradle` uses a `moduleMap` as the single source of truth for all submodules.
+Adding one entry here automatically wires the module into test-report aggregation, JaCoCo
+coverage aggregation, and the `aggregateJavadoc` task — no other changes to the root build file
+are needed.
 
 ```groovy
-dependencies {
-    testReportAggregation project(':fun-spring')
-    jacocoAggregation      project(':fun-spring')
+// build.gradle (root)
+def moduleMap = [
+    ':lib'          : 'dmx.fun',
+    ':assertj'      : 'dmx.fun.assertj',
+    ':jackson'      : 'dmx.fun.jackson',
+    ':spring'       : 'dmx.fun.spring',
+    ':fun-newmod'   : 'dmx.fun.newmod',   // ← add this line
+]
+```
+
+### 4. Configure JPMS tests
+
+The `dmx-fun.java-module` convention plugin exposes a `jpmsTest` DSL block that wires
+`--module-path`, `--patch-module`, and `--add-modules` into `compileTestJava` and `test`
+automatically. Add it to the module's `build.gradle`:
+
+```groovy
+// Minimal — only moduleName is required
+jpmsTest {
+    moduleName = 'dmx.fun.newmod'
+}
+
+// Extended — for modules with extra JPMS requirements
+jpmsTest {
+    moduleName   = 'dmx.fun.newmod'
+    extraModules = ['java.sql']            // added to --add-modules
+    extraReads   = ['java.sql']            // generates --add-reads moduleName=X
+    extraOpens   = ['ALL-UNNAMED',         // generates --add-opens moduleName/moduleName=X
+                    'spring.core']
 }
 ```
 
-And add its source directory to the `aggregateJavadoc` task's `--module-source-path` arguments.
+| Property      | Type           | Required | Description                                                  |
+|---------------|----------------|----------|--------------------------------------------------------------|
+| `moduleName`  | `String`       | yes      | JPMS module name (`dmx.fun.*`)                               |
+| `extraModules`| `List<String>` | no       | Extra `--add-modules` entries needed at test compile/runtime |
+| `extraReads`  | `List<String>` | no       | Extra `--add-reads moduleName=X` entries                     |
+| `extraOpens`  | `List<String>` | no       | Extra `--add-opens moduleName/moduleName=X` entries          |
 
-### 4. Expand CI path triggers
+### 5. Expand CI path triggers
 
 Four workflow files reference module paths — update all of them:
 
@@ -63,7 +97,7 @@ Four workflow files reference module paths — update all of them:
 | `.github/workflows/publish.yml`          | `paths:` block                                         |
 | `.github/workflows/publish-snapshot.yml` | `paths:` block                                         |
 
-### 5. Add a compatibility matrix workflow
+### 6. Add a compatibility matrix workflow
 
 If the module has an optional peer dependency, create `.github/workflows/{module}-compatibility.yaml`
 following the pattern of `jackson-compatibility.yaml`:
@@ -72,19 +106,19 @@ following the pattern of `jackson-compatibility.yaml`:
 - Matrix: one entry per supported version of the peer dependency
 - Run: `./gradlew :{module}:test -P{module}Version={version}`
 
-### 6. Write a `README.md` in the module root
+### 7. Write a `README.md` in the module root
 
 Cover: what the module does, Maven/Gradle coordinates, usage snippet, version compatibility table.
 See `jackson/README.md` or `assertj/README.md` for the expected format.
 
-### 7. Add a guide page
+### 8. Add a guide page
 
 Create `site/src/data/guide/{module-name}.mdx` following the established guide style:
 - `order` should be the next available integer after the last module guide
 - Externalize all code snippets into `site/src/data/code/guide/{module-name}/`
 - Include a version compatibility table matching the CI matrix
 
-### 8. Register in the guide index
+### 9. Register in the guide index
 
 Add a card to the `modules` array in `site/src/pages/guide/index.astro`:
 

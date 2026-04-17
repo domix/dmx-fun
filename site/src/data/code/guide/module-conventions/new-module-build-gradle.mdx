@@ -9,16 +9,22 @@ plugins {
 
 dependencies {
     api project(':lib')
-    compileOnly libs.spring.context          // optional peer dependency
-    testImplementation libs.spring.context   // or property-driven version
+    compileOnly libs.spring.context                              // optional peer dep
+    testImplementation "org.springframework:spring-context:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+}
+
+// Wire JPMS test flags automatically via the convention plugin DSL.
+// moduleName is required; extraModules/extraReads/extraOpens are optional.
+jpmsTest {
+    moduleName = 'dmx.fun.newmod'
 }
 
 mavenPublishing {
-    coordinates("codes.domix", "fun-spring", "${project.version}")
+    coordinates("codes.domix", "fun-newmod", "${project.version}")
 
     pom {
-        name = 'dmx-fun Spring integration'
-        description = 'Optional Spring module for dmx-fun: ...'
+        name = 'dmx-fun Newmod integration'
+        description = 'Optional Newmod module for dmx-fun: ...'
     }
 }
 ```
