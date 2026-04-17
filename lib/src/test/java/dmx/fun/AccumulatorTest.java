@@ -428,6 +428,26 @@ class AccumulatorTest {
     }
 
     // -------------------------------------------------------------------------
+    // toResult
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toResult_ofAccumulator_returnsOk() {
+        var acc = Accumulator.of(42, List.of("step 1"));
+        Result<Integer, List<String>> result = acc.toResult();
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get()).isEqualTo(42);
+    }
+
+    @Test
+    void toResult_tellAccumulator_returnsErr() {
+        var acc = Accumulator.tell(List.of("entry"));
+        Result<Void, List<String>> result = acc.toResult();
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).containsExactly("entry");
+    }
+
+    // -------------------------------------------------------------------------
     // liftOption
     // -------------------------------------------------------------------------
 
@@ -524,14 +544,10 @@ class AccumulatorTest {
 
         var result = a
             .combine(b, CONCAT, (name, score) -> name + "/" + score)
-            .combine(Accumulator.of(true, List.of("active")), CONCAT,
-                (nameScore, active) -> nameScore + "/" + active);
+            .combine(c, CONCAT, (nameScore, active) -> nameScore + "/" + active);
 
         assertThat(result.value()).isEqualTo("Alice/42/true");
         assertThat(result.accumulated()).containsExactly("user", "score", "active");
-
-        // suppress unused variable warning
-        var _ = c;
     }
 
     @Test

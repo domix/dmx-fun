@@ -44,7 +44,7 @@ This type is sometimes called the **Writer monad** in functional programming lit
 | `Accumulator.tell(log)`          | `null` (`Void`) | provided         |
 
 For `pure`, the caller provides the empty / identity value because Java does not have type
-classes. Common choices: `List.of()`, `0`, `""`, `NonEmptyList` with a starting element.
+classes. Common choices: `List.of()`, `0`, `""`.
 
 For `tell`, the value is always `null`. Call `hasValue()` to distinguish `tell` results
 from `of`/`pure` results. Do **not** call `map` on a `tell` result — use `flatMap` to
@@ -88,6 +88,7 @@ log entries (`List::size`) or to convert raw strings to structured event objects
 | `toOption()`                         | `Option<A>`                 | Extract value as Option; `None` for `tell` results; accumulation discarded |
 | `liftOption(opt, someLog, noneLog)`  | `Accumulator<E, Option<A>>` | Log the presence or absence of an Option value                             |
 | `liftTry(t, successLog, failureLog)` | `Accumulator<E, Try<A>>`    | Log the success or failure of a Try; the Try itself is the value           |
+| `toResult()`                         | `Result<A, E>`              | `Ok(value)` when has value; `Err(accumulated)` for `tell` results          |
 | `toTuple2()`                         | `Tuple2<E, A>`              | Structural decomposition; `_1` is accumulated, `_2` is value               |
 | `hasValue()`                         | `boolean`                   | Distinguish `of`/`pure` results from `tell` results                        |
 | `value()`                            | `@Nullable A`               | Extract the value; `null` for `tell` results                               |

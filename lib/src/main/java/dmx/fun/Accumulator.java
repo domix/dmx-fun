@@ -529,4 +529,26 @@ public record Accumulator<E, A>(@Nullable A value, E accumulated) {
     public Tuple2<E, @Nullable A> toTuple2() {
         return new Tuple2<>(accumulated, value);
     }
+
+    /**
+     * Converts this accumulator to a {@link Result}: {@link Result#ok(Object)} when
+     * {@link #hasValue()} is {@code true}, or {@link Result#err(Object)} carrying the
+     * accumulated side-channel when this accumulator was created by {@link #tell(Object)}.
+     *
+     * <p>Use this at the boundary between a traced computation chain and error-handling code:
+     *
+     * <pre>{@code
+     * Accumulator<List<String>, Config> acc = loadAndTrace(path);
+     *
+     * Result<Config, List<String>> result = acc.toResult();
+     * // Ok(config)        — when a value was computed
+     * // Err(["entry..."])  — when only tell() steps ran (no real value was produced)
+     * }</pre>
+     *
+     * @return {@code Ok(value)} when {@link #hasValue()}, or {@code Err(accumulated)} otherwise
+     */
+    @SuppressWarnings("NullAway")
+    public Result<A, E> toResult() {
+        return hasValue() ? Result.ok(value) : Result.err(accumulated);
+    }
 }
