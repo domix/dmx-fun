@@ -106,9 +106,9 @@ tasks.named('test') {
 
     def allModules      = ([mod] + jpmsTestCfg.extraModules).join(',')
     def mainOut         = project.sourceSets.main.output.classesDirs
-    def apiDeps         = project.configurations.compileClasspath
+    def runtimeDeps     = project.configurations.runtimeClasspath  // includes runtimeOnly deps
     def testClassesDirs = project.sourceSets.test.output.classesDirs.asPath
-    def modulePath      = (mainOut + apiDeps).asPath
+    def modulePath      = (mainOut + runtimeDeps).asPath
 
     jvmArgs '--module-path',  modulePath
     jvmArgs '--add-modules',  allModules
@@ -120,6 +120,12 @@ tasks.named('test') {
         // Plain string: opens the module's root package (same name as the module) to the target.
         if (o.contains('=')) {
             def parts = o.split('=', 2)
+            if (parts[0].isEmpty() || parts[1].isEmpty()) {
+                throw new GradleException(
+                    "jpmsTest.extraOpens entry '${o}' is malformed — " +
+                    "expected 'package=target' with non-empty package and target"
+                )
+            }
             jvmArgs '--add-opens', "${mod}/${parts[0]}=${parts[1]}"
         } else {
             jvmArgs '--add-opens', "${mod}/${mod}=${o}"
