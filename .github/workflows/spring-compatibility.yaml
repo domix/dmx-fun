@@ -36,6 +36,7 @@ jobs:
         with:
           java-version: '25'
           distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
       # Pass the matrix version as a Gradle property; the build falls back to
       # the catalog version when the property is absent (local development).
       - run: ./gradlew :spring:test -PspringVersion=${{ matrix.spring-version }}
