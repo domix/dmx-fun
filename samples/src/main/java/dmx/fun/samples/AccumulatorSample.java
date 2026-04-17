@@ -3,8 +3,11 @@ package dmx.fun.samples;
 import dmx.fun.Accumulator;
 import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
+import dmx.fun.Result;
 import dmx.fun.Try;
 import dmx.fun.Tuple2;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BinaryOperator;
@@ -16,8 +19,8 @@ import java.util.function.BinaryOperator;
  */
 public class AccumulatorSample {
 
-    record Order(String id, double basePrice) {}
-    record PricedOrder(String id, double price, String currency) {}
+    record Order(String id, BigDecimal basePrice) {}
+    record PricedOrder(String id, BigDecimal price, String currency) {}
 
     static void main() {
 
@@ -116,19 +119,21 @@ public class AccumulatorSample {
         System.out.println("\n=== Real-world: order pricing audit ===");
 
         Accumulator<List<String>, PricedOrder> priced =
-            Accumulator.of(new Order("ord-7", 100.0), List.of("order loaded"))
+            Accumulator.of(new Order("ord-7", BigDecimal.valueOf(100.0)), List.of("order loaded"))
                 .flatMap(o -> {
-                    double discounted = o.basePrice() * 0.85;
+                    BigDecimal discounted = o.basePrice().multiply(BigDecimal.valueOf(0.85));
                     return Accumulator.of(
                         new Order(o.id(), discounted),
                         List.of("15% discount applied → " + discounted)
                     );
                 }, concat)
                 .flatMap(o -> {
-                    double taxed = o.basePrice() * 1.21;
+                    BigDecimal taxed = o.basePrice()
+                        .multiply(BigDecimal.valueOf(1.21))
+                        .setScale(2, RoundingMode.HALF_UP);
                     return Accumulator.of(
-                        new PricedOrder(o.id(), Math.round(taxed * 100.0) / 100.0, "USD"),
-                        List.of("21% VAT applied → " + Math.round(taxed * 100.0) / 100.0)
+                        new PricedOrder(o.id(), taxed, "USD"),
+                        List.of("21% VAT applied → " + taxed)
                     );
                 }, concat);
 
@@ -138,7 +143,7 @@ public class AccumulatorSample {
         // Result:  PricedOrder[id=ord-7, price=102.85, currency=USD]
         // Audit trail:
         //   - order loaded
-        //   - 15% discount applied → 85.0
+        //   - 15% discount applied → 85.00
         //   - 21% VAT applied → 102.85
 
         // ---- Real-world: counter accumulation ----
@@ -178,6 +183,16 @@ public class AccumulatorSample {
 
         System.out.println("of.toOption():   " + Accumulator.of(42, List.of()).toOption());    // Some(42)
         System.out.println("tell.toOption(): " + Accumulator.tell(List.of("x")).toOption());   // None
+
+        // ---- toResult — convert to Result ----
+
+        System.out.println("\n=== toResult ===");
+
+        Result<Integer, List<String>> okResult = Accumulator.of(42, List.of("step")).toResult();
+        System.out.println("of.toResult():   " + okResult);  // Ok(42)
+
+        Result<Void, List<String>> errResult = Accumulator.tell(List.of("only log")).toResult();
+        System.out.println("tell.toResult(): " + errResult); // Err([only log])
 
         // ---- liftOption — log presence/absence ----
 
