@@ -1,33 +1,31 @@
+// ── Jackson integration module ────────────────────────────────────────────────
+// Optional module — users must already have Jackson on their classpath.
+// Provides serializers and deserializers for all dmx-fun types.
 plugins {
     id 'dmx-fun.java-module'
 }
 
 dependencies {
+    // Exposes dmx-fun types to callers; they only need one dependency declaration.
     api project(':lib')
+
+    // Jackson is an optional peer dependency: declared compileOnly so it is not
+    // pulled in transitively. Users bring their own version.
     compileOnly libs.jackson.databind
+
+    // Tests run against the version passed via -PjacksonVersion=X.Y.Z (used by
+    // the CI compatibility matrix), falling back to the catalog version locally.
     testImplementation "com.fasterxml.jackson.core:jackson-databind:${findProperty('jacksonVersion') ?: libs.versions.jackson.get()}"
 }
 
-compileTestJava {
-    def mainClassesDirs = sourceSets.main.output.classesDirs
-    def apiDeps = configurations.compileClasspath
-    def testSrcPath = files(sourceSets.test.java.srcDirs).asPath
-
-    classpath = classpath.filter { f -> !mainClassesDirs.contains(f) && !apiDeps.contains(f) }
-
-    def modulePath = (mainClassesDirs + apiDeps).asPath
-    options.compilerArgs += [
-        '--module-path', modulePath,
-        '--add-modules', 'dmx.fun.jackson',
-        '--patch-module', "dmx.fun.jackson=${testSrcPath}",
-        '--add-reads', 'dmx.fun.jackson=ALL-UNNAMED',
-    ]
+jpmsTest {
+    moduleName = 'dmx.fun.jackson'
 }
 
 mavenPublishing {
     coordinates("codes.domix", "fun-jackson", "${project.version}")
     pom {
         name = 'dmx-fun Jackson integration'
-        description = 'Optional Jackson module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
+        description = 'Jackson module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
     }
 }

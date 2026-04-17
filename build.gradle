@@ -1,18 +1,28 @@
 plugins {
     id 'dmx-fun.java-base'
-    id 'test-report-aggregation'
-    id 'jacoco-report-aggregation'
+    id 'test-report-aggregation'   // aggregates JUnit XML reports across subprojects
+    id 'jacoco-report-aggregation' // aggregates JaCoCo coverage data across subprojects
 }
 
-dependencies {
-    def modules = [
-        ':lib',
-        ':assertj',
-        ':jackson',
-        ':spring',
-    ]
+// ── Module registry ───────────────────────────────────────────────────────────
+// Single source of truth: Gradle project path → JPMS module name.
+//
+// Adding a new submodule here automatically includes it in:
+//   • test and coverage report aggregation  (dependencies block below)
+//   • ./gradlew check                       (testAggregateTestReport + testCodeCoverageReport)
+//   • ./gradlew aggregateJavadoc            (--module-source-path + --module args)
+def moduleMap = [
+    ':lib'     : 'dmx.fun',
+    ':assertj' : 'dmx.fun.assertj',
+    ':jackson' : 'dmx.fun.jackson',
+    ':spring'  : 'dmx.fun.spring',
+]
 
-    modules.each {
+// ── Report aggregation ────────────────────────────────────────────────────────
+// Pulls test results and coverage data from every registered submodule so that
+// the root-level reports cover the whole codebase in one pass.
+dependencies {
+    moduleMap.keySet().each {
         testReportAggregation project(it)
         jacocoAggregation project(it)
     }
@@ -28,92 +38,85 @@ reporting {
     }
 }
 
+// Wire aggregate reports into the standard lifecycle check task so that
+// `./gradlew check` always produces a unified HTML report and coverage summary.
 tasks.named('check') {
     dependsOn tasks.named('testAggregateTestReport')
     dependsOn tasks.named('testCodeCoverageReport')
 }
 
+// ── Aggregate Javadoc ─────────────────────────────────────────────────────────
+// Invokes the javadoc tool directly (via Exec) rather than Gradle's built-in
+// javadoc task so that we can pass --module-source-path for true multi-module
+// Javadoc generation. Each module's sources are discovered from moduleMap.
+//
+// Run with:  ./gradlew aggregateJavadoc
+// Output:    build/reports/javadoc/index.html
 tasks.register('aggregateJavadoc', Exec) {
-    group = 'documentation'
-    description = 'Generates aggregated multi-module Javadoc covering dmx.fun, dmx.fun.assertj, and dmx.fun.jackson.'
+    group       = 'documentation'
+    description = 'Generates aggregated multi-module Javadoc for all dmx-fun modules.'
 
-    dependsOn ':lib:compileJava', ':assertj:compileJava', ':jackson:compileJava'
+    // Ensure every module is compiled before javadoc runs.
+    dependsOn moduleMap.keySet().collect { "${it}:compileJava" }
 
-    // Capture all project-relative values at configuration time
     def javadocToolProvider = javaToolchains.javadocToolFor {
         languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get().toInteger()))
     }
-    def modules = [
-        ':lib',
-        ':assertj',
-        ':jackson',
-        ':spring',
-    ]
-    def moduleSources = modules.collect {
-        [
-            name:it,
-            location: project(it).file('src/main/java')
-        ]
+    def destDir = file('build/reports/javadoc')
+
+    // ── Configuration-time captures (config-cache safe) ───────────────────────
+    // All values that reference other projects must be resolved here, not inside
+    // doFirst, because the configuration cache forbids calling project() at
+    // execution time.
+
+    // Absolute paths of subproject root dirs — used to exclude internal artifacts
+    // from the external module-path (avoids putting a submodule's own jar on its
+    // own module-path during javadoc generation).
+    def internalDirs = moduleMap.keySet().collect { project(it).projectDir.absolutePath }
+
+    // Resolved external module-path: all compile-classpath jars across submodules,
+    // filtered to exclude the submodules' own project directories (those come via
+    // --module-source-path), uniqued, and joined into a path string.
+    // Resolved here at configuration time so doFirst never touches Configuration
+    // objects — required for Gradle configuration-cache compliance.
+    def externalModulePath = moduleMap.keySet()
+        .collectMany { project(it).configurations.compileClasspath.files }
+        .findAll { f -> !internalDirs.any { dir -> f.absolutePath.startsWith(dir) } }
+        .collect { it.absolutePath }
+        .unique()
+        .join(File.pathSeparator)
+
+    // jpmsName → absolute source directory, used for --module-source-path args.
+    def sourceMap = moduleMap.collectEntries { proj, jpmsName ->
+        [(jpmsName): project(proj).file('src/main/java').absolutePath]
     }
-    def libSrc     = project(':lib').file('src/main/java')
-    def assertjSrc = project(':assertj').file('src/main/java')
-    def jacksonSrc = project(':jackson').file('src/main/java')
-    def springSrc = project(':spring').file('src/main/java')
-    def destDir    = file('build/reports/javadoc')
-    // Only external dependencies on the module-path; the three documented modules
-    // are found via --module-source-path so their artifacts must NOT appear here.
-    def internalDirs = modules.collect {
-        project(it).projectDir.absolutePath
-    }
-//    def internalDirs = [
-//        project(':lib').projectDir.absolutePath,
-//        project(':assertj').projectDir.absolutePath,
-//        project(':jackson').projectDir.absolutePath,
-//    ]
-//    def externalDepsConfigs = [
-//        project(':lib').configurations.compileClasspath,
-//        project(':assertj').configurations.compileClasspath,
-//        project(':jackson').configurations.compileClasspath,
-//    ]
-    def externalDepsConfigs = modules.collect {
-        project(it).configurations.compileClasspath
-    }
-    modules.each {
-        inputs.files fileTree(it)
-    }
-    //inputs.files fileTree(libSrc), fileTree(assertjSrc), fileTree(jacksonSrc)
+
+    // Comma-separated list of JPMS module names for the --module flag.
+    def jpmsModules = moduleMap.values().join(',')
+
+    // Declare Java source files as task inputs so Gradle detects changes and
+    // re-runs javadoc when sources are modified. Only *.java files are tracked
+    // to avoid spurious re-runs when non-source files change.
+    sourceMap.each { _, srcPath -> inputs.files fileTree(srcPath) { include '**/*.java' } }
     outputs.dir destDir
 
-    // Build the command at execution time (configs are not yet resolved at configuration time)
+    // ── Execution ─────────────────────────────────────────────────────────────
     doFirst {
-        def sep = File.pathSeparator
-
-        def modulePath = externalDepsConfigs
-            .collectMany { cfg ->
-                cfg.files.findAll { f ->
-                    !internalDirs.any { dir -> f.absolutePath.startsWith(dir) }
-                }*.absolutePath
-            }
-            .unique()
-            .join(sep)
-
         destDir.mkdirs()
 
         executable javadocToolProvider.get().executablePath.asFile.absolutePath
-        args '--module-path',        modulePath
-        args '--module-source-path', "dmx.fun=${libSrc.absolutePath}"
-        args '--module-source-path', "dmx.fun.assertj=${assertjSrc.absolutePath}"
-        args '--module-source-path', "dmx.fun.jackson=${jacksonSrc.absolutePath}"
-        args '--module-source-path', "dmx.fun.spring=${springSrc.absolutePath}"
-        args '--module',             'dmx.fun,dmx.fun.assertj,dmx.fun.jackson,dmx.fun.spring'
+        args '--module-path', externalModulePath
 
-//        moduleSources.each {
-//            args '--module-source-path', "dmx.${it.name}=${it.location.absolutePath}"
-//        }
+        // One --module-source-path per module: tells javadoc where to find the
+        // sources for each JPMS module instead of relying on compiled artifacts.
+        sourceMap.each { jpmsName, srcPath ->
+            args '--module-source-path', "${jpmsName}=${srcPath}"
+        }
 
-        args '-d',                   destDir.absolutePath
-        args '-doctitle',            'dmx-fun API'
-        args '-windowtitle',         'dmx-fun API'
+        args '--module',     jpmsModules      // which modules to document
+        args '-d',           destDir.absolutePath
+        args '-doctitle',    'dmx-fun API'
+        args '-windowtitle', 'dmx-fun API'
         args '-quiet'
         args '-notimestamp'
     }

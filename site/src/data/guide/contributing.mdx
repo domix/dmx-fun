@@ -115,6 +115,111 @@ docs/guide/adding-validated-examples
 
 All PRs run the full CI pipeline (`gradle.yml`) automatically.
 
+## CI pipelines
+
+All pipelines live in `.github/workflows/`. The table below is a quick reference; the sections
+that follow explain each one in detail.
+
+| File                              | Trigger                             | Purpose                                     |
+|-----------------------------------|-------------------------------------|---------------------------------------------|
+| `gradle.yml`                      | push to `main`, any PR              | Full build, tests, coverage                 |
+| `publish.yml`                     | push to `main` (stable version)     | Publish to Maven Central + create GH tag    |
+| `publish-snapshot.yml`            | push to `main` (SNAPSHOT version)   | Publish SNAPSHOT to Maven Central           |
+| `pages.yml`                       | push to `main`, manual dispatch     | Build Javadoc + Astro site → GitHub Pages   |
+| `assertj-compatibility.yaml`      | PR touching `assertj/**`            | Matrix: AssertJ 3.21 – 3.27                 |
+| `jackson-compatibility.yaml`      | PR touching `jackson/**`            | Matrix: Jackson 2.13 – 2.21                 |
+| `spring-compatibility.yaml`       | PR touching `spring/**`             | Matrix: Spring 6.0 – 7.0                   |
+
+### `gradle.yml` — Main CI
+
+Runs on every push to `main` and on every pull request against `main`.
+For pushes, a `dorny/paths-filter` step skips the build job when none of the source directories
+have changed (avoids redundant runs for docs-only commits). For PRs, the build always runs.
+
+```
+./gradlew build
+```
+
+This compiles all modules, runs all tests, generates the aggregated test report and JaCoCo
+coverage report. A `madrapps/jacoco-report` step then posts coverage deltas as a PR comment.
+
+A separate `dependency-submission` job (push-only) submits the dependency graph to GitHub so
+Dependabot can raise alerts for vulnerable transitive dependencies.
+
+### `publish.yml` — Stable release
+
+Triggered on push to `main` when the changed paths include source or build files. The workflow
+reads `version` from `gradle.properties` and skips entirely if:
+- the version ends with `-SNAPSHOT`, or
+- the tag `v{version}` already exists in the remote.
+
+When both checks pass it runs the full test suite, publishes all modules to Maven Central, pushes
+the release tag, and creates a GitHub Release with auto-generated release notes.
+
+The required repository secrets are:
+
+| Secret                         | Used for                     |
+|--------------------------------|------------------------------|
+| `MAVEN_CENTRAL_USERNAME`       | Maven Central auth           |
+| `MAVEN_CENTRAL_PASSWORD`       | Maven Central auth           |
+| `SIGNING_KEY_ID`               | In-memory PGP key ID         |
+| `SIGNING_KEY`                  | In-memory PGP key (armored)  |
+| `SIGNING_KEY_PASSWORD`         | PGP key passphrase           |
+
+To trigger a stable release: set `version=X.Y.Z` (no `-SNAPSHOT`) in `gradle.properties` and
+push to `main`.
+
+### `publish-snapshot.yml` — SNAPSHOT publish
+
+Mirrors `publish.yml` but fires when `version` ends with `-SNAPSHOT`. It runs tests then
+publishes to Maven Central's snapshot repository. No tag is created.
+
+To trigger: ensure `version=X.Y.Z-SNAPSHOT` in `gradle.properties` and push to `main`.
+
+### `pages.yml` — GitHub Pages deploy
+
+Triggered on push to `main` when `site/**`, any `build.gradle`, or source files under
+`lib/src/main/`, `assertj/src/main/`, or `jackson/src/main/` change. Also supports
+`workflow_dispatch` for manual deploys.
+
+Steps:
+1. `./gradlew aggregateJavadoc` — builds multi-module Javadoc into `build/reports/javadoc/`
+2. `npm run build` (in `site/`) — copies the Javadoc into `site/public/` and produces `site/dist/`
+3. Uploads `site/dist/` as a Pages artifact and deploys via `actions/deploy-pages`
+
+To preview the site locally without triggering CI:
+
+```bash
+./gradlew aggregateJavadoc
+cd site && npm run dev
+```
+
+### Compatibility matrix workflows
+
+Each optional-dependency module has its own matrix workflow that runs on PRs touching that
+module's directory. The matrix version is passed as a Gradle property; the build falls back to
+the version catalog entry when the property is absent (safe for local development).
+
+| Workflow                         | Gradle property      | Tested range            |
+|----------------------------------|----------------------|-------------------------|
+| `assertj-compatibility.yaml`     | `-PassertjVersion`   | `3.21.0` – `3.27.7`    |
+| `jackson-compatibility.yaml`     | `-PjacksonVersion`   | `2.13.5` – `2.21.2`    |
+| `spring-compatibility.yaml`      | `-PspringVersion`    | `6.0.23` – `7.0.6`     |
+
+To run a specific version locally:
+
+```bash
+./gradlew :assertj:test -PassertjVersion=3.25.3
+./gradlew :jackson:test -PjacksonVersion=2.17.3
+./gradlew :spring:test  -PspringVersion=6.1.21
+```
+
+When you add a new module with an optional peer dependency, create
+`.github/workflows/{module}-compatibility.yaml` following this same pattern.
+See step 6 of the [Adding a New Module](./module-conventions) guide for details.
+
+---
+
 ## Note on `lib/src/test/resources/`
 
 This directory is intentionally untracked (it appears in `git status` as untracked).

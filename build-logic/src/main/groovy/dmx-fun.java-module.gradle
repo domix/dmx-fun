@@ -51,3 +51,84 @@ mavenPublishing {
         }
     }
 }
+
+// ── JPMS test configuration ───────────────────────────────────────────────────
+//
+// Each subproject declares its JPMS test needs once:
+//
+//   jpmsTest {
+//       moduleName   = 'dmx.fun.spring'       // JPMS module name (required)
+//       extraModules = ['java.sql']            // added to --add-modules
+//       extraReads   = ['java.sql']            // generates --add-reads moduleName=X
+//       extraOpens   = ['ALL-UNNAMED',         // plain string → --add-opens moduleName/moduleName=target
+//                       'spring.core',         //   (opens the module's root package to that target)
+//                       'dmx.fun.x=spring.tx'] // 'pkg=target' form → --add-opens moduleName/pkg=target
+//   }
+//
+// The plugin wires compileTestJava and test automatically. No hand-written
+// compileTestJava or test JPMS blocks are needed in module build files.
+
+class JpmsTestExtension {
+    String       moduleName   = null
+    List<String> extraModules = []
+    List<String> extraReads   = []
+    List<String> extraOpens   = []
+}
+
+def jpmsTestCfg = extensions.create('jpmsTest', JpmsTestExtension)
+
+// tasks.named() is lazy: the configuration action runs when the task is first
+// resolved (after all project evaluation), so jpmsTestCfg is fully populated.
+
+tasks.named('compileTestJava') {
+    def mod = jpmsTestCfg.moduleName
+    if (!mod) return
+
+    def allModules   = ([mod] + jpmsTestCfg.extraModules).join(',')
+    def mainOut      = project.sourceSets.main.output.classesDirs
+    def apiDeps      = project.configurations.compileClasspath
+    def testSrcPath  = project.files(project.sourceSets.test.java.srcDirs).asPath
+    def modulePath   = (mainOut + apiDeps).asPath
+
+    // Move main output + api deps to the module-path to avoid split-package errors.
+    classpath = classpath.filter { f -> !mainOut.contains(f) && !apiDeps.contains(f) }
+
+    options.compilerArgs += ['--module-path',  modulePath]
+    options.compilerArgs += ['--add-modules',  allModules]
+    options.compilerArgs += ['--patch-module', "${mod}=${testSrcPath}"]
+    options.compilerArgs += ['--add-reads',    "${mod}=ALL-UNNAMED"]
+    jpmsTestCfg.extraReads.each { r -> options.compilerArgs += ['--add-reads', "${mod}=${r}"] }
+}
+
+tasks.named('test') {
+    def mod = jpmsTestCfg.moduleName
+    if (!mod) return
+
+    def allModules      = ([mod] + jpmsTestCfg.extraModules).join(',')
+    def mainOut         = project.sourceSets.main.output.classesDirs
+    def runtimeDeps     = project.configurations.runtimeClasspath  // includes runtimeOnly deps
+    def testClassesDirs = project.sourceSets.test.output.classesDirs.asPath
+    def modulePath      = (mainOut + runtimeDeps).asPath
+
+    jvmArgs '--module-path',  modulePath
+    jvmArgs '--add-modules',  allModules
+    jvmArgs '--patch-module', "${mod}=${testClassesDirs}"
+    jvmArgs '--add-reads',    "${mod}=ALL-UNNAMED"
+    jpmsTestCfg.extraReads.each { r -> jvmArgs '--add-reads', "${mod}=${r}" }
+    jpmsTestCfg.extraOpens.each { o ->
+        // 'pkg=target' form: opens the named package (within mod) to the target module.
+        // Plain string: opens the module's root package (same name as the module) to the target.
+        if (o.contains('=')) {
+            def parts = o.split('=', 2)
+            if (parts[0].isEmpty() || parts[1].isEmpty()) {
+                throw new GradleException(
+                    "jpmsTest.extraOpens entry '${o}' is malformed — " +
+                    "expected 'package=target' with non-empty package and target"
+                )
+            }
+            jvmArgs '--add-opens', "${mod}/${parts[0]}=${parts[1]}"
+        } else {
+            jvmArgs '--add-opens', "${mod}/${mod}=${o}"
+        }
+    }
+}
