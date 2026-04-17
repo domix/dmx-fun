@@ -1,29 +1,30 @@
 ---
 title: "Spring Integration — Developer Guide"
-description: "How to use TxResult and TxTry for programmatic transaction management with Result and Try: rollback on error without exceptions, custom TransactionDefinition, and comparison with @Transactional."
+description: "How to use TxResult, TxTry, and TxValidated for programmatic transaction management: rollback on error without exceptions, custom TransactionDefinition, and comparison with @Transactional."
 order: 16
 h1: "Spring Integration"
 ---
 
-import {Content as Dependency}       from '../code/guide/spring/dependency.mdx';
-import {Content as TxResultSnippet}  from '../code/guide/spring/tx-result.mdx';
-import {Content as TxTrySnippet}     from '../code/guide/spring/tx-try.mdx';
-import {Content as TxDefinition}     from '../code/guide/spring/tx-definition.mdx';
-import {Content as VsTransactional}  from '../code/guide/spring/vs-transactional.mdx';
+import {Content as Dependency}         from '../code/guide/spring/dependency.mdx';
+import {Content as TxResultSnippet}    from '../code/guide/spring/tx-result.mdx';
+import {Content as TxTrySnippet}       from '../code/guide/spring/tx-try.mdx';
+import {Content as TxValidatedSnippet} from '../code/guide/spring/tx-validated.mdx';
+import {Content as TxDefinition}       from '../code/guide/spring/tx-definition.mdx';
+import {Content as VsTransactional}    from '../code/guide/spring/vs-transactional.mdx';
 
-The `fun-spring` module adds first-class Spring transaction support for `Result<V,E>` and
-`Try<V>`. It is an **optional** dependency — the core `fun` library has no runtime
-dependency on Spring.
+The `fun-spring` module adds first-class Spring transaction support for `Result<V,E>`,
+`Try<V>`, and `Validated<E,A>`. It is an **optional** dependency — the core `fun` library
+has no runtime dependency on Spring.
 
 ## The problem
 
 Spring's `@Transactional` rolls back only when an unchecked exception escapes the
-annotated method. `Result` and `Try` capture failure as return values, so no exception
-escapes — and the transaction commits even when the operation failed, silently persisting
-partial writes.
+annotated method. `Result`, `Try`, and `Validated` capture failure as return values, so no
+exception escapes — and the transaction commits even when the operation failed, silently
+persisting partial writes.
 
-`TxResult` and `TxTry` solve this by inspecting the return value: a `Result.isError()` or
-`Try.isFailure()` outcome marks the transaction rollback-only before Spring commits.
+`TxResult`, `TxTry`, and `TxValidated` solve this by inspecting the return value: an
+error/failure/invalid outcome marks the transaction rollback-only before Spring commits.
 
 ## Adding the dependency
 
@@ -39,23 +40,17 @@ is supported (see [version compatibility](#version-compatibility) below).
 Both components are Spring `@Component` beans. You need one `PlatformTransactionManager`
 in your context — Spring Boot auto-configures one for every registered `DataSource`.
 
-**Spring Boot** — no extra wiring needed: component scanning picks up `TxResult` and
-`TxTry` automatically as long as `fun-spring` is on the classpath.
+**Spring Boot** — no extra wiring needed: component scanning picks up `TxResult`,
+`TxTry`, and `TxValidated` automatically as long as `fun-spring` is on the classpath.
 
 **Plain Spring** — declare the beans explicitly or add the `dmx.fun.spring` package to
 your `@ComponentScan`.
 
 ```java
 // Plain Spring — explicit registration (only needed without component scanning)
-@Bean
-public TxResult txResult(PlatformTransactionManager txManager) {
-    return new TxResult(txManager);
-}
-
-@Bean
-public TxTry txTry(PlatformTransactionManager txManager) {
-    return new TxTry(txManager);
-}
+@Bean public TxResult txResult(PlatformTransactionManager tm) { return new TxResult(tm); }
+@Bean public TxTry txTry(PlatformTransactionManager tm)       { return new TxTry(tm); }
+@Bean public TxValidated txValidated(PlatformTransactionManager tm) { return new TxValidated(tm); }
 ```
 
 ## `TxResult`
@@ -88,9 +83,24 @@ is `isFailure()`.
 | Action returns `Try.isFailure()`         | Rolls back          |
 | Action throws an unchecked exception      | Rolls back, rethrows |
 
+## `TxValidated`
+
+Wraps a `Validated<E,A>`-returning action in a managed transaction. Rolls back when the
+result is `isInvalid()`.
+
+<TxValidatedSnippet/>
+
+**Rollback contract:**
+
+| Outcome                                   | Transaction         |
+|-------------------------------------------|---------------------|
+| Action returns `Validated.isValid()`     | Commits             |
+| Action returns `Validated.isInvalid()`   | Rolls back          |
+| Action throws an unchecked exception      | Rolls back, rethrows |
+
 ## Custom `TransactionDefinition`
 
-Both components accept an explicit `TransactionDefinition` to control propagation,
+All three components accept an explicit `TransactionDefinition` to control propagation,
 isolation level, timeout, and read-only flag:
 
 <TxDefinition/>
@@ -103,6 +113,8 @@ isolation level, timeout, and read-only flag:
 
 - Use `TxResult` when your pipeline returns `Result<V,E>` for typed domain errors.
 - Use `TxTry` when your pipeline uses `Try<V>` to wrap exception-throwing code.
+- Use `TxValidated` when your pipeline accumulates multiple validation errors and you
+  want atomicity across all steps.
 - Use `@Transactional` when the method has no dmx-fun return type and rollback on
   unchecked exception is sufficient (void methods, simple queries).
 

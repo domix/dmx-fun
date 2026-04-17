@@ -1,0 +1,25 @@
+---
+fileName: 'RegistrationService.java'
+---
+
+```java
+@Service
+public class RegistrationService {
+    private final TxValidated tx;
+    private final UserRepository repo;
+
+    public RegistrationService(TxValidated tx, UserRepository repo) {
+        this.tx = tx; this.repo = repo;
+    }
+
+    public Validated<NonEmptyList<String>, User> register(RegistrationRequest req) {
+        return tx.execute(() ->
+            validateName(req)
+                .combine(validateEmail(req), (name, email) -> new UserDraft(name, email))
+                .map(repo::save)
+        );
+        // • Valid(user)     → transaction commits
+        // • Invalid(errors) → transaction rolls back; no partial writes persisted
+    }
+}
+```
