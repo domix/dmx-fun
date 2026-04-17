@@ -1,0 +1,28 @@
+---
+fileName: 'ReportService.java'
+---
+
+```java
+@Service
+public class ReportService {
+    private final TxTry tx;
+    private final ReportRepository repo;
+    private final AuditLog audit;
+
+    public ReportService(TxTry tx, ReportRepository repo, AuditLog audit) {
+        this.tx = tx; this.repo = repo; this.audit = audit;
+    }
+
+    public Try<Report> generate(ReportRequest req) {
+        return tx.execute(() ->
+            Try.of(() -> repo.save(build(req)))    // Try<Report>
+               .flatMap(r -> Try.of(() -> {        // Try<Report>
+                   audit.record(r);
+                   return r;
+               }))
+        );
+        // • Success(report) → transaction commits
+        // • Failure(cause)  → transaction rolls back; partial writes undone
+    }
+}
+```

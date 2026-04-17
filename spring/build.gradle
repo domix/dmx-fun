@@ -8,6 +8,11 @@ dependencies {
     compileOnly libs.spring.context
     testImplementation "org.springframework:spring-tx:${findProperty('springVersion') ?: libs.versions.spring.get()}"
     testImplementation "org.springframework:spring-context:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+    testImplementation "org.springframework:spring-jdbc:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+    testImplementation libs.h2
+    testImplementation libs.testcontainers.junit5
+    testImplementation libs.testcontainers.postgresql
+    testRuntimeOnly libs.postgresql
 }
 
 compileTestJava {
@@ -20,9 +25,10 @@ compileTestJava {
     def modulePath = (mainClassesDirs + apiDeps).asPath
     options.compilerArgs += [
         '--module-path', modulePath,
-        '--add-modules', 'dmx.fun.spring',
+        '--add-modules', 'dmx.fun.spring,java.sql',
         '--patch-module', "dmx.fun.spring=${testSrcPath}",
         '--add-reads', 'dmx.fun.spring=ALL-UNNAMED',
+        '--add-reads', 'dmx.fun.spring=java.sql',
     ]
 }
 

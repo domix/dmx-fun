@@ -1,0 +1,36 @@
+---
+fileName: 'Comparison.java'
+---
+
+```java
+// ---- @Transactional — commits even when Result is an error ----
+
+@Transactional
+public Result<Order, OrderError> createOrder(OrderRequest req) {
+    return validate(req)
+        .flatMap(repo::save);
+    // ❌ If flatMap returns Err(orderError), the method returns normally —
+    //    no exception escapes, so Spring commits the transaction.
+    //    Any partial writes from validate() are persisted despite the error.
+}
+
+// ---- TxResult — rolls back when Result is an error ----
+
+public Result<Order, OrderError> createOrder(OrderRequest req) {
+    return tx.execute(() ->
+        validate(req)
+            .flatMap(repo::save)
+    );
+    // ✓ If flatMap returns Err(orderError), TxResult marks the transaction
+    //   rollback-only before Spring commits. Partial writes are undone.
+}
+
+// ---- When @Transactional is still the right choice ----
+
+@Transactional
+public void deleteOrder(String id) {
+    // No return value, rollback happens naturally on RuntimeException.
+    // @Transactional is simpler and perfectly correct here.
+    repo.delete(id);
+}
+```

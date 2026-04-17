@@ -1,0 +1,27 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// Read-only transaction — hint to the JDBC driver and database optimizer
+var readOnly = new DefaultTransactionDefinition();
+readOnly.setReadOnly(true);
+
+Result<List<Order>, String> orders = tx.execute(readOnly, orderRepo::findAll);
+
+// Explicit isolation level — e.g. SERIALIZABLE for critical financial operations
+var serializable = new DefaultTransactionDefinition();
+serializable.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
+
+Result<Transfer, TransferError> transfer = tx.execute(serializable, () ->
+    debit(source, amount).flatMap(__ -> credit(target, amount))
+);
+
+// Custom timeout — rolls back automatically if the action exceeds 5 seconds
+var withTimeout = new DefaultTransactionDefinition();
+withTimeout.setTimeout(5);
+
+Result<Report, String> report = tx.execute(withTimeout, () ->
+    Result.ok(reportEngine.generate(params))
+);
+```

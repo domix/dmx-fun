@@ -1,0 +1,124 @@
+---
+title: "Spring Integration — Developer Guide"
+description: "How to use TxResult and TxTry for programmatic transaction management with Result and Try: rollback on error without exceptions, custom TransactionDefinition, and comparison with @Transactional."
+order: 16
+h1: "Spring Integration"
+---
+
+import {Content as Dependency}       from '../code/guide/spring/dependency.mdx';
+import {Content as TxResultSnippet}  from '../code/guide/spring/tx-result.mdx';
+import {Content as TxTrySnippet}     from '../code/guide/spring/tx-try.mdx';
+import {Content as TxDefinition}     from '../code/guide/spring/tx-definition.mdx';
+import {Content as VsTransactional}  from '../code/guide/spring/vs-transactional.mdx';
+
+The `fun-spring` module adds first-class Spring transaction support for `Result<V,E>` and
+`Try<V>`. It is an **optional** dependency — the core `fun` library has no runtime
+dependency on Spring.
+
+## The problem
+
+Spring's `@Transactional` rolls back only when an unchecked exception escapes the
+annotated method. `Result` and `Try` capture failure as return values, so no exception
+escapes — and the transaction commits even when the operation failed, silently persisting
+partial writes.
+
+`TxResult` and `TxTry` solve this by inspecting the return value: a `Result.isError()` or
+`Try.isFailure()` outcome marks the transaction rollback-only before Spring commits.
+
+## Adding the dependency
+
+`fun-spring` declares `spring-tx` and `spring-context` as `compileOnly`. You must add
+them to your own classpath — typically they arrive transitively via `spring-webmvc` or
+`spring-boot-starter-data-jpa`. Any Spring Framework release from **6.0.x through 6.2.x**
+is supported (see [version compatibility](#version-compatibility) below).
+
+<Dependency/>
+
+## Setup
+
+Both components are Spring `@Component` beans. You need one `PlatformTransactionManager`
+in your context — Spring Boot auto-configures one for every registered `DataSource`.
+
+**Spring Boot** — no extra wiring needed: component scanning picks up `TxResult` and
+`TxTry` automatically as long as `fun-spring` is on the classpath.
+
+**Plain Spring** — declare the beans explicitly or add the `dmx.fun.spring` package to
+your `@ComponentScan`.
+
+```java
+// Plain Spring — explicit registration (only needed without component scanning)
+@Bean
+public TxResult txResult(PlatformTransactionManager txManager) {
+    return new TxResult(txManager);
+}
+
+@Bean
+public TxTry txTry(PlatformTransactionManager txManager) {
+    return new TxTry(txManager);
+}
+```
+
+## `TxResult`
+
+Wraps a `Result<V,E>`-returning action in a managed transaction. Rolls back when the
+result is `isError()`.
+
+<TxResultSnippet/>
+
+**Rollback contract:**
+
+| Outcome                                   | Transaction         |
+|-------------------------------------------|---------------------|
+| Action returns `Result.isOk()`           | Commits             |
+| Action returns `Result.isError()`        | Rolls back          |
+| Action throws an unchecked exception      | Rolls back, rethrows |
+
+## `TxTry`
+
+Wraps a `Try<V>`-returning action in a managed transaction. Rolls back when the result
+is `isFailure()`.
+
+<TxTrySnippet/>
+
+**Rollback contract:**
+
+| Outcome                                   | Transaction         |
+|-------------------------------------------|---------------------|
+| Action returns `Try.isSuccess()`         | Commits             |
+| Action returns `Try.isFailure()`         | Rolls back          |
+| Action throws an unchecked exception      | Rolls back, rethrows |
+
+## Custom `TransactionDefinition`
+
+Both components accept an explicit `TransactionDefinition` to control propagation,
+isolation level, timeout, and read-only flag:
+
+<TxDefinition/>
+
+## `TxResult` vs `TxTry` vs `@Transactional`
+
+<VsTransactional/>
+
+**Rule of thumb:**
+
+- Use `TxResult` when your pipeline returns `Result<V,E>` for typed domain errors.
+- Use `TxTry` when your pipeline uses `Try<V>` to wrap exception-throwing code.
+- Use `@Transactional` when the method has no dmx-fun return type and rollback on
+  unchecked exception is sufficient (void methods, simple queries).
+
+## Version compatibility
+
+The module is tested in CI against the following Spring Framework versions on every
+pull request that touches the `spring/` module:
+
+| Spring version | Status  |
+|----------------|---------|
+| 6.0.x          | tested  |
+| 6.1.x          | tested  |
+| 6.2.x          | tested  |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :spring:test -PspringVersion=6.1.14
+```

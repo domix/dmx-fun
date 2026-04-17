@@ -169,6 +169,14 @@ const modules = [
         avoidWhen: 'You are not using AssertJ — the module is optional and test-scoped.',
         tag: 'Testing',
     },
+    {
+        name: 'Spring integration',
+        href: `${base}guide/spring`,
+        summary: 'TxResult and TxTry: programmatic transaction support that rolls back when Result.isError() or Try.isFailure(), without relying on exceptions.',
+        whenToUse: 'You use Result or Try in Spring-managed services and need reliable rollback on domain errors, not just on unchecked exceptions.',
+        avoidWhen: 'Your methods return void or plain values — @Transactional is simpler and sufficient when rollback on unchecked exception is all you need.',
+        tag: 'Spring',
+    },
 ];
 ---
 

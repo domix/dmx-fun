@@ -14,5 +14,5 @@ module dmx.fun.spring {
     requires spring.context;
     requires org.jspecify;
 
-    // exports dmx.fun.spring; — uncomment when implementation classes are added (#125, #126)
+    exports dmx.fun.spring;
 }
