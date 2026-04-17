@@ -11,6 +11,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -64,8 +65,7 @@ class TxTryTest {
             return Try.success(1);
         });
 
-        assertThat(result.isSuccess()).isTrue();
-        assertThat(result.get()).isEqualTo(1);
+        assertThat(result).isSuccess().containsValue(1);
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -77,7 +77,7 @@ class TxTryTest {
             return Try.failure(ex);
         });
 
-        assertThat(result.isFailure()).isTrue();
+        assertThat(result).isFailure();
         assertThat(result.getCause()).isSameAs(ex);
         assertThat(countRows()).isEqualTo(0);
     }
@@ -118,7 +118,7 @@ class TxTryTest {
             return Try.success(4);
         });
 
-        assertThat(result.isSuccess()).isTrue();
+        assertThat(result).isSuccess();
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -130,7 +130,7 @@ class TxTryTest {
             return Try.failure(new RuntimeException("rollback"));
         });
 
-        assertThat(result.isFailure()).isTrue();
+        assertThat(result).isFailure();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -160,7 +160,7 @@ class TxTryTest {
             return Try.failure(new RuntimeException("partial work"));
         });
 
-        assertThat(result.isFailure()).isTrue();
+        assertThat(result).isFailure();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -172,7 +172,7 @@ class TxTryTest {
             return Try.success(2);
         });
 
-        assertThat(result.isSuccess()).isTrue();
+        assertThat(result).isSuccess();
         assertThat(countRows()).isEqualTo(2);
     }
 }

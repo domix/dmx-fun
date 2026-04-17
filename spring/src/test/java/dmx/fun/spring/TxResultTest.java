@@ -11,6 +11,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -64,8 +65,7 @@ class TxResultTest {
             return Result.ok(1);
         });
 
-        assertThat(result.isOk()).isTrue();
-        assertThat(result.get()).isEqualTo(1);
+        assertThat(result).isOk().containsValue(1);
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -76,8 +76,7 @@ class TxResultTest {
             return Result.err("domain error");
         });
 
-        assertThat(result.isError()).isTrue();
-        assertThat(result.getError()).isEqualTo("domain error");
+        assertThat(result).isErr().containsError("domain error");
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -117,7 +116,7 @@ class TxResultTest {
             return Result.ok(4);
         });
 
-        assertThat(result.isOk()).isTrue();
+        assertThat(result).isOk();
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -129,7 +128,7 @@ class TxResultTest {
             return Result.err("rollback me");
         });
 
-        assertThat(result.isError()).isTrue();
+        assertThat(result).isErr();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -159,7 +158,7 @@ class TxResultTest {
             return Result.err("partial work");
         });
 
-        assertThat(result.isError()).isTrue();
+        assertThat(result).isErr();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -171,7 +170,7 @@ class TxResultTest {
             return Result.ok(2);
         });
 
-        assertThat(result.isOk()).isTrue();
+        assertThat(result).isOk();
         assertThat(countRows()).isEqualTo(2);
     }
 }

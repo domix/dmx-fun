@@ -12,6 +12,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -60,7 +61,7 @@ class TxTryPostgresTest {
             return Try.success(1);
         });
 
-        assertThat(result.isSuccess()).isTrue();
+        assertThat(result).isSuccess();
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -72,7 +73,7 @@ class TxTryPostgresTest {
             return Try.failure(ex);
         });
 
-        assertThat(result.isFailure()).isTrue();
+        assertThat(result).isFailure();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -95,7 +96,7 @@ class TxTryPostgresTest {
             return Try.failure(new RuntimeException("rollback"));
         });
 
-        assertThat(result.isFailure()).isTrue();
+        assertThat(result).isFailure();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -107,7 +108,7 @@ class TxTryPostgresTest {
             return Try.failure(new RuntimeException("partial"));
         });
 
-        assertThat(result.isFailure()).isTrue();
+        assertThat(result).isFailure();
         assertThat(countRows()).isEqualTo(0);
     }
 }

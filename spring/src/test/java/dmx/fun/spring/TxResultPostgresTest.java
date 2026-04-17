@@ -12,6 +12,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -61,7 +62,7 @@ class TxResultPostgresTest {
             return Result.ok(1);
         });
 
-        assertThat(result.isOk()).isTrue();
+        assertThat(result).isOk();
         assertThat(countRows()).isEqualTo(1);
     }
 
@@ -72,7 +73,7 @@ class TxResultPostgresTest {
             return Result.err("domain error");
         });
 
-        assertThat(result.isError()).isTrue();
+        assertThat(result).isErr();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -95,7 +96,7 @@ class TxResultPostgresTest {
             return Result.err("rollback");
         });
 
-        assertThat(result.isError()).isTrue();
+        assertThat(result).isErr();
         assertThat(countRows()).isEqualTo(0);
     }
 
@@ -107,7 +108,7 @@ class TxResultPostgresTest {
             return Result.err("partial");
         });
 
-        assertThat(result.isError()).isTrue();
+        assertThat(result).isErr();
         assertThat(countRows()).isEqualTo(0);
     }
 }
