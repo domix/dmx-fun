@@ -78,8 +78,9 @@ with your own `@Bean` declaration (see [Customizing auto-configured beans](#cust
 
 ## Setup
 
-Both components are Spring `@Component` beans. You need one `PlatformTransactionManager`
-in your context — Spring Boot auto-configures one for every registered `DataSource`.
+`TxResult`, `TxTry`, and `TxValidated` are Spring `@Component` beans. You need one
+`PlatformTransactionManager` in your context — Spring Boot auto-configures one for every
+registered `DataSource`.
 
 **Spring Boot with `fun-spring-boot`** — no extra wiring needed: the auto-configuration
 registers `TxResult`, `TxTry`, `TxValidated`, and (when `aspectjweaver` is present)
