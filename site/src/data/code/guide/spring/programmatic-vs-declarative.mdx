@@ -7,20 +7,22 @@ fileName: 'Comparison.java'
 // Explicit control, no AOP, works with JPMS without aspectjweaver at runtime.
 
 @Service
-public class OrderService {
+public class OrderServiceProgrammatic {
     private final TxResult tx;
 
     public Result<Order, OrderError> createOrder(OrderRequest req) {
         return tx.execute(() -> validate(req).flatMap(repo::save));
     }
 }
+```
 
+```java
 // ---- Declarative (@TransactionalResult) ----
 // Less boilerplate, familiar @Transactional style.
 // Requires DmxTransactionalAspect bean + @EnableAspectJAutoProxy.
 
 @Service
-public class OrderService {
+public class OrderServiceDeclarative {
 
     @TransactionalResult
     public Result<Order, OrderError> createOrder(OrderRequest req) {

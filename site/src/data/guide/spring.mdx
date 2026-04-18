@@ -140,10 +140,12 @@ Add `aspectjweaver` to your classpath and register the aspect bean with
 
 <AspectSetup/>
 
-**Spring Boot** — component scanning picks up `DmxTransactionalAspect` automatically
-(it is annotated `@Component`) as long as `aspectjweaver` is on the classpath and
-`@EnableAspectJAutoProxy` (or `spring.aop.auto=true`, the Boot default) is active. No
-explicit `@Bean` declaration is needed.
+**Spring Boot** — `DmxTransactionalAspect` is annotated `@Component`, so Spring Boot
+picks it up automatically **only if** the `dmx.fun.spring` package is within your
+application's `@ComponentScan` base packages (or you explicitly add it via
+`@ComponentScan("dmx.fun.spring")`). If component scanning does not cover that package,
+use the explicit `@Bean` declaration shown above — the same caveat that applies to
+`TxResult`, `TxTry`, and `TxValidated` in the Setup section.
 
 ### `@TransactionalResult`
 
@@ -183,7 +185,7 @@ All three annotations accept the same attributes as Spring's `@Transactional`:
 |---|---|---|
 | `propagation` | `Propagation` | `REQUIRED` |
 | `isolation` | `Isolation` | `DEFAULT` |
-| `timeout` | `int` (seconds) | platform default |
+| `timeout` | `int` (seconds) | `TIMEOUT_DEFAULT` (-1, no explicit timeout) |
 | `transactionManager` | `String` (bean name) | primary `PlatformTransactionManager` |
 
 <TransactionalAttributes/>

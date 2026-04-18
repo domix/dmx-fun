@@ -55,7 +55,7 @@ class TransactionalValidatedAspectPostgresTest {
     }
 
     private int countRows() {
-        return jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class).intValue();
+        return jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
     }
 
     @Test
