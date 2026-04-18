@@ -10,6 +10,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -43,36 +44,42 @@ public class DmxFunSpringAutoConfiguration {
 
     /**
      * Registers a {@link TxResult} backed by the primary transaction manager.
+     * Can be disabled via {@code dmx.fun.tx-result.enabled=false}.
      *
      * @param txManager the transaction manager to back the executor
      * @return a ready-to-use {@link TxResult} instance
      */
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(name = "dmx.fun.tx-result.enabled", havingValue = "true", matchIfMissing = true)
     public TxResult txResult(PlatformTransactionManager txManager) {
         return new TxResult(txManager);
     }
 
     /**
      * Registers a {@link TxTry} backed by the primary transaction manager.
+     * Can be disabled via {@code dmx.fun.tx-try.enabled=false}.
      *
      * @param txManager the transaction manager to back the executor
      * @return a ready-to-use {@link TxTry} instance
      */
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(name = "dmx.fun.tx-try.enabled", havingValue = "true", matchIfMissing = true)
     public TxTry txTry(PlatformTransactionManager txManager) {
         return new TxTry(txManager);
     }
 
     /**
      * Registers a {@link TxValidated} backed by the primary transaction manager.
+     * Can be disabled via {@code dmx.fun.tx-validated.enabled=false}.
      *
      * @param txManager the transaction manager to back the executor
      * @return a ready-to-use {@link TxValidated} instance
      */
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(name = "dmx.fun.tx-validated.enabled", havingValue = "true", matchIfMissing = true)
     public TxValidated txValidated(PlatformTransactionManager txManager) {
         return new TxValidated(txManager);
     }
@@ -80,6 +87,7 @@ public class DmxFunSpringAutoConfiguration {
     /**
      * Enables AspectJ auto-proxying and registers {@link DmxTransactionalAspect}
      * when {@code aspectjweaver} is present on the classpath.
+     * The aspect can be disabled via {@code dmx.fun.aspect.enabled=false}.
      */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(Aspect.class)
@@ -91,6 +99,7 @@ public class DmxFunSpringAutoConfiguration {
          * present. The aspect intercepts methods annotated with
          * {@link dmx.fun.spring.TransactionalResult}, {@link dmx.fun.spring.TransactionalTry},
          * or {@link dmx.fun.spring.TransactionalValidated}.
+         * Can be disabled via {@code dmx.fun.aspect.enabled=false}.
          *
          * @param txManager   the default transaction manager
          * @param beanFactory used to look up named transaction managers
@@ -98,6 +107,7 @@ public class DmxFunSpringAutoConfiguration {
          */
         @Bean
         @ConditionalOnMissingBean
+        @ConditionalOnProperty(name = "dmx.fun.aspect.enabled", havingValue = "true", matchIfMissing = true)
         public DmxTransactionalAspect dmxTransactionalAspect(
                 PlatformTransactionManager txManager, BeanFactory beanFactory) {
             return new DmxTransactionalAspect(txManager, beanFactory);

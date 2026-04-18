@@ -45,6 +45,32 @@ class DmxFunSpringAutoConfigurationTest {
         runner.run(ctx -> assertThat(ctx).hasSingleBean(DmxTransactionalAspect.class));
     }
 
+    // ── @ConditionalOnProperty disable ───────────────────────────────────────
+
+    @Test
+    void txResult_disabledWhenPropertyFalse() {
+        runner.withPropertyValues("dmx.fun.tx-result.enabled=false")
+            .run(ctx -> assertThat(ctx).doesNotHaveBean(TxResult.class));
+    }
+
+    @Test
+    void txTry_disabledWhenPropertyFalse() {
+        runner.withPropertyValues("dmx.fun.tx-try.enabled=false")
+            .run(ctx -> assertThat(ctx).doesNotHaveBean(TxTry.class));
+    }
+
+    @Test
+    void txValidated_disabledWhenPropertyFalse() {
+        runner.withPropertyValues("dmx.fun.tx-validated.enabled=false")
+            .run(ctx -> assertThat(ctx).doesNotHaveBean(TxValidated.class));
+    }
+
+    @Test
+    void aspect_disabledWhenPropertyFalse() {
+        runner.withPropertyValues("dmx.fun.aspect.enabled=false")
+            .run(ctx -> assertThat(ctx).doesNotHaveBean(DmxTransactionalAspect.class));
+    }
+
     // ── @ConditionalOnMissingBean back-off ────────────────────────────────────
 
     @Test

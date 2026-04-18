@@ -95,16 +95,32 @@ your `@ComponentScan`.
 
 ## Customizing auto-configured beans
 
-Every bean that `DmxFunSpringAutoConfiguration` registers is guarded by
-`@ConditionalOnMissingBean`. Declare your own `@Bean` of the same type and the
-auto-configuration backs off, leaving yours in place.
+### Disabling beans via properties
 
-The most common reason to override is to bind a specific transaction manager rather
-than the primary one:
+Each auto-configured bean can be disabled individually in `application.properties` (or
+`application.yml`):
+
+```properties
+dmx.fun.tx-result.enabled=false    # disable TxResult
+dmx.fun.tx-try.enabled=false       # disable TxTry
+dmx.fun.tx-validated.enabled=false # disable TxValidated
+dmx.fun.aspect.enabled=false       # disable DmxTransactionalAspect
+```
+
+All properties default to `true`, so existing applications are not affected.
+IDE autocompletion is available because the JAR ships
+`META-INF/additional-spring-configuration-metadata.json`.
+
+### Replacing a bean with your own
+
+Every auto-configured bean is also guarded by `@ConditionalOnMissingBean`. Declare your
+own `@Bean` of the same type and the auto-configuration backs off, leaving yours in place.
+
+The most common reason to replace is to bind a specific (non-primary) transaction manager:
 
 <SpringBootOverride/>
 
-You can override any subset — any bean not overridden is still registered by the
+You can replace any subset — any bean not replaced is still registered by the
 auto-configuration.
 
 ## `TxResult`

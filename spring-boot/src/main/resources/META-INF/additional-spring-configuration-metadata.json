@@ -1,0 +1,28 @@
+{
+  "properties": [
+    {
+      "name": "dmx.fun.tx-result.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a TxResult bean. Set to false to disable it entirely."
+    },
+    {
+      "name": "dmx.fun.tx-try.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a TxTry bean. Set to false to disable it entirely."
+    },
+    {
+      "name": "dmx.fun.tx-validated.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a TxValidated bean. Set to false to disable it entirely."
+    },
+    {
+      "name": "dmx.fun.aspect.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure the DmxTransactionalAspect bean. Set to false to disable @TransactionalResult, @TransactionalTry, and @TransactionalValidated AOP support entirely."
+    }
+  ]
+}
