@@ -1,6 +1,9 @@
 package dmx.fun.assertj;
 
+import dmx.fun.Accumulator;
+import dmx.fun.Guard;
 import dmx.fun.Option;
+import dmx.fun.Resource;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import dmx.fun.Tuple2;
@@ -20,6 +23,9 @@ import org.jspecify.annotations.NullMarked;
  * assertThat(Result.ok("hello")).isOk().containsValue("hello");
  * assertThat(Try.success(1)).isSuccess().containsValue(1);
  * assertThat(Validated.valid("ok")).isValid().containsValue("ok");
+ * assertThat(resource).succeedsWith("value");
+ * assertThat(guard).accepts("alice").rejects("!!");
+ * assertThat(accumulator).hasValue(42).accumulationContains("step1");
  * }</pre>
  */
 @NullMarked
@@ -110,5 +116,39 @@ public final class DmxFunAssertions {
      */
     public static <A, B, C, D> Tuple4Assert<A, B, C, D> assertThat(Tuple4<A, B, C, D> actual) {
         return new Tuple4Assert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for a {@link Resource}.
+     *
+     * @param <T>    the resource value type
+     * @param actual the Resource to assert on
+     * @return a new {@link ResourceAssert}
+     */
+    public static <T> ResourceAssert<T> assertThat(Resource<T> actual) {
+        return new ResourceAssert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for a {@link Guard}.
+     *
+     * @param <T>    the type of value the guard validates
+     * @param actual the Guard to assert on
+     * @return a new {@link GuardAssert}
+     */
+    public static <T> GuardAssert<T> assertThat(Guard<T> actual) {
+        return new GuardAssert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for an {@link Accumulator}.
+     *
+     * @param <E>    the accumulated side-channel type
+     * @param <A>    the primary value type
+     * @param actual the Accumulator to assert on
+     * @return a new {@link AccumulatorAssert}
+     */
+    public static <E, A> AccumulatorAssert<E, A> assertThat(Accumulator<E, A> actual) {
+        return new AccumulatorAssert<>(actual);
     }
 }
