@@ -1,0 +1,35 @@
+---
+fileName: 'FileProcessor.java'
+---
+
+```java
+// ── Try.toList() — fail-fast: returns first Failure ──────────────────────────
+Try<List<Integer>> parsed =
+    Stream.of("1", "2", "3")
+          .map(s -> Try.of(() -> Integer.parseInt(s)))
+          .collect(Try.toList());
+// → Success([1, 2, 3])
+
+Try<List<Integer>> broken =
+    Stream.of("1", "bad", "3")
+          .map(s -> Try.of(() -> Integer.parseInt(s)))
+          .collect(Try.toList());
+// → Failure(NumberFormatException) — stops at "bad"
+
+// Real-world: parse all config values — abort on the first bad entry
+Try<List<Duration>> timeouts = configKeys.stream()
+    .map(key -> Try.of(() -> Duration.parse(config.get(key))))
+    .collect(Try.toList());
+
+// ── Try.partitioningBy() — process all, split successes from failures ─────────
+Try.Partition<Path> result = filePaths.stream()
+    .map(path -> Try.of(() -> validateFile(path)))
+    .collect(Try.partitioningBy());
+
+List<Path>       valid   = result.successes(); // files that passed validation
+List<Throwable>  errors  = result.failures();  // exceptions from invalid files
+
+// Real-world: import as many files as possible; log failures without aborting
+importService.bulkProcess(result.successes());
+result.failures().forEach(ex -> log.error("Skipping file: {}", ex.getMessage()));
+```

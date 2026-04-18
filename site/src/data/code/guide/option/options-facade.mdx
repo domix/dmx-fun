@@ -1,0 +1,32 @@
+---
+fileName: 'UserService.java'
+---
+
+```java
+// ── Options.presentToList() — keep only present values ───────────────────────
+List<String> names = Stream.<Option<String>>of(
+        Option.some("alice"), Option.none(), Option.some("bob"), Option.none())
+    .collect(Options.presentToList());
+// ["alice", "bob"]
+
+// Real-world: resolve a batch of user IDs; ignore the ones not found
+List<User> found = ids.stream()
+    .map(userRepo::findById)          // Stream<Option<User>>
+    .collect(Options.presentToList()); // List<User> — absent entries dropped
+
+// ── Options.sequence() — all-or-nothing: Optional.empty() if any is None ────
+Optional<List<User>> allOrNone = ids.stream()
+    .map(userRepo::findById)
+    .collect(Options.sequence());
+// Optional.of([...]) only when every ID resolves; Optional.empty() otherwise
+
+// ── Options.toNonEmptyList() — wrap a stream into a NonEmptyList if non-empty ─
+Option<NonEmptyList<String>> nel = items.stream()
+    .filter(item -> item.isActive())
+    .collect(Options.toNonEmptyList());
+
+nel.match(
+    ()    -> log.warn("no active items"),
+    items -> process(items)          // items is a guaranteed NonEmptyList
+);
+```

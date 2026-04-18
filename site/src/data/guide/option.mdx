@@ -23,6 +23,7 @@ import {Content as ComposingZip}           from '../code/guide/option/composing-
 import {Content as ComposingZipWith}       from '../code/guide/option/composing-zip-with.mdx';
 import {Content as ComposingSequence}      from '../code/guide/option/composing-sequence.mdx';
 import {Content as SequenceCollector}      from '../code/guide/option/sequence-collector.mdx';
+import {Content as OptionsFacade}          from '../code/guide/option/options-facade.mdx';
 import {Content as ComposingStream}        from '../code/guide/option/composing-stream.mdx';
 import {Content as InteropConversions}     from '../code/guide/option/interop-conversions.mdx';
 import {Content as PitfallsNested}         from '../code/guide/option/pitfalls-nested.mdx';
@@ -178,6 +179,20 @@ It reduces a `Stream<Option<V>>` to a single `Optional<List<V>>` — present onl
 every element is `Some`, empty if any element is `None`.
 
 <SequenceCollector/>
+
+## Collector facade: Options
+
+`Options` is a single discoverable entry point for all `Stream<Option<T>>` collectors —
+analogous to `java.util.stream.Collectors`. Import `dmx.fun.Options` instead of
+remembering which collector lives on which type.
+
+| Method                       | Returns                     | Semantics                                              |
+|------------------------------|-----------------------------|--------------------------------------------------------|
+| `Options.presentToList()`    | `List<T>`                   | Drops `None` — returns only present values             |
+| `Options.sequence()`         | `Optional<List<T>>`         | All-or-nothing — `empty()` if any element is `None`    |
+| `Options.toNonEmptyList()`   | `Option<NonEmptyList<T>>`   | Wraps stream into `NonEmptyList`, or `None` if empty   |
+
+<OptionsFacade/>
 
 ### Stream integration with `stream()`
 

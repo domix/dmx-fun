@@ -24,6 +24,9 @@
  *   <li>{@link dmx.fun.Guard}        — composable predicate blocks for Validated pipelines</li>
  *   <li>{@link dmx.fun.Resource}     — composable managed resource with guaranteed release</li>
  *   <li>{@link dmx.fun.Accumulator}  — value paired with a side-channel accumulation (Writer monad)</li>
+ *   <li>{@link dmx.fun.Results}      — collector facade for {@code Stream<Result<V,E>>}</li>
+ *   <li>{@link dmx.fun.Options}      — collector facade for {@code Stream<Option<T>>}</li>
+ *   <li>{@link dmx.fun.Tries}        — collector facade for {@code Stream<Try<V>>}</li>
  * </ul>
  *
  * <p>The entire module is {@code @NullMarked}: all API types are non-null by default.

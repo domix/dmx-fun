@@ -20,6 +20,7 @@ import {Content as InteropConversions}   from '../code/guide/result/interop-conv
 import {Content as PitfallsNested}       from '../code/guide/result/pitfalls-nested.mdx';
 import {Content as PitfallsIgnoringError} from '../code/guide/result/pitfalls-ignoring-error.mdx';
 import {Content as GroupingBy}           from '../code/guide/result/grouping-by.mdx';
+import {Content as ResultsFacade}        from '../code/guide/result/results-facade.mdx';
 import {Content as RealWorldExample}     from '../code/guide/result/real-world-example.mdx';
 
 > **Runnable example:** [`ResultSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/ResultSample.java)
@@ -147,6 +148,24 @@ The downstream variant `groupingBy(classifier, downstream)` applies a
 **unmodifiable**.
 
 <GroupingBy/>
+
+## Collector facade: Results
+
+`Results` is a single discoverable entry point for all `Stream<Result<V,E>>` collectors —
+analogous to `java.util.stream.Collectors`. Import `dmx.fun.Results` instead of
+remembering which collector lives on which type.
+
+| Method                                  | Returns                         | Semantics                                        |
+|-----------------------------------------|---------------------------------|--------------------------------------------------|
+| `Results.toList()`                      | `Result<List<V>, E>`            | Fail-fast — first `Err` short-circuits           |
+| `Results.partitioning()`                | `Results.Partition<V, E>`       | Collect all — splits `oks()` and `errors()`      |
+| `Results.groupingBy(classifier)`        | `Map<K, NonEmptyList<V>>`       | Group by key; values are always non-empty        |
+| `Results.groupingBy(classifier, finisher)` | `Map<K, R>`                  | Group then transform each group                  |
+
+`Results.Partition` is a thin wrapper that delegates to `Result.Partition`.
+Call `toResultPartition()` to obtain the underlying `Result.Partition<V, E>` when needed.
+
+<ResultsFacade/>
 
 ## Interoperability
 

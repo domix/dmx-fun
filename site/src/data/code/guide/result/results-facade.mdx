@@ -1,0 +1,44 @@
+---
+fileName: 'OrderProcessor.java'
+---
+
+```java
+// ── Results.toList() — fail-fast: returns first Err ──────────────────────────
+Result<List<Integer>, String> validated =
+    Stream.<Result<Integer, String>>of(Result.ok(1), Result.ok(2), Result.ok(3))
+          .collect(Results.toList());
+// → Ok([1, 2, 3])
+
+Result<List<Integer>, String> firstFails =
+    Stream.<Result<Integer, String>>of(Result.ok(1), Result.err("bad"), Result.ok(3))
+          .collect(Results.toList());
+// → Err("bad")
+
+// Real-world: validate every line in a CSV upload — stop on first invalid row
+Result<List<OrderRow>, String> rows = csvLines.stream()
+    .map(OrderRow::parse)          // Stream<Result<OrderRow, String>>
+    .collect(Results.toList());    // Ok(all rows) or Err(first parse error)
+
+// ── Results.partitioning() — process all, split into oks and errors ───────────
+Results.Partition<OrderRow, String> p = csvLines.stream()
+    .map(OrderRow::parse)
+    .collect(Results.partitioning());
+
+List<OrderRow>  good   = p.oks();    // rows that parsed successfully
+List<String>    bad    = p.errors(); // parse error messages
+
+// Real-world: import as many records as possible; report failures separately
+importService.bulkInsert(p.oks());
+auditLog.recordRejections(p.errors());
+
+// ── Results.groupingBy() — group elements by a derived key ───────────────────
+Map<Status, NonEmptyList<Order>> byStatus =
+    orders.stream()
+          .collect(Results.groupingBy(Order::status));
+// Every map value is NonEmptyList — the non-emptiness is in the type
+
+// Downstream variant: count orders per status
+Map<Status, Integer> countByStatus =
+    orders.stream()
+          .collect(Results.groupingBy(Order::status, NonEmptyList::size));
+```

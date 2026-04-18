@@ -1,0 +1,22 @@
+---
+fileName: 'BatchProcessor.java'
+---
+
+```java
+// ── Tries.toList() — same as Try.toList(), single import entry point ─────────
+Try<List<Integer>> all = Stream.of("10", "20", "30")
+    .map(s -> Try.of(() -> Integer.parseInt(s)))
+    .collect(Tries.toList());
+// → Success([10, 20, 30])
+
+// ── Tries.partitioning() — collect all results, split by outcome ─────────────
+Tries.Partition<byte[]> partition = urls.stream()
+    .map(url -> Try.of(() -> httpClient.fetch(url)))
+    .collect(Tries.partitioning());
+
+partition.successes().forEach(body -> indexer.ingest(body));
+partition.failures().forEach(ex  -> metrics.recordError(ex));
+
+// Bridge to Try.Partition when needed
+Try.Partition<byte[]> tp = partition.toTryPartition();
+```

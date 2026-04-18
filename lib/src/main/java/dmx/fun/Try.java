@@ -3,6 +3,7 @@ package dmx.fun;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -892,6 +893,94 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         } catch (CancellationException e) {
             return Try.failure(e);
         }
+    }
+
+    // ---------- Collectors ----------
+
+    /**
+     * A typed container holding the two partitions produced by {@link #partitioningBy()}.
+     *
+     * @param <V>       the value type of the {@code Success} elements
+     * @param successes an unmodifiable list of values from {@code Success} elements, in encounter order
+     * @param failures  an unmodifiable list of causes from {@code Failure} elements, in encounter order
+     */
+    record Partition<V>(List<V> successes, List<Throwable> failures) {
+        /** Defensively copies both lists and null-checks them. */
+        public Partition {
+            Objects.requireNonNull(successes, "successes");
+            Objects.requireNonNull(failures, "failures");
+            successes = List.copyOf(successes);
+            failures  = List.copyOf(failures);
+        }
+    }
+
+    /**
+     * Returns a {@link Collector} that accumulates a {@code Stream<Try<V>>} into a single
+     * {@code Try<List<V>>}, failing on the first {@code Failure} encountered.
+     *
+     * <p><strong>Note:</strong> this Collector is <em>not</em> fail-fast. Because the Java
+     * {@link Collector} API always feeds every stream element to the accumulator before the
+     * finisher runs, all elements are consumed regardless of failures. The finisher then
+     * returns the first failure encountered, or {@code Success(List)} if all elements succeeded.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Try<List<String>> result = ids.stream()
+     *     .map(id -> Try.of(() -> load(id)))
+     *     .collect(Try.toList());
+     * }</pre>
+     *
+     * @param <V> the success value type
+     * @return a collector producing {@code Try<List<V>>}
+     */
+    static <V> Collector<Try<V>, ?, Try<List<V>>> toList() {
+        return Collector.of(
+            () -> new ArrayList<Try<V>>(),
+            List::add,
+            (a, b) -> { a.addAll(b); return a; },
+            list -> {
+                List<V> values = new ArrayList<>(list.size());
+                for (Try<V> t : list) {
+                    if (t == null) throw new NullPointerException("toList stream contains a null element");
+                    if (t instanceof Failure<V> f) return Try.failure(f.cause());
+                    values.add(((Success<V>) t).value());
+                }
+                return Try.success(Collections.unmodifiableList(values));
+            }
+        );
+    }
+
+    /**
+     * Returns a {@link Collector} that partitions a {@code Stream<Try<V>>} into two typed
+     * lists: {@link Partition#successes()} for values from {@code Success} elements, and
+     * {@link Partition#failures()} for causes from {@code Failure} elements. Both lists are
+     * unmodifiable and in encounter order.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Try.Partition<String> p = stream.collect(Try.partitioningBy());
+     * p.successes(); // List<String>
+     * p.failures();  // List<Throwable>
+     * }</pre>
+     *
+     * @param <V> the success value type
+     * @return a collector producing a {@link Partition} of successes and failures
+     */
+    static <V> Collector<Try<V>, ?, Partition<V>> partitioningBy() {
+        class Acc {
+            final ArrayList<V>         successes = new ArrayList<>();
+            final ArrayList<Throwable> failures  = new ArrayList<>();
+        }
+        return Collector.of(
+            Acc::new,
+            (acc, t) -> {
+                if (t == null) throw new NullPointerException("partitioningBy stream contains a null element");
+                if (t instanceof Success<V> s) acc.successes.add(s.value());
+                else acc.failures.add(((Failure<V>) t).cause());
+            },
+            (a, b) -> { a.successes.addAll(b.successes); a.failures.addAll(b.failures); return a; },
+            acc -> new Partition<>(acc.successes, acc.failures)
+        );
     }
 
     // ---------- sequence / traverse ----------
