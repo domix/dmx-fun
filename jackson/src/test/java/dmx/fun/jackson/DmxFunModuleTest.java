@@ -349,8 +349,7 @@ class DmxFunModuleTest {
             Either<String, Integer> original = Either.right(5);
             String json = mapper.writeValueAsString(original);
             Either<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Either<String, Integer>>() {});
-            assertThat(deserialized.isRight()).isTrue();
-            assertThat(deserialized.getRight()).isEqualTo(5);
+            assertThat(deserialized).isRight().containsRight(5);
         }
 
         @Test
@@ -358,24 +357,21 @@ class DmxFunModuleTest {
             Either<String, Integer> original = Either.left("left value");
             String json = mapper.writeValueAsString(original);
             Either<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Either<String, Integer>>() {});
-            assertThat(deserialized.isLeft()).isTrue();
-            assertThat(deserialized.getLeft()).isEqualTo("left value");
+            assertThat(deserialized).isLeft().containsLeft("left value");
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeRight_rawType_coversNullRightTypePath() throws Exception {
-            Either<?, ?> result = mapper.readValue("{\"right\":5}", Either.class);
-            assertThat(result.isRight()).isTrue();
-            assertThat(result.getRight()).isEqualTo(5);
+            Either<Object, Object> result = (Either<Object, Object>) mapper.readValue("{\"right\":5}", Either.class);
+            assertThat(result).isRight().containsRight(5);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeLeft_rawType_coversNullLeftTypePath() throws Exception {
-            Either<?, ?> result = mapper.readValue("{\"left\":\"e\"}", Either.class);
-            assertThat(result.isLeft()).isTrue();
-            assertThat(result.getLeft()).isEqualTo("e");
+            Either<Object, Object> result = (Either<Object, Object>) mapper.readValue("{\"left\":\"e\"}", Either.class);
+            assertThat(result).isLeft().containsLeft("e");
         }
 
         @Test

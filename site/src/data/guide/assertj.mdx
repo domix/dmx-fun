@@ -1,11 +1,12 @@
 ---
 title: "AssertJ Integration — Developer Guide"
-description: "How to use the optional fun-assertj module: fluent assertions for Option, Result, Try, Validated, Tuple, Resource, Guard, and Accumulator types via DmxFunAssertions.assertThat."
+description: "How to use the optional fun-assertj module: fluent assertions for Either, Option, Result, Try, Validated, Tuple, Resource, Guard, and Accumulator types via DmxFunAssertions.assertThat."
 order: 15
 h1: "AssertJ Integration"
 ---
 
 import {Content as Dependency}           from '../code/guide/assertj/dependency.mdx';
+import {Content as EitherAssertions}     from '../code/guide/assertj/either-assertions.mdx';
 import {Content as OptionAssertions}     from '../code/guide/assertj/option-assertions.mdx';
 import {Content as ResultAssertions}     from '../code/guide/assertj/result-assertions.mdx';
 import {Content as TryAssertions}        from '../code/guide/assertj/try-assertions.mdx';
@@ -49,6 +50,7 @@ in the same test class without naming conflict, because the argument types diffe
 
 | Type                 | Methods                                                                                                                  |
 |----------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `Either<L, R>`       | `isRight()`, `isLeft()`, `containsRight(expected)`, `containsLeft(expected)`                                             |
 | `Option<T>`          | `isSome()`, `isNone()`, `containsValue(expected)`, `hasValueSatisfying(consumer)`                                        |
 | `Result<V, E>`       | `isOk()`, `isErr()`, `containsValue(expected)`, `containsError(expected)`                                                |
 | `Try<V>`             | `isSuccess()`, `isFailure()`, `containsValue(expected)`, `failsWith(exceptionType)`                                      |
@@ -59,6 +61,10 @@ in the same test class without naming conflict, because the argument types diffe
 | `Resource<T>`        | `succeedsWith(expected)`, `failsWith(exceptionType)`, `failsWithMessage(message)`                                        |
 | `Guard<T>`           | `accepts(value)`, `rejects(value)`, `rejectsWithMessage(value, message)`, `rejectsWithMessages(value, messages...)`      |
 | `Accumulator<E, A>`  | `hasValue(expected)`, `hasAccumulation(expected)`, `accumulationContains(element)`, `accumulationHasSize(size)`          |
+
+## `Either<L, R>` assertions
+
+<EitherAssertions/>
 
 ## `Option<T>` assertions
 
