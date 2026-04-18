@@ -3,8 +3,11 @@ fileName: 'Demo.java'
 ---
 
 ```java
-// Spring Boot — declare DmxFunModule as a @Bean; Spring applies it automatically
-// to the auto-configured ObjectMapper.
+// Spring Boot (fun-spring-boot) — DmxFunModule is registered automatically;
+// no explicit @Bean is needed. See "Auto-configuration with fun-spring-boot" below.
+
+// Spring Boot (fun-jackson only, without fun-spring-boot) — declare the bean manually;
+// Spring's JacksonAutoConfiguration applies it to the ObjectMapper.
 @Configuration
 public class JacksonConfig {
     @Bean

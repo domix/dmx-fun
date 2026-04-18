@@ -12,6 +12,7 @@ import {Content as RoundtripResult} from '../code/guide/jackson/roundtrip-result
 import {Content as RoundtripTry}    from '../code/guide/jackson/roundtrip-try.mdx';
 import {Content as RoundtripOther}  from '../code/guide/jackson/roundtrip-other.mdx';
 import {Content as SpringJaxrs}     from '../code/guide/jackson/spring-jaxrs.mdx';
+import {Content as SpringBootAuto}  from '../code/guide/jackson/spring-boot-auto.mdx';
 
 > **Runnable example:** [`JacksonSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/JacksonSample.java)
 
@@ -70,6 +71,24 @@ without any explicit wiring.
 ## Spring Boot and JAX-RS
 
 <SpringJaxrs/>
+
+### Auto-configuration with `fun-spring-boot`
+
+If you use `fun-spring-boot` (instead of wiring things manually), `DmxFunModule` is
+registered as a Spring bean automatically whenever both `jackson-databind` and
+`fun-jackson` are on the classpath. Spring Boot's `JacksonAutoConfiguration`
+discovers all `Module` beans and applies them to the `ObjectMapper` — no
+`@Bean DmxFunModule` declaration required.
+
+<SpringBootAuto/>
+
+The auto-configuration follows standard Spring Boot conventions:
+
+| Condition | Behaviour |
+|---|---|
+| `jackson-databind` **and** `fun-jackson` on classpath | `DmxFunModule` bean registered |
+| User declares own `DmxFunModule` `@Bean` | Auto-configuration backs off (`@ConditionalOnMissingBean`) |
+| `dmx.fun.jackson.enabled=false` | Auto-configuration disabled entirely |
 
 ## Version compatibility
 
