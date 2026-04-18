@@ -4,6 +4,7 @@
 java = "25"
 assertj = "3.27.7"
 jackson = "2.21.2"
+aspectj = "1.9.25"
 spring = "7.0.6"
 h2 = "2.4.240"
 postgresql = "42.7.10"
@@ -13,6 +14,7 @@ junit = "6.0.3"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+aspectj-weaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }

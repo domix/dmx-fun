@@ -1,0 +1,17 @@
+---
+fileName: 'ReportService.java'
+---
+
+```java
+@Service
+public class ReportService {
+    private final AuditRepository repo;
+
+    @TransactionalTry(propagation = Propagation.REQUIRES_NEW)
+    public Try<AuditLog> auditEvent(Event event) {
+        return Try.of(() -> repo.save(event));
+        // • Success(log) → transaction commits
+        // • Failure(ex)  → transaction rolls back; the Try is returned to the caller
+    }
+}
+```

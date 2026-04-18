@@ -1,0 +1,19 @@
+---
+fileName: 'RegistrationService.java'
+---
+
+```java
+@Service
+public class RegistrationService {
+    private final UserRepository repo;
+
+    @TransactionalValidated
+    public Validated<NonEmptyList<String>, User> register(RegistrationRequest req) {
+        return validateName(req)
+            .combine(validateEmail(req), UserDraft::new)
+            .map(repo::save);
+        // • Valid(user)    → transaction commits
+        // • Invalid(errors) → transaction rolls back; all writes undone
+    }
+}
+```

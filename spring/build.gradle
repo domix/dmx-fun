@@ -35,6 +35,13 @@ dependencies {
     // assertj-core is already on the classpath via dmx-fun.java-base.
     compileOnly        project(':assertj')
     testImplementation project(':assertj')
+
+    // AspectJ weaver: needed at compile time (aspect annotations) and test runtime
+    // (Spring AOP uses it to parse @Around pointcut expressions).
+    // compileOnly puts it on compileClasspath so the JPMS module-path plugin
+    // includes it for compileJava/compileTestJava; testImplementation covers test runtime.
+    compileOnly        libs.aspectj.weaver
+    testImplementation libs.aspectj.weaver
 }
 
 // java.sql is required at both compile and runtime because Spring's transaction
@@ -44,9 +51,9 @@ dependencies {
 // patched into the named dmx.fun.spring module.
 jpmsTest {
     moduleName   = 'dmx.fun.spring'
-    extraModules = ['java.sql', 'dmx.fun.assertj']
+    extraModules = ['java.sql', 'dmx.fun.assertj', 'org.aspectj.weaver']
     extraReads   = ['java.sql', 'dmx.fun.assertj']
-    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context']
+    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop']
 }
 
 // assertj-core is on the classpath (unnamed module) at compile time but dmx.fun.assertj
