@@ -1,0 +1,40 @@
+---
+fileName: 'AccumulatorTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+BinaryOperator<List<String>> concat = (a, b) -> {
+    var merged = new ArrayList<>(a);
+    merged.addAll(b);
+    return merged;
+};
+
+Accumulator<List<String>, Integer> result =
+    Accumulator.of(10, List.of("loaded base value"))
+        .flatMap(v -> Accumulator.of(v * 2, List.of("doubled")), concat)
+        .flatMap(v -> Accumulator.of(v + 5, List.of("added 5")), concat);
+
+// Assert the primary computed value
+assertThat(result).hasValue(25);
+
+// Assert individual log entries are present
+assertThat(result)
+    .accumulationContains("loaded base value")
+    .accumulationContains("doubled")
+    .accumulationContains("added 5");
+
+// Assert total number of log entries
+assertThat(result).accumulationHasSize(3);
+
+// Assert the exact accumulation
+assertThat(result)
+    .hasAccumulation(List.of("loaded base value", "doubled", "added 5"));
+
+// Fluent chain
+assertThat(result)
+    .hasValue(25)
+    .accumulationContains("loaded base value")
+    .accumulationHasSize(3);
+```

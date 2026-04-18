@@ -1,0 +1,31 @@
+---
+fileName: 'GuardTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+Guard<String> alphanumeric = Guard.of(
+    s -> s.matches("[a-zA-Z0-9]+"), "must be alphanumeric");
+
+// Assert acceptance
+assertThat(alphanumeric).accepts("alice123");
+
+// Assert rejection (any invalid value)
+assertThat(alphanumeric).rejects("!!");
+
+// Assert a specific rejection message is present
+assertThat(alphanumeric).rejectsWithMessage("!!", "alphanumeric");
+
+// Combined guard: assert all expected messages appear
+Guard<String> minLength = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+Guard<String> username  = alphanumeric.and(minLength);
+
+assertThat(username).rejectsWithMessages("!!", "alphanumeric", "at least 3 chars");
+
+// Fluent chain
+assertThat(username)
+    .accepts("alice")
+    .rejects("!!")
+    .rejectsWithMessage("ab", "at least 3 chars");
+```

@@ -1,6 +1,6 @@
 ---
 title: "AssertJ Integration — Developer Guide"
-description: "How to use the optional fun-assertj module: fluent assertions for Option, Result, Try, Validated, and Tuple types via DmxFunAssertions.assertThat."
+description: "How to use the optional fun-assertj module: fluent assertions for Option, Result, Try, Validated, Tuple, Resource, Guard, and Accumulator types via DmxFunAssertions.assertThat."
 order: 15
 h1: "AssertJ Integration"
 ---
@@ -10,7 +10,10 @@ import {Content as OptionAssertions}     from '../code/guide/assertj/option-asse
 import {Content as ResultAssertions}     from '../code/guide/assertj/result-assertions.mdx';
 import {Content as TryAssertions}        from '../code/guide/assertj/try-assertions.mdx';
 import {Content as ValidatedAssertions}  from '../code/guide/assertj/validated-assertions.mdx';
-import {Content as TupleAssertions}      from '../code/guide/assertj/tuple-assertions.mdx';
+import {Content as TupleAssertions}        from '../code/guide/assertj/tuple-assertions.mdx';
+import {Content as ResourceAssertions}    from '../code/guide/assertj/resource-assertions.mdx';
+import {Content as GuardAssertions}       from '../code/guide/assertj/guard-assertions.mdx';
+import {Content as AccumulatorAssertions} from '../code/guide/assertj/accumulator-assertions.mdx';
 
 > **Runnable example:** [`AssertJSampleTest.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/test/java/dmx/fun/samples/AssertJSampleTest.java)
 
@@ -44,15 +47,18 @@ in the same test class without naming conflict, because the argument types diffe
 
 ## Assertions reference
 
-| Type                 | Methods                                                                                  |
-|----------------------|------------------------------------------------------------------------------------------|
-| `Option<T>`          | `isSome()`, `isNone()`, `containsValue(expected)`, `hasValueSatisfying(consumer)`        |
-| `Result<V, E>`       | `isOk()`, `isErr()`, `containsValue(expected)`, `containsError(expected)`                |
-| `Try<V>`             | `isSuccess()`, `isFailure()`, `containsValue(expected)`, `failsWith(exceptionType)`      |
-| `Validated<E, A>`    | `isValid()`, `isInvalid()`, `containsValue(expected)`, `hasError(expected)`              |
-| `Tuple2<A, B>`       | `hasFirst(expected)`, `hasSecond(expected)`                                              |
-| `Tuple3<A, B, C>`    | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)`                        |
-| `Tuple4<A, B, C, D>` | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)`, `hasFourth(expected)` |
+| Type                 | Methods                                                                                                                  |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `Option<T>`          | `isSome()`, `isNone()`, `containsValue(expected)`, `hasValueSatisfying(consumer)`                                        |
+| `Result<V, E>`       | `isOk()`, `isErr()`, `containsValue(expected)`, `containsError(expected)`                                                |
+| `Try<V>`             | `isSuccess()`, `isFailure()`, `containsValue(expected)`, `failsWith(exceptionType)`                                      |
+| `Validated<E, A>`    | `isValid()`, `isInvalid()`, `containsValue(expected)`, `hasError(expected)`                                              |
+| `Tuple2<A, B>`       | `hasFirst(expected)`, `hasSecond(expected)`                                                                              |
+| `Tuple3<A, B, C>`    | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)`                                                        |
+| `Tuple4<A, B, C, D>` | `hasFirst(expected)`, `hasSecond(expected)`, `hasThird(expected)`, `hasFourth(expected)`                                 |
+| `Resource<T>`        | `succeedsWith(expected)`, `failsWith(exceptionType)`, `failsWithMessage(message)`                                        |
+| `Guard<T>`           | `accepts(value)`, `rejects(value)`, `rejectsWithMessage(value, message)`, `rejectsWithMessages(value, messages...)`      |
+| `Accumulator<E, A>`  | `hasValue(expected)`, `hasAccumulation(expected)`, `accumulationContains(element)`, `accumulationHasSize(size)`          |
 
 ## `Option<T>` assertions
 
@@ -73,6 +79,35 @@ in the same test class without naming conflict, because the argument types diffe
 ## `Tuple2/3/4` assertions
 
 <TupleAssertions/>
+
+## `Resource<T>` assertions
+
+The first assertion called on a `ResourceAssert` runs the full acquire-use-release
+cycle once (via `use(v -> v)`) and caches the result. All subsequent chained
+assertions on the same instance reuse that cached `Try` — the lifecycle is never
+triggered more than once. Use `succeedsWith` to verify that acquisition and
+release complete without error; use `failsWith` / `failsWithMessage` to verify
+that the cycle fails in the expected way.
+
+<ResourceAssertions/>
+
+## `Guard<T>` assertions
+
+`Guard.check(value)` returns `Validated<NonEmptyList<String>, T>`. The assertion
+methods call `check` internally — you only supply the value to validate and the
+messages you expect to find in the rejection error list.
+
+<GuardAssertions/>
+
+## `Accumulator<E, A>` assertions
+
+`accumulationContains` and `accumulationHasSize` require the accumulated
+side-channel (`E`) to be a non-null `java.util.Collection`. If it is `null` or
+not a `Collection`, the assertion fails with a descriptive error. Use
+`hasAccumulation` for equality checks on any accumulation type, including
+non-collection and nullable values.
+
+<AccumulatorAssertions/>
 
 ## Version compatibility
 

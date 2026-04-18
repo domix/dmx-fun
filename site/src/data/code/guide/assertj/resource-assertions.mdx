@@ -1,0 +1,35 @@
+---
+fileName: 'ResourceTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+// Successful acquire + use + release
+Resource<String> file = Resource.of(
+    () -> "file-content",   // acquire
+    content -> { });        // release
+
+assertThat(file).succeedsWith("file-content");
+
+// Acquisition failure — verify exception type
+Resource<String> broken = Resource.of(
+    () -> { throw new IOException("file not found"); },
+    content -> { });
+
+assertThat(broken).failsWith(IOException.class);
+
+// Acquisition failure — verify exception message
+assertThat(broken).failsWithMessage("file not found");
+
+// Chain both failure checks
+assertThat(broken)
+    .failsWith(IOException.class)
+    .failsWithMessage("not found");
+
+// AutoCloseable shorthand
+Resource<BufferedReader> reader = Resource.fromAutoCloseable(
+    () -> new BufferedReader(new FileReader("data.txt")));
+
+assertThat(reader).failsWith(FileNotFoundException.class);
+```
