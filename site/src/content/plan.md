@@ -55,7 +55,7 @@
 
 41. Can functional programming coexist with OOP?
 42. How to introduce functional programming into a legacy codebase
-43. Functional design of business rules
+43. ~~Functional design of business rules~~ [265]
 44. Separating pure logic from infrastructure
 45. ~~Testing in functional programming: why it is often simpler~~ [160]
 46. How functional programming improves maintainability
@@ -103,3 +103,4 @@
 [160]: https://github.com/domix/dmx-fun/pull/160
 [205]: https://github.com/domix/dmx-fun/pull/205
 [241]: https://github.com/domix/dmx-fun/pull/241
+[265]: https://github.com/domix/dmx-fun/pull/265
