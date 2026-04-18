@@ -1,1 +1,2 @@
 dmx.fun.spring.boot.DmxFunSpringAutoConfiguration
+dmx.fun.spring.boot.web.DmxFunWebMvcAutoConfiguration

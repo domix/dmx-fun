@@ -1,8 +1,8 @@
 package dmx.fun.sample.item;
 
+import dmx.fun.Option;
 import dmx.fun.Result;
 import java.util.List;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
  * REST controller demonstrating JSON serialization of dmx-fun types via fun-jackson.
  *
  * <ul>
- *   <li>{@code GET /items/{id}} — returns 200 with the item, or 404 for missing items.
- *       Uses {@link dmx.fun.Option} in the service; the controller maps it to HTTP semantics.</li>
+ *   <li>{@code GET /items/{id}} — returns {@link dmx.fun.Option}{@code <Item>} directly;
+ *       {@link dmx.fun.spring.boot.web.DmxFunWebMvcAutoConfiguration} converts it to
+ *       HTTP 200 (Some) or 404 (None) automatically.</li>
  *   <li>{@code POST /items} — returns {@link Result}{@code <Item,String>} serialized as JSON.
  *       Success: {@code {"ok":{...}}}; failure: {@code {"error":"..."}}.</li>
  *   <li>{@code PUT /items/{id}} — same {@code Result} pattern, demonstrating the declarative
@@ -38,11 +39,12 @@ public class ItemController {
         return service.findAll();
     }
 
+    // Option<Item> is handled by OptionHandlerMethodReturnValueHandler (auto-configured):
+    //   some(item) → HTTP 200 {"id":1,"name":"...","description":"..."}
+    //   none()     → HTTP 404 (empty body)
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable("id") Long id) {
-        return service.findById(id)
-            .map(ResponseEntity::ok)
-            .getOrElse(ResponseEntity.notFound().build());
+    public Option<Item> findById(@PathVariable("id") Long id) {
+        return service.findById(id);
     }
 
     // Result<Item,String> is serialized by DmxFunModule:
