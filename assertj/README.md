@@ -38,6 +38,20 @@ the argument types differ.
 
 ## Assertions reference
 
+### `Either<L, R>`
+
+| Method                     | Description                                                  |
+|----------------------------|--------------------------------------------------------------|
+| `isRight()`                | Asserts the either is a Right                                |
+| `isLeft()`                 | Asserts the either is a Left                                 |
+| `containsRight(expected)`  | Asserts the either is Right and contains the given value     |
+| `containsLeft(expected)`   | Asserts the either is Left and contains the given value      |
+
+```java
+assertThat(Either.right(42)).isRight().containsRight(42);
+assertThat(Either.left("oops")).isLeft().containsLeft("oops");
+```
+
 ### `Option<T>`
 
 | Method                         | Description                                                               |
@@ -108,6 +122,52 @@ assertThat(Validated.invalid("bad")).isInvalid().hasError("bad");
 assertThat(new Tuple2<>("Alice", 30)).hasFirst("Alice").hasSecond(30);
 assertThat(Tuple3.of("Alice", 30, true)).hasFirst("Alice").hasSecond(30).hasThird(true);
 assertThat(Tuple4.of("Alice", 30, true, 1.75)).hasFirst("Alice").hasFourth(1.75);
+```
+
+### `Resource<T>`
+
+| Method                       | Description                                                          |
+|------------------------------|----------------------------------------------------------------------|
+| `succeedsWith(expected)`     | Asserts the resource lifecycle completes and yields the given value  |
+| `failsWith(exceptionType)`   | Asserts the lifecycle fails with an exception of the given type      |
+| `failsWithMessage(message)`  | Asserts the lifecycle fails with an exception containing the message |
+
+The lifecycle (acquire → use → release) runs exactly once and is cached — all
+chained assertions on the same instance reuse the same result.
+
+```java
+assertThat(Resource.of(() -> "conn", c -> {})).succeedsWith("conn");
+assertThat(Resource.of(() -> { throw new IOException("timeout"); }, c -> {}))
+    .failsWith(IOException.class);
+```
+
+### `Guard<T>`
+
+| Method                                   | Description                                                       |
+|------------------------------------------|-------------------------------------------------------------------|
+| `accepts(value)`                         | Asserts the guard passes for the given value                      |
+| `rejects(value)`                         | Asserts the guard fails for the given value                       |
+| `rejectsWithMessage(value, message)`     | Asserts the guard fails with the exact given message              |
+| `rejectsWithMessages(value, messages…)`  | Asserts the guard fails with all of the given messages            |
+
+```java
+Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+assertThat(notBlank).accepts("alice").rejects("  ");
+assertThat(notBlank).rejectsWithMessage("", "must not be blank");
+```
+
+### `Accumulator<E, A>`
+
+| Method                          | Description                                                              |
+|---------------------------------|--------------------------------------------------------------------------|
+| `hasValue(expected)`            | Asserts the primary value equals the expected value                      |
+| `hasAccumulation(expected)`     | Asserts the side-channel accumulation equals the expected value          |
+| `accumulationContains(element)` | Asserts the accumulation (a `Collection`) contains the given element     |
+| `accumulationHasSize(size)`     | Asserts the accumulation (a `Collection`) has the given size             |
+
+```java
+Accumulator<List<String>, Integer> acc = Accumulator.of(42, List.of("step1", "step2"));
+assertThat(acc).hasValue(42).accumulationContains("step1").accumulationHasSize(2);
 ```
 
 ## AssertJ version compatibility
