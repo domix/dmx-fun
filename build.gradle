@@ -15,7 +15,8 @@ def moduleMap = [
     ':lib'     : 'dmx.fun',
     ':assertj' : 'dmx.fun.assertj',
     ':jackson' : 'dmx.fun.jackson',
-    ':spring'  : 'dmx.fun.spring',
+    ':spring'      : 'dmx.fun.spring',
+    ':spring-boot' : 'dmx.fun.spring.boot',
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────

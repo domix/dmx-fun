@@ -17,6 +17,7 @@ import {Content as TransactionalTrySnippet}       from '../code/guide/spring/tra
 import {Content as TransactionalValidatedSnippet} from '../code/guide/spring/transactional-validated.mdx';
 import {Content as TransactionalAttributes}       from '../code/guide/spring/transactional-attributes.mdx';
 import {Content as ProgrammaticVsDeclarative}     from '../code/guide/spring/programmatic-vs-declarative.mdx';
+import {Content as SpringBootDependency}           from '../code/guide/spring/spring-boot-dependency.mdx';
 
 The `fun-spring` module adds first-class Spring transaction support for `Result<V,E>`,
 `Try<V>`, and `Validated<E,A>`. It is an **optional** dependency — the core `fun` library
@@ -34,10 +35,41 @@ error/failure/invalid outcome marks the transaction rollback-only before Spring 
 
 ## Adding the dependency
 
-`fun-spring` declares `spring-tx` and `spring-context` as `compileOnly`. You must add
-them to your own classpath — typically they arrive transitively via `spring-webmvc` or
-`spring-boot-starter-data-jpa`. Spring Framework releases **6.0.x, 6.1.x, 6.2.x, and 7.0.x**
-are supported (see [version compatibility](#version-compatibility) below).
+Two artifacts are available depending on whether you use Spring Boot:
+
+| Artifact | Use when |
+|---|---|
+| `fun-spring` | Plain Spring Framework, or you want manual wiring |
+| `fun-spring-boot` | Spring Boot — auto-configures all beans for you |
+
+`fun-spring-boot` depends on `fun-spring` transitively, so you only need one dependency.
+`fun-spring` declares `spring-tx` and `spring-context` as `compileOnly` so your Spring
+Framework version is not forced — typically they arrive via `spring-webmvc` or
+`spring-boot-starter-data-jpa`.
+
+Spring Framework releases **6.0.x, 6.1.x, 6.2.x, and 7.0.x** are supported
+(see [version compatibility](#version-compatibility) below).
+
+### With Spring Boot (`fun-spring-boot`)
+
+<SpringBootDependency/>
+
+Spring Boot picks up `DmxFunSpringAutoConfiguration` from the JAR's
+`META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` file
+and registers the following beans automatically — no `@EnableAspectJAutoProxy` or
+explicit `@Bean` declarations required:
+
+| Bean | Registered when |
+|---|---|
+| `TxResult` | Always (spring-tx present) |
+| `TxTry` | Always (spring-tx present) |
+| `TxValidated` | Always (spring-tx present) |
+| `DmxTransactionalAspect` | `aspectjweaver` is also on the classpath |
+
+All beans are guarded by `@ConditionalOnMissingBean`, so you can override any of them
+with your own `@Bean` declaration.
+
+### With plain Spring Framework (`fun-spring`)
 
 <Dependency/>
 
@@ -46,8 +78,9 @@ are supported (see [version compatibility](#version-compatibility) below).
 Both components are Spring `@Component` beans. You need one `PlatformTransactionManager`
 in your context — Spring Boot auto-configures one for every registered `DataSource`.
 
-**Spring Boot** — no extra wiring needed: component scanning picks up `TxResult`,
-`TxTry`, and `TxValidated` automatically as long as `fun-spring` is on the classpath.
+**Spring Boot with `fun-spring-boot`** — no extra wiring needed: the auto-configuration
+registers `TxResult`, `TxTry`, `TxValidated`, and (when `aspectjweaver` is present)
+`DmxTransactionalAspect` automatically.
 
 **Plain Spring** — declare the beans explicitly or add the `dmx.fun.spring` package to
 your `@ComponentScan`.

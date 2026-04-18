@@ -1,0 +1,33 @@
+# Verifies that the fun-spring-boot module remains compatible with multiple Spring Boot
+# versions. Spring Boot is declared as compileOnly so users bring their own version;
+# this matrix catches regressions against different release lines before they reach main.
+#
+# Triggered only on pull requests that touch spring-boot/** or this workflow file.
+# To run a specific version locally:
+#   ./gradlew :spring-boot:test -PspringBootVersion=4.0.0
+#
+# Spring Boot 4.x aligns with Spring Framework 7.x (used by this project).
+name: Spring Boot compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'spring-boot/**'
+      - 'spring/**'
+      - '.github/workflows/spring-boot-compatibility.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        spring-boot-version: ['3.0.13', '3.1.12', '3.2.12', '3.3.13', '3.4.13', '3.5.13', '4.0.5']
+    name: Spring Boot ${{ matrix.spring-boot-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      - run: ./gradlew :spring-boot:test -PspringBootVersion=${{ matrix.spring-boot-version }}
