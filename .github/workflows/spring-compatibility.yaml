@@ -17,6 +17,7 @@ on:
     # Run when the spring module or this workflow file is modified.
     paths:
       - 'spring/**'
+      - 'gradle/libs.versions.toml'
       - '.github/workflows/spring-compatibility.yaml'
 
 jobs:

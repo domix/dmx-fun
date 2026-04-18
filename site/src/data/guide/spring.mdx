@@ -62,10 +62,12 @@ explicit `@Bean` declarations required:
 
 | Bean | Registered when |
 |---|---|
-| `TxResult` | Always (spring-tx present) |
-| `TxTry` | Always (spring-tx present) |
-| `TxValidated` | Always (spring-tx present) |
-| `DmxTransactionalAspect` | `aspectjweaver` is also on the classpath |
+| `TxResult` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
+| `TxTry` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
+| `TxValidated` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
+| `DmxTransactionalAspect` | Same as above **and** `aspectjweaver` is also on the classpath |
+
+`PlatformTransactionManager` is auto-configured by Spring Boot for every registered `DataSource`; if you add a `DataSource` (e.g. via `spring-boot-starter-data-jpa` or `spring-boot-starter-jdbc`), no explicit transaction manager declaration is needed.
 
 All beans are guarded by `@ConditionalOnMissingBean`, so you can override any of them
 with your own `@Bean` declaration (see [Customizing auto-configured beans](#customizing-auto-configured-beans) below).
