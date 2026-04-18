@@ -59,6 +59,21 @@ class TryCollectorTest {
             .hasMessageContaining("null");
     }
 
+    @Test
+    void toList_nullAfterFailureReturnsFailureNotNPE() {
+        // A null Try element after an earlier Failure must not mask the failure with NPE.
+        // The finisher returns the first Failure it encounters before ever reaching null.
+        RuntimeException boom = new RuntimeException("first");
+        Try<List<Integer>> result = Stream.of(
+                Try.success(1),
+                Try.<Integer>failure(boom),
+                (Try<Integer>) null)
+            .collect(Try.toList());
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(boom);
+    }
+
     // ── Try.partitioningBy() ─────────────────────────────────────────────────
 
     @Test

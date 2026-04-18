@@ -3,7 +3,7 @@ fileName: 'OrderProcessor.java'
 ---
 
 ```java
-// ── Results.toList() — fail-fast: returns first Err ──────────────────────────
+// ── Results.toList() — returns first Err (stream still fully traversed) ──────
 Result<List<Integer>, String> validated =
     Stream.<Result<Integer, String>>of(Result.ok(1), Result.ok(2), Result.ok(3))
           .collect(Results.toList());
@@ -14,10 +14,12 @@ Result<List<Integer>, String> firstFails =
           .collect(Results.toList());
 // → Err("bad")
 
-// Real-world: validate every line in a CSV upload — stop on first invalid row
+// Real-world: validate every line in a CSV upload — returns first parse error
+// Note: all lines are parsed; toList() does not short-circuit upstream evaluation.
+// Do not rely on early termination for expensive or side-effecting parse logic.
 Result<List<OrderRow>, String> rows = csvLines.stream()
     .map(OrderRow::parse)          // Stream<Result<OrderRow, String>>
-    .collect(Results.toList());    // Ok(all rows) or Err(first parse error)
+    .collect(Results.toList());    // Ok(all rows) or first Err encountered
 
 // ── Results.partitioning() — process all, split into oks and errors ───────────
 Results.Partition<OrderRow, String> p = csvLines.stream()
