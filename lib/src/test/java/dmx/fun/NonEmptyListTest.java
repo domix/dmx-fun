@@ -401,4 +401,118 @@ class NonEmptyListTest {
             Stream.of(1, 2, 3).collect(NonEmptyList.toNonEmptyList());
         assertThat(viaAlias).isEqualTo(viaCollector);
     }
+
+    // -------------------------------------------------------------------------
+    // SequencedCollection — getFirst() / getLast() / reversed()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getFirst_returnsHead() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        assertThat(nel.getFirst()).isEqualTo(1);
+    }
+
+    @Test
+    void getFirst_singleton_returnsSoleElement() {
+        assertThat(NonEmptyList.singleton("only").getFirst()).isEqualTo("only");
+    }
+
+    @Test
+    void getLast_returnsLastTailElement() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        assertThat(nel.getLast()).isEqualTo(3);
+    }
+
+    @Test
+    void getLast_singleton_returnsSoleElement() {
+        assertThat(NonEmptyList.singleton("only").getLast()).isEqualTo("only");
+    }
+
+    @Test
+    void reversed_returnsElementsInReverseOrder() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        NonEmptyList<Integer> rev = nel.reversed();
+        assertThat(rev.toList()).containsExactly(3, 2, 1);
+    }
+
+    @Test
+    void reversed_singleton_returnsSameContent() {
+        NonEmptyList<String> nel = NonEmptyList.singleton("x");
+        assertThat(nel.reversed().toList()).containsExactly("x");
+    }
+
+    @Test
+    void reversed_doesNotMutateOriginal() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        nel.reversed();
+        assertThat(nel.toList()).containsExactly(1, 2, 3);
+    }
+
+    // -------------------------------------------------------------------------
+    // SequencedCollection — mutating methods throw UnsupportedOperationException
+    // -------------------------------------------------------------------------
+
+    @Test
+    void addFirst_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).addFirst(0))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void addLast_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).addLast(2))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void removeFirst_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).removeFirst())
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void removeLast_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).removeLast())
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection — contains / isEmpty / immutable mutations
+    // -------------------------------------------------------------------------
+
+    @Test
+    void isEmpty_alwaysFalse() {
+        assertThat(NonEmptyList.singleton("x").isEmpty()).isFalse();
+        assertThat(NonEmptyList.of(1, List.of(2, 3)).isEmpty()).isFalse();
+    }
+
+    @Test
+    void contains_presentElement_returnsTrue() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        assertThat(nel.contains(1)).isTrue();
+        assertThat(nel.contains(3)).isTrue();
+    }
+
+    @Test
+    void contains_absentElement_returnsFalse() {
+        assertThat(NonEmptyList.of(1, List.of(2)).contains(99)).isFalse();
+    }
+
+    @Test
+    void add_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).add(2))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void remove_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).remove(Integer.valueOf(1)))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void clear_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).clear())
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
 }

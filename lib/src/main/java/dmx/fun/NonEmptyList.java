@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -28,7 +29,7 @@ import org.jspecify.annotations.NullMarked;
  * @param <T> the type of elements in this list
  */
 @NullMarked
-public final class NonEmptyList<T> implements Iterable<T> {
+public final class NonEmptyList<T> implements SequencedCollection<T> {
 
     private final T head;
     private final List<T> tail;
@@ -107,6 +108,86 @@ public final class NonEmptyList<T> implements Iterable<T> {
      */
     public T head() {
         return head;
+    }
+
+    /**
+     * Returns the first element of this list. Alias for {@link #head()}.
+     *
+     * <p>Implements {@link SequencedCollection#getFirst()}.
+     *
+     * @return the first element (never {@code null})
+     */
+    @Override
+    public T getFirst() {
+        return head;
+    }
+
+    /**
+     * Returns the last element of this list.
+     *
+     * <p>Implements {@link SequencedCollection#getLast()}.
+     *
+     * @return the last element (never {@code null})
+     */
+    @Override
+    public T getLast() {
+        return tail.isEmpty() ? head : tail.get(tail.size() - 1);
+    }
+
+    /**
+     * Returns a new {@code NonEmptyList} with all elements in reverse order.
+     *
+     * <p>Implements {@link SequencedCollection#reversed()}.
+     *
+     * @return a reversed copy of this list
+     */
+    @Override
+    public NonEmptyList<T> reversed() {
+        List<T> all = new ArrayList<>(toList());
+        Collections.reverse(all);
+        T newHead = all.get(0);
+        List<T> newTail = List.copyOf(all.subList(1, all.size()));
+        return new NonEmptyList<>(newHead, newTail);
+    }
+
+    /**
+     * Unsupported — {@code NonEmptyList} is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public void addFirst(T t) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /**
+     * Unsupported — {@code NonEmptyList} is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public void addLast(T t) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /**
+     * Unsupported — {@code NonEmptyList} is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public T removeFirst() {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /**
+     * Unsupported — {@code NonEmptyList} is immutable.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public T removeLast() {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
     }
 
     /**
@@ -304,6 +385,72 @@ public final class NonEmptyList<T> implements Iterable<T> {
         }
         // values.size() == nel.size() >= 1, so fromList always returns Some
         return NonEmptyList.fromList(values);
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection (required by SequencedCollection)
+    // -------------------------------------------------------------------------
+
+    /** Always {@code false} — a {@code NonEmptyList} always has at least one element. */
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        return head.equals(o) || tail.contains(o);
+    }
+
+    @Override
+    public boolean containsAll(java.util.Collection<?> c) {
+        return toList().containsAll(c);
+    }
+
+    @Override
+    public Object[] toArray() {
+        return toList().toArray();
+    }
+
+    @Override
+    public <E> E[] toArray(E[] a) {
+        return toList().toArray(a);
+    }
+
+    /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
+    @Override
+    public boolean add(T t) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
+    @Override
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
+    @Override
+    public boolean addAll(java.util.Collection<? extends T> c) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
+    @Override
+    public boolean removeAll(java.util.Collection<?> c) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
+    @Override
+    public boolean retainAll(java.util.Collection<?> c) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
     }
 
     // -------------------------------------------------------------------------

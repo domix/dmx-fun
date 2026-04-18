@@ -1,0 +1,32 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3, 4, 5));
+
+// getFirst() / getLast() — always safe, no emptiness check needed
+int first = nel.getFirst();  // 1
+int last  = nel.getLast();   // 5
+
+// reversed() — returns a new NonEmptyList in reverse order
+NonEmptyList<Integer> rev = nel.reversed();
+// rev.toList() → [5, 4, 3, 2, 1]
+// original unchanged → nel.toList() → [1, 2, 3, 4, 5]
+
+// Works as a java.util.SequencedCollection
+SequencedCollection<Integer> sc = nel;
+sc.getFirst();  // 1
+sc.getLast();   // 5
+
+// Mutating methods always throw — NonEmptyList is immutable
+nel.addFirst(0);    // UnsupportedOperationException
+nel.addLast(6);     // UnsupportedOperationException
+nel.removeFirst();  // UnsupportedOperationException
+nel.removeLast();   // UnsupportedOperationException
+
+// Real-world: show the most recent and oldest event in a guaranteed-non-empty audit log
+NonEmptyList<AuditEvent> log = auditService.getEvents(userId); // guaranteed non-empty
+AuditEvent newest = log.getFirst();
+AuditEvent oldest = log.getLast();
+```

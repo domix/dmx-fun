@@ -5,14 +5,20 @@ fileName: 'Demo.java'
 ```java
 NonEmptyList<String> nel = NonEmptyList.of("a", List.of("b", "c"));
 
-String       head   = nel.head();   // "a"  — always present, never null
-List<String> tail   = nel.tail();   // ["b", "c"] — unmodifiable, may be empty
-List<String> all    = nel.toList(); // ["a", "b", "c"] — all elements
-int          size   = nel.size();   // 3 — always >= 1
+String       head   = nel.head();     // "a"  — always present, never null
+List<String> tail   = nel.tail();     // ["b", "c"] — unmodifiable, may be empty
+List<String> all    = nel.toList();   // ["a", "b", "c"] — all elements
+int          size   = nel.size();     // 3 — always >= 1
+
+// SequencedCollection API (Java 21)
+String first = nel.getFirst();        // "a" — alias for head()
+String last  = nel.getLast();         // "c" — always safe, no emptiness check needed
 
 // Singleton: tail is empty
 NonEmptyList<String> one = NonEmptyList.singleton("only");
-one.head();   // "only"
-one.tail();   // []  (empty unmodifiable list)
-one.size();   // 1
+one.head();      // "only"
+one.getFirst();  // "only"
+one.getLast();   // "only"  — same element, no IndexOutOfBoundsException risk
+one.tail();      // []  (empty unmodifiable list)
+one.size();      // 1
 ```
