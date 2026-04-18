@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: dmx-fun-spring-boot-sample
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dmxfun
+    username: dmxfun
+    password: dmxfun
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+
+logging:
+  level:
+    root: INFO
+    dmx.fun: DEBUG
