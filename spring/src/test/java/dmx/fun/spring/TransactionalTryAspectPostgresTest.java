@@ -1,22 +1,11 @@
 package dmx.fun.spring;
 
 import dmx.fun.Try;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,35 +15,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Validates {@link TransactionalTry} commit/rollback behaviour against a real PostgreSQL
  * database via Testcontainers. Tests are skipped automatically when Docker is unavailable.
  */
-@Testcontainers(disabledWithoutDocker = true)
-class TransactionalTryAspectPostgresTest {
+class TransactionalTryAspectPostgresTest extends AbstractPostgresTestBase {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.6-alpine");
-
-    static AnnotationConfigApplicationContext ctx;
-    static JdbcTemplate jdbc;
     static TryService service;
 
     @BeforeAll
     static void startContext() {
-        ctx = new AnnotationConfigApplicationContext(TestConfig.class);
-        jdbc = ctx.getBean(JdbcTemplate.class);
+        initContext(ServiceConfig.class);
         service = ctx.getBean(TryService.class);
-    }
-
-    @BeforeEach
-    void truncate() {
-        jdbc.execute("TRUNCATE TABLE events");
-    }
-
-    @AfterAll
-    static void stopContext() {
-        ctx.close();
-    }
-
-    private int countRows() {
-        return jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
     }
 
     @Test
@@ -135,39 +103,11 @@ class TransactionalTryAspectPostgresTest {
     }
 
     // -------------------------------------------------------------------------
-    // Spring configuration
+    // Service configuration
     // -------------------------------------------------------------------------
 
     @Configuration
-    @EnableAspectJAutoProxy
-    static class TestConfig {
-
-        @Bean
-        DriverManagerDataSource dataSource() {
-            return new DriverManagerDataSource(
-                POSTGRES.getJdbcUrl(),
-                POSTGRES.getUsername(),
-                POSTGRES.getPassword());
-        }
-
-        @Bean
-        JdbcTemplate jdbcTemplate(DriverManagerDataSource ds) {
-            var tmpl = new JdbcTemplate(ds);
-            tmpl.execute("CREATE TABLE IF NOT EXISTS events (id INT PRIMARY KEY, label VARCHAR(255))");
-            return tmpl;
-        }
-
-        @Bean
-        DataSourceTransactionManager txManager(DriverManagerDataSource ds) {
-            return new DataSourceTransactionManager(ds);
-        }
-
-        @Bean
-        DmxTransactionalAspect dmxTransactionalAspect(
-                PlatformTransactionManager txManager, BeanFactory beanFactory) {
-            return new DmxTransactionalAspect(txManager, beanFactory);
-        }
-
+    static class ServiceConfig {
         @Bean
         TryServiceImpl tryService(JdbcTemplate jdbcTemplate) {
             return new TryServiceImpl(jdbcTemplate);
