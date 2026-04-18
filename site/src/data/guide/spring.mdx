@@ -18,6 +18,7 @@ import {Content as TransactionalValidatedSnippet} from '../code/guide/spring/tra
 import {Content as TransactionalAttributes}       from '../code/guide/spring/transactional-attributes.mdx';
 import {Content as ProgrammaticVsDeclarative}     from '../code/guide/spring/programmatic-vs-declarative.mdx';
 import {Content as SpringBootDependency}           from '../code/guide/spring/spring-boot-dependency.mdx';
+import {Content as SpringBootOverride}             from '../code/guide/spring/spring-boot-override.mdx';
 
 The `fun-spring` module adds first-class Spring transaction support for `Result<V,E>`,
 `Try<V>`, and `Validated<E,A>`. It is an **optional** dependency — the core `fun` library
@@ -67,7 +68,7 @@ explicit `@Bean` declarations required:
 | `DmxTransactionalAspect` | `aspectjweaver` is also on the classpath |
 
 All beans are guarded by `@ConditionalOnMissingBean`, so you can override any of them
-with your own `@Bean` declaration.
+with your own `@Bean` declaration (see [Customizing auto-configured beans](#customizing-auto-configured-beans) below).
 
 ### With plain Spring Framework (`fun-spring`)
 
@@ -87,10 +88,24 @@ your `@ComponentScan`.
 
 ```java
 // Plain Spring — explicit registration (only needed without component scanning)
-@Bean public TxResult txResult(PlatformTransactionManager tm) { return new TxResult(tm); }
-@Bean public TxTry txTry(PlatformTransactionManager tm)       { return new TxTry(tm); }
+@Bean public TxResult txResult(PlatformTransactionManager tm)    { return new TxResult(tm); }
+@Bean public TxTry txTry(PlatformTransactionManager tm)          { return new TxTry(tm); }
 @Bean public TxValidated txValidated(PlatformTransactionManager tm) { return new TxValidated(tm); }
 ```
+
+## Customizing auto-configured beans
+
+Every bean that `DmxFunSpringAutoConfiguration` registers is guarded by
+`@ConditionalOnMissingBean`. Declare your own `@Bean` of the same type and the
+auto-configuration backs off, leaving yours in place.
+
+The most common reason to override is to bind a specific transaction manager rather
+than the primary one:
+
+<SpringBootOverride/>
+
+You can override any subset — any bean not overridden is still registered by the
+auto-configuration.
 
 ## `TxResult`
 
@@ -173,12 +188,14 @@ Add `aspectjweaver` to your classpath and register the aspect bean with
 
 <AspectSetup/>
 
-**Spring Boot** — `DmxTransactionalAspect` is annotated `@Component`, so Spring Boot
-picks it up automatically **only if** the `dmx.fun.spring` package is within your
-application's `@ComponentScan` base packages (or you explicitly add it via
-`@ComponentScan("dmx.fun.spring")`). If component scanning does not cover that package,
-use the explicit `@Bean` declaration shown above — the same caveat that applies to
-`TxResult`, `TxTry`, and `TxValidated` in the Setup section.
+**With `fun-spring-boot`** — `DmxFunSpringAutoConfiguration` registers
+`DmxTransactionalAspect` automatically when `aspectjweaver` is on the classpath. No
+`@EnableAspectJAutoProxy` or `@Bean` declaration is needed.
+
+**With `fun-spring` in a Spring Boot application** — `DmxTransactionalAspect` is
+annotated `@Component` but lives in the `dmx.fun.spring` package, which Spring Boot does
+not scan by default. Either add `@ComponentScan("dmx.fun.spring")` to your configuration
+or register the aspect explicitly with the `@Bean` declaration shown above.
 
 ### `@TransactionalResult`
 
@@ -239,8 +256,10 @@ Choose **declarative** (`@TransactionalResult` / `@TransactionalTry` / `@Transac
 
 ## Version compatibility
 
-The module is tested in CI against the following Spring Framework versions on every
-pull request that touches the `spring/` module:
+### Spring Framework (`fun-spring`)
+
+Tested in CI against the following versions on every pull request that touches
+the `spring/` module:
 
 | Spring version | Status  |
 |----------------|---------|
@@ -252,5 +271,20 @@ pull request that touches the `spring/` module:
 To test locally against a specific version:
 
 ```bash
-./gradlew :spring:test -PspringVersion=7.0.6
+./gradlew :spring:test -PspringVersion=7.0.7
+```
+
+### Spring Boot (`fun-spring-boot`)
+
+Tested in CI against the following versions on every pull request that touches
+the `spring-boot/` or `spring/` module:
+
+| Spring Boot version | Status  |
+|---------------------|---------|
+| 4.0.x               | tested  |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :spring-boot:test -PspringBootVersion=4.0.5
 ```

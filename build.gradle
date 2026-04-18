@@ -12,11 +12,11 @@ plugins {
 //   • ./gradlew check                       (testAggregateTestReport + testCodeCoverageReport)
 //   • ./gradlew aggregateJavadoc            (--module-source-path + --module args)
 def moduleMap = [
-    ':lib'     : 'dmx.fun',
-    ':assertj' : 'dmx.fun.assertj',
-    ':jackson' : 'dmx.fun.jackson',
-    ':spring'      : 'dmx.fun.spring',
-    ':spring-boot' : 'dmx.fun.spring.boot',
+    ':lib'        : 'dmx.fun',
+    ':assertj'    : 'dmx.fun.assertj',
+    ':jackson'    : 'dmx.fun.jackson',
+    ':spring'     : 'dmx.fun.spring',
+    ':spring-boot': 'dmx.fun.spring.boot',
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────
@@ -54,11 +54,11 @@ tasks.named('check') {
 // Run with:  ./gradlew aggregateJavadoc
 // Output:    build/reports/javadoc/index.html
 tasks.register('aggregateJavadoc', Exec) {
-    group       = 'documentation'
+    group = 'documentation'
     description = 'Generates aggregated multi-module Javadoc for all dmx-fun modules.'
 
     // Ensure every module is compiled before javadoc runs.
-    dependsOn moduleMap.keySet().collect { "${it}:compileJava" }
+    dependsOn moduleMap.keySet().collect { "${ it }:compileJava" }
 
     def javadocToolProvider = javaToolchains.javadocToolFor {
         languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get().toInteger()))
@@ -111,12 +111,12 @@ tasks.register('aggregateJavadoc', Exec) {
         // One --module-source-path per module: tells javadoc where to find the
         // sources for each JPMS module instead of relying on compiled artifacts.
         sourceMap.each { jpmsName, srcPath ->
-            args '--module-source-path', "${jpmsName}=${srcPath}"
+            args '--module-source-path', "${ jpmsName }=${ srcPath }"
         }
 
-        args '--module',     jpmsModules      // which modules to document
-        args '-d',           destDir.absolutePath
-        args '-doctitle',    'dmx-fun API'
+        args '--module', jpmsModules      // which modules to document
+        args '-d', destDir.absolutePath
+        args '-doctitle', 'dmx-fun API'
         args '-windowtitle', 'dmx-fun API'
         args '-quiet'
         args '-notimestamp'
