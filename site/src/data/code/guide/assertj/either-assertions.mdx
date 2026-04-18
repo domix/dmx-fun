@@ -1,0 +1,21 @@
+---
+fileName: 'EitherTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+// Assert Right and its value — chainable in one expression
+assertThat(Either.<String, Integer>right(42))
+    .isRight()
+    .containsRight(42);
+
+// Assert Left and its value — chainable in one expression
+assertThat(Either.<String, Integer>left("oops"))
+    .isLeft()
+    .containsLeft("oops");
+
+// isRight() / isLeft() alone when the value does not matter
+assertThat(Either.right("ok")).isRight();
+assertThat(Either.left("err")).isLeft();
+```

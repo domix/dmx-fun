@@ -16,10 +16,25 @@ dependencies {
     // Tests run against the version passed via -PjacksonVersion=X.Y.Z (used by
     // the CI compatibility matrix), falling back to the catalog version locally.
     testImplementation "com.fasterxml.jackson.core:jackson-databind:${findProperty('jacksonVersion') ?: libs.versions.jackson.get()}"
+
+    // Fluent assertions for dmx-fun types (ResultAssert, TryAssert, etc.).
+    // compileOnly puts dmx.fun.assertj on compileClasspath so the JPMS module-path
+    // plugin can expose it to compileTestJava; testImplementation covers test runtime.
+    // assertj-core is already on the classpath via dmx-fun.java-base.
+    compileOnly        project(':assertj')
+    testImplementation project(':assertj')
 }
 
 jpmsTest {
-    moduleName = 'dmx.fun.jackson'
+    moduleName   = 'dmx.fun.jackson'
+    extraModules = ['dmx.fun.assertj']
+    extraReads   = ['dmx.fun.assertj']
+}
+
+// assertj-core is on the classpath (unnamed module) at compile time but dmx.fun.assertj
+// is on the module path and requires it. This read allows the compiler to resolve it.
+tasks.named('compileTestJava') {
+    options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
 }
 
 mavenPublishing {

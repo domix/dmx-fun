@@ -20,7 +20,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DmxFunModuleTest {
 
@@ -42,27 +45,26 @@ class DmxFunModuleTest {
         void serializeSome() throws Exception {
             Option<String> some = Option.some("hello");
             String json = mapper.writeValueAsString(some);
-            assertEquals("\"hello\"", json);
+            assertThat(json).isEqualTo("\"hello\"");
         }
 
         @Test
         void serializeNone() throws Exception {
             Option<String> none = Option.none();
             String json = mapper.writeValueAsString(none);
-            assertEquals("null", json);
+            assertThat(json).isEqualTo("null");
         }
 
         @Test
         void deserializeSome() throws Exception {
             Option<String> result = mapper.readValue("\"world\"", new TypeReference<Option<String>>() {});
-            assertTrue(result.isDefined());
-            assertEquals("world", result.get());
+            assertThat(result).isSome().containsValue("world");
         }
 
         @Test
         void deserializeNone() throws Exception {
             Option<String> result = mapper.readValue("null", new TypeReference<Option<String>>() {});
-            assertTrue(result.isEmpty());
+            assertThat(result).isNone();
         }
 
         @Test
@@ -70,8 +72,7 @@ class DmxFunModuleTest {
             Option<Integer> original = Option.some(42);
             String json = mapper.writeValueAsString(original);
             Option<Integer> deserialized = mapper.readValue(json, new TypeReference<Option<Integer>>() {});
-            assertTrue(deserialized.isDefined());
-            assertEquals(42, deserialized.get());
+            assertThat(deserialized).isSome().containsValue(42);
         }
 
         @Test
@@ -79,7 +80,7 @@ class DmxFunModuleTest {
             Option<Integer> original = Option.none();
             String json = mapper.writeValueAsString(original);
             Option<Integer> deserialized = mapper.readValue(json, new TypeReference<Option<Integer>>() {});
-            assertTrue(deserialized.isEmpty());
+            assertThat(deserialized).isNone();
         }
 
         @Test
@@ -88,8 +89,8 @@ class DmxFunModuleTest {
             // No TypeReference → createContextual returns `this` (no type params),
             // deserialize falls back to p.readValueAs(Object.class)
             Option<?> result = mapper.readValue("\"raw\"", Option.class);
-            assertTrue(result.isDefined());
-            assertEquals("raw", result.get());
+            assertThat(result).isSome();
+            assertThat(result.get()).isEqualTo("raw");
         }
     }
 
@@ -104,14 +105,14 @@ class DmxFunModuleTest {
         void serializeOk() throws Exception {
             Result<String, Integer> ok = Result.ok("success");
             String json = mapper.writeValueAsString(ok);
-            assertEquals("{\"ok\":\"success\"}", json);
+            assertThat(json).isEqualTo("{\"ok\":\"success\"}");
         }
 
         @Test
         void serializeErr() throws Exception {
             Result<String, Integer> err = Result.err(404);
             String json = mapper.writeValueAsString(err);
-            assertEquals("{\"err\":404}", json);
+            assertThat(json).isEqualTo("{\"err\":404}");
         }
 
         @Test
@@ -119,8 +120,7 @@ class DmxFunModuleTest {
             Result<String, Integer> original = Result.ok("hello");
             String json = mapper.writeValueAsString(original);
             Result<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Result<String, Integer>>() {});
-            assertTrue(deserialized.isOk());
-            assertEquals("hello", deserialized.get());
+            assertThat(deserialized).isOk().containsValue("hello");
         }
 
         @Test
@@ -128,31 +128,30 @@ class DmxFunModuleTest {
             Result<String, Integer> original = Result.err(500);
             String json = mapper.writeValueAsString(original);
             Result<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Result<String, Integer>>() {});
-            assertTrue(deserialized.isError());
-            assertEquals(500, deserialized.getError());
+            assertThat(deserialized).isErr().containsError(500);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeOk_rawType_coversNullValueTypePath() throws Exception {
             Result<?, ?> result = mapper.readValue("{\"ok\":99}", Result.class);
-            assertTrue(result.isOk());
-            assertEquals(99, result.get());
+            assertThat(result).isOk();
+            assertThat(result.get()).isEqualTo(99);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeErr_rawType_coversNullErrorTypePath() throws Exception {
             Result<?, ?> result = mapper.readValue("{\"err\":\"oops\"}", Result.class);
-            assertTrue(result.isError());
-            assertEquals("oops", result.getError());
+            assertThat(result).isErr();
+            assertThat(result.getError()).isEqualTo("oops");
         }
 
         @Test
         void deserializeUnknownField_throws() {
             JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Result<Integer, String>>() {}));
-            assertTrue(ex.getMessage().contains("unknown"));
+            assertThat(ex.getMessage()).contains("unknown");
         }
 
         @Test
@@ -171,7 +170,7 @@ class DmxFunModuleTest {
         void deserializeExtraField_throws() {
             JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"ok\":1,\"extra\":2}", new TypeReference<Result<Integer, String>>() {}));
-            assertTrue(ex.getMessage().contains("extra"));
+            assertThat(ex.getMessage()).contains("extra");
         }
     }
 
@@ -186,14 +185,14 @@ class DmxFunModuleTest {
         void serializeSuccess() throws Exception {
             Try<String> success = Try.success("ok");
             String json = mapper.writeValueAsString(success);
-            assertEquals("\"ok\"", json);
+            assertThat(json).isEqualTo("\"ok\"");
         }
 
         @Test
         void serializeFailure() throws Exception {
             Try<String> failure = Try.failure(new RuntimeException("boom"));
             String json = mapper.writeValueAsString(failure);
-            assertEquals("{\"error\":\"boom\"}", json);
+            assertThat(json).isEqualTo("{\"error\":\"boom\"}");
         }
 
         @Test
@@ -201,8 +200,7 @@ class DmxFunModuleTest {
             Try<Integer> original = Try.success(99);
             String json = mapper.writeValueAsString(original);
             Try<Integer> deserialized = mapper.readValue(json, new TypeReference<Try<Integer>>() {});
-            assertTrue(deserialized.isSuccess());
-            assertEquals(99, deserialized.get());
+            assertThat(deserialized).isSuccess().containsValue(99);
         }
 
         @Test
@@ -210,8 +208,8 @@ class DmxFunModuleTest {
             Try<Integer> original = Try.failure(new RuntimeException("error message"));
             String json = mapper.writeValueAsString(original);
             Try<Integer> deserialized = mapper.readValue(json, new TypeReference<Try<Integer>>() {});
-            assertTrue(deserialized.isFailure());
-            assertEquals("error message", deserialized.getCause().getMessage());
+            assertThat(deserialized).isFailure();
+            assertThat(deserialized.getCause().getMessage()).isEqualTo("error message");
         }
 
         @Test
@@ -221,8 +219,8 @@ class DmxFunModuleTest {
             String json = "{\"name\":\"alice\"}";
             Try<Map<String, Object>> result = mapper.readValue(json,
                 new TypeReference<Try<Map<String, Object>>>() {});
-            assertTrue(result.isSuccess());
-            assertEquals("alice", result.get().get("name"));
+            assertThat(result).isSuccess();
+            assertThat(result.get().get("name")).isEqualTo("alice");
         }
 
         @Test
@@ -230,9 +228,9 @@ class DmxFunModuleTest {
         void deserializeSuccessObject_rawType_coversNodeReturnPath() throws Exception {
             // START_OBJECT, no "error" key, valueType == null → returns Try.success(node)
             Try<?> result = mapper.readValue("{\"key\":\"v\"}", Try.class);
-            assertTrue(result.isSuccess());
+            assertThat(result).isSuccess();
             assertInstanceOf(JsonNode.class, result.get());
-            assertEquals("v", ((JsonNode) result.get()).get("key").asText());
+            assertThat(((JsonNode) result.get()).get("key").asText()).isEqualTo("v");
         }
 
         @Test
@@ -240,8 +238,8 @@ class DmxFunModuleTest {
         void deserializeSuccess_rawType_coversPrimitiveNullTypePath() throws Exception {
             // Non-object token, valueType == null → p.readValueAs(Object.class)
             Try<?> result = mapper.readValue("42", Try.class);
-            assertTrue(result.isSuccess());
-            assertEquals(42, result.get());
+            assertThat(result).isSuccess();
+            assertThat(result.get()).isEqualTo(42);
         }
     }
 
@@ -256,14 +254,14 @@ class DmxFunModuleTest {
         void serializeValid() throws Exception {
             Validated<String, Integer> valid = Validated.valid(42);
             String json = mapper.writeValueAsString(valid);
-            assertEquals("{\"valid\":42}", json);
+            assertThat(json).isEqualTo("{\"valid\":42}");
         }
 
         @Test
         void serializeInvalid() throws Exception {
             Validated<String, Integer> invalid = Validated.invalid("error");
             String json = mapper.writeValueAsString(invalid);
-            assertEquals("{\"invalid\":\"error\"}", json);
+            assertThat(json).isEqualTo("{\"invalid\":\"error\"}");
         }
 
         @Test
@@ -271,8 +269,7 @@ class DmxFunModuleTest {
             Validated<String, Integer> original = Validated.valid(7);
             String json = mapper.writeValueAsString(original);
             Validated<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Validated<String, Integer>>() {});
-            assertTrue(deserialized.isValid());
-            assertEquals(7, deserialized.get());
+            assertThat(deserialized).isValid().containsValue(7);
         }
 
         @Test
@@ -280,31 +277,30 @@ class DmxFunModuleTest {
             Validated<String, Integer> original = Validated.invalid("bad input");
             String json = mapper.writeValueAsString(original);
             Validated<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Validated<String, Integer>>() {});
-            assertTrue(deserialized.isInvalid());
-            assertEquals("bad input", deserialized.getError());
+            assertThat(deserialized).isInvalid().hasError("bad input");
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeValid_rawType_coversNullValueTypePath() throws Exception {
             Validated<?, ?> result = mapper.readValue("{\"valid\":7}", Validated.class);
-            assertTrue(result.isValid());
-            assertEquals(7, result.get());
+            assertThat(result).isValid();
+            assertThat(result.get()).isEqualTo(7);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeInvalid_rawType_coversNullErrorTypePath() throws Exception {
             Validated<?, ?> result = mapper.readValue("{\"invalid\":\"e\"}", Validated.class);
-            assertTrue(result.isInvalid());
-            assertEquals("e", result.getError());
+            assertThat(result).isInvalid();
+            assertThat(result.getError()).isEqualTo("e");
         }
 
         @Test
         void deserializeUnknownField_throws() {
             JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Validated<String, Integer>>() {}));
-            assertTrue(ex.getMessage().contains("unknown"));
+            assertThat(ex.getMessage()).contains("unknown");
         }
 
         @Test
@@ -323,7 +319,7 @@ class DmxFunModuleTest {
         void deserializeExtraField_throws() {
             JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"valid\":1,\"extra\":2}", new TypeReference<Validated<String, Integer>>() {}));
-            assertTrue(ex.getMessage().contains("extra"));
+            assertThat(ex.getMessage()).contains("extra");
         }
     }
 
@@ -338,14 +334,14 @@ class DmxFunModuleTest {
         void serializeRight() throws Exception {
             Either<String, Integer> right = Either.right(1);
             String json = mapper.writeValueAsString(right);
-            assertEquals("{\"right\":1}", json);
+            assertThat(json).isEqualTo("{\"right\":1}");
         }
 
         @Test
         void serializeLeft() throws Exception {
             Either<String, Integer> left = Either.left("oops");
             String json = mapper.writeValueAsString(left);
-            assertEquals("{\"left\":\"oops\"}", json);
+            assertThat(json).isEqualTo("{\"left\":\"oops\"}");
         }
 
         @Test
@@ -353,8 +349,7 @@ class DmxFunModuleTest {
             Either<String, Integer> original = Either.right(5);
             String json = mapper.writeValueAsString(original);
             Either<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Either<String, Integer>>() {});
-            assertTrue(deserialized.isRight());
-            assertEquals(5, deserialized.getRight());
+            assertThat(deserialized).isRight().containsRight(5);
         }
 
         @Test
@@ -362,31 +357,28 @@ class DmxFunModuleTest {
             Either<String, Integer> original = Either.left("left value");
             String json = mapper.writeValueAsString(original);
             Either<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Either<String, Integer>>() {});
-            assertTrue(deserialized.isLeft());
-            assertEquals("left value", deserialized.getLeft());
+            assertThat(deserialized).isLeft().containsLeft("left value");
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeRight_rawType_coversNullRightTypePath() throws Exception {
-            Either<?, ?> result = mapper.readValue("{\"right\":5}", Either.class);
-            assertTrue(result.isRight());
-            assertEquals(5, result.getRight());
+            Either<Object, Object> result = (Either<Object, Object>) mapper.readValue("{\"right\":5}", Either.class);
+            assertThat(result).isRight().containsRight(5);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeLeft_rawType_coversNullLeftTypePath() throws Exception {
-            Either<?, ?> result = mapper.readValue("{\"left\":\"e\"}", Either.class);
-            assertTrue(result.isLeft());
-            assertEquals("e", result.getLeft());
+            Either<Object, Object> result = (Either<Object, Object>) mapper.readValue("{\"left\":\"e\"}", Either.class);
+            assertThat(result).isLeft().containsLeft("e");
         }
 
         @Test
         void deserializeUnknownField_throws() {
             JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"unknown\":42}", new TypeReference<Either<String, Integer>>() {}));
-            assertTrue(ex.getMessage().contains("unknown"));
+            assertThat(ex.getMessage()).contains("unknown");
         }
 
         @Test
@@ -405,7 +397,7 @@ class DmxFunModuleTest {
         void deserializeExtraField_throws() {
             JsonMappingException ex = assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("{\"right\":1,\"extra\":2}", new TypeReference<Either<String, Integer>>() {}));
-            assertTrue(ex.getMessage().contains("extra"));
+            assertThat(ex.getMessage()).contains("extra");
         }
     }
 
@@ -420,7 +412,7 @@ class DmxFunModuleTest {
         void serialize() throws Exception {
             Tuple2<String, Integer> t = new Tuple2<>("a", 1);
             String json = mapper.writeValueAsString(t);
-            assertEquals("[\"a\",1]", json);
+            assertThat(json).isEqualTo("[\"a\",1]");
         }
 
         @Test
@@ -428,16 +420,16 @@ class DmxFunModuleTest {
             Tuple2<String, Integer> original = new Tuple2<>("hello", 42);
             String json = mapper.writeValueAsString(original);
             Tuple2<String, Integer> deserialized = mapper.readValue(json, new TypeReference<Tuple2<String, Integer>>() {});
-            assertEquals("hello", deserialized._1());
-            assertEquals(42, deserialized._2());
+            assertThat(deserialized._1()).isEqualTo("hello");
+            assertThat(deserialized._2()).isEqualTo(42);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeRawType_coversNullTypePaths() throws Exception {
             Tuple2<?, ?> result = mapper.readValue("[\"a\",1]", Tuple2.class);
-            assertEquals("a", result._1());
-            assertEquals(1, result._2());
+            assertThat(result._1()).isEqualTo("a");
+            assertThat(result._2()).isEqualTo(1);
         }
 
         @Test
@@ -476,7 +468,7 @@ class DmxFunModuleTest {
         void serialize() throws Exception {
             Tuple3<String, Integer, Boolean> t = Tuple3.of("a", 1, true);
             String json = mapper.writeValueAsString(t);
-            assertEquals("[\"a\",1,true]", json);
+            assertThat(json).isEqualTo("[\"a\",1,true]");
         }
 
         @Test
@@ -484,18 +476,18 @@ class DmxFunModuleTest {
             Tuple3<String, Integer, Boolean> original = Tuple3.of("x", 10, false);
             String json = mapper.writeValueAsString(original);
             Tuple3<String, Integer, Boolean> deserialized = mapper.readValue(json, new TypeReference<Tuple3<String, Integer, Boolean>>() {});
-            assertEquals("x", deserialized._1());
-            assertEquals(10, deserialized._2());
-            assertEquals(false, deserialized._3());
+            assertThat(deserialized._1()).isEqualTo("x");
+            assertThat(deserialized._2()).isEqualTo(10);
+            assertThat(deserialized._3()).isEqualTo(false);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeRawType_coversNullTypePaths() throws Exception {
             Tuple3<?, ?, ?> result = mapper.readValue("[\"a\",1,true]", Tuple3.class);
-            assertEquals("a", result._1());
-            assertEquals(1, result._2());
-            assertEquals(true, result._3());
+            assertThat(result._1()).isEqualTo("a");
+            assertThat(result._2()).isEqualTo(1);
+            assertThat(result._3()).isEqualTo(true);
         }
 
         @Test
@@ -540,7 +532,7 @@ class DmxFunModuleTest {
         void serialize() throws Exception {
             Tuple4<String, Integer, Boolean, Double> t = Tuple4.of("a", 1, true, 3.14);
             String json = mapper.writeValueAsString(t);
-            assertEquals("[\"a\",1,true,3.14]", json);
+            assertThat(json).isEqualTo("[\"a\",1,true,3.14]");
         }
 
         @Test
@@ -548,20 +540,20 @@ class DmxFunModuleTest {
             Tuple4<String, Integer, Boolean, Double> original = Tuple4.of("z", 7, true, 2.71);
             String json = mapper.writeValueAsString(original);
             Tuple4<String, Integer, Boolean, Double> deserialized = mapper.readValue(json, new TypeReference<Tuple4<String, Integer, Boolean, Double>>() {});
-            assertEquals("z", deserialized._1());
-            assertEquals(7, deserialized._2());
-            assertEquals(true, deserialized._3());
-            assertEquals(2.71, deserialized._4(), 0.001);
+            assertThat(deserialized._1()).isEqualTo("z");
+            assertThat(deserialized._2()).isEqualTo(7);
+            assertThat(deserialized._3()).isEqualTo(true);
+            assertThat(deserialized._4()).isEqualTo(2.71);
         }
 
         @Test
         @SuppressWarnings("unchecked")
         void deserializeRawType_coversNullTypePaths() throws Exception {
             Tuple4<?, ?, ?, ?> result = mapper.readValue("[\"a\",1,true,3.14]", Tuple4.class);
-            assertEquals("a", result._1());
-            assertEquals(1, result._2());
-            assertEquals(true, result._3());
-            assertEquals(3.14, (double) result._4(), 0.001);
+            assertThat(result._1()).isEqualTo("a");
+            assertThat(result._2()).isEqualTo(1);
+            assertThat(result._3()).isEqualTo(true);
+            assertThat((double) result._4()).isEqualTo(3.14);
         }
 
         @Test
@@ -612,14 +604,14 @@ class DmxFunModuleTest {
         void serializeSingleElement() throws Exception {
             NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of());
             String json = mapper.writeValueAsString(nel);
-            assertEquals("[1]", json);
+            assertThat(json).isEqualTo("[1]");
         }
 
         @Test
         void serializeMultipleElements() throws Exception {
             NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
             String json = mapper.writeValueAsString(nel);
-            assertEquals("[1,2,3]", json);
+            assertThat(json).isEqualTo("[1,2,3]");
         }
 
         @Test
@@ -627,8 +619,8 @@ class DmxFunModuleTest {
             NonEmptyList<Integer> original = NonEmptyList.of(1, List.of(2, 3));
             String json = mapper.writeValueAsString(original);
             NonEmptyList<Integer> deserialized = mapper.readValue(json, new TypeReference<NonEmptyList<Integer>>() {});
-            assertEquals(1, deserialized.head());
-            assertEquals(List.of(2, 3), deserialized.tail());
+            assertThat(deserialized.head()).isEqualTo(1);
+            assertThat(deserialized.tail()).isEqualTo(List.of(2, 3));
         }
 
         @Test
@@ -641,8 +633,8 @@ class DmxFunModuleTest {
         @SuppressWarnings("unchecked")
         void deserializeRawType_coversNullElementTypePath() throws Exception {
             NonEmptyList<?> result = mapper.readValue("[1,2,3]", NonEmptyList.class);
-            assertEquals(1, result.head());
-            assertEquals(List.of(2, 3), result.tail());
+            assertThat(result.head()).isEqualTo(1);
+            assertThat(result.tail()).isEqualTo(List.of(2, 3));
         }
 
         @Test
@@ -664,11 +656,10 @@ class DmxFunModuleTest {
             ObjectMapper autoMapper = new ObjectMapper().findAndRegisterModules();
             Option<String> some = Option.some("auto");
             String json = autoMapper.writeValueAsString(some);
-            assertEquals("\"auto\"", json);
+            assertThat(json).isEqualTo("\"auto\"");
 
             Option<String> deserialized = autoMapper.readValue("\"auto\"", new TypeReference<Option<String>>() {});
-            assertTrue(deserialized.isDefined());
-            assertEquals("auto", deserialized.get());
+            assertThat(deserialized).isSome().containsValue("auto");
         }
 
         @Test
@@ -676,11 +667,10 @@ class DmxFunModuleTest {
             ObjectMapper autoMapper = new ObjectMapper().findAndRegisterModules();
             Result<String, Integer> ok = Result.ok("found");
             String json = autoMapper.writeValueAsString(ok);
-            assertEquals("{\"ok\":\"found\"}", json);
+            assertThat(json).isEqualTo("{\"ok\":\"found\"}");
 
             Result<String, Integer> deserialized = autoMapper.readValue(json, new TypeReference<Result<String, Integer>>() {});
-            assertTrue(deserialized.isOk());
-            assertEquals("found", deserialized.get());
+            assertThat(deserialized).isOk().containsValue("found");
         }
     }
 }
