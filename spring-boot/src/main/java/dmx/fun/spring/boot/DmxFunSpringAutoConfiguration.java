@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -19,18 +20,24 @@ import org.springframework.transaction.PlatformTransactionManager;
 /**
  * Spring Boot auto-configuration for dmx-fun Spring integration.
  *
- * <p>Registers {@link TxResult}, {@link TxTry}, and {@link TxValidated} when a
- * {@link PlatformTransactionManager} is on the classpath. Additionally enables
- * AspectJ auto-proxying and registers {@link DmxTransactionalAspect} when
- * {@code aspectjweaver} is also present.
+ * <p>Registers {@link TxResult}, {@link TxTry}, and {@link TxValidated} when
+ * {@code spring-tx} is on the classpath <em>and</em> exactly one
+ * {@link PlatformTransactionManager} bean is present (or multiple with one
+ * marked {@code @Primary}). Additionally enables AspectJ auto-proxying and
+ * registers {@link DmxTransactionalAspect} when {@code aspectjweaver} is also
+ * present.
  *
  * <p>All beans are guarded by {@link ConditionalOnMissingBean} so application
- * code can override any of them with a custom bean declaration.
+ * code can override any of them with a custom {@code @Bean} declaration.
+ * Individual beans can also be disabled via {@code application.properties}
+ * (e.g. {@code dmx.fun.tx-result.enabled=false}).
  *
- * <p>This class is registered in
+ * <p>This class uses Spring Boot-specific annotations ({@code @AutoConfiguration},
+ * {@link ConditionalOnMissingBean}, {@link ConditionalOnProperty},
+ * {@link ConditionalOnSingleCandidate}) provided by {@code spring-boot-autoconfigure}.
+ * It is registered in
  * {@code META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports}
- * and is picked up automatically by Spring Boot. It can also be used with plain
- * Spring Framework via {@code @Import(DmxFunSpringAutoConfiguration.class)}.
+ * and is picked up automatically by Spring Boot — no manual configuration is required.
  *
  * @see TxResult
  * @see TxTry
@@ -39,6 +46,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  */
 @AutoConfiguration
 @ConditionalOnClass(PlatformTransactionManager.class)
+@ConditionalOnSingleCandidate(PlatformTransactionManager.class)
 @NullMarked
 public class DmxFunSpringAutoConfiguration {
 
