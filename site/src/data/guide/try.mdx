@@ -125,7 +125,7 @@ and return it immediately.
 
 | Method                  | Returns               | Semantics                                          |
 |-------------------------|-----------------------|----------------------------------------------------|
-| `Try.toList()`          | `Try<List<V>>`        | Fail-fast — first `Failure` short-circuits         |
+| `Try.toList()`          | `Try<List<V>>`        | Returns first `Failure` (upstream fully traversed) |
 | `Try.partitioningBy()`  | `Try.Partition<V>`    | Collect all — splits `successes()` and `failures()`|
 
 `Try.Partition<V>` is a record with two unmodifiable lists.

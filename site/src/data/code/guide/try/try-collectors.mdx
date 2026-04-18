@@ -3,7 +3,7 @@ fileName: 'FileProcessor.java'
 ---
 
 ```java
-// ── Try.toList() — fail-fast: returns first Failure ──────────────────────────
+// ── Try.toList() — returns first Failure (stream still fully traversed) ──────
 Try<List<Integer>> parsed =
     Stream.of("1", "2", "3")
           .map(s -> Try.of(() -> Integer.parseInt(s)))
@@ -14,9 +14,11 @@ Try<List<Integer>> broken =
     Stream.of("1", "bad", "3")
           .map(s -> Try.of(() -> Integer.parseInt(s)))
           .collect(Try.toList());
-// → Failure(NumberFormatException) — stops at "bad"
+// → Failure(NumberFormatException) — "3" is still parsed; collector returns first Failure
 
-// Real-world: parse all config values — abort on the first bad entry
+// Real-world: parse all config values — returns first parse error encountered
+// Note: all keys are parsed regardless; do not rely on early termination for
+// expensive or side-effecting upstream work.
 Try<List<Duration>> timeouts = configKeys.stream()
     .map(key -> Try.of(() -> Duration.parse(config.get(key))))
     .collect(Try.toList());

@@ -905,12 +905,17 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * @param failures  an unmodifiable list of causes from {@code Failure} elements, in encounter order
      */
     record Partition<V>(List<V> successes, List<Throwable> failures) {
-        /** Defensively copies both lists and null-checks them. */
+        /**
+         * Defensively copies both lists and null-checks them.
+         * Uses {@link Collections#unmodifiableList} over a new {@link ArrayList} rather than
+         * {@link List#copyOf} so that {@code null} success values produced by
+         * {@link Try#run(CheckedRunnable) Try.run(...)} are preserved.
+         */
         public Partition {
             Objects.requireNonNull(successes, "successes");
             Objects.requireNonNull(failures, "failures");
-            successes = List.copyOf(successes);
-            failures  = List.copyOf(failures);
+            successes = Collections.unmodifiableList(new ArrayList<>(successes));
+            failures  = Collections.unmodifiableList(new ArrayList<>(failures));
         }
     }
 
