@@ -58,7 +58,10 @@ public class DmxTransactionalAspect {
      * @param beanFactory the factory used to look up named transaction managers; must not
      *                    be {@code null}
      */
-    public DmxTransactionalAspect(PlatformTransactionManager txManager, BeanFactory beanFactory) {
+    public DmxTransactionalAspect(
+        PlatformTransactionManager txManager,
+        BeanFactory beanFactory
+    ) {
         this.defaultTxManager = Objects.requireNonNull(txManager, "txManager");
         this.beanFactory = Objects.requireNonNull(beanFactory, "beanFactory");
     }
@@ -78,7 +81,8 @@ public class DmxTransactionalAspect {
             .execute(
                 definition(ann.propagation(), ann.isolation(), ann.timeout()),
                 () -> (Result<Object, Object>) proceed(pjp),
-                Result::isError);
+                Result::isError
+            );
     }
 
     /**
@@ -96,7 +100,8 @@ public class DmxTransactionalAspect {
             .execute(
                 definition(ann.propagation(), ann.isolation(), ann.timeout()),
                 () -> (Try<Object>) proceed(pjp),
-                Try::isFailure);
+                Try::isFailure
+            );
     }
 
     /**
@@ -114,7 +119,8 @@ public class DmxTransactionalAspect {
             .execute(
                 definition(ann.propagation(), ann.isolation(), ann.timeout()),
                 () -> (Validated<Object, Object>) proceed(pjp),
-                Validated::isInvalid);
+                Validated::isInvalid
+            );
     }
 
     private TxExecutor executor(String txManagerBeanName) {
