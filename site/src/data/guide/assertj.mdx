@@ -82,11 +82,12 @@ in the same test class without naming conflict, because the argument types diffe
 
 ## `Resource<T>` assertions
 
-Each assertion method exercises the full acquire-use-release cycle by calling
-`use(v -> v)` (identity body) and inspecting the resulting `Try`. Use
-`succeedsWith` to verify that acquisition and release complete without error;
-use `failsWith` / `failsWithMessage` to verify that the cycle fails in the
-expected way.
+The first assertion called on a `ResourceAssert` runs the full acquire-use-release
+cycle once (via `use(v -> v)`) and caches the result. All subsequent chained
+assertions on the same instance reuse that cached `Try` — the lifecycle is never
+triggered more than once. Use `succeedsWith` to verify that acquisition and
+release complete without error; use `failsWith` / `failsWithMessage` to verify
+that the cycle fails in the expected way.
 
 <ResourceAssertions/>
 
@@ -101,9 +102,10 @@ messages you expect to find in the rejection error list.
 ## `Accumulator<E, A>` assertions
 
 `accumulationContains` and `accumulationHasSize` require the accumulated
-side-channel (`E`) to be a `java.util.Collection`. If it is not, the assertion
-fails with a descriptive error. Use `hasAccumulation` for equality checks on
-any accumulation type.
+side-channel (`E`) to be a non-null `java.util.Collection`. If it is `null` or
+not a `Collection`, the assertion fails with a descriptive error. Use
+`hasAccumulation` for equality checks on any accumulation type, including
+non-collection and nullable values.
 
 <AccumulatorAssertions/>
 
