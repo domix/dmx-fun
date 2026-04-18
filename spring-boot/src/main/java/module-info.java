@@ -8,8 +8,11 @@ module dmx.fun.spring.boot {
     requires static spring.webmvc;
     requires static spring.web;
     requires static jakarta.servlet;
+    requires static dmx.fun.jackson;
+    requires static com.fasterxml.jackson.databind;
     requires org.jspecify;
 
     exports dmx.fun.spring.boot;
     exports dmx.fun.spring.boot.web;
+    exports dmx.fun.spring.boot.jackson;
 }

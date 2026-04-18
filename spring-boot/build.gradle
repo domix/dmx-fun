@@ -16,6 +16,8 @@ dependencies {
     compileOnly libs.spring.context  // BeanFactory, @Configuration, @EnableAspectJAutoProxy
     compileOnly libs.spring.tx       // PlatformTransactionManager
     compileOnly libs.aspectj.weaver  // Aspect (for @ConditionalOnClass guard)
+    compileOnly project(':jackson')        // DmxFunModule (for @ConditionalOnClass guard)
+    compileOnly libs.jackson.databind      // ObjectMapper (for @ConditionalOnClass guard)
     compileOnly libs.spring.webmvc          // HandlerMethodReturnValueHandler, RequestMappingHandlerAdapter
     compileOnly libs.jakarta.servlet.api    // HttpServletResponse (provided by servlet container at runtime)
 
@@ -26,6 +28,8 @@ dependencies {
     testImplementation libs.spring.context
     testImplementation libs.spring.tx
     testImplementation libs.aspectj.weaver
+    testImplementation project(':jackson')
+    testImplementation libs.jackson.databind
     testImplementation libs.spring.webmvc
     testImplementation libs.jakarta.servlet.api
 }
@@ -34,8 +38,8 @@ dependencies {
 // explicitly so the JVM resolves it into the module graph during tests.
 jpmsTest {
     moduleName   = 'dmx.fun.spring.boot'
-    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet']
-    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop', 'spring.boot.autoconfigure', 'spring.webmvc', 'spring.web']
+    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet', 'dmx.fun.jackson', 'com.fasterxml.jackson.databind']
+    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop', 'spring.boot.autoconfigure', 'spring.webmvc', 'spring.web', 'com.fasterxml.jackson.databind']
 }
 
 mavenPublishing {
