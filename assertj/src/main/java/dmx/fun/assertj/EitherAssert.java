@@ -75,7 +75,7 @@ public final class EitherAssert<L, R> extends AbstractAssert<EitherAssert<L, R>,
     }
 
     private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template.replace("<%s>", "%s"), args);
+        String message = String.format(template, args);
         String description = info.descriptionText();
         return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
     }
