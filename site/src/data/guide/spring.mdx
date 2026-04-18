@@ -295,15 +295,22 @@ To test locally against a specific version:
 
 ### Spring Boot (`fun-spring-boot`)
 
-Tested in CI against the following versions on every pull request that touches
-the `spring-boot/` or `spring/` module:
+Both the 3.x and 4.x release lines are supported. Tested in CI against the
+following versions on every pull request that touches the `spring-boot/`,
+`spring/`, or `gradle/libs.versions.toml` files:
 
 | Spring Boot version | Status  |
 |---------------------|---------|
+| 3.0.x               | tested  |
+| 3.1.x               | tested  |
+| 3.2.x               | tested  |
+| 3.3.x               | tested  |
+| 3.4.x               | tested  |
+| 3.5.x               | tested  |
 | 4.0.x               | tested  |
 
 To test locally against a specific version:
 
 ```bash
-./gradlew :spring-boot:test -PspringBootVersion=4.0.5
+./gradlew :spring-boot:test -PspringBootVersion=3.4.13
 ```
