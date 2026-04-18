@@ -1,6 +1,7 @@
 package dmx.fun.samples;
 
 import dmx.fun.Accumulator;
+import dmx.fun.Either;
 import dmx.fun.Guard;
 import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
@@ -22,6 +23,39 @@ import static dmx.fun.assertj.DmxFunAssertions.assertThat;
  * org.assertj.core.api.Assertions.assertThat without naming conflicts.
  */
 class AssertJSampleTest {
+
+    // ── Either<L, R> ─────────────────────────────────────────────────────────
+
+    @Test
+    void either_rightContainsValue() {
+        // Models a computation that produces the success track (Right).
+        Either<String, Integer> parsed = Either.right(42);
+
+        assertThat(parsed)
+            .isRight()
+            .containsRight(42);
+    }
+
+    @Test
+    void either_leftContainsError() {
+        // Models a computation that ended on the error track (Left).
+        Either<String, Integer> failed = Either.left("invalid input");
+
+        assertThat(failed)
+            .isLeft()
+            .containsLeft("invalid input");
+    }
+
+    @Test
+    void either_isRight_afterSwap() {
+        // swap() exchanges left and right — a Left becomes a Right.
+        Either<String, Integer> original = Either.left("msg");
+        Either<Integer, String> swapped  = original.swap();
+
+        assertThat(swapped)
+            .isRight()
+            .containsRight("msg");
+    }
 
     // ── Option<T> ────────────────────────────────────────────────────────────
 

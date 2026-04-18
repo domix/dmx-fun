@@ -1,6 +1,7 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Accumulator;
+import dmx.fun.Either;
 import dmx.fun.Guard;
 import dmx.fun.Option;
 import dmx.fun.Resource;
@@ -42,6 +43,18 @@ public final class DmxFunAssertions {
      */
     public static <V> OptionAssert<V> assertThat(Option<V> actual) {
         return new OptionAssert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for an {@link Either}.
+     *
+     * @param <L>    the left value type
+     * @param <R>    the right value type
+     * @param actual the Either to assert on
+     * @return a new {@link EitherAssert}
+     */
+    public static <L, R> EitherAssert<L, R> assertThat(Either<L, R> actual) {
+        return new EitherAssert<>(actual);
     }
 
     /**
