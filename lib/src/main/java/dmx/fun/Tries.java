@@ -2,6 +2,7 @@ package dmx.fun;
 
 import java.util.List;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -71,14 +72,8 @@ public final class Tries {
      * @return a collector producing a {@link Tries.Partition}
      */
     public static <V> Collector<Try<V>, ?, Tries.Partition<V>> partitioning() {
-        return Collector.of(
-            () -> new java.util.ArrayList<Try<V>>(),
-            java.util.List::add,
-            (a, b) -> { a.addAll(b); return a; },
-            list -> {
-                var p = list.stream().collect(Try.partitioningBy());
-                return new Tries.Partition<>(p.successes(), p.failures());
-            }
-        );
+        return Collectors.collectingAndThen(
+            Try.partitioningBy(),
+            p -> new Tries.Partition<>(p.successes(), p.failures()));
     }
 }

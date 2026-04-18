@@ -2,8 +2,10 @@ package dmx.fun;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -37,11 +39,12 @@ public final class Results {
      * @param <E> the error type of the {@code Err} elements
      */
     public record Partition<V, E>(List<V> oks, List<E> errors) {
-        /** Delegates to {@link Result.Partition} for consistent null/copy semantics. */
+        /** Null-checks and defensively copies both lists. */
         public Partition {
-            var delegate = new Result.Partition<>(oks, errors);
-            oks    = delegate.oks();
-            errors = delegate.errors();
+            Objects.requireNonNull(oks,    "oks");
+            Objects.requireNonNull(errors, "errors");
+            oks    = List.copyOf(oks);
+            errors = List.copyOf(errors);
         }
 
         /** Converts to the underlying {@link Result.Partition}. */
@@ -75,15 +78,9 @@ public final class Results {
      * @return a collector producing a {@link Results.Partition}
      */
     public static <V, E> Collector<Result<V, E>, ?, Results.Partition<V, E>> partitioning() {
-        return Collector.of(
-            () -> new java.util.ArrayList<Result<V, E>>(),
-            java.util.List::add,
-            (a, b) -> { a.addAll(b); return a; },
-            list -> {
-                var p = list.stream().collect(Result.partitioningBy());
-                return new Results.Partition<>(p.oks(), p.errors());
-            }
-        );
+        return Collectors.collectingAndThen(
+            Result.partitioningBy(),
+            p -> new Results.Partition<>(p.oks(), p.errors()));
     }
 
     /**
