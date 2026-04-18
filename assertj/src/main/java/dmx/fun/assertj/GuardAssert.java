@@ -60,8 +60,12 @@ public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T
      * @return this assertion for chaining
      */
     public GuardAssert<T> rejectsWithMessage(T value, String message) {
-        rejects(value);
-        NonEmptyList<String> errors = actual.check(value).getError();
+        isNotNull();
+        Validated<NonEmptyList<String>, T> result = actual.check(value);
+        if (!result.isInvalid()) {
+            throw buildError("Expected Guard to reject <%s> but accepted it", value);
+        }
+        NonEmptyList<String> errors = result.getError();
         if (errors.toList().stream().noneMatch(e -> e.contains(message))) {
             throw buildError("Expected rejection messages <%s> to contain <%s>", errors, message);
         }
@@ -77,8 +81,12 @@ public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T
      * @return this assertion for chaining
      */
     public GuardAssert<T> rejectsWithMessages(T value, String... messages) {
-        rejects(value);
-        NonEmptyList<String> errors = actual.check(value).getError();
+        isNotNull();
+        Validated<NonEmptyList<String>, T> result = actual.check(value);
+        if (!result.isInvalid()) {
+            throw buildError("Expected Guard to reject <%s> but accepted it", value);
+        }
+        NonEmptyList<String> errors = result.getError();
         for (String message : messages) {
             if (errors.toList().stream().noneMatch(e -> e.contains(message))) {
                 throw buildError("Expected rejection messages <%s> to contain <%s>", errors, message);

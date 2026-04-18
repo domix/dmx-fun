@@ -63,6 +63,10 @@ public final class AccumulatorAssert<E, A> extends AbstractAssert<AccumulatorAss
     public AccumulatorAssert<E, A> accumulationContains(Object element) {
         isNotNull();
         E accumulated = actual.accumulated();
+        if (accumulated == null) {
+            throw buildError(
+                "Expected accumulated value to be a Collection for accumulationContains, but was <null>");
+        }
         if (!(accumulated instanceof Collection<?> col)) {
             throw buildError(
                 "Expected accumulated value to be a Collection for accumulationContains, but was <%s>",
@@ -85,6 +89,10 @@ public final class AccumulatorAssert<E, A> extends AbstractAssert<AccumulatorAss
     public AccumulatorAssert<E, A> accumulationHasSize(int expected) {
         isNotNull();
         E accumulated = actual.accumulated();
+        if (accumulated == null) {
+            throw buildError(
+                "Expected accumulated value to be a Collection for accumulationHasSize, but was <null>");
+        }
         if (!(accumulated instanceof Collection<?> col)) {
             throw buildError(
                 "Expected accumulated value to be a Collection for accumulationHasSize, but was <%s>",
