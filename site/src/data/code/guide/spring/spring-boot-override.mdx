@@ -1,0 +1,27 @@
+---
+fileName: 'MyTxConfig.java'
+---
+
+```java
+import dmx.fun.spring.TxResult;
+import dmx.fun.spring.TxTry;
+import dmx.fun.spring.TxValidated;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
+
+@Configuration
+public class MyTxConfig {
+
+    // Override TxResult to use a specific (non-primary) transaction manager.
+    // @ConditionalOnMissingBean in the auto-config backs off when this bean is present.
+    @Bean
+    public TxResult txResult(
+            @Qualifier("myTxManager") PlatformTransactionManager txManager) {
+        return new TxResult(txManager);
+    }
+
+    // TxTry and TxValidated are left to the auto-config — no override needed.
+}
+```

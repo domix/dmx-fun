@@ -17,6 +17,7 @@ on:
     # Run when the spring module or this workflow file is modified.
     paths:
       - 'spring/**'
+      - 'gradle/libs.versions.toml'
       - '.github/workflows/spring-compatibility.yaml'
 
 jobs:
@@ -28,7 +29,7 @@ jobs:
         # Update this list when a new minor is released or an old one reaches end-of-life.
         # Spring 6.0 OSS support ended 2024-12-31; keep it here until the module
         # drops support for it explicitly.
-        spring-version: ['6.0.23', '6.1.21', '6.2.9', '7.0.6']
+        spring-version: ['6.0.23', '6.1.21', '6.2.9', '7.0.7']
     name: Spring ${{ matrix.spring-version }}
     steps:
       - uses: actions/checkout@v6.0.2
