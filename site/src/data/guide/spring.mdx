@@ -117,11 +117,11 @@ isolation level, timeout, and read-only flag:
 
 **Rule of thumb:**
 
-- Use `TxResult` / `@TransactionalResult` when your pipeline returns `Result<V,E>` for typed domain errors.
-- Use `TxTry` / `@TransactionalTry` when your pipeline uses `Try<V>` to wrap exception-throwing code.
-- Use `TxValidated` / `@TransactionalValidated` when your pipeline accumulates multiple validation errors and you
+- Prefer `TxResult` / `@TransactionalResult` when your pipeline returns `Result<V,E>` for typed domain errors.
+- Choose `TxTry` / `@TransactionalTry` when your pipeline uses `Try<V>` to wrap exception-throwing code.
+- Opt for `TxValidated` / `@TransactionalValidated` when your pipeline accumulates multiple validation errors and you
   want atomicity across all steps.
-- Use `@Transactional` when the method has no dmx-fun return type and rollback on
+- Fall back to `@Transactional` when the method has no dmx-fun return type and rollback on
   unchecked exception is sufficient (void methods, simple queries).
 
 ---

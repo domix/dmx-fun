@@ -17,8 +17,6 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +27,7 @@ class TransactionalResultAspectTest {
     static AnnotationConfigApplicationContext ctx;
     static JdbcTemplate jdbc;
     static ResultService service;
+    static RecordingTxManager primaryRecording;
     static RecordingTxManager recording;
 
     @BeforeAll
@@ -36,12 +35,14 @@ class TransactionalResultAspectTest {
         ctx = new AnnotationConfigApplicationContext(TestConfig.class);
         jdbc = ctx.getBean(JdbcTemplate.class);
         service = ctx.getBean(ResultService.class);
+        primaryRecording = ctx.getBean("txManager", RecordingTxManager.class);
         recording = ctx.getBean("secondaryTxManager", RecordingTxManager.class);
     }
 
     @BeforeEach
     void clearTable() {
         jdbc.execute("DELETE FROM events");
+        primaryRecording.reset();
         recording.reset();
     }
 
@@ -97,6 +98,7 @@ class TransactionalResultAspectTest {
         assertThat(result).isOk();
         assertThat(countRows()).isEqualTo(1);
         assertThat(recording.wasUsed()).isTrue();
+        assertThat(primaryRecording.wasUsed()).isFalse();
     }
 
     @Test
@@ -105,6 +107,7 @@ class TransactionalResultAspectTest {
         assertThat(result).isErr();
         assertThat(countRows()).isEqualTo(0);
         assertThat(recording.wasUsed()).isTrue();
+        assertThat(primaryRecording.wasUsed()).isFalse();
     }
 
     // -------------------------------------------------------------------------
@@ -196,8 +199,8 @@ class TransactionalResultAspectTest {
 
         @Primary
         @Bean
-        DataSourceTransactionManager txManager(EmbeddedDatabase ds) {
-            return new DataSourceTransactionManager(ds);
+        RecordingTxManager txManager(EmbeddedDatabase ds) {
+            return new RecordingTxManager(new DataSourceTransactionManager(ds));
         }
 
         @Bean
@@ -217,31 +220,4 @@ class TransactionalResultAspectTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Recording tx manager — verifies the named bean was actually selected
-    // -------------------------------------------------------------------------
-
-    static class RecordingTxManager implements PlatformTransactionManager {
-        private final PlatformTransactionManager delegate;
-        private boolean used = false;
-
-        RecordingTxManager(PlatformTransactionManager delegate) {
-            this.delegate = delegate;
-        }
-
-        void reset() { used = false; }
-        boolean wasUsed() { return used; }
-
-        @Override
-        public TransactionStatus getTransaction(TransactionDefinition definition) {
-            used = true;
-            return delegate.getTransaction(definition);
-        }
-
-        @Override
-        public void commit(TransactionStatus status) { delegate.commit(status); }
-
-        @Override
-        public void rollback(TransactionStatus status) { delegate.rollback(status); }
-    }
 }

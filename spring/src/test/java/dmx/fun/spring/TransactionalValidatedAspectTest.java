@@ -17,8 +17,6 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -217,31 +215,4 @@ class TransactionalValidatedAspectTest {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Recording tx manager — verifies the named bean was actually selected
-    // -------------------------------------------------------------------------
-
-    static class RecordingTxManager implements PlatformTransactionManager {
-        private final PlatformTransactionManager delegate;
-        private boolean used = false;
-
-        RecordingTxManager(PlatformTransactionManager delegate) {
-            this.delegate = delegate;
-        }
-
-        void reset() { used = false; }
-        boolean wasUsed() { return used; }
-
-        @Override
-        public TransactionStatus getTransaction(TransactionDefinition definition) {
-            used = true;
-            return delegate.getTransaction(definition);
-        }
-
-        @Override
-        public void commit(TransactionStatus status) { delegate.commit(status); }
-
-        @Override
-        public void rollback(TransactionStatus status) { delegate.rollback(status); }
-    }
 }
