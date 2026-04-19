@@ -1,0 +1,118 @@
+---
+fileName: 'ProductCatalogService.java'
+---
+
+```java
+import dmx.fun.Option;
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.resilience4j.DmxBulkhead;
+import dmx.fun.resilience4j.DmxCircuitBreaker;
+import dmx.fun.resilience4j.DmxRateLimiter;
+import dmx.fun.resilience4j.DmxRetry;
+import io.github.resilience4j.bulkhead.BulkheadConfig;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.retry.RetryConfig;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * A product catalog service that uses all four Resilience4J patterns together.
+ *
+ * Search calls are rate-limited (external API quota) and bulkheaded (isolate
+ * concurrent load). Individual product fetches go through a circuit breaker with
+ * a retry layer so transient errors are handled before the circuit trips.
+ */
+public class ProductCatalogService {
+
+    private final DmxRateLimiter              searchRl;
+    private final DmxBulkhead                searchBh;
+    private final DmxCircuitBreaker           productCb;
+    private final DmxRetry                   productRetry;
+    private final ProductApiClient            api;
+    private final Map<String, ProductPage>   cache;
+
+    public ProductCatalogService(ProductApiClient api) {
+        this.api   = api;
+        this.cache = new java.util.HashMap<>();
+
+        this.searchRl = DmxRateLimiter.of("search",
+            RateLimiterConfig.custom()
+                .limitForPeriod(50)
+                .limitRefreshPeriod(Duration.ofSeconds(1))
+                .timeoutDuration(Duration.ZERO)
+                .build());
+
+        this.searchBh = DmxBulkhead.of("search",
+            BulkheadConfig.custom()
+                .maxConcurrentCalls(10)
+                .maxWaitDuration(Duration.ZERO)
+                .build());
+
+        this.productCb = DmxCircuitBreaker.of("product",
+            CircuitBreakerConfig.custom()
+                .failureRateThreshold(50)
+                .waitDurationInOpenState(Duration.ofSeconds(30))
+                .slidingWindowSize(20)
+                .build());
+
+        this.productRetry = DmxRetry.of("product",
+            RetryConfig.custom()
+                .maxAttempts(3)
+                .waitDuration(Duration.ofMillis(100))
+                .retryOnException(IOException.class::isInstance)
+                .build());
+    }
+
+    /**
+     * Searches the catalog. Rate-limited to 50 req/s; max 10 concurrent.
+     * Returns an empty list only when rejected by resilience policies
+     * (rate limit exceeded or bulkhead full). Other failures are propagated.
+     */
+    public List<ProductSummary> search(String query) {
+        return searchRl.executeTry(() ->
+            searchBh.executeTry(() -> api.search(query))
+                .recover(BulkheadFullException.class, ex -> List.of())
+                .getOrThrow(cause ->
+                    cause instanceof RuntimeException re ? re : new RuntimeException(cause))
+        )
+        .recover(RequestNotPermitted.class, ex -> List.of())
+        .getOrThrow(cause ->
+            cause instanceof RuntimeException re ? re : new RuntimeException(cause));
+    }
+
+    /**
+     * Fetches a single product. Retried up to 3 times on IOException;
+     * circuit breaker trips after 50% failures in the last 20 calls.
+     *
+     * Returns Ok(product), Err(CallNotPermittedException) when open,
+     * or Err(lastException) after all retries are exhausted.
+     */
+    public Result<Product, Throwable> findProduct(String id) {
+        return productCb.executeResult(() ->
+            productRetry.executeTry(() -> api.fetchProduct(id))
+                .getOrThrow()                  // surface failure so circuit breaker records it
+        );
+    }
+
+    /**
+     * Renders a product page, falling back to a cached copy on circuit open
+     * and returning an empty Option when nothing is available at all.
+     */
+    public Option<ProductPage> productPage(String id) {
+        return productCb.executeResultTyped(() ->
+            productRetry.executeTry(() -> api.fetchProduct(id)).getOrThrow()
+        )
+        .fold(
+            (CallNotPermittedException ex) -> Option.ofNullable(cache.get(id)),   // circuit open → cached page
+            product -> Option.some(buildPage(product))
+        );
+    }
+}
+```

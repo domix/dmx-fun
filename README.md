@@ -12,12 +12,13 @@ A Java library of functional types that make failures, absence, and validation e
 
 All modules are published to Maven Central. Add only what you need.
 
-| Module        | Latest version                                                                                                                                    |
-|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `fun`         | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                 |
-| `fun-jackson` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson) |
-| `fun-assertj` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj) |
-| `fun-spring`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)   |
+| Module               | Latest version                                                                                                                                                              |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `fun`                | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                                          |
+| `fun-jackson`        | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson)                          |
+| `fun-assertj`        | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)                          |
+| `fun-spring`         | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)                            |
+| `fun-resilience4j`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j)                |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
 
@@ -90,6 +91,32 @@ Fluent custom assertions for all dmx-fun types.
 **Gradle**
 ```groovy
 testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
+```
+
+### Resilience4J integration (optional)
+
+Adapters for `Retry`, `CircuitBreaker`, `RateLimiter`, and `Bulkhead` that return `Try` or `Result` instead of throwing exceptions. Resilience4J is declared as `compileOnly`; bring your own version (tested: 2.0.2–2.4.0).
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-resilience4j</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- Add the Resilience4J artifacts you use, e.g. (replace RESILIENCE4J_VERSION with the actual version): -->
+<dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-retry</artifactId>
+    <version>RESILIENCE4J_VERSION</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-resilience4j:LATEST_VERSION")
+// Add the Resilience4J artifacts you use, e.g. (replace RESILIENCE4J_VERSION with the actual version):
+implementation("io.github.resilience4j:resilience4j-retry:RESILIENCE4J_VERSION")
 ```
 
 ---

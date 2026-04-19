@@ -1,0 +1,35 @@
+# Verifies that the fun-resilience4j module remains compatible with multiple
+# Resilience4J versions. Resilience4J is declared as compileOnly so users bring
+# their own version; this matrix catches regressions before they reach main.
+#
+# Triggered only on pull requests that touch resilience4j/** or this workflow file.
+# To run a specific version locally:
+#   ./gradlew :resilience4j:test -Presilience4jVersion=2.2.0
+name: Resilience4J compatibility
+
+on:
+  pull_request:
+    # Run when the resilience4j module or this workflow file is modified.
+    paths:
+      - 'resilience4j/**'
+      - '.github/workflows/resilience4j-compatibility.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Covers all supported 2.x minor release lines.
+        # Update this list when a new minor is released or an old one is EOL.
+        resilience4j-version: ['2.0.2', '2.1.0', '2.2.0', '2.3.0', '2.4.0']
+    name: Resilience4J ${{ matrix.resilience4j-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      # Pass the matrix version as a Gradle property; the build falls back to
+      # the catalog version when the property is absent (local development).
+      - run: ./gradlew :resilience4j:test -Presilience4jVersion=${{ matrix.resilience4j-version }}

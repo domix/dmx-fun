@@ -1,0 +1,44 @@
+---
+fileName: 'DmxBulkhead usage'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.resilience4j.DmxBulkhead;
+import io.github.resilience4j.bulkhead.BulkheadConfig;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import java.time.Duration;
+
+BulkheadConfig config = BulkheadConfig.custom()
+    .maxConcurrentCalls(20)
+    .maxWaitDuration(Duration.ZERO)   // reject immediately when full
+    .build();
+
+DmxBulkhead bh = DmxBulkhead.of("pdf-renderer", config);
+
+// executeTry — bulkhead full lands in Failure
+Try<byte[]> result = bh.executeTry(() -> pdfRenderer.render(document));
+
+result
+    .onSuccess(pdf -> respond(pdf))
+    .onFailure(ex  -> respondBusy());
+
+// executeResultTyped — bulkhead full becomes Err; call errors propagate as unchecked
+Result<byte[], BulkheadFullException> result2 =
+    bh.executeResultTyped(() -> pdfRenderer.render(document));
+
+result2.fold(
+    ex  -> respondBusy(),        // BulkheadFullException — too many concurrent calls
+    pdf -> respond(pdf)
+);
+
+// Wrap an existing Bulkhead from a Resilience4J Registry
+DmxBulkhead wrapping = DmxBulkhead.of(existingBulkhead);
+```
+
+| Method | Returns | Bulkhead full | Call throws |
+|---|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(BulkheadFullException)` | `Failure(cause)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(BulkheadFullException)` | `Err(cause)` |
+| `executeResultTyped(supplier)` | `Result<V, BulkheadFullException>` | `Err(BulkheadFullException)` | rethrows unchecked |
