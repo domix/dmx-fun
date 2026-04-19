@@ -38,6 +38,29 @@ The `outcome` tag lets you calculate the error rate with a simple PromQL ratio.
 The `exception` tag on `{name}.failure` pinpoints which exception class is causing failures
 without needing to dig into logs.
 
+## Metric naming convention
+
+Use stable, low-cardinality operation names for `{name}`. A practical convention is:
+
+`<bounded-context>.<operation>`
+
+Examples:
+- `order.create`
+- `payment.charge`
+- `inventory.reserve`
+
+Avoid embedding IDs or user input in metric names.
+
+## Exception tag cardinality
+
+`{name}.failure` is tagged with `exception=<ClassName>`. Keep this cardinality bounded:
+
+- Prefer stable exception classes (for example `TimeoutException`, `IllegalStateException`).
+- Avoid dynamically generated exception types.
+- Do not encode request-specific values in tags.
+
+This keeps storage costs and query performance predictable in Prometheus/Datadog/etc.
+
 ## `DmxMicrometer`
 
 The primary entry point. Create one instance per `MeterRegistry` (typically application-scoped)
@@ -68,6 +91,15 @@ persistence — is instrumented independently. No manual counter updates or stop
 bookkeeping in the business logic.
 
 <RealWorld/>
+
+## Instrumentation cost guidance
+
+Micrometer instrumentation has small but non-zero overhead. Recommended placement:
+
+- Instrument network boundaries (HTTP clients, DB repositories, queue publishers/consumers).
+- Instrument expensive or high-value business operations.
+- Avoid instrumenting ultra-hot trivial paths where you do not use the metric operationally.
+- Reuse a single `DmxMicrometer` instance per `MeterRegistry` and keep tag sets stable.
 
 ## Version compatibility
 
