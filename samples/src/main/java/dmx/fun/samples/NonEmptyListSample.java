@@ -27,13 +27,21 @@ public class NonEmptyListSample {
     public static void main(String[] args) {
         // Construction — head + tail list
         NonEmptyList<String> tags = NonEmptyList.of("java", List.of("fp", "dmx-fun"));
-        System.out.println("Head: " + tags.head());      // java
-        System.out.println("Tail: " + tags.tail());      // [fp, dmx-fun]
-        System.out.println("Size: " + tags.size());      // 3
+        System.out.println("Head:     " + tags.head());       // java
+        System.out.println("First:    " + tags.getFirst());   // java  (SequencedCollection)
+        System.out.println("Last:     " + tags.getLast());    // dmx-fun (SequencedCollection)
+        System.out.println("Tail:     " + tags.tail());       // [fp, dmx-fun]
+        System.out.println("Size:     " + tags.size());       // 3
+        System.out.println("Empty?:   " + tags.isEmpty());    // false — always false
 
         // Singleton
         NonEmptyList<String> single = NonEmptyList.singleton("only");
         System.out.println("Single size: " + single.size()); // 1
+
+        // reversed() — new list, original unchanged
+        NonEmptyList<String> rev = tags.reversed();
+        System.out.println("Reversed: " + rev.toList());  // [dmx-fun, fp, java]
+        System.out.println("Original: " + tags.toList()); // [java, fp, dmx-fun]
 
         // Map over all elements
         NonEmptyList<String> upper = tags.map(String::toUpperCase);

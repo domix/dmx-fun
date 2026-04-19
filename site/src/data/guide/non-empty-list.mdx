@@ -14,6 +14,7 @@ import {Content as StreamInterop}      from '../code/guide/non-empty-list/stream
 import {Content as EqualityToString}       from '../code/guide/non-empty-list/equality-tostring.mdx';
 import {Content as InteropNonEmptyTypes}   from '../code/guide/non-empty-list/interop-non-empty-types.mdx';
 import {Content as ToNonEmptyListCollector} from '../code/guide/non-empty-list/to-non-empty-list-collector.mdx';
+import {Content as SequencedCollection}    from '../code/guide/non-empty-list/sequenced-collection.mdx';
 import {Content as RealWorldExample}       from '../code/guide/non-empty-list/real-world-example.mdx';
 
 > **Runnable example:** [`NonEmptyListSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/NonEmptyListSample.java)
@@ -56,6 +57,15 @@ Use it when:
 
 ## Accessing elements
 
+| Method        | Returns              | Notes                                        |
+|---------------|----------------------|----------------------------------------------|
+| `head()`      | First element        | Core accessor — always present               |
+| `getFirst()`  | First element        | `SequencedCollection` alias for `head()`     |
+| `getLast()`   | Last element         | Always safe — no index arithmetic required   |
+| `tail()`      | `List<T>`            | Remaining elements; unmodifiable; may be empty |
+| `toList()`    | `List<T>`            | All elements as an unmodifiable list          |
+| `size()`      | `int >= 1`           | Always at least 1                            |
+
 <AccessingElements/>
 
 `size()` always returns a value `>= 1`. `tail()` returns an unmodifiable `List`
@@ -67,6 +77,25 @@ that may be empty (for singletons).
 
 All transformation methods (`map`, `append`, `prepend`, `concat`) return a **new
 `NonEmptyList`** — the original is unchanged.
+
+## SequencedCollection integration (Java 21)
+
+`NonEmptyList<T>` implements `java.util.SequencedCollection<T>`, the Java 21
+interface that formalises a collection with a defined encounter order and
+well-known first and last elements.
+
+Because `NonEmptyList` is always non-empty, `getFirst()` and `getLast()` are
+**total functions** — they never throw `NoSuchElementException`.
+
+`reversed()` returns a **new** `NonEmptyList` with elements in reverse order;
+the original is not modified.
+
+All mutating methods always throw `UnsupportedOperationException` because
+`NonEmptyList` is immutable. This covers both the `SequencedCollection` mutators
+(`addFirst`, `addLast`, `removeFirst`, `removeLast`) and the inherited `Collection`
+mutators (`add`, `remove`, `addAll`, `removeAll`, `retainAll`, `removeIf`, `clear`).
+
+<SequencedCollection/>
 
 ## Collecting a stream — `toNonEmptyList`
 
@@ -97,8 +126,9 @@ provides three dedicated helpers:
 
 ## Stream and `Iterable` interop
 
-`NonEmptyList<T>` implements `Iterable<T>` and provides `toStream()` for
-integration with the standard Java stream API.
+`NonEmptyList<T>` implements `SequencedCollection<T>` (which extends `Collection<T>`
+and `Iterable<T>`) and provides `toStream()` for integration with the standard Java
+stream API.
 
 <StreamInterop/>
 
