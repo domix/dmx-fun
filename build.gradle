@@ -12,11 +12,12 @@ plugins {
 //   • ./gradlew check                       (testAggregateTestReport + testCodeCoverageReport)
 //   • ./gradlew aggregateJavadoc            (--module-source-path + --module args)
 def moduleMap = [
-    ':lib'        : 'dmx.fun',
-    ':assertj'    : 'dmx.fun.assertj',
-    ':jackson'    : 'dmx.fun.jackson',
-    ':spring'     : 'dmx.fun.spring',
-    ':spring-boot': 'dmx.fun.spring.boot',
+    ':lib'           : 'dmx.fun',
+    ':assertj'       : 'dmx.fun.assertj',
+    ':jackson'       : 'dmx.fun.jackson',
+    ':spring'        : 'dmx.fun.spring',
+    ':spring-boot'   : 'dmx.fun.spring.boot',
+    ':resilience4j'  : 'dmx.fun.resilience4j',
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────
