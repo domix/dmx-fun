@@ -12,7 +12,7 @@ postgresql = "42.7.10"
 testcontainers = "1.21.4"
 jspecify = "1.0.0"
 junit = "6.0.3"
-resilience4j = "2.2.0"
+resilience4j = "2.4.0"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }

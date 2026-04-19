@@ -7,7 +7,7 @@ plugins {
 }
 
 // Resilience4J version: overridable for CI compatibility matrix.
-//   ./gradlew :resilience4j:test -PresilObj4jVersion=2.1.0
+//   ./gradlew :resilience4j:test -Presilience4jVersion=2.1.0
 def r4jVersion = findProperty('resilience4jVersion') ?: libs.versions.resilience4j.get()
 
 dependencies {
