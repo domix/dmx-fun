@@ -17,7 +17,7 @@ import org.jspecify.annotations.NullMarked;
  *
  * <p>Usage:
  * <pre>{@code
- * import static dmx.fun.Results.*;
+ * import dmx.fun.Results;
  *
  * Result<List<Integer>, String> r  = stream.collect(Results.toList());
  * Results.Partition<Integer, String> p = stream.collect(Results.partitioning());

@@ -923,10 +923,10 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * Returns a {@link Collector} that accumulates a {@code Stream<Try<V>>} into a single
      * {@code Try<List<V>>}, failing on the first {@code Failure} encountered.
      *
-     * <p><strong>Note:</strong> this Collector is <em>not</em> fail-fast. Because the Java
-     * {@link Collector} API always feeds every stream element to the accumulator before the
-     * finisher runs, all elements are consumed regardless of failures. The finisher then
-     * returns the first failure encountered, or {@code Success(List)} if all elements succeeded.
+     * <p><strong>Note:</strong> this Collector is <em>not</em> fail-fast. All stream elements
+     * are always consumed. The accumulator records the first {@code Failure} cause and skips
+     * subsequent values; the finisher returns that failure, or {@code Success(List)} if all
+     * elements succeeded.
      *
      * <p>Example:
      * <pre>{@code
@@ -939,19 +939,27 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * @return a collector producing {@code Try<List<V>>}
      */
     static <V> Collector<Try<V>, ?, Try<List<V>>> toList() {
+        class Acc {
+            final ArrayList<V> values = new ArrayList<>();
+            Throwable firstFailure = null;
+        }
         return Collector.of(
-            () -> new ArrayList<Try<V>>(),
-            List::add,
-            (a, b) -> { a.addAll(b); return a; },
-            list -> {
-                List<V> values = new ArrayList<>(list.size());
-                for (Try<V> t : list) {
-                    if (t == null) throw new NullPointerException("toList stream contains a null element");
-                    if (t instanceof Failure<V> f) return Try.failure(f.cause());
-                    values.add(((Success<V>) t).value());
-                }
-                return Try.success(Collections.unmodifiableList(values));
-            }
+            Acc::new,
+            (acc, t) -> {
+                if (acc.firstFailure != null) return;
+                if (t == null) throw new NullPointerException("toList stream contains a null element");
+                if (t instanceof Failure<V> f) { acc.firstFailure = f.cause(); return; }
+                acc.values.add(((Success<V>) t).value());
+            },
+            (a, b) -> {
+                if (a.firstFailure != null) return a;
+                if (b.firstFailure != null) { a.firstFailure = b.firstFailure; return a; }
+                a.values.addAll(b.values);
+                return a;
+            },
+            acc -> acc.firstFailure != null
+                ? Try.failure(acc.firstFailure)
+                : Try.success(Collections.unmodifiableList(acc.values))
         );
     }
 
