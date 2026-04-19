@@ -388,7 +388,7 @@ public interface Guard<T> {
      * @param <T> the type of the value to be guarded
      * @return a Guard that validates the value is not null
      */
-    static <@Nullable T> Guard<@Nullable T> nonNull() {
+    static <T extends @Nullable Object> Guard<T> nonNull() {
         return Guard.of(Objects::nonNull, "must not be null");
     }
 }
