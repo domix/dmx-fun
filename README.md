@@ -19,6 +19,7 @@ All modules are published to Maven Central. Add only what you need.
 | `fun-assertj`        | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)                          |
 | `fun-spring`         | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)                            |
 | `fun-resilience4j`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j)                |
+| `fun-micrometer`     | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)                    |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
 
@@ -91,6 +92,30 @@ Fluent custom assertions for all dmx-fun types.
 **Gradle**
 ```groovy
 testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
+```
+
+### Micrometer integration (optional)
+
+Automatic counters, timers, and failure metrics for `Try` and `Result` operations. Micrometer is declared as `compileOnly`; bring your own version (1.5.x – 1.16.x) and backend.
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-micrometer</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+    <version>1.16.5</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-micrometer:LATEST_VERSION")
+implementation("io.micrometer:micrometer-core:1.16.5")
 ```
 
 ### Resilience4J integration (optional)

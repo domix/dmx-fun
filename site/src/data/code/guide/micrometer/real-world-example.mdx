@@ -1,0 +1,97 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+import dmx.fun.Option;
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.micrometer.DmxMicrometer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+
+/**
+ * An order service that automatically records metrics for every Try/Result
+ * operation without scattering manual counter.increment() calls throughout
+ * the business logic.
+ *
+ * After startup, the following metrics appear in your Micrometer backend
+ * (e.g. Prometheus /actuator/prometheus):
+ *
+ *   order_place_count{outcome="success",...}
+ *   order_place_count{outcome="failure",...}
+ *   order_place_duration_seconds_count{outcome="success",...}
+ *   order_place_duration_seconds_sum{outcome="success",...}
+ *   order_place_failure_total{exception="PaymentException",...}
+ *
+ *   inventory_reserve_count{outcome="success",...}
+ *   ...
+ */
+public class OrderService {
+
+    private final DmxMicrometer dmx;
+    private final PaymentGateway paymentGateway;
+    private final InventoryClient inventoryClient;
+    private final OrderRepository orderRepository;
+
+    public OrderService(MeterRegistry registry,
+                        PaymentGateway paymentGateway,
+                        InventoryClient inventoryClient,
+                        OrderRepository orderRepository) {
+        this.dmx               = DmxMicrometer.of(registry);
+        this.paymentGateway    = paymentGateway;
+        this.inventoryClient   = inventoryClient;
+        this.orderRepository   = orderRepository;
+    }
+
+    /**
+     * Places an order: reserves inventory, charges payment, and persists.
+     * Each step is instrumented independently so failures are traceable
+     * to the exact service call — no wrapping try/catch needed.
+     */
+    public Result<Order, String> placeOrder(PlaceOrderCommand cmd) {
+        Tags orderTags = Tags.of("customer", cmd.customerId(), "channel", cmd.channel());
+
+        // 1. Reserve inventory — metrics: inventory.reserve.count / duration / failure
+        Try<Reservation> reservation = dmx.recordTry(
+            "inventory.reserve", orderTags,
+            () -> inventoryClient.reserve(cmd.items())
+        );
+        if (reservation.isFailure()) {
+            return Result.err("Inventory unavailable: " + reservation.getCause().getMessage());
+        }
+
+        // 2. Charge payment — metrics: payment.charge.count / duration / failure
+        Try<Receipt> receipt = dmx.recordTry(
+            "payment.charge",
+            orderTags.and("provider", cmd.paymentProvider()),
+            () -> paymentGateway.charge(cmd.amount(), cmd.paymentToken())
+        );
+        if (receipt.isFailure()) {
+            inventoryClient.release(reservation.get());
+            return Result.err("Payment failed: " + receipt.getCause().getMessage());
+        }
+
+        // 3. Persist order — metrics: order.place.count / duration / failure
+        return dmx.recordResult(
+            "order.place", orderTags,
+            () -> orderRepository.save(Order.from(cmd, reservation.get(), receipt.get()))
+        )
+        .mapError(ex -> "Failed to persist order: " + ex.getMessage());
+    }
+
+    /**
+     * Looks up an order by ID. Missing orders are modelled as Option.none()
+     * rather than a failure — the metric still records outcome=success.
+     */
+    public Option<Order> findOrder(String orderId) {
+        return dmx.recordTry(
+            "order.find",
+            Tags.of("id", orderId),
+            () -> orderRepository.findById(orderId)
+        )
+        .toOption()
+        .flatMap(Option::fromOptional);
+    }
+}
+```

@@ -1,0 +1,40 @@
+---
+fileName: 'DmxMicrometer usage'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.micrometer.DmxMicrometer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+
+// One-time setup — typically injected or obtained from the application context
+DmxMicrometer dmx = DmxMicrometer.of(registry);
+
+// Instrument a Try operation — name + tags identify the metric
+Try<Response> result = dmx.recordTry(
+    "http.client.get",
+    Tags.of("endpoint", "/users"),
+    () -> httpClient.get(url)
+);
+
+result
+    .onSuccess(r  -> render(r))
+    .onFailure(ex -> renderError(ex));
+
+// Instrument a Result operation
+Result<User, Throwable> user = dmx.recordResult(
+    "db.user.find",
+    Tags.of("table", "users"),
+    () -> userRepo.findById(id)
+);
+```
+
+**Metrics recorded for each call:**
+
+| Metric | Type | Tags |
+|---|---|---|
+| `{name}.count` | Counter | `outcome=success\|failure` + custom tags |
+| `{name}.duration` | Timer | `outcome=success\|failure` + custom tags |
+| `{name}.failure` | Counter | `exception=<ClassName>` + custom tags (on failure only) |

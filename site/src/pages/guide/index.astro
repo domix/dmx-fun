@@ -185,6 +185,14 @@ const modules = [
         avoidWhen: 'You are not using Resilience4J — the module is optional and has no effect without it.',
         tag: 'Resilience',
     },
+    {
+        name: 'Micrometer integration',
+        href: `${base}guide/micrometer`,
+        summary: 'Automatic counters, timers, and failure metrics for Try and Result executions via DmxMicrometer and the DmxMetered fluent builder.',
+        whenToUse: 'You want observability for Try/Result operations without scattering manual counter.increment() calls through your business logic.',
+        avoidWhen: 'You are not using Micrometer — the module is optional and has no effect without it.',
+        tag: 'Observability',
+    },
 ];
 ---
 
