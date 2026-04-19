@@ -48,13 +48,18 @@ nonNull.check("hello"); // Valid("hello")
 nonNull.check(null);    // Invalid(["must not be null"])
 ```
 
-You can chain `nonNull()` with further rules using `and()`.  Because `and()` is always
-evaluated on both sides, the downstream guard only receives a non-null value when the
-`nonNull` check passes:
+To chain `nonNull()` with further rules, use `andThen()` rather than `and()`.
+`and()` always evaluates **both** sides, so a downstream `Guard.of(s -> !s.isBlank(), ...)`
+would receive `null` and throw when the input is `null`. `andThen()` short-circuits:
+if this guard returns `Invalid`, the next guard is never called.
 
 ```java
 Guard<@Nullable String> nonNullAndNotBlank = Guard.<@Nullable String>nonNull()
-    .and(Guard.of(s -> !s.isBlank(), "must not be blank"));
+    .andThen(Guard.<@Nullable String>of(s -> s != null && !s.isBlank(), "must not be blank"));
+
+nonNullAndNotBlank.check("hello"); // Valid("hello")
+nonNullAndNotBlank.check(null);    // Invalid(["must not be null"]) — RHS never called
+nonNullAndNotBlank.check("   ");   // Invalid(["must not be blank"])
 ```
 
 ## `and(other)` — accumulate all errors

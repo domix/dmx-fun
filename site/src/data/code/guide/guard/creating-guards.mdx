@@ -23,7 +23,8 @@ Guard<@Nullable String> nonNull = Guard.nonNull();
 nonNull.check("hello"); // Valid("hello")
 nonNull.check(null);    // Invalid(["must not be null"])
 
-// Compose nonNull with further rules using and()
+// Compose nonNull with further rules using andThen() — short-circuits on Invalid
+// so the RHS predicate never receives null
 Guard<@Nullable String> nonNullAndNotBlank = Guard.<@Nullable String>nonNull()
-    .and(Guard.of(s -> !s.isBlank(), "must not be blank"));
+    .andThen(Guard.<@Nullable String>of(s -> s != null && !s.isBlank(), "must not be blank"));
 ```

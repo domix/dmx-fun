@@ -410,6 +410,47 @@ class GuardTest {
         assertThat(g.check(null).isValid()).isFalse();
     }
 
+    // -------------------------------------------------------------------------
+    // andThen — short-circuit composition
+    // -------------------------------------------------------------------------
+
+    @Test
+    void andThen_returnsValid_whenBothPass() {
+        Guard<String> notBlank  = Guard.of(s -> !s.isBlank(),    "must not be blank");
+        Guard<String> minLength = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+        assertThat(notBlank.andThen(minLength).check("alice").isValid()).isTrue();
+    }
+
+    @Test
+    void andThen_returnsFirstInvalid_andSkipsNext_whenFirstFails() {
+        Guard<@Nullable String> nonNull  = Guard.nonNull();
+        Guard<@Nullable String> notBlank = Guard.<@Nullable String>of(
+            s -> s != null && !s.isBlank(), "must not be blank");
+
+        // nonNull fails → notBlank must NOT be called (would NPE on null)
+        Validated<NonEmptyList<String>, @Nullable String> result = nonNull.andThen(notBlank).check(null);
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("must not be null");
+    }
+
+    @Test
+    void andThen_returnsNextInvalid_whenFirstPassesAndNextFails() {
+        Guard<@Nullable String> nonNull  = Guard.nonNull();
+        Guard<@Nullable String> notBlank = Guard.<@Nullable String>of(
+            s -> s != null && !s.isBlank(), "must not be blank");
+
+        Validated<NonEmptyList<String>, @Nullable String> result = nonNull.andThen(notBlank).check("   ");
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("must not be blank");
+    }
+
+    @Test
+    void andThen_shouldThrowNPE_whenNextIsNull() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        assertThatThrownBy(() -> g.andThen(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
     @Test
     void check_integratesWithValidatedCombine_toAccumulateAcrossFields() {
         Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "username must not be blank");

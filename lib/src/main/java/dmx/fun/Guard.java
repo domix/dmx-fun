@@ -146,6 +146,42 @@ public interface Guard<T> {
     }
 
     /**
+     * Returns a composed guard that evaluates {@code next} only when this guard passes.
+     *
+     * <p>Unlike {@link #and(Guard) and}, evaluation is <strong>short-circuit</strong>:
+     * if this guard returns {@code Invalid}, {@code next} is never called and its error is
+     * never accumulated. This makes {@code andThen} the safe choice when the downstream
+     * guard's predicate would throw on the values rejected by this guard — most notably
+     * when composing {@link #nonNull()} with a rule that dereferences the value:
+     *
+     * <pre>{@code
+     * Guard<@Nullable String> nonNullAndNotBlank =
+     *     Guard.<@Nullable String>nonNull()
+     *         .andThen(Guard.<@Nullable String>of(s -> s != null && !s.isBlank(),
+     *                                             "must not be blank"));
+     *
+     * nonNullAndNotBlank.check("hello"); // Valid("hello")
+     * nonNullAndNotBlank.check(null);    // Invalid(["must not be null"]) — next not evaluated
+     * nonNullAndNotBlank.check("   ");   // Invalid(["must not be blank"])
+     * }</pre>
+     *
+     * <p>Use {@link #and(Guard) and} when you want both guards evaluated regardless of the
+     * first result (error accumulation). Use {@code andThen} when the second guard must not
+     * run until the first has passed.
+     *
+     * @param next the guard to evaluate when this guard passes; must not be {@code null}
+     * @return a composed {@code Guard<T>}
+     * @throws NullPointerException if {@code next} is {@code null}
+     */
+    default Guard<T> andThen(Guard<T> next) {
+        Objects.requireNonNull(next, "next");
+        return value -> {
+            Validated<NonEmptyList<String>, T> first = this.check(value);
+            return first.isValid() ? next.check(value) : first;
+        };
+    }
+
+    /**
      * Returns a composed guard that passes when <em>at least one</em> of this guard or
      * {@code other} passes.
      *
