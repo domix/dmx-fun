@@ -15,6 +15,7 @@ on:
       - 'spring-boot/**'
       - 'spring/**'
       - 'gradle/libs.versions.toml'
+      - 'settings.gradle'
       - '.github/workflows/spring-boot-sample-compatibility.yaml'
 
 jobs:

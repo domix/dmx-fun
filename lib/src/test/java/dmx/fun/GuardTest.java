@@ -2,6 +2,7 @@ package dmx.fun;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -388,7 +389,7 @@ class GuardTest {
 
     @Test
     void nonNull_rejectsNull() {
-        Guard<String> g = Guard.nonNull();
+        Guard<@Nullable String> g = Guard.nonNull();
         Validated<NonEmptyList<String>, String> result = g.check(null);
         assertThat(result.isValid()).isFalse();
         assertThat(result.getError().toList()).containsExactly("must not be null");
@@ -396,7 +397,7 @@ class GuardTest {
 
     @Test
     void nonNull_acceptsNonNull() {
-        Guard<String> g = Guard.nonNull();
+        Guard<@Nullable String> g = Guard.nonNull();
         Validated<NonEmptyList<String>, String> result = g.check("hello");
         assertThat(result.isValid()).isTrue();
         assertThat(result.get()).isEqualTo("hello");
@@ -404,7 +405,7 @@ class GuardTest {
 
     @Test
     void nonNull_worksForAnyType() {
-        Guard<Integer> g = Guard.nonNull();
+        Guard<@Nullable Integer> g = Guard.nonNull();
         assertThat(g.check(42).isValid()).isTrue();
         assertThat(g.check(null).isValid()).isFalse();
     }
