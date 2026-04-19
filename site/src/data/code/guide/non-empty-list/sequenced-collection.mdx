@@ -20,10 +20,10 @@ sc.getFirst();  // 1
 sc.getLast();   // 5
 
 // Mutating methods always throw — NonEmptyList is immutable
-nel.addFirst(0);    // UnsupportedOperationException
-nel.addLast(6);     // UnsupportedOperationException
-nel.removeFirst();  // UnsupportedOperationException
-nel.removeLast();   // UnsupportedOperationException
+try { nel.addFirst(0);   } catch (UnsupportedOperationException e) { /* expected */ }
+try { nel.addLast(6);    } catch (UnsupportedOperationException e) { /* expected */ }
+try { nel.removeFirst(); } catch (UnsupportedOperationException e) { /* expected */ }
+try { nel.removeLast();  } catch (UnsupportedOperationException e) { /* expected */ }
 
 // Real-world: show the most recent and oldest event in a guaranteed-non-empty audit log
 NonEmptyList<AuditEvent> log = auditService.getEvents(userId); // guaranteed non-empty

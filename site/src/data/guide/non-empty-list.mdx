@@ -90,9 +90,10 @@ Because `NonEmptyList` is always non-empty, `getFirst()` and `getLast()` are
 `reversed()` returns a **new** `NonEmptyList` with elements in reverse order;
 the original is not modified.
 
-The four mutating methods inherited from `SequencedCollection` (`addFirst`,
-`addLast`, `removeFirst`, `removeLast`) always throw `UnsupportedOperationException`
-because `NonEmptyList` is immutable.
+All mutating methods always throw `UnsupportedOperationException` because
+`NonEmptyList` is immutable. This covers both the `SequencedCollection` mutators
+(`addFirst`, `addLast`, `removeFirst`, `removeLast`) and the inherited `Collection`
+mutators (`add`, `remove`, `addAll`, `removeAll`, `retainAll`, `removeIf`, `clear`).
 
 <SequencedCollection/>
 

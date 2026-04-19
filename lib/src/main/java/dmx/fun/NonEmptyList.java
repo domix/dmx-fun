@@ -449,6 +449,12 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
 
     /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
     @Override
+    public boolean removeIf(java.util.function.Predicate<? super T> filter) {
+        throw new UnsupportedOperationException("NonEmptyList is immutable");
+    }
+
+    /** @throws UnsupportedOperationException always — {@code NonEmptyList} is immutable */
+    @Override
     public void clear() {
         throw new UnsupportedOperationException("NonEmptyList is immutable");
     }
