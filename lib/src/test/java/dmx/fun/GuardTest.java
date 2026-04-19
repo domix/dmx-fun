@@ -382,6 +382,33 @@ class GuardTest {
         assertThat(valid).containsExactly("alice", "bob");
     }
 
+    // -------------------------------------------------------------------------
+    // nonNull — static factory
+    // -------------------------------------------------------------------------
+
+    @Test
+    void nonNull_rejectsNull() {
+        Guard<String> g = Guard.nonNull();
+        Validated<NonEmptyList<String>, String> result = g.check(null);
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("must not be null");
+    }
+
+    @Test
+    void nonNull_acceptsNonNull() {
+        Guard<String> g = Guard.nonNull();
+        Validated<NonEmptyList<String>, String> result = g.check("hello");
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void nonNull_worksForAnyType() {
+        Guard<Integer> g = Guard.nonNull();
+        assertThat(g.check(42).isValid()).isTrue();
+        assertThat(g.check(null).isValid()).isFalse();
+    }
+
     @Test
     void check_integratesWithValidatedCombine_toAccumulateAcrossFields() {
         Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "username must not be blank");

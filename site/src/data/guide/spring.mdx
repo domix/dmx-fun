@@ -70,7 +70,7 @@ explicit `@Bean` declarations required:
 
 `PlatformTransactionManager` is auto-configured by Spring Boot for every registered `DataSource`; if you add a `DataSource` (e.g. via `spring-boot-starter-data-jpa` or `spring-boot-starter-jdbc`), no explicit transaction manager declaration is needed.
 
-`DmxFunModule` is the Jackson serializer/deserializer for all dmx-fun types. When it is registered as a bean, Spring Boot's `JacksonAutoConfiguration` applies it to the `ObjectMapper` automatically — `Result`, `Option`, `Try`, and the other types serialize to JSON without any extra wiring. See the [Jackson Integration guide](./jackson#auto-configuration-with-fun-spring-boot) for the full reference.
+`DmxFunModule` is the Jackson serializer/deserializer for all dmx-fun types. When it is registered as a bean, Spring Boot's `JacksonAutoConfiguration` applies it to the `ObjectMapper` automatically — `Result`, `Option`, `Try`, and the other types serialize to JSON without any extra wiring. To opt out, set `dmx.fun.jackson.enabled=false`. See the [Jackson Integration guide](./jackson#auto-configuration-with-fun-spring-boot) for the full reference.
 
 All beans are guarded by `@ConditionalOnMissingBean`, so you can override any of them
 with your own `@Bean` declaration (see [Customizing auto-configured beans](#customizing-auto-configured-beans) below).

@@ -1,0 +1,12 @@
+spring:
+  sql:
+    init:
+      mode: always
+
+logging:
+  level:
+    org.springframework.transaction: TRACE
+    org.springframework.jdbc.datasource.DataSourceTransactionManager: DEBUG
+    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+    org.springframework.orm: TRACE
+    org.springframework.jdbc: TRACE

@@ -8,15 +8,10 @@ spring:
     driver-class-name: org.postgresql.Driver
   sql:
     init:
-      mode: always
+      mode: never
       schema-locations: classpath:db/schema.sql
 
 logging:
   level:
     root: INFO
     dmx.fun: DEBUG
-    org.springframework.transaction: TRACE
-    org.springframework.jdbc.datasource.DataSourceTransactionManager: DEBUG
-    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
-    org.springframework.orm: TRACE
-    org.springframework.jdbc: TRACE

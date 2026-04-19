@@ -346,9 +346,7 @@ public interface Guard<T> {
         return result.isValid() ? Option.some(result.get()) : Option.none();
     }
 
-    default <T> Guard<T> nonNull(@Nullable T value) {
-        return Guard.of(t -> {
-            return Objects.nonNull(t);
-        }, "must not be null");
+    static <T> Guard<T> nonNull() {
+        return Guard.of(Objects::nonNull, "must not be null");
     }
 }

@@ -25,7 +25,12 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBody
  *
  * <p>The handler is disabled via {@code dmx.fun.mvc.option-handler.enabled=false}.
  */
-@AutoConfiguration
+@AutoConfiguration(afterName = {
+    // Boot 3.x location
+    "org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration",
+    // Boot 4.x location (moved)
+    "org.springframework.boot.web.servlet.autoconfigure.WebMvcAutoConfiguration"
+})
 @ConditionalOnClass({DispatcherServlet.class, RequestMappingHandlerAdapter.class})
 @ConditionalOnProperty(name = "dmx.fun.mvc.option-handler.enabled", havingValue = "true", matchIfMissing = true)
 @NullMarked

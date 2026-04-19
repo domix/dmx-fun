@@ -39,7 +39,7 @@ curl -s -X POST http://localhost:8080/items \
   -d '{"name":"Widget","description":"A fine widget"}' | jq .
 # → {"ok":{"id":1,"name":"Widget","description":"A fine widget"}}
 
-# Validation failure — Result.err serialized as {"error":"..."}
+# Validation failure — Result.err serialized as {"err":"..."}
 curl -s -X POST http://localhost:8080/items \
   -H 'Content-Type: application/json' \
   -d '{"name":"","description":"desc"}' | jq .
@@ -100,7 +100,7 @@ simplicity. For production applications, use [Flyway](https://flywaydb.org) or
 
 ## Module structure
 
-```
+```text
 spring-boot-sample/
 ├── build.gradle
 ├── docker-compose.yml              # PostgreSQL for local dev
