@@ -95,7 +95,7 @@ testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
 
 ### Resilience4J integration (optional)
 
-Adapters for `Retry`, `CircuitBreaker`, `RateLimiter`, and `Bulkhead` that return `Try` or `Result` instead of throwing exceptions. Resilience4J is declared as `compileOnly`; bring your own version (2.x).
+Adapters for `Retry`, `CircuitBreaker`, `RateLimiter`, and `Bulkhead` that return `Try` or `Result` instead of throwing exceptions. Resilience4J is declared as `compileOnly`; bring your own version (tested: 2.0.2–2.4.0).
 
 **Maven**
 ```xml

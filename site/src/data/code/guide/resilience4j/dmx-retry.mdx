@@ -7,6 +7,7 @@ import dmx.fun.Result;
 import dmx.fun.Try;
 import dmx.fun.resilience4j.DmxRetry;
 import io.github.resilience4j.retry.RetryConfig;
+import java.io.IOException;
 import java.time.Duration;
 
 RetryConfig config = RetryConfig.custom()
