@@ -14,6 +14,8 @@ import {Content as TransformingFilter} from '../code/guide/try/transforming-filt
 import {Content as SideEffects}        from '../code/guide/try/side-effects.mdx';
 import {Content as Recovery}           from '../code/guide/try/recovery.mdx';
 import {Content as SequenceTraverse}   from '../code/guide/try/sequence-traverse.mdx';
+import {Content as TryCollectors}      from '../code/guide/try/try-collectors.mdx';
+import {Content as TriesFacade}        from '../code/guide/try/tries-facade.mdx';
 import {Content as NullHandling}       from '../code/guide/try/null-handling.mdx';
 import {Content as InteropConversions} from '../code/guide/try/interop-conversions.mdx';
 import {Content as PitfallsGet}        from '../code/guide/try/pitfalls-get.mdx';
@@ -115,6 +117,36 @@ Both operations apply **fail-fast semantics**: they stop at the first `Failure`
 and return it immediately.
 
 <SequenceTraverse/>
+
+## Stream collectors
+
+`Try.toList()` and `Try.partitioningBy()` are stream `Collector` counterparts to
+`sequence` — they operate on a `Stream<Try<V>>` instead of a list.
+
+| Method                  | Returns               | Semantics                                          |
+|-------------------------|-----------------------|----------------------------------------------------|
+| `Try.toList()`          | `Try<List<V>>`        | Returns first `Failure` (upstream fully traversed) |
+| `Try.partitioningBy()`  | `Try.Partition<V>`    | Collect all — splits `successes()` and `failures()`|
+
+`Try.Partition<V>` is a record with two unmodifiable lists.
+
+<TryCollectors/>
+
+## Collector facade: Tries
+
+`Tries` is a single discoverable entry point for all `Stream<Try<V>>` collectors —
+analogous to `java.util.stream.Collectors`. Import `dmx.fun.Tries` instead of
+remembering which collector lives on which type.
+
+| Method                    | Returns                   | Semantics                                          |
+|---------------------------|---------------------------|----------------------------------------------------|
+| `Tries.toList()`          | `Try<List<V>>`            | Delegates to `Try.toList()`                        |
+| `Tries.partitioning()`    | `Tries.Partition<V>`      | Delegates to `Try.partitioningBy()`                |
+
+`Tries.Partition` is a thin wrapper that delegates to `Try.Partition`.
+Call `toTryPartition()` to obtain the underlying `Try.Partition<V>` when needed.
+
+<TriesFacade/>
 
 ## Null handling
 
