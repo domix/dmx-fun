@@ -44,11 +44,19 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @see TxValidated
  * @see DmxTransactionalAspect
  */
-@AutoConfiguration
+@AutoConfiguration(afterName = {
+    // Boot 3.x package
+    "org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration",
+    // Boot 4.x package (moved in 4.0)
+    "org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration"
+})
 @ConditionalOnClass(PlatformTransactionManager.class)
 @ConditionalOnSingleCandidate(PlatformTransactionManager.class)
 @NullMarked
 public class DmxFunSpringAutoConfiguration {
+
+    /** Default constructor required for Spring Boot auto-configuration instantiation. */
+    public DmxFunSpringAutoConfiguration() {}
 
     /**
      * Registers a {@link TxResult} backed by the primary transaction manager.

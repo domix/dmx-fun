@@ -2,6 +2,7 @@ package dmx.fun;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -380,6 +381,74 @@ class GuardTest {
             .flatMap(s -> notBlank.checkToOption(s).stream())
             .toList();
         assertThat(valid).containsExactly("alice", "bob");
+    }
+
+    // -------------------------------------------------------------------------
+    // nonNull — static factory
+    // -------------------------------------------------------------------------
+
+    @Test
+    void nonNull_rejectsNull() {
+        Guard<@Nullable String> g = Guard.nonNull();
+        Validated<NonEmptyList<String>, String> result = g.check(null);
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("must not be null");
+    }
+
+    @Test
+    void nonNull_acceptsNonNull() {
+        Guard<@Nullable String> g = Guard.nonNull();
+        Validated<NonEmptyList<String>, String> result = g.check("hello");
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void nonNull_worksForAnyType() {
+        Guard<@Nullable Integer> g = Guard.nonNull();
+        assertThat(g.check(42).isValid()).isTrue();
+        assertThat(g.check(null).isValid()).isFalse();
+    }
+
+    // -------------------------------------------------------------------------
+    // andThen — short-circuit composition
+    // -------------------------------------------------------------------------
+
+    @Test
+    void andThen_returnsValid_whenBothPass() {
+        Guard<String> notBlank  = Guard.of(s -> !s.isBlank(),    "must not be blank");
+        Guard<String> minLength = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+        assertThat(notBlank.andThen(minLength).check("alice").isValid()).isTrue();
+    }
+
+    @Test
+    void andThen_returnsFirstInvalid_andSkipsNext_whenFirstFails() {
+        Guard<@Nullable String> nonNull  = Guard.nonNull();
+        Guard<@Nullable String> notBlank = Guard.<@Nullable String>of(
+            s -> s != null && !s.isBlank(), "must not be blank");
+
+        // nonNull fails → notBlank must NOT be called (would NPE on null)
+        Validated<NonEmptyList<String>, @Nullable String> result = nonNull.andThen(notBlank).check(null);
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("must not be null");
+    }
+
+    @Test
+    void andThen_returnsNextInvalid_whenFirstPassesAndNextFails() {
+        Guard<@Nullable String> nonNull  = Guard.nonNull();
+        Guard<@Nullable String> notBlank = Guard.<@Nullable String>of(
+            s -> s != null && !s.isBlank(), "must not be blank");
+
+        Validated<NonEmptyList<String>, @Nullable String> result = nonNull.andThen(notBlank).check("   ");
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("must not be blank");
+    }
+
+    @Test
+    void andThen_shouldThrowNPE_whenNextIsNull() {
+        Guard<String> g = Guard.of(s -> !s.isBlank(), "must not be blank");
+        assertThatThrownBy(() -> g.andThen(null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test

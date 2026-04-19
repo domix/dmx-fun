@@ -1,0 +1,29 @@
+---
+fileName: 'Demo.java / application.properties'
+---
+
+```java
+// With fun-spring-boot, jackson-databind, and fun-jackson all on the classpath,
+// DmxFunModule is registered automatically as a bean. No @Bean declaration needed —
+// Spring Boot's JacksonAutoConfiguration discovers all Module beans and applies
+// them to the ObjectMapper.
+
+// Controller just works: Jackson serializes Result, Option, Try transparently.
+@GetMapping("/users/{id}")
+public Result<User, ApiError> getUser(@PathVariable Long id) {
+    return userService.findById(id);
+    // → {"ok":{"id":1,"name":"Alice"}}   or   {"err":{"code":"NOT_FOUND"}}
+}
+
+// Override: declare your own DmxFunModule bean when you need customization.
+// The auto-configuration backs off automatically (ConditionalOnMissingBean).
+@Bean
+public DmxFunModule dmxFunModule() {
+    return new DmxFunModule(); // add custom serializers here if needed
+}
+```
+
+```properties
+# Opt out of the Jackson auto-configuration (enabled by default)
+dmx.fun.jackson.enabled=false
+```

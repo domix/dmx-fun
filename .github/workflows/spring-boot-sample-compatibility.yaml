@@ -1,0 +1,35 @@
+# Verifies that the spring-boot-sample runs correctly against multiple Spring Boot versions.
+# Mirrors the matrix used in spring-boot-compatibility.yaml (Boot 3.3+ only, since the
+# sample targets that baseline for Spring Boot Docker Compose support).
+#
+# Triggered on pull requests that touch spring-boot-sample/**, spring-boot/**, spring/**,
+# the version catalog, or this workflow file.
+# To run a specific version locally:
+#   ./gradlew :spring-boot-sample:test -PspringBootVersion=3.4.13
+name: Spring Boot sample compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'spring-boot-sample/**'
+      - 'spring-boot/**'
+      - 'spring/**'
+      - 'gradle/libs.versions.toml'
+      - 'settings.gradle'
+      - '.github/workflows/spring-boot-sample-compatibility.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        spring-boot-version: ['3.4.13', '3.5.13', '4.0.5']
+    name: Spring Boot ${{ matrix.spring-boot-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      - run: ./gradlew :spring-boot-sample:test -PspringBootVersion=${{ matrix.spring-boot-version }}

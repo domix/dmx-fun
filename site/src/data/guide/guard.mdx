@@ -32,6 +32,36 @@ rule once as a `Guard` and compose them with `and`, `or`, and `negate`.
 
 Both factory overloads throw `NullPointerException` for `null` predicate or message arguments.
 
+## Built-in guards
+
+### `Guard.nonNull()`
+
+Returns a `Guard<@Nullable T>` that accepts a nullable input and produces
+`Invalid(["must not be null"])` when the value is `null`, or `Valid(value)` otherwise.
+
+The type parameter is declared `<@Nullable T>` so the compiler knows that passing `null`
+is intentional — no `@SuppressWarnings` needed:
+
+```java
+Guard<@Nullable String> nonNull = Guard.nonNull();
+nonNull.check("hello"); // Valid("hello")
+nonNull.check(null);    // Invalid(["must not be null"])
+```
+
+To chain `nonNull()` with further rules, use `andThen()` rather than `and()`.
+`and()` always evaluates **both** sides, so a downstream `Guard.of(s -> !s.isBlank(), ...)`
+would receive `null` and throw when the input is `null`. `andThen()` short-circuits:
+if this guard returns `Invalid`, the next guard is never called.
+
+```java
+Guard<@Nullable String> nonNullAndNotBlank = Guard.<@Nullable String>nonNull()
+    .andThen(Guard.<@Nullable String>of(s -> s != null && !s.isBlank(), "must not be blank"));
+
+nonNullAndNotBlank.check("hello"); // Valid("hello")
+nonNullAndNotBlank.check(null);    // Invalid(["must not be null"]) — RHS never called
+nonNullAndNotBlank.check("   ");   // Invalid(["must not be blank"])
+```
+
 ## `and(other)` — accumulate all errors
 
 Both guards are **always evaluated** — `and` is not fail-fast.

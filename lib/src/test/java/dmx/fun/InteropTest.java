@@ -100,6 +100,13 @@ class InteropTest {
     }
 
     @Test
+    void option_fromTryOptional() {
+        assertThat(Option.fromTryOptional(Try.success(Optional.of("hi")))).isEqualTo(Option.some("hi"));
+        assertThat(Option.fromTryOptional(Try.success(Optional.<String>empty()))).isEqualTo(Option.none());
+        assertThat(Option.fromTryOptional(Try.<Optional<String>>failure(new RuntimeException()))).isEqualTo(Option.none());
+    }
+
+    @Test
     void option_toResult() {
         var success = Option.some(10).toResult("missing");
         assertThat(success).isEqualTo(Result.ok(10));

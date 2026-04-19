@@ -10,4 +10,10 @@ public String resolveShippingLabel(long userId) {
         .map(AddressFormatter::format)          // Option<String>
         .getOrElse("Default Warehouse, 1 Main St");
 }
+
+// JPA / Spring Data repositories return Optional<T>.
+// Convert directly so DataAccessExceptions propagate as expected (5xx).
+public Option<Item> findById(Long id) {
+    return Option.fromOptional(itemRepository.findById(id));
+}
 ```
