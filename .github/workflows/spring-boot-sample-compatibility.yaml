@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spring-boot-version: ['3.3.13', '3.4.13', '3.5.13', '4.0.5']
+        spring-boot-version: ['3.4.13', '3.5.13', '4.0.5']
     name: Spring Boot ${{ matrix.spring-boot-version }}
     steps:
       - uses: actions/checkout@v6.0.2
