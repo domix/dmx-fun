@@ -38,6 +38,14 @@ public final class OptionHandlerMethodReturnValueHandler implements HandlerMetho
 
     private final HandlerMethodReturnValueHandler delegate;
 
+    /**
+     * Creates a handler that unwraps {@link Option} return values and delegates
+     * serialization of the unwrapped value to the given handler.
+     *
+     * @param delegate the handler that processes the unwrapped value — typically a
+     *                 {@code RequestResponseBodyMethodProcessor} that writes the body
+     *                 using the configured {@code HttpMessageConverter}s
+     */
     public OptionHandlerMethodReturnValueHandler(HandlerMethodReturnValueHandler delegate) {
         this.delegate = delegate;
     }

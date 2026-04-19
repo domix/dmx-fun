@@ -212,7 +212,7 @@ Useful for integrating into Stream pipelines without `filter + map`.
 | `Result` → `Option`           | `result.toOption()`                             |
 | `Try` → `Option`              | `tryVal.toOption()`                             |
 | `Optional` → `Option`         | `Option.fromOptional(optional)`                 |
-| `Try<Optional<T>>` → `Option` | `Option.fromTryOptional(tryOfOptional)` _(flattens both layers)_ |
+| `Try<Optional<T>>` → `Option` | `Option.fromTryOptional(tryOfOptional)` _(flattens both layers; converts Failure to None — drops the error)_ |
 
 <InteropConversions/>
 

@@ -55,6 +55,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 @NullMarked
 public class DmxFunSpringAutoConfiguration {
 
+    /** Default constructor required for Spring Boot auto-configuration instantiation. */
+    public DmxFunSpringAutoConfiguration() {}
+
     /**
      * Registers a {@link TxResult} backed by the primary transaction manager.
      * Can be disabled via {@code dmx.fun.tx-result.enabled=false}.

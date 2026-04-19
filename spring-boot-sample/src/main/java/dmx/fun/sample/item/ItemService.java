@@ -67,12 +67,12 @@ public class ItemService {
      */
     @TransactionalResult
     public Result<Item, String> update(Long id, String name) {
-        System.out.println("Updating...");
-        return mustNotBeBlank.check(name)
+        String normalized = name == null ? null : name.strip();
+        return mustNotBeBlank.check(normalized)
             .toResult()
             .mapError(violations -> String.join(", ", violations))
             .flatMap(_ -> this.findById(id).toResult("item not found: %d".formatted(id)))
-            .flatMap(item -> this.internalSave(new Item(item.id(), name, item.description())));
+            .flatMap(item -> this.internalSave(new Item(item.id(), normalized, item.description())));
     }
 
     // ── Queries ───────────────────────────────────────────────────────────────
@@ -83,9 +83,7 @@ public class ItemService {
      * <p>Converts {@code Optional} → {@code Option} so callers stay in the dmx-fun type world.
      */
     public Option<Item> findById(Long id) {
-        return Option
-            .fromTry(Try.of(() -> repository.findById(id)))
-            .flatMap(Option::fromOptional);
+        return Option.fromOptional(repository.findById(id));
     }
 
     public List<Item> findAll() {

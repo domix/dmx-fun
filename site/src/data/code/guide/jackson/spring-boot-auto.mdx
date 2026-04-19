@@ -3,9 +3,10 @@ fileName: 'Demo.java / application.properties'
 ---
 
 ```java
-// With fun-spring-boot on the classpath, DmxFunModule is registered automatically.
-// No @Bean declaration needed — Spring Boot's JacksonAutoConfiguration discovers
-// all Module beans and applies them to the ObjectMapper.
+// With fun-spring-boot, jackson-databind, and fun-jackson all on the classpath,
+// DmxFunModule is registered automatically as a bean. No @Bean declaration needed —
+// Spring Boot's JacksonAutoConfiguration discovers all Module beans and applies
+// them to the ObjectMapper.
 
 // Controller just works: Jackson serializes Result, Option, Try transparently.
 @GetMapping("/users/{id}")

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  *       {@link dmx.fun.spring.boot.web.DmxFunWebMvcAutoConfiguration} converts it to
  *       HTTP 200 (Some) or 404 (None) automatically.</li>
  *   <li>{@code POST /items} — returns {@link Result}{@code <Item,String>} serialized as JSON.
- *       Success: {@code {"ok":{...}}}; failure: {@code {"error":"..."}}.</li>
+ *       Success: {@code {"ok":{...}}}; failure: {@code {"err":"..."}}.</li>
  *   <li>{@code PUT /items/{id}} — same {@code Result} pattern, demonstrating the declarative
  *       {@link dmx.fun.spring.TransactionalResult} style from the service layer.</li>
  * </ul>

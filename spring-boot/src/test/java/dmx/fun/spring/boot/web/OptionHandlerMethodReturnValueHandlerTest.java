@@ -81,10 +81,11 @@ class OptionHandlerMethodReturnValueHandlerTest {
         var response = new MockHttpServletResponse();
         var webRequest = new ServletWebRequest(new MockHttpServletRequest(), response);
 
+        int initialStatus = response.getStatus();
         handler.handleReturnValue(Option.some("x"), paramFor("optionMethod"),
             new ModelAndViewContainer(), webRequest);
 
-        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getStatus()).isEqualTo(initialStatus);
     }
 
     // ── Stub delegate ─────────────────────────────────────────────────────────

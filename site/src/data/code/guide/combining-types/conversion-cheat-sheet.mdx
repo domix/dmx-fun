@@ -24,7 +24,7 @@ Option<String> o1 = tryValue.toOption(); // Some on success, None on failure
 Option<Item> o2 = Option.fromTryOptional(Try.of(() -> repository.findById(id)));
 
 // Result<T, E> → Option<T>  (discards the error)
-Option<String> o2 = result.toOption();   // Some(value) or None
+Option<String> o3 = result.toOption();   // Some(value) or None
 
 // Result<T, E> → Try<T>
 Try<String> t2 = result.toTry(AppError::toException);
