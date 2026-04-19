@@ -15,6 +15,7 @@ import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.retry.RetryConfig;
 import java.io.IOException;
 import java.time.Duration;
@@ -71,14 +72,19 @@ public class ProductCatalogService {
 
     /**
      * Searches the catalog. Rate-limited to 50 req/s; max 10 concurrent.
-     * Returns an empty list on any search failure (rate limit, bulkhead full, or API error).
+     * Returns an empty list only when rejected by resilience policies
+     * (rate limit exceeded or bulkhead full). Other failures are propagated.
      */
     public List<ProductSummary> search(String query) {
         return searchRl.executeTry(() ->
             searchBh.executeTry(() -> api.search(query))
-                .getOrElse(List.of())          // bulkhead full → empty list
+                .recover(BulkheadFullException.class, ex -> List.of())
+                .getOrThrow(cause ->
+                    cause instanceof RuntimeException re ? re : new RuntimeException(cause))
         )
-        .getOrElse(List.of());                 // rate limited → empty list
+        .recover(RequestNotPermitted.class, ex -> List.of())
+        .getOrThrow(cause ->
+            cause instanceof RuntimeException re ? re : new RuntimeException(cause));
     }
 
     /**
