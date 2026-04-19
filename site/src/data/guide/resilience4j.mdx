@@ -1,0 +1,135 @@
+---
+title: "Resilience4J Integration — Developer Guide"
+description: "How to use the optional fun-resilience4j module: dmx-fun adapters for Retry, CircuitBreaker, RateLimiter, and Bulkhead that return Try or Result instead of throwing exceptions."
+order: 17
+h1: "Resilience4J Integration"
+---
+
+import {Content as Dependency}        from '../code/guide/resilience4j/dependency.mdx';
+import {Content as DmxRetry}          from '../code/guide/resilience4j/dmx-retry.mdx';
+import {Content as DmxCircuitBreaker} from '../code/guide/resilience4j/dmx-circuit-breaker.mdx';
+import {Content as DmxRateLimiter}    from '../code/guide/resilience4j/dmx-rate-limiter.mdx';
+import {Content as DmxBulkhead}       from '../code/guide/resilience4j/dmx-bulkhead.mdx';
+import {Content as RealWorld}         from '../code/guide/resilience4j/real-world-example.mdx';
+
+The `fun-resilience4j` module provides dmx-fun adapters for the four core
+[Resilience4J](https://resilience4j.readme.io/) patterns: `Retry`, `CircuitBreaker`,
+`RateLimiter`, and `Bulkhead`. It is an **optional** dependency — the core `fun` library
+has no runtime dependency on Resilience4J.
+
+Each adapter wraps a native Resilience4J instance. You configure the policy using the
+standard Resilience4J API and the adapter takes care of capturing the outcome as a dmx-fun
+type so you never need to catch exceptions in your business logic.
+
+## Adding the dependency
+
+`fun-resilience4j` declares all four Resilience4J artifacts as `compileOnly`. You must add
+the artifacts you actually use explicitly to your classpath. Any **Resilience4J 2.x**
+release is supported.
+
+<Dependency/>
+
+## API overview
+
+| Adapter | Wraps | Returns on policy rejection | Returns on call failure |
+|---|---|---|---|
+| `DmxRetry` | `Retry` | `Failure(lastException)` / `Err(lastException)` | same |
+| `DmxCircuitBreaker` | `CircuitBreaker` | `Failure(CallNotPermittedException)` / `Err(...)` | `Failure(cause)` / `Err(cause)` |
+| `DmxRateLimiter` | `RateLimiter` | `Failure(RequestNotPermitted)` / `Err(...)` | `Failure(cause)` / `Err(cause)` |
+| `DmxBulkhead` | `Bulkhead` | `Failure(BulkheadFullException)` / `Err(...)` | `Failure(cause)` / `Err(cause)` |
+
+Each adapter offers three execution methods:
+
+| Method | Return type | Policy rejection | Call failure |
+|---|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(ex)` | `Failure(cause)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(ex)` | `Err(cause)` |
+| `executeResultTyped(supplier)` | `Result<V, SpecificException>` | `Err(specificEx)` | rethrows unchecked |
+
+> `DmxRetry` does not have `executeResultTyped` — retries always surface the last exception,
+> so `executeResult` already gives you `Result<V, Throwable>`.
+
+Choose **`executeTry`** when you want a flat failure channel and the caller will just log or
+recover. Choose **`executeResultTyped`** when you need to branch specifically on a policy
+rejection (e.g. show a "service unavailable" page on circuit open) while letting genuine
+call errors propagate.
+
+## `DmxRetry`
+
+Executes a supplier through a retry policy. On every attempt that throws, Resilience4J
+waits and retries according to the `RetryConfig`. The adapter captures the final outcome
+as a `Try` or `Result` so your code stays exception-free.
+
+<DmxRetry/>
+
+## `DmxCircuitBreaker`
+
+Executes a supplier through a circuit breaker. When the circuit is open, calls are
+rejected immediately with `CallNotPermittedException` — no downstream traffic is issued.
+`executeTry` and `executeResult` capture the rejection like any other failure;
+`executeResultTyped` surfaces it as a distinct typed error so callers can branch on it.
+
+<DmxCircuitBreaker/>
+
+## `DmxRateLimiter`
+
+Limits the rate of calls to a downstream service. When the configured quota is exceeded,
+the supplier is not called and `RequestNotPermitted` is returned. Configure
+`timeoutDuration(Duration.ZERO)` to reject immediately rather than queuing.
+
+<DmxRateLimiter/>
+
+## `DmxBulkhead`
+
+Limits the number of concurrent calls. When the bulkhead is full, additional callers
+are rejected immediately with `BulkheadFullException` (when `maxWaitDuration` is zero).
+Use a bulkhead to isolate a slow downstream dependency so that slow calls do not exhaust
+the caller's thread pool.
+
+<DmxBulkhead/>
+
+## Composing patterns
+
+Resilience4J recommends layering patterns in this order (outer to inner):
+**Bulkhead → RateLimiter → CircuitBreaker → Retry → Supplier**.
+
+With dmx-fun adapters, composition is straightforward — each adapter's supplier can call
+the next adapter:
+
+```java
+Result<Response, Throwable> result = bulkhead.executeResult(() ->
+    rateLimiter.executeTry(() ->
+        circuitBreaker.executeTry(() ->
+            retry.executeTry(() -> downstream.call()).getOrThrow()
+        ).getOrThrow()
+    ).getOrThrow()
+);
+```
+
+Use `getOrThrow()` on `Try` at each inner layer to surface failures upward so the outer
+adapters record them correctly (circuit breaker failure-rate counting, etc.).
+
+## Real-world example
+
+A product catalog service that layers all four patterns:
+- **Rate limiter** caps search API calls to 50 per second.
+- **Bulkhead** limits concurrent searches to 10.
+- **Circuit breaker** trips after 50% failures in the last 20 product fetches.
+- **Retry** attempts each product fetch up to 3 times before the circuit breaker sees the result.
+
+<RealWorld/>
+
+## Version compatibility
+
+The module is tested in CI against the following Resilience4J versions on every pull
+request that touches the `resilience4j/` module:
+
+| Resilience4J version | Status  |
+|----------------------|---------|
+| 2.2.0                | tested  |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :resilience4j:test -PresilObj4jVersion=2.2.0
+```

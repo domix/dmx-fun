@@ -1,0 +1,37 @@
+---
+fileName: 'DmxRetry usage'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.resilience4j.DmxRetry;
+import io.github.resilience4j.retry.RetryConfig;
+import java.time.Duration;
+
+RetryConfig config = RetryConfig.custom()
+    .maxAttempts(3)
+    .waitDuration(Duration.ofMillis(200))
+    .retryOnException(IOException.class::isInstance)
+    .build();
+
+DmxRetry retry = DmxRetry.of("payment-gateway", config);
+
+// Returns Try — failure holds the last exception if all attempts are exhausted
+Try<Response> result = retry.executeTry(() -> paymentGateway.charge(cmd));
+
+result
+    .onSuccess(r  -> log.info("Charged: {}", r.transactionId()))
+    .onFailure(ex -> log.error("All retries failed", ex));
+
+// Returns Result<V, Throwable> — same semantics, Result shape
+Result<Response, Throwable> result2 = retry.executeResult(() -> paymentGateway.charge(cmd));
+
+// Wrap an existing Retry configured elsewhere (e.g. via Resilience4J Registry)
+DmxRetry wrapping = DmxRetry.of(existingRetry);
+```
+
+| Method | Returns | On last failure |
+|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(lastException)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(lastException)` |

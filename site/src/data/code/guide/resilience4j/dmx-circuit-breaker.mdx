@@ -1,0 +1,48 @@
+---
+fileName: 'DmxCircuitBreaker usage'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.resilience4j.DmxCircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import java.time.Duration;
+
+CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+    .failureRateThreshold(50)
+    .waitDurationInOpenState(Duration.ofSeconds(30))
+    .slidingWindowSize(10)
+    .build();
+
+DmxCircuitBreaker cb = DmxCircuitBreaker.of("inventory", config);
+
+// executeTry — all failures (circuit open or call error) land in Failure
+Try<Item> result = cb.executeTry(() -> inventoryService.findItem(id));
+
+result
+    .onSuccess(item -> render(item))
+    .onFailure(ex  -> renderUnavailable());
+
+// executeResult — Err holds any Throwable
+Result<Item, Throwable> result2 = cb.executeResult(() -> inventoryService.findItem(id));
+
+// executeResultTyped — circuit-open becomes Err; call errors propagate as unchecked
+Result<Item, CallNotPermittedException> result3 =
+    cb.executeResultTyped(() -> inventoryService.findItem(id));
+
+result3.fold(
+    ex  -> renderCircuitOpen(),     // CallNotPermittedException — circuit is open
+    item -> render(item)
+);
+
+// Wrap an existing CircuitBreaker from a Resilience4J Registry
+DmxCircuitBreaker wrapping = DmxCircuitBreaker.of(existingCircuitBreaker);
+```
+
+| Method | Returns | Circuit open | Call throws |
+|---|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(CallNotPermittedException)` | `Failure(cause)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(CallNotPermittedException)` | `Err(cause)` |
+| `executeResultTyped(supplier)` | `Result<V, CallNotPermittedException>` | `Err(CallNotPermittedException)` | rethrows unchecked |
