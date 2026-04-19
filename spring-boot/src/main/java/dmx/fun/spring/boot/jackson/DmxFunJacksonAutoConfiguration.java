@@ -29,6 +29,19 @@ import org.springframework.context.annotation.Bean;
 @NullMarked
 public class DmxFunJacksonAutoConfiguration {
 
+    /** Default constructor required for Spring Boot auto-configuration instantiation. */
+    public DmxFunJacksonAutoConfiguration() {}
+
+    /**
+     * Registers a {@link DmxFunModule} bean so that Spring Boot's
+     * {@code JacksonAutoConfiguration} can discover and apply it to the
+     * application's {@link ObjectMapper} automatically.
+     *
+     * <p>Skipped when the application already declares its own {@link DmxFunModule} bean
+     * ({@code @ConditionalOnMissingBean}).
+     *
+     * @return a ready-to-use {@link DmxFunModule} instance
+     */
     @Bean
     @ConditionalOnMissingBean(DmxFunModule.class)
     public DmxFunModule dmxFunModule() {

@@ -12,7 +12,6 @@ module dmx.fun.resilience4j {
     requires static io.github.resilience4j.circuitbreaker;
     requires static io.github.resilience4j.ratelimiter;
     requires static io.github.resilience4j.bulkhead;
-    requires static dmx.fun.assertj;
     requires org.jspecify;
 
     exports dmx.fun.resilience4j;

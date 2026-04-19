@@ -120,7 +120,7 @@ implementation("io.micrometer:micrometer-core:1.16.5")
 
 ### Resilience4J integration (optional)
 
-Adapters for `Retry`, `CircuitBreaker`, `RateLimiter`, and `Bulkhead` that return `Try` or `Result` instead of throwing exceptions. Resilience4J is declared as `compileOnly`; bring your own version (2.x).
+Adapters for `Retry`, `CircuitBreaker`, `RateLimiter`, and `Bulkhead` that return `Try` or `Result` instead of throwing exceptions. Resilience4J is declared as `compileOnly`; bring your own version (tested: 2.0.2–2.4.0).
 
 **Maven**
 ```xml
@@ -129,19 +129,19 @@ Adapters for `Retry`, `CircuitBreaker`, `RateLimiter`, and `Bulkhead` that retur
     <artifactId>fun-resilience4j</artifactId>
     <version>LATEST_VERSION</version>
 </dependency>
-<!-- Add the Resilience4J artifacts you use, e.g.: -->
+<!-- Add the Resilience4J artifacts you use, e.g. (replace RESILIENCE4J_VERSION with the actual version): -->
 <dependency>
     <groupId>io.github.resilience4j</groupId>
     <artifactId>resilience4j-retry</artifactId>
-    <version>2.2.0</version>
+    <version>RESILIENCE4J_VERSION</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
 implementation("codes.domix:fun-resilience4j:LATEST_VERSION")
-// Add the Resilience4J artifacts you use, e.g.:
-implementation("io.github.resilience4j:resilience4j-retry:2.2.0")
+// Add the Resilience4J artifacts you use, e.g. (replace RESILIENCE4J_VERSION with the actual version):
+implementation("io.github.resilience4j:resilience4j-retry:RESILIENCE4J_VERSION")
 ```
 
 ---

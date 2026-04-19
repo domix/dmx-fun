@@ -90,6 +90,8 @@ public final class DmxCircuitBreaker {
             return Result.err(e);
         } catch (RuntimeException e) {
             throw e;
+        } catch (Error e) {
+            throw e;
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }

@@ -15,9 +15,12 @@ import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.retry.RetryConfig;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A product catalog service that uses all four Resilience4J patterns together.
@@ -28,14 +31,16 @@ import java.util.List;
  */
 public class ProductCatalogService {
 
-    private final DmxRateLimiter     searchRl;
-    private final DmxBulkhead        searchBh;
-    private final DmxCircuitBreaker  productCb;
-    private final DmxRetry           productRetry;
-    private final ProductApiClient    api;
+    private final DmxRateLimiter              searchRl;
+    private final DmxBulkhead                searchBh;
+    private final DmxCircuitBreaker           productCb;
+    private final DmxRetry                   productRetry;
+    private final ProductApiClient            api;
+    private final Map<String, ProductPage>   cache;
 
     public ProductCatalogService(ProductApiClient api) {
-        this.api = api;
+        this.api   = api;
+        this.cache = new java.util.HashMap<>();
 
         this.searchRl = DmxRateLimiter.of("search",
             RateLimiterConfig.custom()
@@ -67,14 +72,19 @@ public class ProductCatalogService {
 
     /**
      * Searches the catalog. Rate-limited to 50 req/s; max 10 concurrent.
-     * Returns an empty list when the rate limit or bulkhead is exceeded.
+     * Returns an empty list only when rejected by resilience policies
+     * (rate limit exceeded or bulkhead full). Other failures are propagated.
      */
     public List<ProductSummary> search(String query) {
         return searchRl.executeTry(() ->
             searchBh.executeTry(() -> api.search(query))
-                .getOrElse(List.of())          // bulkhead full → empty list
+                .recover(BulkheadFullException.class, ex -> List.of())
+                .getOrThrow(cause ->
+                    cause instanceof RuntimeException re ? re : new RuntimeException(cause))
         )
-        .getOrElse(List.of());                 // rate limited → empty list
+        .recover(RequestNotPermitted.class, ex -> List.of())
+        .getOrThrow(cause ->
+            cause instanceof RuntimeException re ? re : new RuntimeException(cause));
     }
 
     /**
@@ -100,7 +110,7 @@ public class ProductCatalogService {
             productRetry.executeTry(() -> api.fetchProduct(id)).getOrThrow()
         )
         .fold(
-            (CallNotPermittedException ex) -> cache.get(id),   // circuit open → cached page
+            (CallNotPermittedException ex) -> Option.ofNullable(cache.get(id)),   // circuit open → cached page
             product -> Option.some(buildPage(product))
         );
     }

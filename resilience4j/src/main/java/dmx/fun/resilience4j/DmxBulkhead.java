@@ -81,6 +81,8 @@ public final class DmxBulkhead {
             return Result.err(e);
         } catch (RuntimeException e) {
             throw e;
+        } catch (Error e) {
+            throw e;
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }

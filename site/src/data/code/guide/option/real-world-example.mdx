@@ -12,9 +12,8 @@ public String resolveShippingLabel(long userId) {
 }
 
 // JPA / Spring Data repositories return Optional<T>.
-// Wrapping the call in Try catches any DataAccessException,
-// then Option.fromTry flattens both layers in one step.
+// Convert directly so DataAccessExceptions propagate as expected (5xx).
 public Option<Item> findById(Long id) {
-    return Option.fromTryOptional(Try.of(() -> itemRepository.findById(id)));
+    return Option.fromOptional(itemRepository.findById(id));
 }
 ```

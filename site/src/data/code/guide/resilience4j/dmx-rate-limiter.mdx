@@ -23,7 +23,10 @@ Try<SearchResult> result = rl.executeTry(() -> searchApi.query(request));
 
 result
     .onSuccess(r  -> render(r))
-    .onFailure(ex -> renderRateLimited());
+    .onFailure(ex -> {
+        if (ex instanceof RequestNotPermitted) renderRateLimited();
+        else renderError(ex);
+    });
 
 // executeResultTyped — rate-limit rejection becomes Err; call errors propagate as unchecked
 Result<SearchResult, RequestNotPermitted> result2 =
