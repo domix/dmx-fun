@@ -10,4 +10,11 @@ public String resolveShippingLabel(long userId) {
         .map(AddressFormatter::format)          // Option<String>
         .getOrElse("Default Warehouse, 1 Main St");
 }
+
+// JPA / Spring Data repositories return Optional<T>.
+// Wrapping the call in Try catches any DataAccessException,
+// then Option.fromTry flattens both layers in one step.
+public Option<Item> findById(Long id) {
+    return Option.fromTryOptional(Try.of(() -> itemRepository.findById(id)));
+}
 ```

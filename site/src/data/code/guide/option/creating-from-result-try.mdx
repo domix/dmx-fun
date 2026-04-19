@@ -8,4 +8,10 @@ Option<User> user = userResult.toOption();
 
 // Try -> Option (discards the exception)
 Option<Config> cfg = tryReadConfig.toOption();
+
+// Try<Optional<T>> -> Option<T>  (flattens both layers in one step)
+// Success(Optional.of(v))  -> Some(v)
+// Success(Optional.empty()) -> None
+// Failure(ex)              -> None
+Option<Item> item = Option.fromTryOptional(Try.of(() -> repository.findById(id)));
 ```

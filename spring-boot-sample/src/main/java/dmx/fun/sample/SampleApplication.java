@@ -25,6 +25,9 @@ public class SampleApplication {
     }
 
     // Explicit HTTP message converter so Spring MVC uses the Jackson 2.x ObjectMapper above.
+    // MappingJackson2HttpMessageConverter is deprecated for removal in Spring Framework 7 (Jackson 3.x
+    // migration); suppressed here because fun-jackson still targets Jackson 2.x.
+    @SuppressWarnings("removal")
     @Bean
     public MappingJackson2HttpMessageConverter jacksonHttpMessageConverter(ObjectMapper objectMapper) {
         return new MappingJackson2HttpMessageConverter(objectMapper);

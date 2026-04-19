@@ -629,6 +629,26 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         return t.isSuccess() ? Option.ofNullable(t.get()) : Option.none();
     }
 
+    /**
+     * Converts a {@link Try}{@code <Optional<V>>} into an {@link Option}{@code <V>}, flattening
+     * both layers in a single step.
+     *
+     * <ul>
+     *   <li>{@code Success(Optional.of(v))} → {@code Some(v)}</li>
+     *   <li>{@code Success(Optional.empty())} → {@code None}</li>
+     *   <li>{@code Failure(ex)} → {@code None}</li>
+     * </ul>
+     *
+     * @param t   the {@link Try} wrapping an {@link Optional} value, must not be null
+     * @param <V> the type of the value inside the {@link Optional}
+     * @return an {@link Option} containing the value if present and the {@link Try} succeeded,
+     *         or {@link Option#none()} otherwise
+     */
+    static <V> Option<V> fromTryOptional(Try<Optional<V>> t) {
+        Objects.requireNonNull(t, "t");
+        return t.isSuccess() ? fromOptional(t.get()) : Option.none();
+    }
+
     // ---------- zip / map2 ----------
 
     /**

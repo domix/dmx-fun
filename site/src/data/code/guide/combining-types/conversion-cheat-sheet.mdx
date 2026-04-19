@@ -20,6 +20,9 @@ Result<String, AppError> r4 = tryValue.toResult(ex -> AppError.from(ex));
 // Try<T> → Option<T>
 Option<String> o1 = tryValue.toOption(); // Some on success, None on failure
 
+// Try<Optional<T>> → Option<T>  (flattens both layers — common with JPA repositories)
+Option<Item> o2 = Option.fromTryOptional(Try.of(() -> repository.findById(id)));
+
 // Result<T, E> → Option<T>  (discards the error)
 Option<String> o2 = result.toOption();   // Some(value) or None
 

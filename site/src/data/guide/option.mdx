@@ -203,15 +203,16 @@ Useful for integrating into Stream pipelines without `filter + map`.
 
 ## Interoperability
 
-| Conversion            | Method                            |
-|-----------------------|-----------------------------------|
-| `Option` → `Optional` | `option.toOptional()`             |
-| `Option` → `Result`   | `option.toResult(errorSupplier)`  |
-| `Option` → `Try`      | `option.toTry(exceptionSupplier)` |
-| `Option` → `Either`   | `option.toEither(leftSupplier)`   |
-| `Result` → `Option`   | `result.toOption()`               |
-| `Try` → `Option`      | `tryVal.toOption()`               |
-| `Optional` → `Option` | `Option.fromOptional(optional)`   |
+| Conversion                    | Method                                          |
+|-------------------------------|-------------------------------------------------|
+| `Option` → `Optional`         | `option.toOptional()`                           |
+| `Option` → `Result`           | `option.toResult(errorSupplier)`                |
+| `Option` → `Try`              | `option.toTry(exceptionSupplier)`               |
+| `Option` → `Either`           | `option.toEither(leftSupplier)`                 |
+| `Result` → `Option`           | `result.toOption()`                             |
+| `Try` → `Option`              | `tryVal.toOption()`                             |
+| `Optional` → `Option`         | `Option.fromOptional(optional)`                 |
+| `Try<Optional<T>>` → `Option` | `Option.fromTryOptional(tryOfOptional)` _(flattens both layers)_ |
 
 <InteropConversions/>
 

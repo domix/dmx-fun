@@ -1,7 +1,9 @@
 package dmx.fun.sample.item;
 
+import dmx.fun.Guard;
 import dmx.fun.Option;
 import dmx.fun.Result;
+import dmx.fun.Try;
 import dmx.fun.spring.TransactionalResult;
 import dmx.fun.spring.TxResult;
 import java.util.ArrayList;
@@ -24,10 +26,11 @@ public class ItemService {
 
     private final ItemRepository repository;
     private final TxResult txResult;
+    private final static Guard<String> mustNotBeBlank = Guard.of(s -> s != null && !s.isBlank(), "name must not be blank");
 
     public ItemService(ItemRepository repository, TxResult txResult) {
         this.repository = repository;
-        this.txResult   = txResult;
+        this.txResult = txResult;
     }
 
     // ── Programmatic TxResult ─────────────────────────────────────────────────
@@ -39,13 +42,19 @@ public class ItemService {
      * when the returned {@code Result} is {@code Err}.
      */
     public Result<Item, String> create(String name, String description) {
-        return txResult.execute(() -> {
-            if (name == null || name.isBlank()) {
-                return Result.err("name must not be blank");
-            }
-            Item saved = repository.save(new Item(null, name.strip(), description));
-            return Result.ok(saved);
-        });
+        return txResult.execute(
+            () -> mustNotBeBlank.check(name)
+                .toResult()
+                .mapError(violations -> String.join(", ", violations))
+                .map(theName -> new Item(null, theName.strip(), description))
+                .flatMap(this::internalSave)
+        );
+    }
+
+    private Result<Item, String> internalSave(Item save) {
+        return Try.of(() -> repository.save(save))
+            .toResult()
+            .mapError(Throwable::getMessage);
     }
 
     // ── Declarative @TransactionalResult ─────────────────────────────────────
@@ -58,15 +67,12 @@ public class ItemService {
      */
     @TransactionalResult
     public Result<Item, String> update(Long id, String name) {
-        if (name == null || name.isBlank()) {
-            return Result.err("name must not be blank");
-        }
-        return repository.findById(id)
-            .<Result<Item, String>>map(existing -> {
-                Item updated = repository.save(new Item(existing.id(), name.strip(), existing.description()));
-                return Result.ok(updated);
-            })
-            .orElseGet(() -> Result.err("item not found: " + id));
+        System.out.println("Updating...");
+        return mustNotBeBlank.check(name)
+            .toResult()
+            .mapError(violations -> String.join(", ", violations))
+            .flatMap(_ -> this.findById(id).toResult("item not found: %d".formatted(id)))
+            .flatMap(item -> this.internalSave(new Item(item.id(), name, item.description())));
     }
 
     // ── Queries ───────────────────────────────────────────────────────────────
@@ -77,7 +83,9 @@ public class ItemService {
      * <p>Converts {@code Optional} → {@code Option} so callers stay in the dmx-fun type world.
      */
     public Option<Item> findById(Long id) {
-        return Option.fromOptional(repository.findById(id));
+        return Option
+            .fromTry(Try.of(() -> repository.findById(id)))
+            .flatMap(Option::fromOptional);
     }
 
     public List<Item> findAll() {

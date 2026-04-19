@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A named, composable predicate that produces a {@link Validated} result when applied to a value.
@@ -343,5 +344,11 @@ public interface Guard<T> {
     default Option<T> checkToOption(T value) {
         Validated<NonEmptyList<String>, T> result = this.check(value);
         return result.isValid() ? Option.some(result.get()) : Option.none();
+    }
+
+    default <T> Guard<T> nonNull(@Nullable T value) {
+        return Guard.of(t -> {
+            return Objects.nonNull(t);
+        }, "must not be null");
     }
 }
