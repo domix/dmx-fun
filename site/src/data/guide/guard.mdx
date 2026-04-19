@@ -32,6 +32,31 @@ rule once as a `Guard` and compose them with `and`, `or`, and `negate`.
 
 Both factory overloads throw `NullPointerException` for `null` predicate or message arguments.
 
+## Built-in guards
+
+### `Guard.nonNull()`
+
+Returns a `Guard<@Nullable T>` that accepts a nullable input and produces
+`Invalid(["must not be null"])` when the value is `null`, or `Valid(value)` otherwise.
+
+The type parameter is declared `<@Nullable T>` so the compiler knows that passing `null`
+is intentional — no `@SuppressWarnings` needed:
+
+```java
+Guard<@Nullable String> nonNull = Guard.nonNull();
+nonNull.check("hello"); // Valid("hello")
+nonNull.check(null);    // Invalid(["must not be null"])
+```
+
+You can chain `nonNull()` with further rules using `and()`.  Because `and()` is always
+evaluated on both sides, the downstream guard only receives a non-null value when the
+`nonNull` check passes:
+
+```java
+Guard<@Nullable String> nonNullAndNotBlank = Guard.<@Nullable String>nonNull()
+    .and(Guard.of(s -> !s.isBlank(), "must not be blank"));
+```
+
 ## `and(other)` — accumulate all errors
 
 Both guards are **always evaluated** — `and` is not fail-fast.

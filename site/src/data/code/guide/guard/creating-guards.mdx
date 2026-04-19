@@ -17,4 +17,13 @@ Guard<Integer> max = Guard.of(
 notBlank.check("hello"); // Valid("hello")
 notBlank.check("   ");   // Invalid(["must not be blank"])
 max.check(150);          // Invalid(["must be ≤ 100, got 150"])
+
+// Built-in: nonNull() — accepts @Nullable T, rejects null
+Guard<@Nullable String> nonNull = Guard.nonNull();
+nonNull.check("hello"); // Valid("hello")
+nonNull.check(null);    // Invalid(["must not be null"])
+
+// Compose nonNull with further rules using and()
+Guard<@Nullable String> nonNullAndNotBlank = Guard.<@Nullable String>nonNull()
+    .and(Guard.of(s -> !s.isBlank(), "must not be blank"));
 ```
