@@ -8,7 +8,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   sql:
     init:
-      mode: never
+      mode: always
       schema-locations: classpath:db/schema.sql
 
 logging:
