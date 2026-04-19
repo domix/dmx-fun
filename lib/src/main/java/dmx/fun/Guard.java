@@ -346,6 +346,12 @@ public interface Guard<T> {
         return result.isValid() ? Option.some(result.get()) : Option.none();
     }
 
+    /**
+     * Creates and returns a Guard instance that ensures a value is non-null.
+     *
+     * @param <T> the type of the value to be guarded
+     * @return a Guard that validates the value is not null
+     */
     static <T> Guard<T> nonNull() {
         return Guard.of(Objects::nonNull, "must not be null");
     }
