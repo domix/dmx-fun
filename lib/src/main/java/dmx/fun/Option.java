@@ -17,6 +17,7 @@ import java.util.stream.Gatherer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A sealed interface representing an optional value with two possible states:
@@ -102,7 +103,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param value the value to be encapsulated; if null, a None instance is returned
      * @return an Option containing the provided value if it is non-null, or a None instance if the value is null
      */
-    static <V> Option<V> ofNullable(V value) {
+    static <V> Option<V> ofNullable(@Nullable V value) {
         return value == null ? none() : new Some<>(value);
     }
 
