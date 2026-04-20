@@ -24,6 +24,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>The same metrics are recorded as with {@link DmxMicrometer#recordTry}:
  * {@code {name}.count}, {@code {name}.duration}, and {@code {name}.failure}.
+ * This builder is mutable and not thread-safe; avoid sharing one instance for concurrent per-call reconfiguration.
  */
 @NullMarked
 public final class DmxMetered {

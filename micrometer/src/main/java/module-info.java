@@ -6,9 +6,9 @@
  * metric tracking at call sites.
  */
 module dmx.fun.micrometer {
-    requires dmx.fun;
-    requires static micrometer.core;
-    requires org.jspecify;
+    requires transitive dmx.fun;
+    requires static transitive micrometer.core;
+    requires static org.jspecify;
 
     exports dmx.fun.micrometer;
 }

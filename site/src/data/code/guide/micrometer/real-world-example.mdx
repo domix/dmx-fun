@@ -48,9 +48,11 @@ public class OrderService {
      * Places an order: reserves inventory, charges payment, and persists.
      * Each step is instrumented independently so failures are traceable
      * to the exact service call — no wrapping try/catch needed.
+     * Keep metric tags bounded: put customerId/orderId in logs or traces,
+     * not in Micrometer tags.
      */
     public Result<Order, String> placeOrder(PlaceOrderCommand cmd) {
-        Tags orderTags = Tags.of("customer", cmd.customerId(), "channel", cmd.channel());
+        Tags orderTags = Tags.of("channel", cmd.channel(), "region", cmd.region());
 
         // 1. Reserve inventory — metrics: inventory.reserve.count / duration / failure
         Try<Reservation> reservation = dmx.recordTry(
@@ -87,7 +89,7 @@ public class OrderService {
     public Option<Order> findOrder(String orderId) {
         return dmx.recordTry(
             "order.find",
-            Tags.of("id", orderId),
+            Tags.of("lookup", "by-id", "channel", "api"),
             () -> orderRepository.findById(orderId)
         )
         .toOption()

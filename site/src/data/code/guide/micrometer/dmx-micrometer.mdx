@@ -37,4 +37,4 @@ Result<User, Throwable> user = dmx.recordResult(
 |---|---|---|
 | `{name}.count` | Counter | `outcome=success\|failure` + custom tags |
 | `{name}.duration` | Timer | `outcome=success\|failure` + custom tags |
-| `{name}.failure` | Counter | `exception=<ClassName>` + custom tags (on failure only) |
+| `{name}.failure` | Counter | Try-only: `exception=<ClassName>` + custom tags (emitted on `recordTry` failure only) |

@@ -26,13 +26,18 @@ and backend (Prometheus, Datadog, CloudWatch, etc.), following the same pattern 
 
 ## Metrics recorded
 
-For every instrumented call, three metric families are updated:
+For every instrumented call, these two metric families are updated:
 
 | Metric | Type | Tags |
 |---|---|---|
 | `{name}.count` | Counter | `outcome=success\|failure` + your custom tags |
 | `{name}.duration` | Timer | `outcome=success\|failure` + your custom tags |
-| `{name}.failure` | Counter | `exception=<ClassName>` + your custom tags (on failure only) |
+
+Try-only metric:
+
+| Metric | Type | Tags |
+|---|---|---|
+| `{name}.failure` | Counter | `exception=<ClassName>` + your custom tags (emitted on `recordTry` failure only) |
 
 The `outcome` tag lets you calculate the error rate with a simple PromQL ratio.
 The `exception` tag on `{name}.failure` pinpoints which exception class is causing failures

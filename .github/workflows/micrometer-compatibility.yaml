@@ -19,6 +19,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         # Covers all supported minor release lines from 1.5.x to 1.16.x.
         # Update this list when a new minor is released or an old one is EOL.
