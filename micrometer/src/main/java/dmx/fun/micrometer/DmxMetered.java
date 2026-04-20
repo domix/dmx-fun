@@ -1,6 +1,7 @@
 package dmx.fun.micrometer;
 
 import dmx.fun.CheckedSupplier;
+import dmx.fun.Lazy;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -31,7 +32,7 @@ public final class DmxMetered {
 
     private final String name;
     private Tags tags = Tags.empty();
-    private @Nullable MeterRegistry registry;
+    private @Nullable Lazy<DmxMicrometer> micrometer;
 
     private DmxMetered(String name) {
         this.name = name;
@@ -50,7 +51,8 @@ public final class DmxMetered {
 
     /** Sets the {@link MeterRegistry} to register metrics with. */
     public DmxMetered registry(MeterRegistry registry) {
-        this.registry = Objects.requireNonNull(registry, "registry");
+        MeterRegistry assignedRegistry = Objects.requireNonNull(registry, "registry");
+        this.micrometer = Lazy.of(() -> DmxMicrometer.of(assignedRegistry));
         return this;
     }
 
@@ -61,7 +63,7 @@ public final class DmxMetered {
      * @throws IllegalStateException if {@link #registry} was not set
      */
     public <V> Try<V> recordTry(CheckedSupplier<V> supplier) {
-        return DmxMicrometer.of(requireRegistry()).recordTry(name, tags, supplier);
+        return requireMicrometer().recordTry(name, tags, supplier);
     }
 
     /**
@@ -71,13 +73,14 @@ public final class DmxMetered {
      * @throws IllegalStateException if {@link #registry} was not set
      */
     public <V> Result<V, Throwable> recordResult(CheckedSupplier<V> supplier) {
-        return DmxMicrometer.of(requireRegistry()).recordResult(name, tags, supplier);
+        return requireMicrometer().recordResult(name, tags, supplier);
     }
 
-    private MeterRegistry requireRegistry() {
-        if (registry == null) {
+    private DmxMicrometer requireMicrometer() {
+        Lazy<DmxMicrometer> lazyMicrometer = micrometer;
+        if (lazyMicrometer == null) {
             throw new IllegalStateException("registry must be set before recording — call .registry(meterRegistry) first");
         }
-        return registry;
+        return lazyMicrometer.get();
     }
 }
