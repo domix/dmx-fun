@@ -8,7 +8,9 @@ jacocoTestReport.enabled = false
 dependencies {
     implementation project(':lib')
     implementation project(':jackson')
+    implementation project(':micrometer')
     implementation libs.jackson.databind
+    implementation libs.micrometer.core
 
     testImplementation project(':assertj')
     testImplementation libs.assertj.core

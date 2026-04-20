@@ -1,0 +1,26 @@
+---
+fileName: 'DmxMetered fluent builder'
+---
+
+```java
+import dmx.fun.Try;
+import dmx.fun.Result;
+import dmx.fun.micrometer.DmxMetered;
+import io.micrometer.core.instrument.Tags;
+
+// Chain name → tags → registry → execute
+Try<Receipt> result = DmxMetered.of("payment.charge")
+    .tags(Tags.of("provider", "stripe", "currency", "USD"))
+    .registry(registry)
+    .recordTry(() -> stripe.charge(amount));
+
+// Same with Result
+Result<User, Throwable> user = DmxMetered.of("db.user.find")
+    .tags(Tags.of("table", "users"))
+    .registry(registry)
+    .recordResult(() -> userRepo.findById(id));
+```
+
+> `DmxMetered` is a mutable builder — call `recordTry` or `recordResult` once
+> at the end. For repeated instrumentation of the same operation, prefer
+> `DmxMicrometer.of(registry)` and call `recordTry` directly.

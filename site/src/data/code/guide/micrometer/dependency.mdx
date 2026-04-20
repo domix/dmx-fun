@@ -1,0 +1,30 @@
+---
+fileName: 'build.gradle / pom.xml'
+---
+
+```groovy
+// Gradle
+implementation("codes.domix:fun-micrometer:LATEST_VERSION")
+// Micrometer — bring your own version (1.5.x – 1.16.x)
+implementation("io.micrometer:micrometer-core:1.16.5")
+// Add your Micrometer backend, e.g. Prometheus:
+// implementation("io.micrometer:micrometer-registry-prometheus:1.16.5")
+```
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-micrometer</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- Micrometer — bring your own version (1.5.x – 1.16.x) -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+    <version>1.16.5</version>
+</dependency>
+```
+
+> `fun-micrometer` declares `micrometer-core` as `compileOnly`. Your Micrometer backend
+> (Prometheus, Datadog, CloudWatch, etc.) is pulled in by your own dependency — not by this module.

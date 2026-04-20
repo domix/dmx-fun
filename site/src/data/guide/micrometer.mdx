@@ -1,0 +1,133 @@
+---
+title: "Micrometer Integration — Developer Guide"
+description: "How to use the optional fun-micrometer module: automatic counters, timers, and failure metrics for Try and Result operations via DmxMicrometer and the DmxMetered fluent builder."
+order: 18
+h1: "Micrometer Integration"
+---
+
+import {Content as Dependency}    from '../code/guide/micrometer/dependency.mdx';
+import {Content as DmxMicrometer} from '../code/guide/micrometer/dmx-micrometer.mdx';
+import {Content as DmxMetered}    from '../code/guide/micrometer/dmx-metered.mdx';
+import {Content as RealWorld}     from '../code/guide/micrometer/real-world-example.mdx';
+
+The `fun-micrometer` module instruments `Try` and `Result` executions automatically,
+recording success/failure counts and execution latency without requiring manual metric
+tracking at call sites. It is an **optional** dependency — the core `fun` library has no
+runtime dependency on Micrometer.
+
+`fun-micrometer` declares `micrometer-core` as `compileOnly`. You bring your own version
+and backend (Prometheus, Datadog, CloudWatch, etc.), following the same pattern as
+`fun-jackson` and `fun-resilience4j`. Any version from
+**1.5.x through 1.16.x** is supported (see [version compatibility](#version-compatibility) below).
+
+## Adding the dependency
+
+<Dependency/>
+
+## Metrics recorded
+
+For every instrumented call, these two metric families are updated:
+
+| Metric | Type | Tags |
+|---|---|---|
+| `{name}.count` | Counter | `outcome=success\|failure` + your custom tags |
+| `{name}.duration` | Timer | `outcome=success\|failure` + your custom tags |
+
+Try-only metric:
+
+| Metric | Type | Tags |
+|---|---|---|
+| `{name}.failure` | Counter | `exception=<ClassName>` + your custom tags (emitted on `recordTry` failure only) |
+
+The `outcome` tag lets you calculate the error rate with a simple PromQL ratio.
+The `exception` tag on `{name}.failure` pinpoints which exception class is causing failures
+without needing to dig into logs.
+
+## Metric naming convention
+
+Use stable, low-cardinality operation names for `{name}`. A practical convention is:
+
+`<bounded-context>.<operation>`
+
+Examples:
+- `order.create`
+- `payment.charge`
+- `inventory.reserve`
+
+Avoid embedding IDs or user input in metric names.
+
+## Exception tag cardinality
+
+`{name}.failure` is tagged with `exception=<ClassName>`. Keep this cardinality bounded:
+
+- Prefer stable exception classes (for example `TimeoutException`, `IllegalStateException`).
+- Avoid dynamically generated exception types.
+- Do not encode request-specific values in tags.
+
+This keeps storage costs and query performance predictable in Prometheus/Datadog/etc.
+
+## `DmxMicrometer`
+
+The primary entry point. Create one instance per `MeterRegistry` (typically application-scoped)
+and call `recordTry` or `recordResult` at each instrumentation point.
+
+<DmxMicrometer/>
+
+## `DmxMetered` — fluent builder
+
+When you prefer to configure name, tags, and registry in a single chain — for example
+inside a factory method or when building one-off instrumented operations — use the
+`DmxMetered` fluent builder:
+
+<DmxMetered/>
+
+## Choosing `DmxMicrometer` vs `DmxMetered`
+
+| Scenario | Recommendation |
+|---|---|
+| Multiple operations in the same class | `DmxMicrometer.of(registry)` — inject once, call many times |
+| Single ad-hoc operation, tags built inline | `DmxMetered.of(name).tags(...).registry(...).recordTry(...)` |
+| Spring Boot bean | Inject `MeterRegistry`, wrap with `DmxMicrometer.of(registry)` in the constructor |
+
+## Real-world example
+
+An order service where every step — inventory reservation, payment charge, and
+persistence — is instrumented independently. No manual counter updates or stopwatch
+bookkeeping in the business logic.
+
+<RealWorld/>
+
+## Instrumentation cost guidance
+
+Micrometer instrumentation has small but non-zero overhead. Recommended placement:
+
+- Instrument network boundaries (HTTP clients, DB repositories, queue publishers/consumers).
+- Instrument expensive or high-value business operations.
+- Avoid instrumenting ultra-hot trivial paths where you do not use the metric operationally.
+- Reuse a single `DmxMicrometer` instance per `MeterRegistry` and keep tag sets stable.
+
+## Version compatibility
+
+The module is tested in CI against the following Micrometer versions on every pull
+request that touches the `micrometer/` module:
+
+| Micrometer version | Spring Boot | Status  |
+|--------------------|-------------|---------|
+| 1.16.x             | 3.5.x       | tested  |
+| 1.15.x             | —           | tested  |
+| 1.14.x             | 3.4.x       | tested  |
+| 1.13.x             | 3.3.x       | tested  |
+| 1.12.x             | 3.2.x       | tested  |
+| 1.11.x             | 3.1.x       | tested  |
+| 1.10.x             | 3.0.x       | tested  |
+| 1.9.x              | 2.7.x       | tested  |
+| 1.8.x              | —           | tested  |
+| 1.7.x              | —           | tested  |
+| 1.6.x              | —           | tested  |
+| 1.5.x              | —           | tested  |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :micrometer:test -PmicrometerVersion=1.12.0
+```
