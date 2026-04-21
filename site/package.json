@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.15",
-    "@astrojs/mdx": "^4.3.13",
-    "astro": "^5.18.0",
+    "@astrojs/mdx": "^5.0.3",
+    "astro": "^6.1.8",
     "astro-expressive-code": "^0.41.7"
   }
 }
