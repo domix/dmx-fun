@@ -19,6 +19,9 @@ import {Content as TransactionalAttributes}       from '../code/guide/spring/tra
 import {Content as ProgrammaticVsDeclarative}     from '../code/guide/spring/programmatic-vs-declarative.mdx';
 import {Content as SpringBootDependency}           from '../code/guide/spring/spring-boot-dependency.mdx';
 import {Content as SpringBootOverride}             from '../code/guide/spring/spring-boot-override.mdx';
+import {Content as MvcOptionController}            from '../code/guide/spring/mvc-option-controller.mdx';
+import {Content as MvcResultController}            from '../code/guide/spring/mvc-result-controller.mdx';
+import {Content as MvcHandlerDisable}              from '../code/guide/spring/mvc-handler-disable.mdx';
 
 The `fun-spring` module adds first-class Spring transaction support for `Result<V,E>`,
 `Try<V>`, and `Validated<E,A>`. It is an **optional** dependency — the core `fun` library
@@ -67,6 +70,8 @@ explicit `@Bean` declarations required:
 | `TxValidated` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
 | `DmxTransactionalAspect` | Same as above **and** `aspectjweaver` is also on the classpath |
 | `DmxFunModule` | `jackson-databind` **and** `fun-jackson` are both on the classpath |
+| `optionReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
+| `resultReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
 
 `PlatformTransactionManager` is auto-configured by Spring Boot for every registered `DataSource`; if you add a `DataSource` (e.g. via `spring-boot-starter-data-jpa` or `spring-boot-starter-jdbc`), no explicit transaction manager declaration is needed.
 
@@ -107,10 +112,12 @@ Each auto-configured bean can be disabled individually in `application.propertie
 `application.yml`):
 
 ```properties
-dmx.fun.tx-result.enabled=false    # disable TxResult
-dmx.fun.tx-try.enabled=false       # disable TxTry
-dmx.fun.tx-validated.enabled=false # disable TxValidated
-dmx.fun.aspect.enabled=false       # disable DmxTransactionalAspect
+dmx.fun.tx-result.enabled=false          # disable TxResult
+dmx.fun.tx-try.enabled=false             # disable TxTry
+dmx.fun.tx-validated.enabled=false       # disable TxValidated
+dmx.fun.aspect.enabled=false             # disable DmxTransactionalAspect
+dmx.fun.mvc.option-handler.enabled=false # disable Option MVC handler
+dmx.fun.mvc.result-handler.enabled=false # disable Result/Try/Validated MVC handler
 ```
 
 All properties default to `true`, so existing applications are not affected.
@@ -275,6 +282,57 @@ Choose **declarative** (`@TransactionalResult` / `@TransactionalTry` / `@Transac
 - You prefer the familiar `@Transactional` annotation style.
 - The method is already a Spring bean and JDK-proxy or CGLIB overhead is acceptable.
 - You want to keep the service class free of `TxResult` constructor injection.
+
+---
+
+## Spring MVC return value handlers
+
+`fun-spring-boot` registers two Spring MVC
+[`HandlerMethodReturnValueHandler`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/method/support/HandlerMethodReturnValueHandler.html)s
+that let controller methods return dmx-fun types directly, without manually unwrapping them
+or calling `fold`/`getOrElse` before responding. Both handlers are inserted ahead of
+Spring's standard body processor so they take precedence over default serialization.
+
+### `Option` — 200 or 404
+
+`OptionHandlerMethodReturnValueHandler` maps `Option<V>` return values:
+- `Option.some(v)` → HTTP 200, body is `v` serialized (via the active `MessageConverter`)
+- `Option.none()` → HTTP 404, empty body
+
+<MvcOptionController/>
+
+### `Result`, `Try`, and `Validated` — 200 or 500
+
+`ResultHandlerMethodReturnValueHandler` maps `Result<V,E>`, `Try<V>`, and `Validated<E,A>`
+return values. The success branch produces HTTP 200 with the unwrapped value as the body;
+the error branch produces HTTP 500 with the error/cause as the body. Body serialization is
+delegated to the existing `RequestResponseBodyMethodProcessor`, so Jackson, content
+negotiation, and message converters all behave as normal.
+
+<MvcResultController/>
+
+### Disabling the handlers
+
+Both handlers are enabled by default and can be toggled independently:
+
+<MvcHandlerDisable/>
+
+Each property is documented in the JAR's
+`META-INF/additional-spring-configuration-metadata.json`, so IDE autocompletion works
+out of the box.
+
+### Interaction with `fun-jackson`
+
+The handlers delegate body serialization to Spring's existing body processor. When
+`fun-jackson` is on the classpath and `DmxFunModule` is registered (which `fun-spring-boot`
+does automatically), the **unwrapped** value or error is serialized — not the wrapper type.
+This means `Result.ok(item)` produces `{"id":1,"name":"Widget"}`, not `{"ok":{"id":1,...}}`.
+
+If you want the wrapped JSON shape (`{"ok":{...}}` / `{"err":"..."}`), disable the Result
+handler (`dmx.fun.mvc.result-handler.enabled=false`) and let `fun-jackson` serialize the
+`Result` directly.
+
+---
 
 ## Version compatibility
 
