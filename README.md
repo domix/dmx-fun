@@ -12,15 +12,15 @@ A Java library of functional types that make failures, absence, and validation e
 
 All modules are published to Maven Central. Add only what you need.
 
-| Module             | Latest version                                                                                                                                              |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `fun`              | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                           |
-| `fun-jackson`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson)           |
-| `fun-assertj`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)           |
-| `fun-spring`       | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)             |
-| `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   |
-| `fun-resilience4j` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j) |
-| `fun-micrometer`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)     |
+| Module             | Latest version                                                                                                                                              | Description                                                                                   |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `fun`              | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                           | Core library. `Option`, `Result`, `Try`, `Validated`, `Either`, `Lazy`, `Tuple`, `NonEmptyList/Map/Set`, `Guard`, `Resource`, `Accumulator`. |
+| `fun-jackson`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson)           | Jackson serializers and deserializers for all dmx-fun types.                                  |
+| `fun-assertj`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)           | Fluent AssertJ assertions for all dmx-fun types. Use in `test` scope.                         |
+| `fun-spring`       | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)             | `@Transactional` support for `Result`, `Try`, `Option`, and `Validated`.                      |
+| `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   | Spring Boot auto-configuration for dmx-fun. Registers beans automatically when dependencies are on the classpath. |
+| `fun-resilience4j` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j) | Resilience4J adapters (Retry, CircuitBreaker, RateLimiter, Bulkhead) that return `Try`/`Result` instead of throwing. |
+| `fun-micrometer`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)     | Counters, timers, and failure metrics for `Try` and `Result` via Micrometer.                  |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
 
