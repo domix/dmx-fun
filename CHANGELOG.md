@@ -7,6 +7,123 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.14] - 2026-04-22
+
+### Added
+
+- **`fun-spring` module — Spring transaction support (#124, #125, #126):**
+  - `TxResult`, `TxTry`, `TxValidated` — programmatic wrappers that execute a supplier in a
+    managed transaction and roll back when the return value is an error/failure/invalid outcome.
+  - `@TransactionalResult`, `@TransactionalTry`, `@TransactionalValidated` — AOP annotations
+    backed by `DmxTransactionalAspect`; same rollback contract as the programmatic variants.
+  - All three wrappers accept an optional `TransactionDefinition` for explicit propagation,
+    isolation, timeout, and read-only control.
+  - `spring-tx` and `spring-context` declared `compileOnly`; Spring 6.0.x, 6.1.x, 6.2.x, and
+    7.0.x are tested in CI on every pull request that touches the `spring/` module.
+- **`fun-spring-boot` module — Spring Boot autoconfiguration (#247):**
+  - `DmxFunSpringAutoConfiguration` auto-registers `TxResult`, `TxTry`, `TxValidated`, and
+    `DmxTransactionalAspect` (when `aspectjweaver` is present) with zero configuration.
+  - `DmxFunModule` registered as a bean so Spring Boot's `JacksonAutoConfiguration` applies it
+    automatically to the `ObjectMapper` — all dmx-fun types serialize to JSON without any extra
+    wiring (opt-out: `dmx.fun.jackson.enabled=false`).
+  - `OptionHandlerMethodReturnValueHandler` — Spring MVC return value handler:
+    `Option.some(v)` → HTTP 200 with `v` as body; `Option.none()` → HTTP 404 with empty body.
+  - `ResultHandlerMethodReturnValueHandler` (#268) — Spring MVC return value handler for
+    `Result<V,E>`, `Try<V>`, and `Validated<E,A>`: success/ok/valid → HTTP 200 with the
+    unwrapped value as body; failure/err/invalid → HTTP 500 with the error/cause as body.
+    Body serialization is delegated to `RequestResponseBodyMethodProcessor` so Jackson,
+    content negotiation, and message converters all behave as normal.
+  - Both MVC handlers are independently togglable via
+    `dmx.fun.mvc.option-handler.enabled` and `dmx.fun.mvc.result-handler.enabled`.
+  - All beans guarded by `@ConditionalOnMissingBean`; each individually disabled via
+    `application.properties`; all properties documented in
+    `META-INF/additional-spring-configuration-metadata.json` for IDE autocompletion.
+  - Spring Boot 3.3.x, 3.4.x, 3.5.x, and 4.0.x tested in CI.
+- **`fun-micrometer` module — automatic metrics for `Try` and `Result` (#231):**
+  - `DmxMicrometer` — wraps a `MeterRegistry` and records counters, timers, and failure metrics.
+  - `DmxMetered` — decorator that applies `DmxMicrometer` to any `Try`- or `Result`-returning
+    supplier; success/failure outcomes are tagged and reported automatically.
+  - Micrometer declared `compileOnly`; Micrometer 1.5.x–1.16.x tested in CI.
+- **`fun-resilience4j` module — Resilience4J adapters (#223):**
+  - `DmxRetry`, `DmxCircuitBreaker`, `DmxRateLimiter`, `DmxBulkhead` — each wraps the
+    corresponding Resilience4J policy and exposes three execution methods:
+    - `executeTry(supplier)` → `Try<V>`: policy rejection or call failure lands in `Failure`.
+    - `executeResult(supplier)` → `Result<V, Throwable>`: any failure lands in `Err`.
+    - `executeResultTyped(supplier)` → `Result<V, PolicyException>`: policy rejection becomes
+      typed `Err`; call exceptions propagate as unchecked.
+  - Resilience4J declared `compileOnly`; versions 2.0.2, 2.1.0, 2.2.0, 2.3.0, and 2.4.0
+    tested via CI compatibility matrix on every pull request touching `resilience4j/`.
+- **`Guard<T>` — composable null-safe predicate blocks (#230):**
+  - `Guard.of(Predicate)` — wraps a predicate as a `Guard`.
+  - `Guard.nonNull()` — built-in guard that rejects `null` values.
+  - `and(Guard)`, `or(Guard)`, `negate()` — boolean combinators.
+  - `andThen(Guard)` — short-circuit composition: skips the second guard when the first fails.
+  - Integrates with `Validated` for accumulating validation errors via `Guard.validate`.
+- **`Accumulator<E, A>` — value with an accumulated side-channel (#226):**
+  - `Accumulator.of(value, accumulated)` / `Accumulator.pure(value)` factory methods.
+  - `map(Function)`, `mapAccumulated(Function)`, `flatMap(Function)` — standard functor /
+    monad operations on both channels.
+  - `tell(E)` — appends a single entry to the accumulated channel.
+- **`Resource<T>` — functional managed resource (#224):**
+  - `Resource.of(acquire, release)` — pairs acquisition and guaranteed release in one value.
+  - `use(Function)` — opens the resource, applies the function, closes the resource; always
+    releases even when the function throws.
+  - `useAsResult(Function)` → `Result<R, Throwable>` — captures any exception as `Err`.
+  - `map(Function)`, `flatMap(Function)`, `mapTry(CheckedFunction)` — compose resources
+    without breaking the acquire-release guarantee.
+- **`NonEmptyMap<K, V>` and `NonEmptySet<T>` (#225):**
+  - Non-empty collection types guaranteed at compile time.
+  - Factory methods, accessors, transformation operations, and `Map`/`Set` interop.
+- **`Try.timeout(Duration)` (#228):**
+  - Executes a `CheckedSupplier` on a virtual thread with a wall-clock deadline.
+  - Returns `Failure(TimeoutException)` when the deadline is exceeded; interrupts the virtual
+    thread cleanly.
+- **`Validated.combine3` and `combine4` (#227):**
+  - `combine3(v1, v2, v3, combiner, errorCombiner)` and the four-argument variant — extend the
+    existing `combine` applicative to three and four independent `Validated` values,
+    accumulating all errors when more than one branch is `Invalid`.
+- **`Option.zipWith` and `Option.flatZip` (#229):**
+  - `zipWith(Option<B>, BiFunction<A,B,C>)` — combines two `Option` values with a function,
+    returning `None` if either is absent.
+  - `flatZip(Function<A, Option<B>>)` — chains a value-producing function and keeps both the
+    original and derived values in a `Tuple2`.
+- **`NonEmptyList.first()` and `NonEmptyList.last()` via `SequencedCollection` (#260):**
+  - `NonEmptyList` now implements `SequencedCollection<T>`; `first()` and `last()` provide
+    guaranteed-non-null head and tail access.
+- **`Results`, `Options`, `Tries` collector façades (#254):**
+  - `Results.collector()`, `Options.collector()`, `Tries.collector()` — `Collector` instances
+    that accumulate a stream of containers into a single container of a list, with fail-fast
+    or accumulating semantics depending on the type.
+  - `Result.groupingBy(Function)`, `Option.toOptional()` collector, `NonEmptyList.collector()`
+    — additional `Collector` overloads for standard Java interop.
+- **`fun-assertj` — fluent assertions for `Resource`, `Guard`, and `Accumulator` (#252):**
+  - `DmxFunAssertions.assertThat(Resource<T>)` — `isAcquired()`, value-level assertions.
+  - `DmxFunAssertions.assertThat(Guard<T>)` — `accepts(value)`, `rejects(value)`.
+  - `DmxFunAssertions.assertThat(Accumulator<E,A>)` — `hasValue(A)`, `hasAccumulated(E...)`.
+- **`spring-boot-sample` module (#261):**
+  - End-to-end Spring Boot demo: `ItemController` returning `Option`, `Result`, and `Try`
+    directly from controller methods; `ItemService` with `@TransactionalResult`; Testcontainers
+    integration tests verifying the full HTTP → service → database round-trip.
+- **Build — JPMS test-patching extracted into shared convention plugin (#248):**
+  - `dmx-fun.java-module` convention plugin now centralizes the JPMS `--patch-module`
+    and `--add-reads` configuration required to compile tests in the module; each subproject
+    no longer needs to duplicate this boilerplate in its own `build.gradle`.
+
+### Fixed
+
+- **`fun-resilience4j` — `Error` subclasses no longer wrapped in `executeResultTyped`:**
+  - `DmxBulkhead`, `DmxCircuitBreaker`, and `DmxRateLimiter` each had a `catch (Throwable t)`
+    that wrapped JVM errors (e.g. `OutOfMemoryError`, `StackOverflowError`) in
+    `RuntimeException`. A `catch (Error e) { throw e; }` clause is now inserted before the
+    `Throwable` catch so fatal JVM errors are always rethrown unchanged.
+- **`fun-resilience4j` — `requires static dmx.fun.assertj` removed from production
+  `module-info.java`:** AssertJ is test-only; the production module descriptor no longer
+  declares a dependency on it.
+- **`ResultHandlerMethodReturnValueHandler.supportsReturnType` gated on delegate capability:**
+  - The handler previously claimed `Result`, `Validated`, and `Try` unconditionally. It now
+    requires `delegate.supportsReturnType(returnType)` to also return `true`, ensuring the
+    handler only activates when the underlying body-writing delegate is present and capable.
+
 ## [0.0.13] - 2026-04-12
 
 ### Breaking Changes
@@ -325,7 +442,8 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.13...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.14...HEAD
+[0.0.14]: https://github.com/domix/dmx-fun/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/domix/dmx-fun/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/domix/dmx-fun/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/domix/dmx-fun/compare/v0.0.10...v0.0.11
