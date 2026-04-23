@@ -6,12 +6,12 @@ author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Release"
 tags: ["Release", "Spring", "SpringBoot", "Micrometer", "Resilience4J", "Guard", "Accumulator", "Resource", "NonEmptyMap", "NonEmptySet"]
-image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1634&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+image: "https://images.unsplash.com/photo-1760949933432-15013f464635?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 imageCredit:
-    author: "Jordan Harrison"
-    authorUrl: "https://unsplash.com/@jordanharrison"
+    author: "Scott Hibberson"
+    authorUrl: "https://unsplash.com/@scott_hibberson"
     source: "Unsplash"
-    sourceUrl: "https://unsplash.com/photos/blue-and-black-server-racks-40XgDxBfYXM"
+    sourceUrl: "https://unsplash.com/es/fotos/racimo-de-hongos-que-crecen-en-el-suelo-del-bosque-J4cfrgHFoTg"
 ---
 
 Version **0.0.14** is the ecosystem release. Where previous milestones built out the core
