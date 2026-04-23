@@ -30,9 +30,10 @@ public final class ResultHandlerMethodReturnValueHandler implements HandlerMetho
     @Override
     public boolean supportsReturnType(MethodParameter returnType) {
         Class<?> type = returnType.getParameterType();
-        return Result.class.isAssignableFrom(type)
+        boolean wrapperType = Result.class.isAssignableFrom(type)
             || Validated.class.isAssignableFrom(type)
             || Try.class.isAssignableFrom(type);
+        return wrapperType && delegate.supportsReturnType(returnType);
     }
 
     @Override
