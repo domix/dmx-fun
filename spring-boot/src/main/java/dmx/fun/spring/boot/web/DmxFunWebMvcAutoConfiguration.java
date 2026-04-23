@@ -16,14 +16,20 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
 /**
- * Spring Boot auto-configuration that registers {@link OptionHandlerMethodReturnValueHandler}
+ * Spring Boot auto-configuration that registers dmx-fun Spring MVC
+ * {@link org.springframework.web.method.support.HandlerMethodReturnValueHandler}s
  * in Spring MVC's {@link RequestMappingHandlerAdapter}.
  *
- * <p>This allows controller methods to return {@link dmx.fun.Option} directly:
- * {@code Option.some(value)} produces HTTP 200 with the serialized value;
- * {@code Option.none()} produces HTTP 404 with an empty body.
- *
- * <p>The handler is disabled via {@code dmx.fun.mvc.option-handler.enabled=false}.
+ * <p>Registers:
+ * <ul>
+ *   <li>{@link OptionHandlerMethodReturnValueHandler} for {@link dmx.fun.Option}
+ *       (some → 200, none → 404), controlled by
+ *       {@code dmx.fun.mvc.option-handler.enabled}.</li>
+ *   <li>{@link ResultHandlerMethodReturnValueHandler} for {@link dmx.fun.Result},
+ *       {@link dmx.fun.Validated}, and {@link dmx.fun.Try}
+ *       (success/valid → 200, error/invalid/failure → 500), controlled by
+ *       {@code dmx.fun.mvc.result-handler.enabled}.</li>
+ * </ul>
  */
 @AutoConfiguration(afterName = {
     // Boot 3.x location
@@ -32,11 +38,42 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBody
     "org.springframework.boot.web.servlet.autoconfigure.WebMvcAutoConfiguration"
 })
 @ConditionalOnClass({DispatcherServlet.class, RequestMappingHandlerAdapter.class})
-@ConditionalOnProperty(name = "dmx.fun.mvc.option-handler.enabled", havingValue = "true", matchIfMissing = true)
 @NullMarked
 public class DmxFunWebMvcAutoConfiguration {
 
     @Bean
+    @ConditionalOnProperty(name = "dmx.fun.mvc.result-handler.enabled", havingValue = "true", matchIfMissing = true)
+    static BeanPostProcessor resultReturnValueHandlerPostProcessor() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+                if (!(bean instanceof RequestMappingHandlerAdapter adapter)) return bean;
+
+                List<HandlerMethodReturnValueHandler> current = adapter.getReturnValueHandlers();
+                if (current == null) return bean;
+
+                List<HandlerMethodReturnValueHandler> handlers = new ArrayList<>(current);
+
+                boolean alreadyPresent = handlers.stream()
+                    .anyMatch(h -> h instanceof ResultHandlerMethodReturnValueHandler);
+                if (alreadyPresent) return bean;
+
+                @Nullable HandlerMethodReturnValueHandler bodyProcessor = handlers.stream()
+                    .filter(h -> h instanceof RequestResponseBodyMethodProcessor)
+                    .findFirst()
+                    .orElse(null);
+                if (bodyProcessor == null) return bean;
+
+                handlers.add(0, new ResultHandlerMethodReturnValueHandler(bodyProcessor));
+                adapter.setReturnValueHandlers(handlers);
+
+                return bean;
+            }
+        };
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "dmx.fun.mvc.option-handler.enabled", havingValue = "true", matchIfMissing = true)
     static BeanPostProcessor optionReturnValueHandlerPostProcessor() {
         return new BeanPostProcessor() {
             @Override

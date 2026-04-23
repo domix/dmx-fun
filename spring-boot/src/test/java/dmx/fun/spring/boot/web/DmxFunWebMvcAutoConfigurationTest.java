@@ -21,23 +21,34 @@ class DmxFunWebMvcAutoConfigurationTest {
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(DmxFunWebMvcAutoConfiguration.class));
 
-    // ── Registration ──────────────────────────────────────────────────────────
-
     @Test
-    void registersPostProcessor_byDefault() {
-        runner.run(ctx -> assertThat(ctx).hasBean("optionReturnValueHandlerPostProcessor"));
+    void registersPostProcessors_byDefault() {
+        runner.run(ctx -> {
+            assertThat(ctx).hasBean("optionReturnValueHandlerPostProcessor");
+            assertThat(ctx).hasBean("resultReturnValueHandlerPostProcessor");
+        });
     }
 
     @Test
-    void postProcessor_disabled_byProperty() {
+    void optionPostProcessor_disabled_byProperty() {
         runner.withPropertyValues("dmx.fun.mvc.option-handler.enabled=false")
-            .run(ctx -> assertThat(ctx).doesNotHaveBean("optionReturnValueHandlerPostProcessor"));
+            .run(ctx -> {
+                assertThat(ctx).doesNotHaveBean("optionReturnValueHandlerPostProcessor");
+                assertThat(ctx).hasBean("resultReturnValueHandlerPostProcessor");
+            });
     }
 
-    // ── BeanPostProcessor behavior ────────────────────────────────────────────
+    @Test
+    void resultPostProcessor_disabled_byProperty() {
+        runner.withPropertyValues("dmx.fun.mvc.result-handler.enabled=false")
+            .run(ctx -> {
+                assertThat(ctx).doesNotHaveBean("resultReturnValueHandlerPostProcessor");
+                assertThat(ctx).hasBean("optionReturnValueHandlerPostProcessor");
+            });
+    }
 
     @Test
-    void postProcessor_ignoresNonAdapterBeans() {
+    void optionPostProcessor_ignoresNonAdapterBeans() {
         runner.run(ctx -> {
             BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
             Object other = "not-an-adapter";
@@ -46,7 +57,16 @@ class DmxFunWebMvcAutoConfigurationTest {
     }
 
     @Test
-    void postProcessor_returnsEarly_whenHandlersNull() {
+    void resultPostProcessor_ignoresNonAdapterBeans() {
+        runner.run(ctx -> {
+            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            Object other = "not-an-adapter";
+            assertThat(bpp.postProcessAfterInitialization(other, "x")).isSameAs(other);
+        });
+    }
+
+    @Test
+    void optionPostProcessor_returnsEarly_whenHandlersNull() {
         runner.run(ctx -> {
             BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
             StubAdapter adapter = new StubAdapter(null);
@@ -56,7 +76,17 @@ class DmxFunWebMvcAutoConfigurationTest {
     }
 
     @Test
-    void postProcessor_insertsOptionHandler_atIndex0_beforeBodyProcessor() {
+    void resultPostProcessor_returnsEarly_whenHandlersNull() {
+        runner.run(ctx -> {
+            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            StubAdapter adapter = new StubAdapter(null);
+            assertThat(bpp.postProcessAfterInitialization(adapter, "adapter")).isSameAs(adapter);
+            assertThat(adapter.handlers).isNull();
+        });
+    }
+
+    @Test
+    void optionPostProcessor_insertsHandler_atIndex0_beforeBodyProcessor() {
         runner.run(ctx -> {
             BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
             HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
@@ -71,7 +101,22 @@ class DmxFunWebMvcAutoConfigurationTest {
     }
 
     @Test
-    void postProcessor_isIdempotent_whenOptionHandlerAlreadyPresent() {
+    void resultPostProcessor_insertsHandler_atIndex0_beforeBodyProcessor() {
+        runner.run(ctx -> {
+            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
+            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(bodyProcessor)));
+
+            bpp.postProcessAfterInitialization(adapter, "adapter");
+
+            assertThat(adapter.handlers).hasSize(2);
+            assertThat(adapter.handlers.get(0)).isInstanceOf(ResultHandlerMethodReturnValueHandler.class);
+            assertThat(adapter.handlers.get(1)).isSameAs(bodyProcessor);
+        });
+    }
+
+    @Test
+    void optionPostProcessor_isIdempotent_whenHandlerAlreadyPresent() {
         runner.run(ctx -> {
             BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
             HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
@@ -86,7 +131,22 @@ class DmxFunWebMvcAutoConfigurationTest {
     }
 
     @Test
-    void postProcessor_skipsInsert_whenNoBodyProcessorFound() {
+    void resultPostProcessor_isIdempotent_whenHandlerAlreadyPresent() {
+        runner.run(ctx -> {
+            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
+            ResultHandlerMethodReturnValueHandler existing = new ResultHandlerMethodReturnValueHandler(bodyProcessor);
+            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(existing, bodyProcessor)));
+
+            bpp.postProcessAfterInitialization(adapter, "adapter");
+
+            assertThat(adapter.handlers).hasSize(2);
+            assertThat(adapter.handlers.get(0)).isSameAs(existing);
+        });
+    }
+
+    @Test
+    void optionPostProcessor_skipsInsert_whenNoBodyProcessorFound() {
         runner.run(ctx -> {
             BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
             HandlerMethodReturnValueHandler other = new StubHandler();
@@ -99,7 +159,19 @@ class DmxFunWebMvcAutoConfigurationTest {
         });
     }
 
-    // ── Stubs ─────────────────────────────────────────────────────────────────
+    @Test
+    void resultPostProcessor_skipsInsert_whenNoBodyProcessorFound() {
+        runner.run(ctx -> {
+            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            HandlerMethodReturnValueHandler other = new StubHandler();
+            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(other)));
+
+            bpp.postProcessAfterInitialization(adapter, "adapter");
+
+            assertThat(adapter.handlers).hasSize(1);
+            assertThat(adapter.handlers.get(0)).isSameAs(other);
+        });
+    }
 
     static class StubAdapter extends RequestMappingHandlerAdapter {
         List<HandlerMethodReturnValueHandler> handlers;

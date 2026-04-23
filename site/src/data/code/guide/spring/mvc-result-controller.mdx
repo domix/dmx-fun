@@ -1,0 +1,45 @@
+---
+fileName: 'ItemController.java'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.Validated;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/items")
+public class ItemController {
+
+    private final ItemService service;
+
+    // Result<V, E> — ok maps to 200 with V as body; err maps to 500 with E as body
+    @PostMapping
+    public Result<Item, String> create(@RequestBody CreateItemRequest request) {
+        return service.create(request.name(), request.description());
+    }
+
+    // Try<V> — success maps to 200 with V as body; failure maps to 500 with cause as body
+    @GetMapping("/{id}/summary")
+    public Try<ItemSummary> summary(@PathVariable long id) {
+        return service.summarize(id);
+    }
+
+    // Validated<E, A> — valid maps to 200 with A as body; invalid maps to 500 with E as body
+    @PutMapping("/{id}/validate")
+    public Validated<String, Item> validate(@PathVariable long id,
+                                            @RequestBody UpdateItemRequest req) {
+        return service.validate(id, req);
+    }
+}
+```
+
+| Return type | Outcome | HTTP status | Body |
+|---|---|---|---|
+| `Result<V, E>` | `ok(v)` | 200 | `v` serialized |
+| `Result<V, E>` | `err(e)` | 500 | `e` serialized |
+| `Try<V>` | `success(v)` | 200 | `v` serialized |
+| `Try<V>` | `failure(ex)` | 500 | `ex` serialized |
+| `Validated<E, A>` | `valid(a)` | 200 | `a` serialized |
+| `Validated<E, A>` | `invalid(e)` | 500 | `e` serialized |

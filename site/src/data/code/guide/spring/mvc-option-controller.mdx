@@ -1,0 +1,26 @@
+---
+fileName: 'ItemController.java'
+---
+
+```java
+import dmx.fun.Option;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/items")
+public class ItemController {
+
+    private final ItemService service;
+
+    // Option<V> — some maps to 200 with V as body; none maps to 404 with empty body
+    @GetMapping("/{id}")
+    public Option<Item> findById(@PathVariable long id) {
+        return service.findById(id);
+    }
+}
+```
+
+| Return type | Outcome | HTTP status | Body |
+|---|---|---|---|
+| `Option<V>` | `some(v)` | 200 | `v` serialized |
+| `Option<V>` | `none()` | 404 | empty |
