@@ -25,9 +25,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration tests for the REST layer.
  *
- * <p>Verifies that {@link dmx.fun.Result} and {@link dmx.fun.Option} values are
- * correctly serialized to JSON by the auto-configured Jackson {@code ObjectMapper}
- * (with {@link dmx.fun.jackson.DmxFunModule} registered).
+ * <p>Verifies HTTP mapping for dmx-fun return types in Spring MVC:
+ * {@link dmx.fun.Option} maps to 200/404 and {@link dmx.fun.Result}
+ * maps to 200/500 with the unwrapped body.
  */
 @SpringBootTest(classes = SampleApplication.class)
 @Testcontainers
@@ -78,10 +78,9 @@ class ItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"Widget\",\"description\":\"A fine widget\"}"))
             .andExpect(status().isOk())
-            // fun-jackson serializes Result.ok as {"ok": {...}}
-            .andExpect(jsonPath("$.ok.name").value("Widget"))
-            .andExpect(jsonPath("$.ok.description").value("A fine widget"))
-            .andExpect(jsonPath("$.ok.id").isNumber());
+            .andExpect(jsonPath("$.name").value("Widget"))
+            .andExpect(jsonPath("$.description").value("A fine widget"))
+            .andExpect(jsonPath("$.id").isNumber());
     }
 
     @Test
@@ -89,9 +88,8 @@ class ItemControllerTest {
         mockMvc.perform(post("/items")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"\",\"description\":\"desc\"}"))
-            .andExpect(status().isOk())
-            // fun-jackson serializes Result.err as {"err": "..."}
-            .andExpect(jsonPath("$.err").value("name must not be blank"));
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$").value("name must not be blank"));
     }
 
     // ── PUT /items/{id} ───────────────────────────────────────────────────────
@@ -104,7 +102,7 @@ class ItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"Renamed\"}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.ok.name").value("Renamed"));
+            .andExpect(jsonPath("$.name").value("Renamed"));
     }
 
     @Test
@@ -112,8 +110,8 @@ class ItemControllerTest {
         mockMvc.perform(put("/items/-1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"Ghost\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.err", containsString("item not found")));
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$", containsString("item not found")));
     }
 
     // ── GET /items ────────────────────────────────────────────────────────────
@@ -134,12 +132,12 @@ class ItemControllerTest {
         String body = mockMvc.perform(post("/items")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"" + name + "\",\"description\":" + descJson + "}"))
-            .andExpect(jsonPath("$.ok.id").isNumber())
+            .andExpect(jsonPath("$.id").isNumber())
             .andReturn()
             .getResponse()
             .getContentAsString();
 
-        // body looks like {"ok":{"id":42,...}}
+        // body looks like {"id":42,...}
         int start = body.indexOf("\"id\":") + 5;
         int end   = body.indexOf(",", start);
         if (end < 0) end = body.indexOf("}", start);

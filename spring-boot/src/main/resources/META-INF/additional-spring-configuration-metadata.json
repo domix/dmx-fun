@@ -23,6 +23,18 @@
       "type": "java.lang.Boolean",
       "defaultValue": true,
       "description": "Whether to auto-configure the DmxTransactionalAspect bean. Set to false to disable @TransactionalResult, @TransactionalTry, and @TransactionalValidated AOP support entirely."
+    },
+    {
+      "name": "dmx.fun.mvc.option-handler.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure the Spring MVC Option return-value handler. Set to false to disable Option.some() -> 200 / Option.none() -> 404 mapping."
+    },
+    {
+      "name": "dmx.fun.mvc.result-handler.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure the Spring MVC Result/Validated/Try return-value handler. Set to false to disable success -> 200 and error/failure -> 500 mapping."
     }
   ]
 }

@@ -18,8 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
  *   <li>{@code GET /items/{id}} — returns {@link dmx.fun.Option}{@code <Item>} directly;
  *       {@link dmx.fun.spring.boot.web.DmxFunWebMvcAutoConfiguration} converts it to
  *       HTTP 200 (Some) or 404 (None) automatically.</li>
- *   <li>{@code POST /items} — returns {@link Result}{@code <Item,String>} serialized as JSON.
- *       Success: {@code {"ok":{...}}}; failure: {@code {"err":"..."}}.</li>
+ *   <li>{@code POST /items} — returns {@link Result}{@code <Item,String>} directly;
+ *       Spring MVC maps {@code ok} to HTTP 200 with the value body and {@code err} to
+ *       HTTP 500 with the error body.</li>
  *   <li>{@code PUT /items/{id}} — same {@code Result} pattern, demonstrating the declarative
  *       {@link dmx.fun.spring.TransactionalResult} style from the service layer.</li>
  * </ul>
@@ -47,9 +48,9 @@ public class ItemController {
         return service.findById(id);
     }
 
-    // Result<Item,String> is serialized by DmxFunModule:
-    //   success → {"ok":{"id":1,"name":"Widget","description":"…"}}
-    //   failure → {"err":"name must not be blank"}
+    // Result<Item,String> is handled by ResultHandlerMethodReturnValueHandler:
+    //   ok(item)   → HTTP 200 {"id":1,"name":"Widget","description":"…"}
+    //   err(error) → HTTP 500 "name must not be blank"
     @PostMapping
     public Result<Item, String> create(@RequestBody CreateItemRequest request) {
         return service.create(request.name(), request.description());
