@@ -12,7 +12,8 @@ import org.jspecify.annotations.NullMarked;
  *
  * <ul>
  *   <li>{@code Try.success(v)}  → {@code v} (unwrapped)</li>
- *   <li>{@code Try.failure(ex)} → {@code {"error": "message"}}</li>
+ *   <li>{@code Try.failure(ex)} → {@code {"error": "message"}} or {@code {"error": null}} if the
+ *       exception message is null</li>
  * </ul>
  */
 @NullMarked
@@ -29,7 +30,12 @@ class TrySerializer extends StdSerializer<Try> {
             provider.defaultSerializeValue(value.get(), gen);
         } else {
             gen.writeStartObject();
-            gen.writeStringField("error", value.getCause().getMessage());
+            var message = value.getCause().getMessage();
+            if (message != null) {
+                gen.writeStringField("error", message);
+            } else {
+                gen.writeNullField("error");
+            }
             gen.writeEndObject();
         }
     }

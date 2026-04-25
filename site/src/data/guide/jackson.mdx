@@ -42,7 +42,7 @@ without any explicit wiring.
 |----------------------|-------------------|------------------------|
 | `Option<T>`          | `v` (unwrapped)   | `null`                 |
 | `Result<V, E>`       | `{"ok": v}`       | `{"err": e}`           |
-| `Try<V>`             | `v` (unwrapped)   | `{"error": "message"}` |
+| `Try<V>`             | `v` (unwrapped)   | `{"error": "msg"}` or `{"error": null}` |
 | `Validated<E, A>`    | `{"valid": a}`    | `{"invalid": e}`       |
 | `Either<L, R>`       | `{"right": v}`    | `{"left": v}`          |
 | `Tuple2<A, B>`       | `[a, b]`          | —                      |
@@ -117,10 +117,11 @@ To test locally against a specific version:
 
 ### `Try.failure` loses the exception type
 
-`Try.failure(ex)` serializes as `{"error": "message"}` — only the exception
-message is preserved. On deserialization, a `RuntimeException` is always
-reconstructed regardless of the original exception class. Stack traces are not
-serialized.
+`Try.failure(ex)` serializes as `{"error": "msg"}` where `msg` is
+`ex.getMessage()`. If the exception has no message, the field is written as
+`{"error": null}` and a `RuntimeException` with a `null` message is
+reconstructed on deserialization. In all cases only the message survives —
+the original exception class and stack trace are not preserved.
 
 **Workaround**: convert `Try<V>` to `Result<V, String>` via `toResult(Throwable::getMessage)`
 before serializing if the exception type matters to consumers.

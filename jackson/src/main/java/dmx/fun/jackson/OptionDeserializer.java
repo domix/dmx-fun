@@ -52,11 +52,7 @@ class OptionDeserializer extends StdDeserializer<Option> implements ContextualDe
 
     @Override
     public Option deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (valueType != null) {
-            Object value = ctxt.readValue(p, valueType);
-            return Option.some(value);
-        }
-        Object value = p.readValueAs(Object.class);
+        Object value = valueType != null ? ctxt.readValue(p, valueType) : p.readValueAs(Object.class);
         return Option.some(value);
     }
 }

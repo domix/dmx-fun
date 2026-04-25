@@ -53,14 +53,17 @@ class Tuple2Deserializer extends StdDeserializer<Tuple2> implements ContextualDe
         if (p.nextToken() == JsonToken.END_ARRAY) {
             throw InvalidFormatException.from(p, "Tuple2 requires exactly 2 elements, got 0", null, Tuple2.class);
         }
-        Object v1 = type1 != null ? ctxt.readValue(p, type1) : p.readValueAs(Object.class);
+        @Nullable Object v1 = type1 != null ? ctxt.readValue(p, type1) : p.readValueAs(Object.class);
         if (p.nextToken() == JsonToken.END_ARRAY) {
             throw InvalidFormatException.from(p, "Tuple2 requires exactly 2 elements, got 1", null, Tuple2.class);
         }
-        Object v2 = type2 != null ? ctxt.readValue(p, type2) : p.readValueAs(Object.class);
+        @Nullable Object v2 = type2 != null ? ctxt.readValue(p, type2) : p.readValueAs(Object.class);
         if (p.nextToken() != JsonToken.END_ARRAY) {
             throw InvalidFormatException.from(p, "Tuple2 requires exactly 2 elements, got more", null, Tuple2.class);
         }
-        return new Tuple2<>(v1, v2);
+        if (v1 == null || v2 == null) {
+            throw InvalidFormatException.from(p, "Tuple2 elements must not be null", null, Tuple2.class);
+        }
+        return Tuple2.of(v1, v2);
     }
 }
