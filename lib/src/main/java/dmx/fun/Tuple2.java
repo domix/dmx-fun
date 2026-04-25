@@ -35,8 +35,9 @@ public record Tuple2<A, B>(A _1, B _2) {
      * Returns a new tuple with {@code f} applied to the first element; the second element is unchanged.
      *
      * @param <R> the type of the new first element
-     * @param f   the mapping function
+     * @param f   the mapping function; must not be {@code null} and must not return {@code null}
      * @return a new {@code Tuple2} with the transformed first element
+     * @throws NullPointerException if {@code f} is {@code null} or returns {@code null}
      */
     public <R> Tuple2<R, B> mapFirst(Function<? super A, ? extends R> f) {
         Objects.requireNonNull(f, "mapFirst: mapping function must not be null");
@@ -47,8 +48,9 @@ public record Tuple2<A, B>(A _1, B _2) {
      * Returns a new tuple with {@code f} applied to the second element; the first element is unchanged.
      *
      * @param <R> the type of the new second element
-     * @param f   the mapping function
+     * @param f   the mapping function; must not be {@code null} and must not return {@code null}
      * @return a new {@code Tuple2} with the transformed second element
+     * @throws NullPointerException if {@code f} is {@code null} or returns {@code null}
      */
     public <R> Tuple2<A, R> mapSecond(Function<? super B, ? extends R> f) {
         Objects.requireNonNull(f, "mapSecond: mapping function must not be null");
