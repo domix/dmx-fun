@@ -1,0 +1,36 @@
+// ── BOM (Bill of Materials) ───────────────────────────────────────────────────
+// Publishes codes.domix:fun-bom so consumers can import one POM to manage
+// all dmx-fun module versions in one place.
+//
+// Gradle (Kotlin DSL):
+//   implementation(platform("codes.domix:fun-bom:${version}"))
+//
+// Maven:
+//   <dependencyManagement><dependencies><dependency>
+//     <groupId>codes.domix</groupId><artifactId>fun-bom</artifactId>
+//     <version>${version}</version><type>pom</type><scope>import</scope>
+//   </dependency></dependencies></dependencyManagement>
+plugins {
+    id 'dmx-fun.bom'
+}
+
+dependencies {
+    constraints {
+        api project(':lib')
+        api project(':assertj')
+        api project(':jackson')
+        api project(':spring')
+        api project(':spring-boot')
+        api project(':resilience4j')
+        api project(':micrometer')
+    }
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-bom", "${project.version}")
+
+    pom {
+        name = 'dmx-fun BOM'
+        description = 'Bill of Materials for dmx-fun: import this POM to manage versions for all dmx-fun modules in one place.'
+    }
+}

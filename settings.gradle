@@ -5,6 +5,7 @@ plugins {
 
 rootProject.name = 'dmx-fun'
 includeBuild('build-logic')
+include('bom')
 include('lib')
 include('assertj')
 include('jackson')
