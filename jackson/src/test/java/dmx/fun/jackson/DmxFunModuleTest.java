@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import dmx.fun.Either;
 import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
@@ -468,7 +469,7 @@ class DmxFunModuleTest {
 
         @Test
         void deserializeNullElement_throws() {
-            assertThrows(InvalidFormatException.class, () ->
+            assertThrows(MismatchedInputException.class, () ->
                 mapper.readValue("[null,1]", new TypeReference<Tuple2<String, Integer>>() {}));
         }
     }
