@@ -17,8 +17,10 @@ All CI/CD is handled by GitHub Actions. The workflows live in `.github/workflows
 | `publish.yml`                | push to `main` — stable version only   | Publish all modules to Maven Central, create git tag and GitHub Release |
 | `publish-snapshot.yml`       | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central                             |
 | `jackson-compatibility.yaml` | PR touching `jackson/**`               | Matrix test against Jackson 2.13.x – 2.21.x                             |
-| `assertj-compatibility.yaml` | PR touching `assertj/**`               | Matrix test against AssertJ 3.21.x – 3.27.x                             |
-| `pages.yml`                  | push to `main`                         | Build and deploy the documentation site to GitHub Pages                 |
+| `assertj-compatibility.yaml`             | PR touching `assertj/**`                           | Matrix test against AssertJ 3.21.x – 3.27.x                              |
+| `spring-boot-compatibility.yaml`         | PR touching `spring-boot/**` or `spring/**`        | Matrix test of `fun-spring-boot` against Spring Boot 3.3.x – 4.0.x       |
+| `spring-boot-sample-compatibility.yaml`  | PR touching `spring-boot-sample/**` or `spring/**` | Matrix test of the Spring Boot sample app against Boot 3.4.x – 4.0.x     |
+| `pages.yml`                              | push to `main`                                     | Build and deploy the documentation site to GitHub Pages                   |
 
 ---
 
@@ -144,6 +146,65 @@ Runs only on pull requests — not on push to `main`.
 **Local equivalent**:
 ```bash
 ./gradlew :assertj:test -PassertjVersion=3.25.3
+```
+
+**Secrets required**: none.
+
+---
+
+## `spring-boot-compatibility.yaml` — Spring Boot matrix
+
+**Triggers**: PR where at least one changed file matches `spring-boot/**`, `spring/**`,
+`gradle/libs.versions.toml`, or the workflow file itself.
+
+Runs only on pull requests — not on push to `main`.
+
+`fun-spring-boot` declares Spring Boot as `compileOnly`, so users bring their own version.
+This matrix catches regressions against different Boot release lines before they reach `main`.
+Boot 4.x aligns with Spring Framework 7.x, which is the baseline this project targets.
+
+**What it does**: runs `:spring-boot:test` for each Spring Boot version in the matrix:
+
+| Spring Boot version | Status |
+|---------------------|--------|
+| 3.3.13              | tested |
+| 3.4.13              | tested |
+| 3.5.13              | tested |
+| 4.0.6               | tested |
+
+**Local equivalent**:
+```bash
+./gradlew :spring-boot:test -PspringBootVersion=4.0.6
+```
+
+**Secrets required**: none.
+
+---
+
+## `spring-boot-sample-compatibility.yaml` — Spring Boot sample matrix
+
+**Triggers**: PR where at least one changed file matches `spring-boot-sample/**`,
+`spring-boot/**`, `spring/**`, `gradle/libs.versions.toml`, `settings.gradle`,
+or the workflow file itself.
+
+Runs only on pull requests — not on push to `main`.
+
+Mirrors the matrix used in `spring-boot-compatibility.yaml` for the Spring Boot versions,
+but scoped to Boot 3.4+ only — the sample requires Spring Boot's Docker Compose support,
+which was introduced in 3.1 and stabilised in 3.4. It tests the full end-to-end stack:
+controller → service → database via Testcontainers.
+
+**What it does**: runs `:spring-boot-sample:test` for each Spring Boot version in the matrix:
+
+| Spring Boot version | Status |
+|---------------------|--------|
+| 3.4.13              | tested |
+| 3.5.13              | tested |
+| 4.0.6               | tested |
+
+**Local equivalent**:
+```bash
+./gradlew :spring-boot-sample:test -PspringBootVersion=3.4.13
 ```
 
 **Secrets required**: none.
