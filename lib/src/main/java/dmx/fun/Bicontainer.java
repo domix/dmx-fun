@@ -91,7 +91,9 @@ interface Bicontainer<V, E> {
      */
     default V getOrThrow(Function<E, ? extends RuntimeException> exMapper) {
         Objects.requireNonNull(exMapper, "exMapper");
-        if (isSuccess()) return get();
+        if (isSuccess()) {
+            return get();
+        }
         throw Containers.requireNonNullResult(exMapper.apply(getError()), "exMapper");
     }
 
@@ -133,8 +135,11 @@ interface Bicontainer<V, E> {
     default void match(Consumer<V> onSuccess, Consumer<E> onError) {
         Objects.requireNonNull(onSuccess, "onSuccess");
         Objects.requireNonNull(onError, "onError");
-        if (isSuccess()) onSuccess.accept(get());
-        else onError.accept(getError());
+        if (isSuccess()) {
+            onSuccess.accept(get());
+        } else {
+            onError.accept(getError());
+        }
     }
 
     // ---------- Interop ----------

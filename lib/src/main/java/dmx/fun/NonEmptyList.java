@@ -93,7 +93,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
         }
         list.forEach(e -> Objects.requireNonNull(e, "list elements must not be null"));
         T head = list.get(0);
-        List<T> tail = List.copyOf(list.subList(1, list.size()));
+        var tail = List.<T>copyOf(list.subList(1, list.size()));
         return Option.some(new NonEmptyList<>(head, tail));
     }
 
@@ -143,10 +143,10 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      */
     @Override
     public NonEmptyList<T> reversed() {
-        List<T> all = new ArrayList<>(toList());
+        var all = new ArrayList<>(toList());
         Collections.reverse(all);
         T newHead = all.get(0);
-        List<T> newTail = List.copyOf(all.subList(1, all.size()));
+        var newTail = List.copyOf(all.subList(1, all.size()));
         return new NonEmptyList<>(newHead, newTail);
     }
 
@@ -206,7 +206,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      * @return a new unmodifiable list with all elements
      */
     public List<T> toList() {
-        List<T> result = new ArrayList<>(1 + tail.size());
+        var result = new ArrayList<T>(1 + tail.size());
         result.add(head);
         result.addAll(tail);
         return Collections.unmodifiableList(result);
@@ -237,7 +237,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
     public <R> NonEmptyList<R> map(Function<? super T, ? extends R> mapper) {
         Objects.requireNonNull(mapper, "mapper must not be null");
         R newHead = Objects.requireNonNull(mapper.apply(head), "mapper must not return null");
-        List<R> newTail = new ArrayList<>(tail.size());
+        var newTail = new ArrayList<R>(tail.size());
         for (T element : tail) {
             newTail.add(Objects.requireNonNull(mapper.apply(element), "mapper must not return null"));
         }
@@ -253,7 +253,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      */
     public NonEmptyList<T> append(T element) {
         Objects.requireNonNull(element, "element must not be null");
-        List<T> newTail = new ArrayList<>(tail.size() + 1);
+        var newTail = new ArrayList<T>(tail.size() + 1);
         newTail.addAll(tail);
         newTail.add(element);
         return new NonEmptyList<>(head, Collections.unmodifiableList(newTail));
@@ -268,7 +268,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      */
     public NonEmptyList<T> prepend(T element) {
         Objects.requireNonNull(element, "element must not be null");
-        List<T> newTail = new ArrayList<>(1 + tail.size());
+        var newTail = new ArrayList<T>(1 + tail.size());
         newTail.add(head);
         newTail.addAll(tail);
         return new NonEmptyList<>(element, Collections.unmodifiableList(newTail));
@@ -283,7 +283,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      */
     public NonEmptyList<T> concat(NonEmptyList<T> other) {
         Objects.requireNonNull(other, "other must not be null");
-        List<T> newTail = new ArrayList<>(tail.size() + other.size());
+        var newTail = new ArrayList<T>(tail.size() + other.size());
         newTail.addAll(tail);
         newTail.add(other.head);
         newTail.addAll(other.tail);
@@ -302,7 +302,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      * @return a {@code NonEmptySet<T>} with the same distinct elements
      */
     public NonEmptySet<T> toNonEmptySet() {
-        Set<T> tailAsSet = new LinkedHashSet<>(tail);
+        var tailAsSet = new LinkedHashSet<>(tail);
         return NonEmptySet.of(head, tailAsSet);
     }
 
@@ -331,7 +331,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
             ArrayList<T>::new,
             ArrayList::add,
             (a, b) -> { a.addAll(b); return a; },
-            list -> NonEmptyList.<T>fromList(list)
+            NonEmptyList::fromList
         );
     }
 
@@ -376,7 +376,7 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      */
     public static <T> Option<NonEmptyList<T>> sequence(NonEmptyList<Option<T>> nel) {
         Objects.requireNonNull(nel, "nel must not be null");
-        List<T> values = new ArrayList<>(nel.size());
+        var values = new ArrayList<T>(nel.size());
         for (Option<T> opt : nel) {
             switch (opt) {
                 case Option.None<T> ignored -> { return Option.none(); }

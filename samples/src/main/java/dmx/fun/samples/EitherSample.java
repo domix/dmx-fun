@@ -17,32 +17,32 @@ public class EitherSample {
         }
     }
 
-    static void main(String[] args) {
+    static void main() {
         // Numeric input → Left path
-        Either<Integer, String> number = classify("42");
-        System.out.println("Is left: " + number.isLeft()); // true
-        System.out.println("Value:   " + number.getLeft()); // 42
+        var number = classify("42");
+        IO.println("Is left: " + number.isLeft()); // true
+        IO.println("Value:   " + number.getLeft()); // 42
 
         // Text input → Right path
-        Either<Integer, String> text = classify("hello");
-        System.out.println("Is right: " + text.isRight()); // true
-        System.out.println("Value:    " + text.getRight()); // HELLO
+        var text = classify("hello");
+        IO.println("Is right: " + text.isRight()); // true
+        IO.println("Value:    " + text.getRight()); // HELLO
 
         // Fold: apply different functions to each branch
-        String description = classify("100").fold(
+        var description = classify("100").fold(
             n -> "number with " + n.toString().length() + " digits",
             s -> "text: " + s
         );
-        System.out.println(description); // number with 3 digits
+        IO.println(description); // number with 3 digits
 
         // Map over the right side only
-        Either<Integer, String> mapped = classify("world").map(s -> s + "!");
-        System.out.println("Mapped right: " + mapped.getRight()); // WORLD!
+        var mapped = classify("world").map(s -> s + "!");
+        IO.println("Mapped right: " + mapped.getRight()); // WORLD!
 
         // Pattern match
         switch (classify("7")) {
-            case Either.Left<Integer, String>  left  -> System.out.println("Left: "  + left.value());
-            case Either.Right<Integer, String> right -> System.out.println("Right: " + right.value());
+            case Either.Left<Integer, String>  left  -> IO.println("Left: "  + left.value());
+            case Either.Right<Integer, String> right -> IO.println("Right: " + right.value());
         }
     }
 }

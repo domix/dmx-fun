@@ -372,16 +372,17 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     /**
-     * Collects all present (non-empty) values from a stream of {@code Option} instances into a list.
-     * <p>
-     * Equivalent to stream.flatMap(Option::stream).collect(toList()).
+     * Collects all present (non-empty) values from a stream of {@code Option} instances into an
+     * unmodifiable list.
      *
      * @param options a stream of {@code Option} instances
      * @param <V>     the type of the values inside the {@code Option} instances
-     * @return a list containing all present values from the provided stream
+     * @return an unmodifiable list containing all present values from the provided stream
      */
     static <V> List<V> collectPresent(Stream<Option<V>> options) {
-        return options.flatMap(Option::stream).collect(Collectors.toList());
+        return options
+            .flatMap(Option::stream)
+            .toList();
     }
 
     /**

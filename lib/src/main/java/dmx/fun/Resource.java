@@ -147,7 +147,7 @@ public final class Resource<T> {
             CheckedConsumer<? super T> release) {
         Objects.requireNonNull(acquired, "acquired");
         Objects.requireNonNull(release, "release");
-        return new Resource<>(new Effect<T>() {
+        return new Resource<>(new Effect<>() {
             @Override
             public <R> Try<R> run(CheckedFunction<? super T, ? extends R> body) {
                 if (acquired.isFailure()) {

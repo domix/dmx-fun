@@ -175,21 +175,21 @@ class AccumulatorTest {
 
     @Test
     void flatMap_shouldThrowNPE_whenFunctionIsNull() {
-        Accumulator<List<String>, Integer> acc = Accumulator.of(1, List.of());
+        var acc = Accumulator.<List<String>, Integer>of(1, List.of());
         assertThatThrownBy(() -> acc.flatMap(null, CONCAT))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void flatMap_shouldThrowNPE_whenMergeIsNull() {
-        Accumulator<List<String>, Integer> acc = Accumulator.of(1, List.of());
+        var acc = Accumulator.<List<String>, Integer>of(1, List.of());
         assertThatThrownBy(() -> acc.flatMap(v -> Accumulator.of(v, List.of()), null))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void flatMap_shouldThrowNPE_whenFunctionReturnsNull() {
-        Accumulator<List<String>, Integer> acc = Accumulator.of(1, List.of());
+        var acc = Accumulator.<List<String>, Integer>of(1, List.of());
         assertThatThrownBy(() -> acc.flatMap(v -> null, CONCAT))
             .isInstanceOf(NullPointerException.class);
     }
@@ -321,39 +321,39 @@ class AccumulatorTest {
 
     @Test
     void combine_shouldThrowNPE_whenOtherIsNull() {
-        Accumulator<List<String>, Integer> acc = Accumulator.of(1, List.of());
+        var acc = Accumulator.<List<String>, Integer>of(1, List.of());
         assertThatThrownBy(() -> acc.combine(null, CONCAT, Integer::sum))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void combine_shouldThrowNPE_whenMergeIsNull() {
-        Accumulator<List<String>, Integer> a = Accumulator.of(1, List.of());
-        Accumulator<List<String>, Integer> b = Accumulator.of(2, List.of());
+        var a = Accumulator.<List<String>, Integer>of(1, List.of());
+        var b = Accumulator.<List<String>, Integer>of(2, List.of());
         assertThatThrownBy(() -> a.combine(b, null, Integer::sum))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void combine_shouldThrowNPE_whenFunctionIsNull() {
-        Accumulator<List<String>, Integer> a = Accumulator.of(1, List.of());
-        Accumulator<List<String>, Integer> b = Accumulator.of(2, List.of());
+        var a = Accumulator.<List<String>, Integer>of(1, List.of());
+        var b = Accumulator.<List<String>, Integer>of(2, List.of());
         assertThatThrownBy(() -> a.<Integer, Integer>combine(b, CONCAT, null))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void combine_shouldThrowNPE_whenThisIsTell() {
-        Accumulator<List<String>, Void> tell = Accumulator.tell(List.of("entry"));
-        Accumulator<List<String>, Integer> other = Accumulator.of(42, List.of());
+        var tell = Accumulator.tell(List.of("entry"));
+        var other = Accumulator.<List<String>, Integer>of(42, List.of());
         assertThatThrownBy(() -> tell.combine(other, CONCAT, (a, b) -> b))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void combine_shouldThrowNPE_whenOtherIsTell() {
-        Accumulator<List<String>, Integer> acc = Accumulator.of(42, List.of());
-        Accumulator<List<String>, Void> tell    = Accumulator.tell(List.of("entry"));
+        var acc = Accumulator.<List<String>, Integer>of(42, List.of());
+        var tell = Accumulator.tell(List.of("entry"));
         assertThatThrownBy(() -> acc.combine(tell, CONCAT, (a, b) -> a))
             .isInstanceOf(NullPointerException.class);
     }
@@ -394,7 +394,7 @@ class AccumulatorTest {
         // Use the canonical record constructor directly to put a null-value element in the list
         // (mirrors the tell() case without the Void type mismatch)
         var noValue = new Accumulator<List<String>, Integer>(null, List.of("tell — no value"));
-        List<Accumulator<List<String>, Integer>> steps = List.of(
+        var steps = List.of(
             Accumulator.of(1, List.of("ok")),
             noValue
         );
@@ -422,7 +422,7 @@ class AccumulatorTest {
     @Test
     void toOption_discardsAccumulation() {
         var acc = Accumulator.of("value", List.of("important log"));
-        Option<String> opt = acc.toOption();
+        var opt = acc.toOption();
         assertThat(opt.get()).isEqualTo("value");
         // accumulated is not accessible through Option — that's by design
     }
@@ -434,7 +434,7 @@ class AccumulatorTest {
     @Test
     void toResult_ofAccumulator_returnsOk() {
         var acc = Accumulator.of(42, List.of("step 1"));
-        Result<Integer, List<String>> result = acc.toResult();
+        var result = acc.toResult();
         assertThat(result.isOk()).isTrue();
         assertThat(result.get()).isEqualTo(42);
     }
@@ -442,7 +442,7 @@ class AccumulatorTest {
     @Test
     void toResult_tellAccumulator_returnsErr() {
         var acc = Accumulator.tell(List.of("entry"));
-        Result<Void, List<String>> result = acc.toResult();
+        var result = acc.toResult();
         assertThat(result.isError()).isTrue();
         assertThat(result.getError()).containsExactly("entry");
     }

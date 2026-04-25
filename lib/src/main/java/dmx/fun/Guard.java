@@ -104,7 +104,10 @@ public interface Guard<T> {
      * @return a new {@code Guard<T>}
      * @throws NullPointerException if {@code predicate} or {@code errorMessageFn} is {@code null}
      */
-    static <T> Guard<T> of(Predicate<? super T> predicate, Function<? super T, String> errorMessageFn) {
+    static <T> Guard<T> of(
+        Predicate<? super T> predicate,
+        Function<? super T, String> errorMessageFn
+    ) {
         Objects.requireNonNull(predicate, "predicate");
         Objects.requireNonNull(errorMessageFn, "errorMessageFn");
         return value -> predicate.test(value)
@@ -142,7 +145,7 @@ public interface Guard<T> {
     default Guard<T> and(Guard<T> other) {
         Objects.requireNonNull(other, "other");
         return value -> this.check(value)
-            .combine(other.check(value), NonEmptyList::concat, (v1, v2) -> v1);
+            .combine(other.check(value), NonEmptyList::concat, (v1, _) -> v1);
     }
 
     /**
@@ -176,7 +179,7 @@ public interface Guard<T> {
     default Guard<T> andThen(Guard<T> next) {
         Objects.requireNonNull(next, "next");
         return value -> {
-            Validated<NonEmptyList<String>, T> first = this.check(value);
+            var first = this.check(value);
             return first.isValid() ? next.check(value) : first;
         };
     }
@@ -206,11 +209,15 @@ public interface Guard<T> {
     default Guard<T> or(Guard<T> other) {
         Objects.requireNonNull(other, "other");
         return value -> {
-            Validated<NonEmptyList<String>, T> left = this.check(value);
-            if (left.isValid()) return left;
-            Validated<NonEmptyList<String>, T> right = other.check(value);
-            if (right.isValid()) return right;
-            return left.combine(right, NonEmptyList::concat, (v1, v2) -> v1);
+            var left = this.check(value);
+            if (left.isValid()) {
+                return left;
+            }
+            var right = other.check(value);
+            if (right.isValid()) {
+                return right;
+            }
+            return left.combine(right, NonEmptyList::concat, (v1, _) -> v1);
         };
     }
 
@@ -306,7 +313,7 @@ public interface Guard<T> {
     default <U> Guard<U> contramap(Function<? super U, ? extends T> mapper) {
         Objects.requireNonNull(mapper, "mapper");
         return u -> {
-            Validated<NonEmptyList<String>, T> result = this.check(mapper.apply(u));
+            var result = this.check(mapper.apply(u));
             return result.isValid() ? Validated.valid(u) : Validated.invalid(result.getError());
         };
     }
@@ -352,7 +359,9 @@ public interface Guard<T> {
      */
     default <E> Result<T, E> checkToResult(T value, Function<NonEmptyList<String>, E> toError) {
         Objects.requireNonNull(toError, "toError");
-        return this.check(value).mapError(toError).toResult();
+        return this.check(value)
+            .mapError(toError)
+            .toResult();
     }
 
     /**
@@ -378,7 +387,7 @@ public interface Guard<T> {
      *         fails
      */
     default Option<T> checkToOption(T value) {
-        Validated<NonEmptyList<String>, T> result = this.check(value);
+        var result = this.check(value);
         return result.isValid() ? Option.some(result.get()) : Option.none();
     }
 

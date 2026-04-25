@@ -161,7 +161,7 @@ public record Accumulator<E, A>(@Nullable A value, E accumulated) {
      * @throws NullPointerException if {@code accumulated} is {@code null}
      */
     @SuppressWarnings("NullAway") // null is the only valid Void value; tell() is its sole producer
-    public static <E> Accumulator<E, @Nullable Void> tell(E accumulated) {
+    public static <E> Accumulator<E, Void> tell(E accumulated) {
         Objects.requireNonNull(accumulated, "accumulated");
         return new Accumulator<>(null, accumulated);
     }
@@ -253,9 +253,12 @@ public record Accumulator<E, A>(@Nullable A value, E accumulated) {
             BinaryOperator<E> merge) {
         Objects.requireNonNull(f, "f");
         Objects.requireNonNull(merge, "merge");
-        Accumulator<E, B> next = f.apply(value);
+        var next = f.apply(value);
         Objects.requireNonNull(next, "flatMap function must not return null");
-        return new Accumulator<>(next.value(), merge.apply(accumulated, next.accumulated()));
+        return new Accumulator<>(
+            next.value(),
+            merge.apply(accumulated, next.accumulated())
+        );
     }
 
     /**
@@ -381,7 +384,7 @@ public record Accumulator<E, A>(@Nullable A value, E accumulated) {
         Objects.requireNonNull(merge, "merge");
         Objects.requireNonNull(empty, "empty");
         E acc = empty;
-        List<A> values = new ArrayList<>(accumulators.size());
+        var values = new ArrayList<A>(accumulators.size());
         for (int i = 0; i < accumulators.size(); i++) {
             Accumulator<E, A> a = accumulators.get(i);
             Objects.requireNonNull(a, "accumulators[" + i + "] must not be null");

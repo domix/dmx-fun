@@ -90,8 +90,12 @@ tasks.named('compileTestJava') {
     def testSrcPath  = project.files(project.sourceSets.test.java.srcDirs).asPath
     def modulePath   = (mainOut + apiDeps).asPath
 
-    // Move main output + api deps to the module-path to avoid split-package errors.
-    classpath = classpath.filter { f -> !mainOut.contains(f) && !apiDeps.contains(f) }
+    // Keep the source-set classpath untouched during project configuration so IDEs
+    // can resolve test references against main sources. We only strip main/api
+    // entries right before javac runs (they are provided via --module-path).
+    doFirst {
+        classpath = classpath.filter { f -> !mainOut.contains(f) && !apiDeps.contains(f) }
+    }
 
     options.compilerArgs += ['--module-path',  modulePath]
     options.compilerArgs += ['--add-modules',  allModules]

@@ -7,6 +7,50 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TupleTest {
 
+    // ── Tuple2 ────────────────────────────────────────────────────────────────
+
+    @Test
+    void tuple2_of_exposesFields() {
+        var t = Tuple2.of("a", 2);
+        assertEquals("a", t._1());
+        assertEquals(2, t._2());
+    }
+
+    @Test
+    void tuple2_of_null_first_throws() {
+        assertThrows(NullPointerException.class, () -> Tuple2.of(null, 2));
+    }
+
+    @Test
+    void tuple2_of_null_second_throws() {
+        assertThrows(NullPointerException.class, () -> Tuple2.of(1, null));
+    }
+
+    @Test
+    void tuple2_mapFirst_appliesFunction() {
+        var t = Tuple2.of(1, "b").mapFirst(n -> n * 10);
+        assertEquals(10, t._1());
+        assertEquals("b", t._2());
+    }
+
+    @Test
+    void tuple2_mapSecond_appliesFunction() {
+        var t = Tuple2.of(1, "b").mapSecond(String::toUpperCase);
+        assertEquals(1, t._1());
+        assertEquals("B", t._2());
+    }
+
+    @Test
+    void tuple2_map_collapsesToValue() {
+        var result = Tuple2.of(3, 4).map(Integer::sum);
+        assertEquals(7, result);
+    }
+
+    @Test
+    void tuple2_equality() {
+        assertEquals(Tuple2.of("x", 1), Tuple2.of("x", 1));
+    }
+
     // ── Tuple3 ────────────────────────────────────────────────────────────────
 
     @Test

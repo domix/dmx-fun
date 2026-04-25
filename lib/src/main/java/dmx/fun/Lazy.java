@@ -57,11 +57,11 @@ public final class Lazy<T> {
      * @throws NullPointerException if the supplier returns {@code null}
      */
     public T get() {
-        Try<T> s = evaluate();
+        var s = evaluate();
         if (s.isSuccess()) {
             return s.get();
         }
-        Throwable cause = s.getCause();
+        var cause = s.getCause();
         if (cause instanceof RuntimeException re) {
             throw re;
         }
@@ -176,7 +176,7 @@ public final class Lazy<T> {
      * @return a {@code CompletableFuture<T>} that completes with this lazy's value
      */
     public CompletableFuture<T> toFuture() {
-        Try<T> s = state;
+        var s = state;
         if (s != null) {
             if (s.isFailure()) {
                 return CompletableFuture.failedFuture(s.getCause());
@@ -209,7 +209,8 @@ public final class Lazy<T> {
      * @throws NullPointerException if {@code errorMapper} is {@code null} or returns {@code null}
      */
     public <E> Result<T, E> toResult(Function<? super Throwable, ? extends E> errorMapper) {
-        return toTry().toResult(errorMapper);
+        return toTry()
+            .toResult(errorMapper);
     }
 
     /**
@@ -220,7 +221,7 @@ public final class Lazy<T> {
      */
     @Override
     public String toString() {
-        Try<T> s = state;
+        var s = state;
         if (s == null) {
             return "Lazy[?]";
         }
@@ -237,7 +238,7 @@ public final class Lazy<T> {
         // would make the non-null guarantee
         // explicit and prevents warnings
         // from static analysis tools
-        Try<T> s = state;
+        var s = state;
         if (s != null) {
             return s;
         }

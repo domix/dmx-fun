@@ -1,7 +1,6 @@
 package dmx.fun;
 
 import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,14 +14,14 @@ class EitherTest {
 
     @Test
     void left_shouldCreateLeftInstance() {
-        Either<String, Integer> e = Either.left("error");
+        var e = Either.left("error");
         assertThat(e.isLeft()).isTrue();
         assertThat(e.isRight()).isFalse();
     }
 
     @Test
     void right_shouldCreateRightInstance() {
-        Either<String, Integer> e = Either.right(42);
+        var e = Either.right(42);
         assertThat(e.isRight()).isTrue();
         assertThat(e.isLeft()).isFalse();
     }
@@ -47,17 +46,17 @@ class EitherTest {
 
     @Test
     void getLeft_shouldReturnValue_whenLeft() {
-        assertThat(Either.<String, Integer>left("error").getLeft()).isEqualTo("error");
+        assertThat(Either.left("error").getLeft()).isEqualTo("error");
     }
 
     @Test
     void getRight_shouldReturnValue_whenRight() {
-        assertThat(Either.<String, Integer>right(42).getRight()).isEqualTo(42);
+        assertThat(Either.right(42).getRight()).isEqualTo(42);
     }
 
     @Test
     void getLeft_shouldThrow_whenRight() {
-        Either<String, Integer> e = Either.right(42);
+        var e = Either.right(42);
         assertThatThrownBy(e::getLeft)
             .isInstanceOf(java.util.NoSuchElementException.class)
             .hasMessageContaining("Right");
@@ -65,7 +64,7 @@ class EitherTest {
 
     @Test
     void getRight_shouldThrow_whenLeft() {
-        Either<String, Integer> e = Either.left("error");
+        var e = Either.left("error");
         assertThatThrownBy(e::getRight)
             .isInstanceOf(java.util.NoSuchElementException.class)
             .hasMessageContaining("Left");
@@ -77,28 +76,28 @@ class EitherTest {
 
     @Test
     void fold_shouldApplyOnLeft_whenLeft() {
-        Either<String, Integer> e = Either.left("error");
-        String result = e.fold(l -> "LEFT:" + l, r -> "RIGHT:" + r);
+        var e = Either.left("error");
+        var result = e.fold("LEFT:%s"::formatted, "RIGHT:%s"::formatted);
         assertThat(result).isEqualTo("LEFT:error");
     }
 
     @Test
     void fold_shouldApplyOnRight_whenRight() {
-        Either<String, Integer> e = Either.right(42);
-        String result = e.fold(l -> "LEFT:" + l, r -> "RIGHT:" + r);
+        var e = Either.right(42);
+        var result = e.fold("LEFT:%s"::formatted, "RIGHT:%d"::formatted);
         assertThat(result).isEqualTo("RIGHT:42");
     }
 
     @Test
     void fold_shouldThrowNPE_whenOnLeftIsNull() {
-        Either<String, Integer> e = Either.left("x");
-        assertThatThrownBy(() -> e.fold(null, r -> r.toString()))
+        var e = Either.left("x");
+        assertThatThrownBy(() -> e.fold(null, Object::toString))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void fold_shouldThrowNPE_whenOnRightIsNull() {
-        Either<String, Integer> e = Either.right(1);
+        var e = Either.right(1);
         assertThatThrownBy(() -> e.fold(l -> l, null))
             .isInstanceOf(NullPointerException.class);
     }
@@ -109,21 +108,23 @@ class EitherTest {
 
     @Test
     void map_shouldTransformRight_whenRight() {
-        Either<String, Integer> e = Either.<String, Integer>right(5).map(v -> v * 2);
+        var e = Either.right(5)
+            .map(v -> v * 2);
         assertThat(e.isRight()).isTrue();
         assertThat(e.getRight()).isEqualTo(10);
     }
 
     @Test
     void map_shouldLeaveLeft_unchanged() {
-        Either<String, Integer> e = Either.<String, Integer>left("err").map(v -> v * 2);
+        var e = Either.<String, Integer>left("err")
+            .map(v -> v * 2);
         assertThat(e.isLeft()).isTrue();
         assertThat(e.getLeft()).isEqualTo("err");
     }
 
     @Test
     void map_shouldThrowNPE_whenMapperIsNull() {
-        Either<String, Integer> e = Either.right(1);
+        var e = Either.right(1);
         assertThatThrownBy(() -> e.map(null))
             .isInstanceOf(NullPointerException.class);
     }
@@ -134,21 +135,23 @@ class EitherTest {
 
     @Test
     void mapLeft_shouldTransformLeft_whenLeft() {
-        Either<String, Integer> e = Either.<String, Integer>left("error").mapLeft(String::toUpperCase);
+        var e = Either.left("error")
+            .mapLeft(String::toUpperCase);
         assertThat(e.isLeft()).isTrue();
         assertThat(e.getLeft()).isEqualTo("ERROR");
     }
 
     @Test
     void mapLeft_shouldLeaveRight_unchanged() {
-        Either<String, Integer> e = Either.<String, Integer>right(7).mapLeft(String::toUpperCase);
+        var e = Either.<String, Integer>right(7)
+            .mapLeft(String::toUpperCase);
         assertThat(e.isRight()).isTrue();
         assertThat(e.getRight()).isEqualTo(7);
     }
 
     @Test
     void mapLeft_shouldThrowNPE_whenMapperIsNull() {
-        Either<String, Integer> e = Either.left("x");
+        var e = Either.left("x");
         assertThatThrownBy(() -> e.mapLeft(null))
             .isInstanceOf(NullPointerException.class);
     }
@@ -159,7 +162,7 @@ class EitherTest {
 
     @Test
     void flatMap_shouldChain_whenRight() {
-        Either<String, Integer> result = Either.<String, Integer>right(5)
+        var result = Either.right(5)
             .flatMap(v -> v > 0 ? Either.right(v * 10) : Either.left("negative"));
         assertThat(result.isRight()).isTrue();
         assertThat(result.getRight()).isEqualTo(50);
@@ -167,9 +170,12 @@ class EitherTest {
 
     @Test
     void flatMap_shouldShortCircuit_whenLeft() {
-        List<String> called = new ArrayList<>();
-        Either<String, Integer> result = Either.<String, Integer>left("err")
-            .flatMap(v -> { called.add("called"); return Either.right(v); });
+        var called = new ArrayList<String>();
+        var result = Either.left("err")
+            .flatMap(v -> {
+                called.add("called");
+                return Either.right(v);
+            });
         assertThat(result.isLeft()).isTrue();
         assertThat(result.getLeft()).isEqualTo("err");
         assertThat(called).isEmpty();
@@ -177,22 +183,22 @@ class EitherTest {
 
     @Test
     void flatMap_shouldReturnLeft_whenMapperReturnsLeft() {
-        Either<String, Integer> result = Either.<String, Integer>right(5)
-            .flatMap(v -> Either.left("too small"));
+        var result = Either.right(5)
+            .flatMap(_ -> Either.left("too small"));
         assertThat(result.isLeft()).isTrue();
         assertThat(result.getLeft()).isEqualTo("too small");
     }
 
     @Test
     void flatMap_shouldThrowNPE_whenMapperIsNull() {
-        Either<String, Integer> e = Either.right(1);
+        var e = Either.right(1);
         assertThatThrownBy(() -> e.flatMap(null))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void flatMap_shouldThrowNPE_whenMapperReturnsNull() {
-        Either<String, Integer> e = Either.right(1);
+        var e = Either.right(1);
         assertThatThrownBy(() -> e.flatMap(v -> null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("mapper returned null");
@@ -204,22 +210,27 @@ class EitherTest {
 
     @Test
     void swap_shouldTurnLeftIntoRight() {
-        Either<Integer, String> swapped = Either.<String, Integer>left("hello").swap();
+        var swapped = Either.left("hello").swap();
         assertThat(swapped.isRight()).isTrue();
         assertThat(swapped.getRight()).isEqualTo("hello");
     }
 
     @Test
     void swap_shouldTurnRightIntoLeft() {
-        Either<String, Integer> swapped = Either.<Integer, String>right("world").swap();
+        var swapped = Either.right("world").swap();
         assertThat(swapped.isLeft()).isTrue();
         assertThat(swapped.getLeft()).isEqualTo("world");
     }
 
     @Test
     void swap_shouldBeInvolution() {
-        Either<String, Integer> original = Either.right(99);
-        assertThat(original.swap().swap().getRight()).isEqualTo(99);
+        var original = Either.right(99);
+        assertThat(
+            original
+                .swap()
+                .swap()
+                .getRight()
+        ).isEqualTo(99);
     }
 
     // -------------------------------------------------------------------------
@@ -228,44 +239,47 @@ class EitherTest {
 
     @Test
     void peek_shouldExecuteAction_whenRight() {
-        List<Integer> seen = new ArrayList<>();
-        Either<String, Integer> e = Either.<String, Integer>right(42).peek(seen::add);
+        var seen = new ArrayList<Integer>();
+        var e = Either.<String, Integer>right(42)
+            .peek(seen::add);
         assertThat(seen).containsExactly(42);
         assertThat(e.getRight()).isEqualTo(42); // unchanged
     }
 
     @Test
     void peek_shouldNotExecuteAction_whenLeft() {
-        List<Integer> seen = new ArrayList<>();
+        var seen = new ArrayList<Integer>();
         Either.<String, Integer>left("err").peek(seen::add);
         assertThat(seen).isEmpty();
     }
 
     @Test
     void peek_shouldThrowNPE_whenActionIsNull() {
-        Either<String, Integer> e = Either.right(1);
+        var e = Either.right(1);
         assertThatThrownBy(() -> e.peek(null))
             .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     void peekLeft_shouldExecuteAction_whenLeft() {
-        List<String> seen = new ArrayList<>();
-        Either<String, Integer> e = Either.<String, Integer>left("err").peekLeft(seen::add);
+        var seen = new ArrayList<String>();
+        var e = Either.left("err")
+            .peekLeft(seen::add);
         assertThat(seen).containsExactly("err");
         assertThat(e.getLeft()).isEqualTo("err"); // unchanged
     }
 
     @Test
     void peekLeft_shouldNotExecuteAction_whenRight() {
-        List<String> seen = new ArrayList<>();
-        Either.<String, Integer>right(1).peekLeft(seen::add);
+        var seen = new ArrayList<String>();
+        Either.<String, Integer>right(1)
+            .peekLeft(seen::add);
         assertThat(seen).isEmpty();
     }
 
     @Test
     void peekLeft_shouldThrowNPE_whenActionIsNull() {
-        Either<String, Integer> e = Either.left("x");
+        var e = Either.left("x");
         assertThatThrownBy(() -> e.peekLeft(null))
             .isInstanceOf(NullPointerException.class);
     }
@@ -276,14 +290,17 @@ class EitherTest {
 
     @Test
     void toOption_shouldReturnSome_whenRight() {
-        Option<Integer> opt = Either.<String, Integer>right(7).toOption();
+        var opt = Either
+            .right(7)
+            .toOption();
         assertThat(opt.isDefined()).isTrue();
         assertThat(opt.get()).isEqualTo(7);
     }
 
     @Test
     void toOption_shouldReturnNone_whenLeft() {
-        Option<Integer> opt = Either.<String, Integer>left("err").toOption();
+        var opt = Either.left("err")
+            .toOption();
         assertThat(opt.isEmpty()).isTrue();
     }
 
@@ -293,14 +310,18 @@ class EitherTest {
 
     @Test
     void toResult_shouldMapRightToOk() {
-        Result<Integer, String> result = Either.<String, Integer>right(42).toResult();
+        var result = Either
+            .right(42)
+            .toResult();
         assertThat(result.isOk()).isTrue();
         assertThat(result.get()).isEqualTo(42);
     }
 
     @Test
     void toResult_shouldMapLeftToErr() {
-        Result<Integer, String> result = Either.<String, Integer>left("fail").toResult();
+        var result = Either
+            .left("fail")
+            .toResult();
         assertThat(result.isError()).isTrue();
         assertThat(result.getError()).isEqualTo("fail");
     }
@@ -311,14 +332,18 @@ class EitherTest {
 
     @Test
     void toValidated_shouldMapRightToValid() {
-        Validated<String, Integer> v = Either.<String, Integer>right(99).toValidated();
+        var v = Either
+            .right(99)
+            .toValidated();
         assertThat(v.isValid()).isTrue();
         assertThat(v.get()).isEqualTo(99);
     }
 
     @Test
     void toValidated_shouldMapLeftToInvalid() {
-        Validated<String, Integer> v = Either.<String, Integer>left("err").toValidated();
+        var v = Either
+            .left("err")
+            .toValidated();
         assertThat(v.isInvalid()).isTrue();
         assertThat(v.getError()).isEqualTo("err");
     }
@@ -329,16 +354,16 @@ class EitherTest {
 
     @Test
     void result_toEither_shouldMapOkToRight() {
-        Result<Integer, String> ok = Result.ok(42);
-        Either<String, Integer> e = ok.toEither();
+        var ok = Result.<Integer, String>ok(42);
+        var e = ok.toEither();
         assertThat(e.isRight()).isTrue();
         assertThat(e.getRight()).isEqualTo(42);
     }
 
     @Test
     void result_toEither_shouldMapErrToLeft() {
-        Result<Integer, String> err = Result.err("fail");
-        Either<String, Integer> e = err.toEither();
+        var err = Result.<Integer, String>err("fail");
+        var e = err.toEither();
         assertThat(e.isLeft()).isTrue();
         assertThat(e.getLeft()).isEqualTo("fail");
     }
@@ -349,11 +374,11 @@ class EitherTest {
 
     @Test
     void eitherShouldModel_neutralBranching_withoutErrorSemantics() {
-        Either<String, Integer> adminId = Either.left("admin-001");
-        Either<String, Integer> userId  = Either.right(42);
+        var adminId = Either.left("admin-001");
+        var userId  = Either.right(42);
 
-        String labelAdmin = adminId.fold(a -> "Admin: " + a, u -> "User #" + u);
-        String labelUser  = userId.fold(a  -> "Admin: " + a, u -> "User #" + u);
+        var labelAdmin = adminId.fold("Admin: %s"::formatted, "User #%s"::formatted);
+        var labelUser  = userId.fold("Admin: %s"::formatted, "User #%d"::formatted);
 
         assertThat(labelAdmin).isEqualTo("Admin: admin-001");
         assertThat(labelUser).isEqualTo("User #42");
