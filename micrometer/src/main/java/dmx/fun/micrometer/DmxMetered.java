@@ -1,7 +1,6 @@
 package dmx.fun.micrometer;
 
 import dmx.fun.CheckedSupplier;
-import dmx.fun.Lazy;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -32,7 +31,7 @@ public final class DmxMetered {
 
     private final String name;
     private Tags tags = Tags.empty();
-    private @Nullable Lazy<DmxMicrometer> micrometer;
+    private @Nullable DmxMicrometer micrometer;
 
     private DmxMetered(String name) {
         this.name = name;
@@ -51,8 +50,7 @@ public final class DmxMetered {
 
     /** Sets the {@link MeterRegistry} to register metrics with. */
     public DmxMetered registry(MeterRegistry registry) {
-        MeterRegistry assignedRegistry = Objects.requireNonNull(registry, "registry");
-        this.micrometer = Lazy.of(() -> DmxMicrometer.of(assignedRegistry));
+        this.micrometer = DmxMicrometer.of(Objects.requireNonNull(registry, "registry"));
         return this;
     }
 
@@ -77,10 +75,9 @@ public final class DmxMetered {
     }
 
     private DmxMicrometer requireMicrometer() {
-        Lazy<DmxMicrometer> lazyMicrometer = micrometer;
-        if (lazyMicrometer == null) {
+        if (micrometer == null) {
             throw new IllegalStateException("registry must be set before recording — call .registry(meterRegistry) first");
         }
-        return lazyMicrometer.get();
+        return micrometer;
     }
 }

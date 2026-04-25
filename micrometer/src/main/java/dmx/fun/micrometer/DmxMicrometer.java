@@ -58,7 +58,7 @@ public final class DmxMicrometer {
         Objects.requireNonNull(tags, "tags");
         Objects.requireNonNull(supplier, "supplier");
 
-        Timer.Sample sample = Timer.start(registry);
+        var sample = Timer.start(registry);
         Try<V> result;
         try {
             result = Try.success(supplier.get());

@@ -1,11 +1,7 @@
 package dmx.fun.micrometer;
 
-import dmx.fun.Result;
-import dmx.fun.Try;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.io.IOException;
 import java.util.stream.IntStream;
@@ -73,7 +69,7 @@ class DmxMicrometerTest {
 
     @Test
     void recordTry_success_returnsSuccessValue() {
-        Try<String> result = dmx.recordTry("op", Tags.empty(), () -> "ok");
+        var result = dmx.recordTry("op", Tags.empty(), () -> "ok");
 
         assertThat(result).containsValue("ok");
     }
@@ -82,7 +78,7 @@ class DmxMicrometerTest {
     void recordTry_success_incrementsSuccessCounter() {
         dmx.recordTry("op", Tags.empty(), () -> "ok");
 
-        Counter counter = registry.get("op.count").tag("outcome", "success").counter();
+        var counter = registry.get("op.count").tag("outcome", "success").counter();
         assertThat(counter.count()).isEqualTo(1.0);
     }
 
@@ -90,7 +86,7 @@ class DmxMicrometerTest {
     void recordTry_success_recordsDurationTimer() {
         dmx.recordTry("op", Tags.empty(), () -> "ok");
 
-        Timer timer = registry.get("op.duration").tag("outcome", "success").timer();
+        var timer = registry.get("op.duration").tag("outcome", "success").timer();
         assertThat(timer.count()).isEqualTo(1L);
     }
 
@@ -105,8 +101,8 @@ class DmxMicrometerTest {
 
     @Test
     void recordTry_failure_returnsFailure() {
-        IOException boom = new IOException("boom");
-        Try<String> result = dmx.recordTry("op", Tags.empty(), () -> { throw boom; });
+        var boom = new IOException("boom");
+        var result = dmx.recordTry("op", Tags.empty(), () -> { throw boom; });
 
         assertThat(result).failsWith(IOException.class);
         assertThat(result.getCause()).isSameAs(boom);
@@ -116,7 +112,7 @@ class DmxMicrometerTest {
     void recordTry_failure_incrementsFailureCounter() {
         dmx.recordTry("op", Tags.empty(), () -> { throw new IOException("boom"); });
 
-        Counter counter = registry.get("op.count").tag("outcome", "failure").counter();
+        var counter = registry.get("op.count").tag("outcome", "failure").counter();
         assertThat(counter.count()).isEqualTo(1.0);
     }
 
@@ -124,7 +120,7 @@ class DmxMicrometerTest {
     void recordTry_failure_recordsDurationTimer() {
         dmx.recordTry("op", Tags.empty(), () -> { throw new RuntimeException("boom"); });
 
-        Timer timer = registry.get("op.duration").tag("outcome", "failure").timer();
+        var timer = registry.get("op.duration").tag("outcome", "failure").timer();
         assertThat(timer.count()).isEqualTo(1L);
     }
 
@@ -132,7 +128,7 @@ class DmxMicrometerTest {
     void recordTry_failure_incrementsExceptionCounter() {
         dmx.recordTry("op", Tags.empty(), () -> { throw new IOException("boom"); });
 
-        Counter counter = registry.get("op.failure").tag("exception", "IOException").counter();
+        var counter = registry.get("op.failure").tag("exception", "IOException").counter();
         assertThat(counter.count()).isEqualTo(1.0);
     }
 
@@ -140,7 +136,7 @@ class DmxMicrometerTest {
     void recordTry_failure_exceptionCounterTaggedWithSimpleClassName() {
         dmx.recordTry("op", Tags.empty(), () -> { throw new IllegalArgumentException("bad"); });
 
-        Counter counter = registry.get("op.failure").tag("exception", "IllegalArgumentException").counter();
+        var counter = registry.get("op.failure").tag("exception", "IllegalArgumentException").counter();
         assertThat(counter.count()).isEqualTo(1.0);
     }
 
@@ -148,10 +144,10 @@ class DmxMicrometerTest {
 
     @Test
     void recordTry_customTags_propagatedToAllMetrics() {
-        Tags tags = Tags.of("service", "payments");
+        var tags = Tags.of("service", "payments");
         dmx.recordTry("op", tags, () -> "ok");
 
-        Counter counter = registry.get("op.count")
+        var counter = registry.get("op.count")
             .tags("service", "payments", "outcome", "success")
             .counter();
         assertThat(counter.count()).isEqualTo(1.0);
@@ -159,10 +155,10 @@ class DmxMicrometerTest {
 
     @Test
     void recordTry_customTags_propagatedToFailureCounter() {
-        Tags tags = Tags.of("service", "payments");
+        var tags = Tags.of("service", "payments");
         dmx.recordTry("op", tags, () -> { throw new IOException("boom"); });
 
-        Counter counter = registry.get("op.failure")
+        var counter = registry.get("op.failure")
             .tags("service", "payments", "exception", "IOException")
             .counter();
         assertThat(counter.count()).isEqualTo(1.0);
@@ -176,7 +172,7 @@ class DmxMicrometerTest {
         dmx.recordTry("op", Tags.empty(), () -> "b");
         dmx.recordTry("op", Tags.empty(), () -> "c");
 
-        Counter counter = registry.get("op.count").tag("outcome", "success").counter();
+        var counter = registry.get("op.count").tag("outcome", "success").counter();
         assertThat(counter.count()).isEqualTo(3.0);
     }
 
@@ -184,14 +180,14 @@ class DmxMicrometerTest {
 
     @Test
     void recordResult_success_returnsOk() {
-        Result<String, Throwable> result = dmx.recordResult("op", Tags.empty(), () -> "ok");
+        var result = dmx.recordResult("op", Tags.empty(), () -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void recordResult_failure_returnsErr() {
-        Result<String, Throwable> result = dmx.recordResult("op", Tags.empty(),
+        var result = dmx.recordResult("op", Tags.empty(),
             () -> { throw new IOException("boom"); });
 
         assertThat(result).isErr();
@@ -202,7 +198,7 @@ class DmxMicrometerTest {
     void recordResult_recordsSameMetricsAsTry() {
         dmx.recordResult("op", Tags.empty(), () -> "ok");
 
-        Counter counter = registry.get("op.count").tag("outcome", "success").counter();
+        var counter = registry.get("op.count").tag("outcome", "success").counter();
         assertThat(counter.count()).isEqualTo(1.0);
     }
 
@@ -220,19 +216,19 @@ class DmxMicrometerTest {
         long expectedFailures = IntStream.range(0, totalCalls).filter(i -> i % 3 == 0).count();
         long expectedSuccesses = totalCalls - expectedFailures;
 
-        Counter success = registry.get("op.concurrent.count")
+        var success = registry.get("op.concurrent.count")
             .tags("component", "test", "outcome", "success")
             .counter();
-        Counter failure = registry.get("op.concurrent.count")
+        var failure = registry.get("op.concurrent.count")
             .tags("component", "test", "outcome", "failure")
             .counter();
-        Counter exception = registry.get("op.concurrent.failure")
+        var exception = registry.get("op.concurrent.failure")
             .tags("component", "test", "exception", "IOException")
             .counter();
-        Timer successTimer = registry.get("op.concurrent.duration")
+        var successTimer = registry.get("op.concurrent.duration")
             .tags("component", "test", "outcome", "success")
             .timer();
-        Timer failureTimer = registry.get("op.concurrent.duration")
+        var failureTimer = registry.get("op.concurrent.duration")
             .tags("component", "test", "outcome", "failure")
             .timer();
 
