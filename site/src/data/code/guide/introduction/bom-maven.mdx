@@ -1,0 +1,34 @@
+---
+fileName: 'pom.xml'
+---
+
+```xml
+<!-- Import the BOM in dependencyManagement -->
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>codes.domix</groupId>
+      <artifactId>fun-bom</artifactId>
+      <version>0.0.14</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+
+<!-- Declare modules without versions -->
+<dependencies>
+  <dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-jackson</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-spring-boot</artifactId>
+  </dependency>
+</dependencies>
+```

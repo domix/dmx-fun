@@ -6,6 +6,8 @@ h1: "Introduction"
 ---
 
 import {Content as TasteOfComposition} from '../code/guide/introduction/taste-of-composition.mdx';
+import {Content as BomGradle}          from '../code/guide/introduction/bom-gradle.mdx';
+import {Content as BomMaven}           from '../code/guide/introduction/bom-maven.mdx';
 
 export const base = import.meta.env.BASE_URL;
 
@@ -58,6 +60,43 @@ without `instanceof` boilerplate, and with destructuring built in.
 | `NonEmptyList<T>`  | A list with at least one element, enforced at compile time | <a href={`${base}guide/non-empty-list`}>NEL guide</a>                    |
 | `Accumulator<E, A>` | A value paired with a side-channel accumulation (log, metrics, audit trail) | <a href={`${base}guide/accumulator`}>Accumulator guide</a>               |
 | Checked interfaces | `CheckedFunction`, `TriFunction`, `QuadFunction`, and more | <a href={`${base}guide/checked-interfaces`}>Checked interfaces guide</a> |
+
+## Adding dmx-fun to your project
+
+All artifacts are published to Maven Central under the `codes.domix` group.
+
+### Using the BOM (recommended when using multiple modules)
+
+`fun-bom` is a Bill of Materials that centralizes all dmx-fun artifact versions
+in one place. Import it once and omit the version from every individual module
+declaration — the BOM keeps them in sync automatically.
+
+#### Gradle
+
+<BomGradle/>
+
+#### Maven
+
+<BomMaven/>
+
+### Without the BOM (single module)
+
+If you only need one module, declare it directly with an explicit version.
+Each module guide has a copy-ready snippet in its **Adding the dependency** section.
+
+### Available modules
+
+| Artifact | What it adds |
+|---|---|
+| `codes.domix:fun` | Core library — always required |
+| `codes.domix:fun-assertj` | Fluent AssertJ assertions for all dmx-fun types |
+| `codes.domix:fun-jackson` | Jackson serializers/deserializers |
+| `codes.domix:fun-spring` | Spring Framework converters and utilities |
+| `codes.domix:fun-spring-boot` | Spring Boot auto-configuration |
+| `codes.domix:fun-resilience4j` | Resilience4j integration |
+| `codes.domix:fun-micrometer` | Micrometer instrumentation |
+
+---
 
 ## How to read this guide
 

@@ -1,0 +1,41 @@
+plugins {
+    id 'java-platform'
+    id 'com.vanniktech.maven.publish'
+}
+
+mavenPublishing {
+    publishToMavenCentral(true, false)
+    signAllPublications()
+
+    pom {
+        inceptionYear = "2025"
+        url = 'https://domix.github.io/dmx-fun/'
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+        developers {
+            developer {
+                id = 'domix'
+                name = 'Domingo Suarez Torres'
+                email = 'domingo.suarez@gmail.com'
+            }
+        }
+        scm {
+            connection = 'scm:git:https://github.com/domix/dmx-fun'
+            developerConnection = 'scm:git:https://github.com/domix/dmx-fun'
+            url = 'https://github.com/domix/dmx-fun'
+        }
+        issueManagement {
+            system = 'GitHub'
+            url = 'https://github.com/domix/dmx-fun/issues'
+        }
+        ciManagement {
+            system = 'GitHub Actions'
+            url = 'https://github.com/domix/dmx-fun/actions'
+        }
+    }
+}
