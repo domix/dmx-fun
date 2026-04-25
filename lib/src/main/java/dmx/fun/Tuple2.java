@@ -26,6 +26,8 @@ public record Tuple2<A, B>(A _1, B _2) {
      * @return a new {@code Tuple2} containing the two values
      */
     public static <A, B> Tuple2<A, B> of(A a, B b) {
+        Objects.requireNonNull(a, "a must not be null");
+        Objects.requireNonNull(b, "b must not be null");
         return new Tuple2<>(a, b);
     }
 
@@ -37,7 +39,8 @@ public record Tuple2<A, B>(A _1, B _2) {
      * @return a new {@code Tuple2} with the transformed first element
      */
     public <R> Tuple2<R, B> mapFirst(Function<? super A, ? extends R> f) {
-        return new Tuple2<>(Objects.requireNonNull(f.apply(_1)), _2);
+        Objects.requireNonNull(f, "mapFirst: mapping function must not be null");
+        return new Tuple2<>(Objects.requireNonNull(f.apply(_1), "mapFirst: mapping function must not return null"), _2);
     }
 
     /**
@@ -48,7 +51,8 @@ public record Tuple2<A, B>(A _1, B _2) {
      * @return a new {@code Tuple2} with the transformed second element
      */
     public <R> Tuple2<A, R> mapSecond(Function<? super B, ? extends R> f) {
-        return new Tuple2<>(_1, Objects.requireNonNull(f.apply(_2)));
+        Objects.requireNonNull(f, "mapSecond: mapping function must not be null");
+        return new Tuple2<>(_1, Objects.requireNonNull(f.apply(_2), "mapSecond: mapping function must not return null"));
     }
 
     /**
@@ -59,6 +63,7 @@ public record Tuple2<A, B>(A _1, B _2) {
      * @return the non-null result of applying {@code f} to {@code _1} and {@code _2}
      */
     public <R> R map(BiFunction<? super A, ? super B, ? extends R> f) {
-        return Objects.requireNonNull(f.apply(_1, _2));
+        Objects.requireNonNull(f, "map: combining function must not be null");
+        return Objects.requireNonNull(f.apply(_1, _2), "map: combining function must not return null");
     }
 }

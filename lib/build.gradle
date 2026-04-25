@@ -20,10 +20,6 @@ jpmsTest {
     extraReads   = ['java.net.http']
 }
 
-tasks.named('compileTestJava') {
-    options.compilerArgs += ['--add-reads', 'dmx.fun=ALL-UNNAMED']
-}
-
 mavenPublishing {
     coordinates("codes.domix", "fun", "${project.version}")
 

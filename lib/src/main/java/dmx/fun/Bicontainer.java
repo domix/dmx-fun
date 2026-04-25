@@ -137,8 +137,9 @@ interface Bicontainer<V, E> {
         Objects.requireNonNull(onError, "onError");
         if (isSuccess()) {
             onSuccess.accept(get());
+        } else {
+            onError.accept(getError());
         }
-        else onError.accept(getError());
     }
 
     // ---------- Interop ----------

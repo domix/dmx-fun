@@ -17,6 +17,16 @@ class TupleTest {
     }
 
     @Test
+    void tuple2_of_null_first_throws() {
+        assertThrows(NullPointerException.class, () -> Tuple2.of(null, 2));
+    }
+
+    @Test
+    void tuple2_of_null_second_throws() {
+        assertThrows(NullPointerException.class, () -> Tuple2.of(1, null));
+    }
+
+    @Test
     void tuple2_mapFirst_appliesFunction() {
         var t = Tuple2.of(1, "b").mapFirst(n -> n * 10);
         assertEquals(10, t._1());

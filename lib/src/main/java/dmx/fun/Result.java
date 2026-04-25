@@ -804,8 +804,9 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
                 }
                 if (r instanceof Ok<V, E> ok) {
                     acc.oks.add(ok.value());
+                } else {
+                    acc.errors.add(((Err<V, E>) r).error());
                 }
-                else acc.errors.add(((Err<V, E>) r).error());
             },
             (a, b) -> { a.oks.addAll(b.oks); a.errors.addAll(b.errors); return a; },
             acc -> new Partition<>(acc.oks, acc.errors)
