@@ -14,6 +14,7 @@ All modules are published to Maven Central. Add only what you need.
 
 | Module             | Latest version                                                                                                                                              | Description                                                                                   |
 |--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `fun-bom`          | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-bom)](https://central.sonatype.com/artifact/codes.domix/fun-bom)                   | Bill of Materials — import once to manage all dmx-fun versions in one place.                  |
 | `fun`              | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                           | Core library. `Option`, `Result`, `Try`, `Validated`, `Either`, `Lazy`, `Tuple`, `NonEmptyList/Map/Set`, `Guard`, `Resource`, `Accumulator`. |
 | `fun-jackson`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson)           | Jackson serializers and deserializers for all dmx-fun types.                                  |
 | `fun-assertj`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)           | Fluent AssertJ assertions for all dmx-fun types. Use in `test` scope.                         |
@@ -23,6 +24,47 @@ All modules are published to Maven Central. Add only what you need.
 | `fun-micrometer`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)     | Counters, timers, and failure metrics for `Try` and `Result` via Micrometer.                  |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
+
+### Using the BOM (recommended when using multiple modules)
+
+Import `fun-bom` once and omit the version from every individual module declaration.
+
+**Maven**
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>codes.domix</groupId>
+      <artifactId>fun-bom</artifactId>
+      <version>LATEST_VERSION</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+
+<dependencies>
+  <dependency>
+      <groupId>codes.domix</groupId>
+      <artifactId>fun</artifactId>
+  </dependency>
+  <dependency>
+      <groupId>codes.domix</groupId>
+      <artifactId>fun-jackson</artifactId>
+  </dependency>
+</dependencies>
+```
+
+**Gradle (Kotlin DSL)**
+```kotlin
+dependencies {
+    implementation(platform("codes.domix:fun-bom:LATEST_VERSION"))
+    implementation("codes.domix:fun")
+    implementation("codes.domix:fun-jackson")  // no version needed
+}
+```
+
+---
 
 ### Core library
 
