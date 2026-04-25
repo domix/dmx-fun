@@ -1,9 +1,6 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Guard;
-import dmx.fun.NonEmptyList;
-import dmx.fun.Validated;
-import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -14,7 +11,7 @@ import org.jspecify.annotations.NullMarked;
  * @param <T> the type of value the guard validates
  */
 @NullMarked
-public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T>> {
+public final class GuardAssert<T> extends AbstractDmxFunAssert<GuardAssert<T>, Guard<T>> {
 
     GuardAssert(Guard<T> actual) {
         super(actual, GuardAssert.class);
@@ -28,7 +25,7 @@ public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T
      */
     public GuardAssert<T> accepts(T value) {
         isNotNull();
-        Validated<NonEmptyList<String>, T> result = actual.check(value);
+        var result = actual.check(value);
         if (!result.isValid()) {
             throw buildError("Expected Guard to accept <%s> but rejected it with <%s>",
                 value, result.getError());
@@ -44,7 +41,7 @@ public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T
      */
     public GuardAssert<T> rejects(T value) {
         isNotNull();
-        Validated<NonEmptyList<String>, T> result = actual.check(value);
+        var result = actual.check(value);
         if (!result.isInvalid()) {
             throw buildError("Expected Guard to reject <%s> but accepted it", value);
         }
@@ -61,11 +58,11 @@ public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T
      */
     public GuardAssert<T> rejectsWithMessage(T value, String message) {
         isNotNull();
-        Validated<NonEmptyList<String>, T> result = actual.check(value);
+        var result = actual.check(value);
         if (!result.isInvalid()) {
             throw buildError("Expected Guard to reject <%s> but accepted it", value);
         }
-        NonEmptyList<String> errors = result.getError();
+        var errors = result.getError();
         if (errors.toList().stream().noneMatch(e -> e.contains(message))) {
             throw buildError("Expected rejection messages <%s> to contain <%s>", errors, message);
         }
@@ -82,11 +79,11 @@ public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T
      */
     public GuardAssert<T> rejectsWithMessages(T value, String... messages) {
         isNotNull();
-        Validated<NonEmptyList<String>, T> result = actual.check(value);
+        var result = actual.check(value);
         if (!result.isInvalid()) {
             throw buildError("Expected Guard to reject <%s> but accepted it", value);
         }
-        NonEmptyList<String> errors = result.getError();
+        var errors = result.getError();
         for (String message : messages) {
             if (errors.toList().stream().noneMatch(e -> e.contains(message))) {
                 throw buildError("Expected rejection messages <%s> to contain <%s>", errors, message);
@@ -95,9 +92,4 @@ public final class GuardAssert<T> extends AbstractAssert<GuardAssert<T>, Guard<T
         return this;
     }
 
-    private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template.replace("<%s>", "%s"), args);
-        String description = info.descriptionText();
-        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
-    }
 }

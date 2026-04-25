@@ -40,13 +40,16 @@ class TryAssertTest {
     @Test
     void containsValue_shouldFail_whenValueDiffers() {
         assertThatThrownBy(() -> assertThat(Try.success(1)).containsValue(99))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("99")
+            .hasMessageContaining("1");
     }
 
     @Test
     void containsValue_shouldFail_forFailure() {
         assertThatThrownBy(() -> assertThat(Try.<Integer>failure(new RuntimeException())).containsValue(1))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Success");
     }
 
     @Test
@@ -63,14 +66,17 @@ class TryAssertTest {
     void failsWith_shouldFail_whenExceptionTypeDiffers() {
         assertThatThrownBy(() ->
             assertThat(Try.failure(new RuntimeException())).failsWith(IllegalArgumentException.class))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("IllegalArgumentException")
+            .hasMessageContaining("RuntimeException");
     }
 
     @Test
     void failsWith_shouldFail_whenTryIsSuccess() {
         assertThatThrownBy(() ->
             assertThat(Try.success(1)).failsWith(RuntimeException.class))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Failure");
     }
 
     @Test

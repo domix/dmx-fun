@@ -68,7 +68,7 @@
 
 51. How functional can an object-oriented language really be?
 52. Functional libraries worth knowing
-53. ~~JDK-first functional programming: how far can you go without dependencies?~~ [310]
+53. ~~JDK-first functional programming: how far can you go without dependencies?~~ [311]
 54. Vavr, Arrow, Cats, fp-ts: what problems do they solve?
 55. Do you need a functional library or just better habits?
 
@@ -104,4 +104,4 @@
 [205]: https://github.com/domix/dmx-fun/pull/205
 [241]: https://github.com/domix/dmx-fun/pull/241
 [265]: https://github.com/domix/dmx-fun/pull/265
-[310]: https://github.com/domix/dmx-fun/pull/310
+[311]: https://github.com/domix/dmx-fun/pull/311

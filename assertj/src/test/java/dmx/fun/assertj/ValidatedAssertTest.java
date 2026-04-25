@@ -40,13 +40,16 @@ class ValidatedAssertTest {
     @Test
     void containsValue_shouldFail_whenValueDiffers() {
         assertThatThrownBy(() -> assertThat(Validated.valid(1)).containsValue(99))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("99")
+            .hasMessageContaining("1");
     }
 
     @Test
     void containsValue_shouldFail_forInvalid() {
         assertThatThrownBy(() -> assertThat(Validated.<String, Integer>invalid("e")).containsValue(1))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Valid");
     }
 
     @Test
@@ -57,13 +60,16 @@ class ValidatedAssertTest {
     @Test
     void hasError_shouldFail_whenErrorDiffers() {
         assertThatThrownBy(() -> assertThat(Validated.<String, Integer>invalid("err")).hasError("other"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("other")
+            .hasMessageContaining("err");
     }
 
     @Test
     void hasError_shouldFail_forValid() {
         assertThatThrownBy(() -> assertThat(Validated.<String, Integer>valid(1)).hasError("e"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Invalid");
     }
 
     @Test

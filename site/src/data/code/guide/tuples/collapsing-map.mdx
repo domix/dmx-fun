@@ -3,10 +3,16 @@ fileName: 'Demo.java'
 ---
 
 ```java
+// Tuple2.map — collapses two elements into one value via BiFunction
+Tuple2<String, Integer> t2 = Tuple2.of("Alice", 30);
+
+String label2 = t2.map((name, age) -> name + " (age " + age + ")");
+// "Alice (age 30)"
+
 // Tuple3.map — collapses three elements into one value via TriFunction
 Tuple3<String, Integer, Boolean> t3 = Tuple3.of("Alice", 30, true);
 
-String label = t3.map((name, age, active) ->
+String label3 = t3.map((name, age, active) ->
     name + " (age " + age + ")" + (active ? " ✓" : ""));
 // "Alice (age 30) ✓"
 

@@ -3,7 +3,6 @@ package dmx.fun.assertj;
 import dmx.fun.Option;
 import java.util.Objects;
 import java.util.function.Consumer;
-import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -14,7 +13,7 @@ import org.jspecify.annotations.NullMarked;
  * @param <V> the type of the optional value
  */
 @NullMarked
-public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Option<V>> {
+public final class OptionAssert<V> extends AbstractDmxFunAssert<OptionAssert<V>, Option<V>> {
 
     OptionAssert(Option<V> actual) {
         super(actual, OptionAssert.class);
@@ -73,9 +72,4 @@ public final class OptionAssert<V> extends AbstractAssert<OptionAssert<V>, Optio
         return this;
     }
 
-    private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template.replace("<%s>", "%s"), args);
-        String description = info.descriptionText();
-        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
-    }
 }

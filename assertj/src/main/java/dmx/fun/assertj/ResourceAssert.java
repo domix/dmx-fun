@@ -3,7 +3,6 @@ package dmx.fun.assertj;
 import dmx.fun.Resource;
 import dmx.fun.Try;
 import java.util.Objects;
-import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -19,7 +18,7 @@ import org.jspecify.annotations.Nullable;
  * @param <T> the resource value type
  */
 @NullMarked
-public final class ResourceAssert<T> extends AbstractAssert<ResourceAssert<T>, Resource<T>> {
+public final class ResourceAssert<T> extends AbstractDmxFunAssert<ResourceAssert<T>, Resource<T>> {
 
     private @Nullable Try<T> cachedResult;
 
@@ -43,7 +42,7 @@ public final class ResourceAssert<T> extends AbstractAssert<ResourceAssert<T>, R
      * @return this assertion for chaining
      */
     public ResourceAssert<T> succeedsWith(T expected) {
-        Try<T> result = evaluate();
+        var result = evaluate();
         if (result.isFailure()) {
             throw buildError("Expected Resource to succeed with <%s> but failed with <%s>",
                 expected, result.getCause());
@@ -63,7 +62,7 @@ public final class ResourceAssert<T> extends AbstractAssert<ResourceAssert<T>, R
      * @return this assertion for chaining
      */
     public ResourceAssert<T> failsWith(Class<? extends Throwable> exceptionType) {
-        Try<T> result = evaluate();
+        var result = evaluate();
         if (result.isSuccess()) {
             throw buildError("Expected Resource to fail with <%s> but succeeded with <%s>",
                 exceptionType.getName(), result.get());
@@ -83,7 +82,7 @@ public final class ResourceAssert<T> extends AbstractAssert<ResourceAssert<T>, R
      * @return this assertion for chaining
      */
     public ResourceAssert<T> failsWithMessage(String message) {
-        Try<T> result = evaluate();
+        var result = evaluate();
         if (result.isSuccess()) {
             throw buildError("Expected Resource to fail but succeeded with <%s>", result.get());
         }
@@ -95,9 +94,4 @@ public final class ResourceAssert<T> extends AbstractAssert<ResourceAssert<T>, R
         return this;
     }
 
-    private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template.replace("<%s>", "%s"), args);
-        String description = info.descriptionText();
-        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
-    }
 }

@@ -40,13 +40,16 @@ class ResultAssertTest {
     @Test
     void containsValue_shouldFail_whenValueDiffers() {
         assertThatThrownBy(() -> assertThat(Result.ok("hello")).containsValue("world"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("world")
+            .hasMessageContaining("hello");
     }
 
     @Test
     void containsValue_shouldFail_forErr() {
         assertThatThrownBy(() -> assertThat(Result.<String, String>err("e")).containsValue("v"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Ok");
     }
 
     @Test
@@ -57,13 +60,16 @@ class ResultAssertTest {
     @Test
     void containsError_shouldFail_whenErrorDiffers() {
         assertThatThrownBy(() -> assertThat(Result.<String, String>err("oops")).containsError("other"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("other")
+            .hasMessageContaining("oops");
     }
 
     @Test
     void containsError_shouldFail_forOk() {
         assertThatThrownBy(() -> assertThat(Result.<String, String>ok("v")).containsError("e"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Err");
     }
 
     @Test

@@ -26,9 +26,15 @@ All three are Java `record` types, which means:
 - Fields are exposed via accessor methods `_1()`, `_2()`, `_3()`, `_4()` — consistent
   across all tuple arities.
 
-**Null policy**: `Tuple3` and `Tuple4` are `@NullMarked` — null elements throw
-`NullPointerException` at construction time. `Tuple2` is a plain record without
-null guards; prefer `Tuple3`/`Tuple4` when null-safety is required.
+**Null policy**: All three types are `@NullMarked`, but the enforcement point differs:
+
+- **`Tuple3` and `Tuple4`** use compact record constructors that call
+  `Objects.requireNonNull` on every component. Both the `of()` factory and the
+  raw record constructor (`new Tuple3<>(...)` / `new Tuple4<>(...)`) throw
+  `NullPointerException` if any element is `null`.
+- **`Tuple2`** validates only inside its `of()` factory. The raw record constructor
+  (`new Tuple2<>(...)`) bypasses the check and accepts `null` elements. Prefer
+  `Tuple2.of(...)` in application code.
 
 Use Tuples when:
 
@@ -51,21 +57,24 @@ Fields are accessed via zero-argument methods `_1()`, `_2()`, `_3()`, and `_4()`
 
 ## Transforming individual slots
 
-`Tuple3` and `Tuple4` provide `mapFirst`, `mapSecond`, `mapThird` (and `mapFourth`
-for `Tuple4`). Each returns a **new tuple** with the targeted slot replaced; the
-remaining slots are carried through unchanged.
+All three types provide per-slot transformation methods. Each returns a **new tuple**
+with the targeted slot replaced; the remaining slots are carried through unchanged.
+
+- `Tuple2` — `mapFirst`, `mapSecond`
+- `Tuple3` — `mapFirst`, `mapSecond`, `mapThird`
+- `Tuple4` — `mapFirst`, `mapSecond`, `mapThird`, `mapFourth`
 
 <TransformingSlots/>
 
 ## Collapsing to a single value — `map`
 
-`Tuple3.map(TriFunction)` and `Tuple4.map(QuadFunction)` collapse the entire tuple
-into a single result by applying a function to all slots at once.
+Every tuple type can collapse all its elements into a single value:
+
+- `Tuple2.map(BiFunction)` — uses the standard `java.util.function.BiFunction`
+- `Tuple3.map(TriFunction)` — uses the library-provided `TriFunction<A,B,C,R>`
+- `Tuple4.map(QuadFunction)` — uses the library-provided `QuadFunction<A,B,C,D,R>`
 
 <CollapsingMap/>
-
-`TriFunction<A,B,C,R>` and `QuadFunction<A,B,C,D,R>` are functional interfaces
-provided by the library, analogous to `java.util.function.BiFunction`.
 
 ## Equality and `toString`
 
