@@ -65,7 +65,7 @@ public final class DmxMetered {
      * @return this builder
      */
     public DmxMetered registry(MeterRegistry registry) {
-        this.micrometer = DmxMicrometer.of(Objects.requireNonNull(registry, "registry"));
+        this.micrometer = DmxMicrometer.of(registry);
         return this;
     }
 
