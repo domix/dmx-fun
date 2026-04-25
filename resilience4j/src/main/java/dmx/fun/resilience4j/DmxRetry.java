@@ -36,12 +36,23 @@ public final class DmxRetry {
         this.retry = retry;
     }
 
-    /** Wraps an existing {@link Retry} instance. */
+    /**
+     * Wraps an existing {@link Retry} instance.
+     *
+     * @param retry the Resilience4J retry policy to wrap
+     * @return a new {@code DmxRetry} backed by the given retry policy
+     */
     public static DmxRetry of(Retry retry) {
         return new DmxRetry(Objects.requireNonNull(retry, "retry"));
     }
 
-    /** Creates a new {@link Retry} from the given name and config, then wraps it. */
+    /**
+     * Creates a new {@link Retry} from the given name and config, then wraps it.
+     *
+     * @param name   the retry policy name
+     * @param config the retry configuration
+     * @return a new {@code DmxRetry} backed by the created retry policy
+     */
     public static DmxRetry of(String name, RetryConfig config) {
         return new DmxRetry(Retry.of(name, config));
     }
@@ -49,6 +60,8 @@ public final class DmxRetry {
     /**
      * Executes the supplier through the retry policy.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Success(value)} if the call eventually succeeds,
      *         {@code Failure(cause)} if all attempts are exhausted
      */
@@ -63,6 +76,8 @@ public final class DmxRetry {
     /**
      * Executes the supplier through the retry policy.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Ok(value)} if the call eventually succeeds,
      *         {@code Err(cause)} if all attempts are exhausted
      */
