@@ -43,7 +43,12 @@ public final class DmxMicrometer {
         this.registry = registry;
     }
 
-    /** Creates an instance bound to the given {@link MeterRegistry}. */
+    /**
+     * Creates an instance bound to the given {@link MeterRegistry}.
+     *
+     * @param registry the registry to record metrics into; must not be null
+     * @return a new {@code DmxMicrometer} bound to the given registry
+     */
     public static DmxMicrometer of(MeterRegistry registry) {
         return new DmxMicrometer(Objects.requireNonNull(registry, "registry"));
     }
@@ -51,6 +56,10 @@ public final class DmxMicrometer {
     /**
      * Executes the supplier and records metrics under {@code name}.
      *
+     * @param <V> the value type returned on success
+     * @param name the base metric name; must not be null
+     * @param tags additional tags to attach to all metrics; must not be null
+     * @param supplier the operation to execute; must not be null
      * @return {@code Success(value)} on success, {@code Failure(cause)} on any exception
      */
     public <V> Try<V> recordTry(String name, Tags tags, CheckedSupplier<V> supplier) {
@@ -58,7 +67,7 @@ public final class DmxMicrometer {
         Objects.requireNonNull(tags, "tags");
         Objects.requireNonNull(supplier, "supplier");
 
-        Timer.Sample sample = Timer.start(registry);
+        var sample = Timer.start(registry);
         Try<V> result;
         try {
             result = Try.success(supplier.get());
@@ -86,6 +95,10 @@ public final class DmxMicrometer {
     /**
      * Executes the supplier and records metrics under {@code name}.
      *
+     * @param <V> the value type returned on success
+     * @param name the base metric name; must not be null
+     * @param tags additional tags to attach to all metrics; must not be null
+     * @param supplier the operation to execute; must not be null
      * @return {@code Ok(value)} on success, {@code Err(cause)} on any exception
      */
     public <V> Result<V, Throwable> recordResult(String name, Tags tags, CheckedSupplier<V> supplier) {

@@ -1,8 +1,5 @@
 package dmx.fun.micrometer;
 
-import dmx.fun.Result;
-import dmx.fun.Try;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -17,9 +14,34 @@ class DmxMeteredTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry();
 
+    // ── null contracts ─────────────────────────────────────────────────────────
+
+    @Test
+    void of_nullName_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxMetered.of(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("name");
+    }
+
+    @Test
+    void tags_nullTags_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxMetered.of("op").tags(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("tags");
+    }
+
+    @Test
+    void registry_nullRegistry_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxMetered.of("op").registry(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("registry");
+    }
+
+    // ── recordTry ──────────────────────────────────────────────────────────────
+
     @Test
     void recordTry_success_returnsSuccessValue() {
-        Try<String> result = DmxMetered.of("op")
+        var result = DmxMetered.of("op")
             .registry(registry)
             .recordTry(() -> "ok");
 
@@ -28,7 +50,7 @@ class DmxMeteredTest {
 
     @Test
     void recordTry_failure_returnsFailure() {
-        Try<String> result = DmxMetered.of("op")
+        var result = DmxMetered.of("op")
             .registry(registry)
             .recordTry(() -> { throw new IOException("boom"); });
 
@@ -42,7 +64,7 @@ class DmxMeteredTest {
             .registry(registry)
             .recordTry(() -> "ok");
 
-        Counter counter = registry.get("op.count")
+        var counter = registry.get("op.count")
             .tags("service", "payments", "outcome", "success")
             .counter();
         assertThat(counter.count()).isEqualTo(1.0);
@@ -50,7 +72,7 @@ class DmxMeteredTest {
 
     @Test
     void recordResult_success_returnsOk() {
-        Result<String, Throwable> result = DmxMetered.of("op")
+        var result = DmxMetered.of("op")
             .registry(registry)
             .recordResult(() -> "ok");
 
@@ -59,7 +81,7 @@ class DmxMeteredTest {
 
     @Test
     void recordResult_failure_returnsErr() {
-        Result<String, Throwable> result = DmxMetered.of("op")
+        var result = DmxMetered.of("op")
             .registry(registry)
             .recordResult(() -> { throw new IOException("boom"); });
 
@@ -84,7 +106,7 @@ class DmxMeteredTest {
     void tags_defaultsToEmpty() {
         DmxMetered.of("op").registry(registry).recordTry(() -> "ok");
 
-        Counter counter = registry.get("op.count").tag("outcome", "success").counter();
+        var counter = registry.get("op.count").tag("outcome", "success").counter();
         assertThat(counter.count()).isEqualTo(1.0);
     }
 }

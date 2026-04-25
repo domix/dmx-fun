@@ -1,7 +1,6 @@
 package dmx.fun.micrometer;
 
 import dmx.fun.CheckedSupplier;
-import dmx.fun.Lazy;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -32,33 +31,49 @@ public final class DmxMetered {
 
     private final String name;
     private Tags tags = Tags.empty();
-    private @Nullable Lazy<DmxMicrometer> micrometer;
+    private @Nullable DmxMicrometer micrometer;
 
     private DmxMetered(String name) {
         this.name = name;
     }
 
-    /** Creates a builder for the given metric name. */
+    /**
+     * Creates a builder for the given metric name.
+     *
+     * @param name the base metric name; must not be null
+     * @return a new {@code DmxMetered} builder
+     */
     public static DmxMetered of(String name) {
         return new DmxMetered(Objects.requireNonNull(name, "name"));
     }
 
-    /** Sets the tags to attach to all metrics for this operation. */
+    /**
+     * Sets the tags to attach to all metrics for this operation.
+     *
+     * @param tags the tags to apply; must not be null
+     * @return this builder
+     */
     public DmxMetered tags(Tags tags) {
         this.tags = Objects.requireNonNull(tags, "tags");
         return this;
     }
 
-    /** Sets the {@link MeterRegistry} to register metrics with. */
+    /**
+     * Sets the {@link MeterRegistry} to register metrics with.
+     *
+     * @param registry the registry to use; must not be null
+     * @return this builder
+     */
     public DmxMetered registry(MeterRegistry registry) {
-        MeterRegistry assignedRegistry = Objects.requireNonNull(registry, "registry");
-        this.micrometer = Lazy.of(() -> DmxMicrometer.of(assignedRegistry));
+        this.micrometer = DmxMicrometer.of(registry);
         return this;
     }
 
     /**
      * Executes the supplier and records metrics.
      *
+     * @param <V> the value type returned on success
+     * @param supplier the operation to execute; must not be null
      * @return {@code Success(value)} on success, {@code Failure(cause)} on any exception
      * @throws IllegalStateException if {@link #registry} was not set
      */
@@ -69,6 +84,8 @@ public final class DmxMetered {
     /**
      * Executes the supplier and records metrics.
      *
+     * @param <V> the value type returned on success
+     * @param supplier the operation to execute; must not be null
      * @return {@code Ok(value)} on success, {@code Err(cause)} on any exception
      * @throws IllegalStateException if {@link #registry} was not set
      */
@@ -77,10 +94,9 @@ public final class DmxMetered {
     }
 
     private DmxMicrometer requireMicrometer() {
-        Lazy<DmxMicrometer> lazyMicrometer = micrometer;
-        if (lazyMicrometer == null) {
+        if (micrometer == null) {
             throw new IllegalStateException("registry must be set before recording — call .registry(meterRegistry) first");
         }
-        return lazyMicrometer.get();
+        return micrometer;
     }
 }
