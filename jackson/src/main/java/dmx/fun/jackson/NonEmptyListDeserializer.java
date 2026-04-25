@@ -52,7 +52,7 @@ class NonEmptyListDeserializer extends StdDeserializer<NonEmptyList> implements 
         }
         List<Object> elements = new ArrayList<>();
         while (p.nextToken() != JsonToken.END_ARRAY) {
-            Object element = elementType != null ? ctxt.readValue(p, elementType) : p.readValueAs(Object.class);
+            var element = elementType != null ? ctxt.readValue(p, elementType) : p.readValueAs(Object.class);
             elements.add(element);
         }
 

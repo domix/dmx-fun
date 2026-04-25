@@ -19,6 +19,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <ul>
  *   <li>{@code {"error": "msg"}} → {@code Try.failure(new RuntimeException("msg"))}</li>
+ *   <li>{@code {"error": null}}  → {@code Try.failure(new RuntimeException(null))}</li>
  *   <li>any other value → {@code Try.success(v)}</li>
  * </ul>
  */
@@ -51,9 +52,12 @@ class TryDeserializer extends StdDeserializer<Try> implements ContextualDeserial
     public Try deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p.currentToken() == JsonToken.START_OBJECT) {
             ObjectNode node = p.readValueAsTree();
-            if (node.size() == 1 && node.has("error") && node.get("error").isTextual()) {
-                String message = node.get("error").asText();
-                return Try.failure(new RuntimeException(message));
+            if (node.size() == 1 && node.has("error")) {
+                var errorNode = node.get("error");
+                if (errorNode.isTextual() || errorNode.isNull()) {
+                    @Nullable String message = errorNode.isNull() ? null : errorNode.asText();
+                    return Try.failure(new RuntimeException(message));
+                }
             }
             // Object that is not a failure — treat as success
             if (valueType != null) {

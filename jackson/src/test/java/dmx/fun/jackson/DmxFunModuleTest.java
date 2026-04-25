@@ -213,6 +213,16 @@ class DmxFunModuleTest {
         }
 
         @Test
+        void roundTripFailure_nullMessage() throws Exception {
+            var original = Try.failure(new RuntimeException());
+            var json = mapper.writeValueAsString(original);
+            assertThat(json).isEqualTo("{\"error\":null}");
+            var deserialized = mapper.readValue(json, new TypeReference<Try<Integer>>() {});
+            assertThat(deserialized).isFailure();
+            assertThat(deserialized.getCause().getMessage()).isNull();
+        }
+
+        @Test
         void deserializeSuccessObject_coversReadTreeAsValuePath() throws Exception {
             // When the JSON is a START_OBJECT with no "error" key and valueType is known,
             // TryDeserializer calls ctxt.readTreeAsValue(node, valueType)
@@ -454,6 +464,12 @@ class DmxFunModuleTest {
         void deserializeTooManyElements_throws() {
             assertThrows(InvalidFormatException.class, () ->
                 mapper.readValue("[1,2,3]", new TypeReference<Tuple2<String, Integer>>() {}));
+        }
+
+        @Test
+        void deserializeNullElement_throws() {
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[null,1]", new TypeReference<Tuple2<String, Integer>>() {}));
         }
     }
 
