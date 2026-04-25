@@ -90,12 +90,12 @@ public final class AccumulatorAssert<E, A> extends AbstractDmxFunAssert<Accumula
         E accumulated = actual.accumulated();
         if (accumulated == null) {
             throw buildError(
-                "Expected accumulated value to be a Collection for " + operation + ", but was <null>");
+                "Expected accumulated value to be a Collection for <%s>, but was <null>", operation);
         }
         if (!(accumulated instanceof Collection<?> col)) {
             throw buildError(
-                "Expected accumulated value to be a Collection for " + operation + ", but was <%s>",
-                accumulated.getClass().getName());
+                "Expected accumulated value to be a Collection for <%s>, but was <%s>",
+                operation, accumulated.getClass().getName());
         }
         return col;
     }

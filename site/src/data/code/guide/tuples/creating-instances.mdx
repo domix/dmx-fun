@@ -12,7 +12,9 @@ Tuple3<String, Integer, Boolean> t3 = Tuple3.of("Alice", 30, true);
 // Tuple4 — a quadruple (null-guarded factory method)
 Tuple4<String, Integer, Boolean, Double> t4 = Tuple4.of("Alice", 30, true, 1.75);
 
-// All of() factory methods are @NullMarked — null arguments throw NullPointerException
-Tuple2.of("Alice", null);       // throws NullPointerException
-Tuple3.of("Alice", null, true); // throws NullPointerException
+// of() methods and Tuple3/Tuple4 compact constructors use Objects.requireNonNull —
+// null arguments throw NullPointerException at runtime
+Tuple2.of("Alice", null);       // throws NullPointerException (of() validates)
+Tuple3.of("Alice", null, true); // throws NullPointerException (compact constructor validates)
+new Tuple3<>("Alice", null, true); // also throws — compact constructor always runs
 ```
