@@ -147,8 +147,8 @@ assertThat(Resource.of(() -> { throw new IOException("timeout"); }, c -> {}))
 |------------------------------------------|-------------------------------------------------------------------|
 | `accepts(value)`                         | Asserts the guard passes for the given value                      |
 | `rejects(value)`                         | Asserts the guard fails for the given value                       |
-| `rejectsWithMessage(value, message)`     | Asserts the guard fails with the exact given message              |
-| `rejectsWithMessages(value, messages…)`  | Asserts the guard fails with all of the given messages            |
+| `rejectsWithMessage(value, message)`     | Asserts the guard fails and at least one rejection message contains the given string     |
+| `rejectsWithMessages(value, messages…)`  | Asserts the guard fails and each given string appears in at least one rejection message  |
 
 ```java
 Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
