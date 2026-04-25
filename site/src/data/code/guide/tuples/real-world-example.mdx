@@ -7,7 +7,7 @@ fileName: 'Demo.java'
 // Tuple2 keeps the original value and its outcome together without a named class.
 
 List<Tuple2<User, ValidationResult>> results = users.stream()
-    .map(user -> new Tuple2<>(user, validator.validate(user)))
+    .map(user -> Tuple2.of(user, validator.validate(user)))
     .collect(Collectors.toList());
 
 // Partition into valid and invalid
@@ -17,10 +17,10 @@ Map<Boolean, List<Tuple2<User, ValidationResult>>> partitioned = results.stream(
 List<Tuple2<User, ValidationResult>> valid   = partitioned.get(true);
 List<Tuple2<User, ValidationResult>> invalid = partitioned.get(false);
 
-// Collapse each pair to a summary line for reporting
+// Collapse each pair to a summary line using Tuple2.map(BiFunction)
 List<String> report = invalid.stream()
     .map(t -> t.map((user, res) ->
-        user.email() + ": " + String.join(", ", res.errors())))  // Tuple2 has no map() yet — use fields
+        user.email() + ": " + String.join(", ", res.errors())))
     .collect(Collectors.toList());
 
 // Simpler with Tuple3: carry user, result, and timestamp together

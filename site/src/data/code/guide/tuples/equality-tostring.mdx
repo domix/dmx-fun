@@ -5,8 +5,8 @@ fileName: 'Demo.java'
 ```java
 // Tuple types are records — equality, hashCode, and toString are derived automatically.
 
-Tuple2<String, Integer> a = new Tuple2<>("Alice", 30);
-Tuple2<String, Integer> b = new Tuple2<>("Alice", 30);
+Tuple2<String, Integer> a = Tuple2.of("Alice", 30);
+Tuple2<String, Integer> b = Tuple2.of("Alice", 30);
 
 boolean same = a.equals(b);  // true — structural equality
 int     hash = a.hashCode(); // consistent with equals

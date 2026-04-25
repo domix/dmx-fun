@@ -6,7 +6,7 @@ fileName: 'TupleTest.java'
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 
 // Tuple2
-assertThat(new Tuple2<>("Alice", 30))
+assertThat(Tuple2.of("Alice", 30))
     .hasFirst("Alice")
     .hasSecond(30);
 
