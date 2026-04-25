@@ -466,7 +466,7 @@ class AccumulatorTest {
     void liftOption_none_usesNoneLog() {
         var result = Accumulator.liftOption(
             Option.<String>none(),
-            name -> List.of("found: " + name),
+            name -> List.of("found: %s".formatted(name)),
             List.of("not found")
         );
         assertThat(result.value().isEmpty()).isTrue();
