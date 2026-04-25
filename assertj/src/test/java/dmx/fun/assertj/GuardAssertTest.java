@@ -73,7 +73,8 @@ class GuardAssertTest {
     void rejectsWithMessage_shouldFail_forValidValue() {
         assertThatThrownBy(() -> assertThat(ALPHANUMERIC)
             .rejectsWithMessage("alice", "alphanumeric"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("alice");
     }
 
     // ── rejectsWithMessages ───────────────────────────────────────────────────

@@ -91,7 +91,8 @@ class ResourceAssertTest {
     @Test
     void failsWithMessage_shouldFail_whenResourceSucceeds() {
         assertThatThrownBy(() -> assertThat(SUCCESSFUL).failsWithMessage("anything"))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("fail");
     }
 
     // ── RELEASE_FAILS: body succeeds, release throws ──────────────────────────

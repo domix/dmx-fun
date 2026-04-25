@@ -3,7 +3,6 @@ package dmx.fun.assertj;
 import dmx.fun.Accumulator;
 import java.util.Collection;
 import java.util.Objects;
-import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -16,7 +15,7 @@ import org.jspecify.annotations.Nullable;
  * @param <A> the primary value type
  */
 @NullMarked
-public final class AccumulatorAssert<E, A> extends AbstractAssert<AccumulatorAssert<E, A>, Accumulator<E, A>> {
+public final class AccumulatorAssert<E, A> extends AbstractDmxFunAssert<AccumulatorAssert<E, A>, Accumulator<E, A>> {
 
     AccumulatorAssert(Accumulator<E, A> actual) {
         super(actual, AccumulatorAssert.class);
@@ -62,18 +61,9 @@ public final class AccumulatorAssert<E, A> extends AbstractAssert<AccumulatorAss
      */
     public AccumulatorAssert<E, A> accumulationContains(Object element) {
         isNotNull();
-        E accumulated = actual.accumulated();
-        if (accumulated == null) {
-            throw buildError(
-                "Expected accumulated value to be a Collection for accumulationContains, but was <null>");
-        }
-        if (!(accumulated instanceof Collection<?> col)) {
-            throw buildError(
-                "Expected accumulated value to be a Collection for accumulationContains, but was <%s>",
-                accumulated.getClass().getName());
-        }
+        var col = requireCollection("accumulationContains");
         if (!col.contains(element)) {
-            throw buildError("Expected accumulation <%s> to contain <%s>", accumulated, element);
+            throw buildError("Expected accumulation <%s> to contain <%s>", col, element);
         }
         return this;
     }
@@ -88,16 +78,7 @@ public final class AccumulatorAssert<E, A> extends AbstractAssert<AccumulatorAss
      */
     public AccumulatorAssert<E, A> accumulationHasSize(int expected) {
         isNotNull();
-        E accumulated = actual.accumulated();
-        if (accumulated == null) {
-            throw buildError(
-                "Expected accumulated value to be a Collection for accumulationHasSize, but was <null>");
-        }
-        if (!(accumulated instanceof Collection<?> col)) {
-            throw buildError(
-                "Expected accumulated value to be a Collection for accumulationHasSize, but was <%s>",
-                accumulated.getClass().getName());
-        }
+        var col = requireCollection("accumulationHasSize");
         if (col.size() != expected) {
             throw buildError("Expected accumulation to have size <%s> but had <%s>",
                 expected, col.size());
@@ -105,9 +86,17 @@ public final class AccumulatorAssert<E, A> extends AbstractAssert<AccumulatorAss
         return this;
     }
 
-    private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template.replace("<%s>", "%s"), args);
-        String description = info.descriptionText();
-        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
+    private Collection<?> requireCollection(String operation) {
+        E accumulated = actual.accumulated();
+        if (accumulated == null) {
+            throw buildError(
+                "Expected accumulated value to be a Collection for " + operation + ", but was <null>");
+        }
+        if (!(accumulated instanceof Collection<?> col)) {
+            throw buildError(
+                "Expected accumulated value to be a Collection for " + operation + ", but was <%s>",
+                accumulated.getClass().getName());
+        }
+        return col;
     }
 }

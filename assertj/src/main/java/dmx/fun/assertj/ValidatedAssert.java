@@ -2,7 +2,6 @@ package dmx.fun.assertj;
 
 import dmx.fun.Validated;
 import java.util.Objects;
-import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -14,7 +13,7 @@ import org.jspecify.annotations.NullMarked;
  * @param <A> the value type
  */
 @NullMarked
-public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<E, A>, Validated<E, A>> {
+public final class ValidatedAssert<E, A> extends AbstractDmxFunAssert<ValidatedAssert<E, A>, Validated<E, A>> {
 
     ValidatedAssert(Validated<E, A> actual) {
         super(actual, ValidatedAssert.class);
@@ -74,9 +73,4 @@ public final class ValidatedAssert<E, A> extends AbstractAssert<ValidatedAssert<
         return this;
     }
 
-    private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template.replace("<%s>", "%s"), args);
-        String description = info.descriptionText();
-        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
-    }
 }

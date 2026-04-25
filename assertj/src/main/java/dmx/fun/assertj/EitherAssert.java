@@ -2,7 +2,6 @@ package dmx.fun.assertj;
 
 import dmx.fun.Either;
 import java.util.Objects;
-import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -14,7 +13,7 @@ import org.jspecify.annotations.NullMarked;
  * @param <R> the right value type
  */
 @NullMarked
-public final class EitherAssert<L, R> extends AbstractAssert<EitherAssert<L, R>, Either<L, R>> {
+public final class EitherAssert<L, R> extends AbstractDmxFunAssert<EitherAssert<L, R>, Either<L, R>> {
 
     EitherAssert(Either<L, R> actual) {
         super(actual, EitherAssert.class);
@@ -74,9 +73,4 @@ public final class EitherAssert<L, R> extends AbstractAssert<EitherAssert<L, R>,
         return this;
     }
 
-    private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template, args);
-        String description = info.descriptionText();
-        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
-    }
 }

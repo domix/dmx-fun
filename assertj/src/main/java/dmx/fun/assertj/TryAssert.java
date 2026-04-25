@@ -2,7 +2,6 @@ package dmx.fun.assertj;
 
 import dmx.fun.Try;
 import java.util.Objects;
-import org.assertj.core.api.AbstractAssert;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -13,7 +12,7 @@ import org.jspecify.annotations.NullMarked;
  * @param <V> the success value type
  */
 @NullMarked
-public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
+public final class TryAssert<V> extends AbstractDmxFunAssert<TryAssert<V>, Try<V>> {
 
     TryAssert(Try<V> actual) {
         super(actual, TryAssert.class);
@@ -74,9 +73,4 @@ public final class TryAssert<V> extends AbstractAssert<TryAssert<V>, Try<V>> {
         return this;
     }
 
-    private AssertionError buildError(String template, Object... args) {
-        String message = String.format(template.replace("<%s>", "%s"), args);
-        String description = info.descriptionText();
-        return new AssertionError(description.isEmpty() ? message : "[" + description + "] " + message);
-    }
 }

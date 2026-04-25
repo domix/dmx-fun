@@ -41,13 +41,16 @@ class OptionAssertTest {
     @Test
     void containsValue_shouldFail_whenValueDiffers() {
         assertThatThrownBy(() -> assertThat(Option.some(1)).containsValue(99))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("99")
+            .hasMessageContaining("1");
     }
 
     @Test
     void containsValue_shouldFail_forNone() {
         assertThatThrownBy(() -> assertThat(Option.<Integer>none()).containsValue(1))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Some");
     }
 
     @Test
@@ -65,7 +68,8 @@ class OptionAssertTest {
     @Test
     void hasValueSatisfying_shouldFail_forNone() {
         assertThatThrownBy(() -> assertThat(Option.<Integer>none()).hasValueSatisfying(v -> {}))
-            .isInstanceOf(AssertionError.class);
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Some");
     }
 
     @Test
