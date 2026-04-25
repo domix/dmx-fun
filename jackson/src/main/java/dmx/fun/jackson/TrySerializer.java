@@ -29,7 +29,8 @@ class TrySerializer extends StdSerializer<Try> {
             provider.defaultSerializeValue(value.get(), gen);
         } else {
             gen.writeStartObject();
-            gen.writeStringField("error", value.getCause().getMessage());
+            String message = value.getCause().getMessage();
+            gen.writeStringField("error", message != null ? message : "");
             gen.writeEndObject();
         }
     }

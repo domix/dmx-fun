@@ -42,7 +42,7 @@ class EitherDeserializer extends StdDeserializer<Either> implements ContextualDe
 
     @Override
     public JsonDeserializer<?> createContextual(DeserializationContext ctxt, @Nullable BeanProperty property) {
-        JavaType contextualType = ctxt.getContextualType();
+        var contextualType = ctxt.getContextualType();
         if (contextualType != null && contextualType.containedTypeCount() >= 2) {
             return new EitherDeserializer(contextualType.containedType(0), contextualType.containedType(1));
         }
@@ -57,15 +57,15 @@ class EitherDeserializer extends StdDeserializer<Either> implements ContextualDe
         if (p.nextToken() != JsonToken.FIELD_NAME) {
             throw ctxt.wrongTokenException(p, Either.class, JsonToken.FIELD_NAME, "Expected field name");
         }
-        String fieldName = p.currentName();
+        var fieldName = p.currentName();
         p.nextToken(); // move to value
 
         Either result;
         if ("right".equals(fieldName)) {
-            Object value = rightType != null ? ctxt.readValue(p, rightType) : p.readValueAs(Object.class);
+            var value = rightType != null ? ctxt.readValue(p, rightType) : p.readValueAs(Object.class);
             result = Either.right(value);
         } else if ("left".equals(fieldName)) {
-            Object value = leftType != null ? ctxt.readValue(p, leftType) : p.readValueAs(Object.class);
+            var value = leftType != null ? ctxt.readValue(p, leftType) : p.readValueAs(Object.class);
             result = Either.left(value);
         } else {
             throw ctxt.weirdStringException(fieldName, Either.class, "Expected 'right' or 'left' field");

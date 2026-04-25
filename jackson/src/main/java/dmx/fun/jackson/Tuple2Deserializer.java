@@ -61,6 +61,6 @@ class Tuple2Deserializer extends StdDeserializer<Tuple2> implements ContextualDe
         if (p.nextToken() != JsonToken.END_ARRAY) {
             throw InvalidFormatException.from(p, "Tuple2 requires exactly 2 elements, got more", null, Tuple2.class);
         }
-        return new Tuple2<>(v1, v2);
+        return Tuple2.of(v1, v2);
     }
 }

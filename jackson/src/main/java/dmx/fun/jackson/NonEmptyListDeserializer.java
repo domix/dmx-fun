@@ -38,7 +38,7 @@ class NonEmptyListDeserializer extends StdDeserializer<NonEmptyList> implements 
 
     @Override
     public JsonDeserializer<?> createContextual(DeserializationContext ctxt, @Nullable BeanProperty property) {
-        JavaType contextualType = ctxt.getContextualType();
+        var contextualType = ctxt.getContextualType();
         if (contextualType != null && contextualType.containedTypeCount() > 0) {
             return new NonEmptyListDeserializer(contextualType.containedType(0));
         }

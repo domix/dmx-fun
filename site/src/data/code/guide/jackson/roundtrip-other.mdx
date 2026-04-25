@@ -22,7 +22,7 @@ Either<String, String> e = mapper.readValue("{\"right\":\"ok\"}",
 // Right("ok")
 
 // Tuple2 / Tuple3 / Tuple4 — serialized as JSON arrays
-String t2 = mapper.writeValueAsString(new Tuple2<>("Alice", 30));             // ["Alice",30]
+String t2 = mapper.writeValueAsString(Tuple2.of("Alice", 30));                 // ["Alice",30]
 String t3 = mapper.writeValueAsString(Tuple3.of("Alice", 30, true));          // ["Alice",30,true]
 String t4 = mapper.writeValueAsString(Tuple4.of("Alice", 30, true, 1.75));    // ["Alice",30,true,1.75]
 
