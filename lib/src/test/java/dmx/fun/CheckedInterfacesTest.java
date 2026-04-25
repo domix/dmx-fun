@@ -13,7 +13,7 @@ class CheckedInterfacesTest {
     @Test
     void checkedSupplier_successPath_viaTryOf() {
         CheckedSupplier<String> supplier = () -> "hello";
-        Try<String> result = Try.of(supplier);
+        var result = Try.of(supplier);
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.get()).isEqualTo("hello");
     }
@@ -21,14 +21,14 @@ class CheckedInterfacesTest {
     @Test
     void checkedSupplier_failurePath_viaTryOf() {
         CheckedSupplier<String> supplier = () -> { throw new IOException("boom"); };
-        Try<String> result = Try.of(supplier);
+        var result = Try.of(supplier);
         assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause()).isInstanceOf(IOException.class).hasMessage("boom");
     }
 
     @Test
     void checkedSupplier_lambdaSyntax_noExplicitCast() {
-        Try<Integer> result = Try.of(() -> 42);
+        var result = Try.of(() -> 42);
         assertThat(result.get()).isEqualTo(42);
     }
 
@@ -37,21 +37,21 @@ class CheckedInterfacesTest {
     @Test
     void checkedRunnable_successPath_viaTryRun() {
         CheckedRunnable runnable = () -> { /* no-op */ };
-        Try<Void> result = Try.run(runnable);
+        var result = Try.run(runnable);
         assertThat(result.isSuccess()).isTrue();
     }
 
     @Test
     void checkedRunnable_failurePath_viaTryRun() {
         CheckedRunnable runnable = () -> { throw new IllegalStateException("bad state"); };
-        Try<Void> result = Try.run(runnable);
+        var result = Try.run(runnable);
         assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause()).isInstanceOf(IllegalStateException.class).hasMessage("bad state");
     }
 
     @Test
     void checkedRunnable_lambdaSyntax_noExplicitCast() {
-        Try<Void> result = Try.run(() -> { /* side-effect */ });
+        var result = Try.run(() -> { /* side-effect */ });
         assertThat(result.isSuccess()).isTrue();
     }
 
@@ -66,7 +66,7 @@ class CheckedInterfacesTest {
     @Test
     void checkedFunction_exceptionCapturedByTryOf() {
         CheckedFunction<String, Integer> fn = s -> { throw new RuntimeException("fn failed"); };
-        Try<Integer> result = Try.of(() -> fn.apply("anything"));
+        var result = Try.of(() -> fn.apply("anything"));
         assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause()).hasMessage("fn failed");
     }
@@ -81,7 +81,7 @@ class CheckedInterfacesTest {
 
     @Test
     void checkedConsumer_directAccept_succeeds() throws Exception {
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         CheckedConsumer<String> consumer = sb::append;
         consumer.accept("world");
         assertThat(sb.toString()).isEqualTo("world");
@@ -89,7 +89,7 @@ class CheckedInterfacesTest {
 
     @Test
     void checkedConsumer_exceptionPropagatesCorrectly() {
-        CheckedConsumer<String> consumer = s -> { throw new IOException("consumer failed"); };
+        CheckedConsumer<String> consumer = _ -> { throw new IOException("consumer failed"); };
         assertThatThrownBy(() -> consumer.accept("x"))
             .isInstanceOf(IOException.class)
             .hasMessage("consumer failed");
@@ -97,7 +97,7 @@ class CheckedInterfacesTest {
 
     @Test
     void checkedConsumer_lambdaSyntax_noExplicitCast() throws Exception {
-        CheckedConsumer<Integer> consumer = i -> { /* use i */ };
+        CheckedConsumer<Integer> consumer = _ -> { /* use i */ };
         consumer.accept(99); // must compile without cast
     }
 }

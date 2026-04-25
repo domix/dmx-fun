@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class OptionZipTest {
 
     @Test
-    void zip_shouldCombineTwoSomes() {
+    void zip_bothSome_returnsSomeTuple2() {
         Tuple2<Integer, String> expected = new Tuple2<>(1, "a");
         Option<Tuple2<Integer, String>> r = Option.zip(Option.some(1), Option.some("a"));
 
@@ -18,26 +18,26 @@ class OptionZipTest {
     }
 
     @Test
-    void zip_shouldReturnNone_ifEitherIsNone() {
+    void zip_anyNone_returnsNone() {
         assertEquals(Option.none(), Option.zip(Option.none(), Option.some("a")));
         assertEquals(Option.none(), Option.zip(Option.some(1), Option.none()));
         assertEquals(Option.none(), Option.zip(Option.none(), Option.none()));
     }
 
     @Test
-    void zip_instanceMethod_shouldWork() {
+    void zip_instanceMethod_bothSome_returnsSomeTuple2() {
         Option<Tuple2<Integer, String>> r = Option.some(1).zip(Option.some("a"));
         assertEquals(Option.some(new Tuple2<>(1, "a")), r);
     }
 
     @Test
-    void map2_shouldCombineTwoSomes() {
+    void map2_bothSome_appliesCombiner() {
         Option<String> r = Option.map2(Option.some(2), Option.some(3), (a, b) -> "v:" + (a + b));
         assertEquals(Option.some("v:5"), r);
     }
 
     @Test
-    void map2_shouldReturnNone_ifEitherIsNone() {
+    void map2_anyNone_returnsNone() {
         Option<String> r1 = Option.map2(Option.none(), Option.some(3), (a, b) -> "x");
         Option<String> r2 = Option.map2(Option.some(2), Option.none(), (a, b) -> "x");
         assertEquals(Option.none(), r1);
@@ -45,7 +45,7 @@ class OptionZipTest {
     }
 
     @Test
-    void map2_shouldBeLazy_whenAnySideIsNone() {
+    void map2_anyNone_combinerNotCalled() {
         AtomicBoolean called = new AtomicBoolean(false);
 
         Option<String> r = Option.map2(
@@ -62,24 +62,24 @@ class OptionZipTest {
     }
 
     @Test
-    void map2_shouldTurnNullResultIntoNone() {
+    void map2_combinerReturnsNull_returnsNone() {
         Option<String> r = Option.map2(Option.some(1), Option.some(2), (a, b) -> null);
         assertEquals(Option.none(), r);
     }
 
     @Test
-    void zipWith_instanceMethod_shouldWork() {
+    void zipWith_instanceMethod_bothSome_appliesCombiner() {
         Option<String> r = Option.some(2).zipWith(Option.some(3), (a, b) -> "sum=" + (a + b));
         assertEquals(Option.some("sum=5"), r);
     }
 
     @Test
-    void zipWith_shouldThrowNPE_ifCombinerIsNull() {
+    void zipWith_nullCombiner_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> Option.some(1).zipWith(Option.some(2), null));
     }
 
     @Test
-    void zip_shouldThrowNPE_ifOtherIsNull() {
+    void zip_nullArgument_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> Option.some(1).zip(null));
     }
 

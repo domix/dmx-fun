@@ -20,7 +20,8 @@ class GuardAssertTest {
 
     @Test
     void accepts_shouldPass_forValidValue() {
-        assertThat(ALPHANUMERIC).accepts("alice123");
+        assertThat(ALPHANUMERIC)
+            .accepts("alice123");
     }
 
     @Test
@@ -34,12 +35,14 @@ class GuardAssertTest {
 
     @Test
     void rejects_shouldPass_forInvalidValue() {
-        assertThat(ALPHANUMERIC).rejects("!!");
+        assertThat(ALPHANUMERIC)
+            .rejects("!!");
     }
 
     @Test
     void rejects_shouldFail_forValidValue() {
-        assertThatThrownBy(() -> assertThat(ALPHANUMERIC).rejects("alice"))
+        assertThatThrownBy(() -> assertThat(ALPHANUMERIC)
+            .rejects("alice"))
             .isInstanceOf(AssertionError.class)
             .hasMessageContaining("alice");
     }
@@ -48,24 +51,28 @@ class GuardAssertTest {
 
     @Test
     void rejectsWithMessage_shouldPass_whenMessagePresent() {
-        assertThat(ALPHANUMERIC).rejectsWithMessage("!!", "alphanumeric");
+        assertThat(ALPHANUMERIC)
+            .rejectsWithMessage("!!", "alphanumeric");
     }
 
     @Test
     void rejectsWithMessage_shouldPass_withPartialMatch() {
-        assertThat(ALPHANUMERIC).rejectsWithMessage("!!", "must be");
+        assertThat(ALPHANUMERIC)
+            .rejectsWithMessage("!!", "must be");
     }
 
     @Test
     void rejectsWithMessage_shouldFail_whenMessageAbsent() {
-        assertThatThrownBy(() -> assertThat(ALPHANUMERIC).rejectsWithMessage("!!", "database error"))
+        assertThatThrownBy(() -> assertThat(ALPHANUMERIC)
+            .rejectsWithMessage("!!", "database error"))
             .isInstanceOf(AssertionError.class)
             .hasMessageContaining("database error");
     }
 
     @Test
     void rejectsWithMessage_shouldFail_forValidValue() {
-        assertThatThrownBy(() -> assertThat(ALPHANUMERIC).rejectsWithMessage("alice", "alphanumeric"))
+        assertThatThrownBy(() -> assertThat(ALPHANUMERIC)
+            .rejectsWithMessage("alice", "alphanumeric"))
             .isInstanceOf(AssertionError.class);
     }
 
@@ -73,7 +80,8 @@ class GuardAssertTest {
 
     @Test
     void rejectsWithMessages_shouldPass_whenAllMessagesPresent() {
-        assertThat(BOTH).rejectsWithMessages("!!", "alphanumeric", "at least 3 chars");
+        assertThat(BOTH)
+            .rejectsWithMessages("!!", "alphanumeric", "at least 3 chars");
     }
 
     @Test

@@ -381,7 +381,9 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @return a list containing all present values from the provided stream
      */
     static <V> List<V> collectPresent(Stream<Option<V>> options) {
-        return options.flatMap(Option::stream).collect(Collectors.toList());
+        return options
+            .flatMap(Option::stream)
+            .toList();
     }
 
     /**

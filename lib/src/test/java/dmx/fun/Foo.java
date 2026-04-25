@@ -1,7 +1,5 @@
 package dmx.fun;
 
-import java.util.Optional;
-
 public class Foo {
     class Profile { public String getDisplayName() { return "caca";}}
     static class User { public Profile getProfile() { return null;}}
@@ -15,7 +13,7 @@ public class Foo {
         var user2 = new User2();
         String name2 = Option.some(user2)
             .flatMap(User2::getProfile)      // getProfile() can return null...
-            .map(profile -> profile.getDisplayName())
+            .map(Profile::getDisplayName)
                 .getOrElse("no name");
         System.out.printf("name: %s%n", name2);
     }

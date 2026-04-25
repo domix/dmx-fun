@@ -16,6 +16,7 @@ dependencies {
     // Tests run against the version passed via -PassertjVersion=X.Y.Z (used by
     // the CI compatibility matrix), falling back to the catalog version locally.
     testImplementation "org.assertj:assertj-core:${findProperty('assertjVersion') ?: libs.versions.assertj.get()}"
+    testImplementation project(':assertj')
 }
 
 jpmsTest {

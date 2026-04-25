@@ -214,7 +214,7 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
     }
 
     /**
-     * Swaps the two sides: {@link Left} becomes {@link Right} and vice-versa.
+     * Swaps the two sides: {@link Left} becomes {@link Right} and vice versa.
      *
      * @return an {@code Either<R,L>} with the sides swapped
      */

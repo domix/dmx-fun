@@ -392,7 +392,9 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     @SuppressWarnings("unchecked")
     default Result<Value, Error> orElse(Supplier<? extends Result<? extends Value, ? extends Error>> alternative) {
         Objects.requireNonNull(alternative, "alternative");
-        if (isOk()) return this;
+        if (isOk()) {
+            return this;
+        }
         return (Result<Value, Error>) Objects.requireNonNull(alternative.get(), "alternative returned null");
     }
 
@@ -591,9 +593,9 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      */
     static <V> Result<V, NoSuchElementException> fromOptional(Optional<? extends V> optional) {
         Objects.requireNonNull(optional, "optional");
-        return optional.isPresent()
-            ? Result.ok(optional.get())
-            : Result.err(new NoSuchElementException("Optional is empty"));
+
+        return optional.<Result<V, NoSuchElementException>>map(Result::ok)
+            .orElseGet(() -> Result.err(new NoSuchElementException("Optional is empty")));
     }
 
     // ---------- CompletableFuture interop ----------
@@ -756,8 +758,12 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
             list -> {
                 List<V> values = new ArrayList<>(list.size());
                 for (Result<V, E> r : list) {
-                    if (r == null) throw new NullPointerException("toList stream contains a null element");
-                    if (r instanceof Err<V, E> err) return Result.err(err.error());
+                    if (r == null) {
+                        throw new NullPointerException("toList stream contains a null element");
+                    }
+                    if (r instanceof Err<V, E> err) {
+                        return Result.err(err.error());
+                    }
                     values.add(((Ok<V, E>) r).value());
                 }
                 return Result.ok(Collections.unmodifiableList(values));
@@ -793,8 +799,12 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         return Collector.of(
             Acc::new,
             (acc, r) -> {
-                if (r == null) throw new NullPointerException("partitioningBy stream contains a null element");
-                if (r instanceof Ok<V, E> ok) acc.oks.add(ok.value());
+                if (r == null) {
+                    throw new NullPointerException("partitioningBy stream contains a null element");
+                }
+                if (r instanceof Ok<V, E> ok) {
+                    acc.oks.add(ok.value());
+                }
                 else acc.errors.add(((Err<V, E>) r).error());
             },
             (a, b) -> { a.oks.addAll(b.oks); a.errors.addAll(b.errors); return a; },
@@ -914,8 +924,12 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
             Result<? extends V2, ? extends E> r2) {
         Objects.requireNonNull(r1, "r1");
         Objects.requireNonNull(r2, "r2");
-        if (r1 instanceof Err<?, ? extends E> e) return Result.err(e.error());
-        if (r2 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r1 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r2 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
         V1 v1 = ((Ok<? extends V1, ?>) r1).value();
         V2 v2 = ((Ok<? extends V2, ?>) r2).value();
         return Result.ok(new Tuple2<>(v1, v2));
@@ -942,9 +956,15 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         Objects.requireNonNull(r1, "r1");
         Objects.requireNonNull(r2, "r2");
         Objects.requireNonNull(r3, "r3");
-        if (r1 instanceof Err<?, ? extends E> e) return Result.err(e.error());
-        if (r2 instanceof Err<?, ? extends E> e) return Result.err(e.error());
-        if (r3 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r1 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r2 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r3 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
         V1 v1 = ((Ok<? extends V1, ?>) r1).value();
         V2 v2 = ((Ok<? extends V2, ?>) r2).value();
         V3 v3 = ((Ok<? extends V3, ?>) r3).value();
@@ -976,9 +996,15 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         Objects.requireNonNull(r2, "r2");
         Objects.requireNonNull(r3, "r3");
         Objects.requireNonNull(combiner, "combiner");
-        if (r1 instanceof Err<?, ? extends E> e) return Result.err(e.error());
-        if (r2 instanceof Err<?, ? extends E> e) return Result.err(e.error());
-        if (r3 instanceof Err<?, ? extends E> e) return Result.err(e.error());
+        if (r1 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r2 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
+        if (r3 instanceof Err<?, ? extends E> e) {
+            return Result.err(e.error());
+        }
         V1 v1 = ((Ok<? extends V1, ?>) r1).value();
         V2 v2 = ((Ok<? extends V2, ?>) r2).value();
         V3 v3 = ((Ok<? extends V3, ?>) r3).value();
