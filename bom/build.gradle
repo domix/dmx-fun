@@ -23,6 +23,7 @@ dependencies {
         api project(':spring-boot')
         api project(':resilience4j')
         api project(':micrometer')
+        api project(':jakarta-validation')
     }
 }
 

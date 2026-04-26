@@ -1,0 +1,42 @@
+# Verifies that the fun-jakarta-validation module remains compatible with multiple
+# Jakarta Validation API versions. The API is declared as compileOnly so users bring
+# their own version; this matrix catches regressions before they reach main.
+#
+# Triggered only on pull requests that touch jakarta-validation/** or this workflow file.
+# To run a specific version locally:
+#   ./gradlew :jakarta-validation:test -PjakartaValidationVersion=3.0.2 -PhibernateValidatorVersion=8.0.2.Final
+name: Jakarta Validation compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'jakarta-validation/**'
+      - 'gradle/libs.versions.toml'
+      - '.github/workflows/jakarta-validation-compatibility.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - jakarta-validation-version: '3.0.2'
+            hibernate-validator-version: '9.0.1.Final'
+          - jakarta-validation-version: '3.1.1'
+            hibernate-validator-version: '9.0.1.Final'
+          - jakarta-validation-version: '3.0.2'
+            hibernate-validator-version: '9.1.0.Final'
+          - jakarta-validation-version: '3.1.1'
+            hibernate-validator-version: '9.1.0.Final'
+    name: JV ${{ matrix.jakarta-validation-version }} / HV ${{ matrix.hibernate-validator-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      - run: >
+          ./gradlew :jakarta-validation:test
+          -PjakartaValidationVersion=${{ matrix.jakarta-validation-version }}
+          -PhibernateValidatorVersion=${{ matrix.hibernate-validator-version }}
