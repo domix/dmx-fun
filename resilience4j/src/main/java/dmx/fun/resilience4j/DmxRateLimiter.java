@@ -32,12 +32,23 @@ public final class DmxRateLimiter {
         this.rateLimiter = rateLimiter;
     }
 
-    /** Wraps an existing {@link RateLimiter} instance. */
+    /**
+     * Wraps an existing {@link RateLimiter} instance.
+     *
+     * @param rateLimiter the Resilience4J rate limiter to wrap
+     * @return a new {@code DmxRateLimiter} backed by the given rate limiter
+     */
     public static DmxRateLimiter of(RateLimiter rateLimiter) {
         return new DmxRateLimiter(Objects.requireNonNull(rateLimiter, "rateLimiter"));
     }
 
-    /** Creates a new {@link RateLimiter} from the given name and config, then wraps it. */
+    /**
+     * Creates a new {@link RateLimiter} from the given name and config, then wraps it.
+     *
+     * @param name   the rate limiter name
+     * @param config the rate limiter configuration
+     * @return a new {@code DmxRateLimiter} backed by the created rate limiter
+     */
     public static DmxRateLimiter of(String name, RateLimiterConfig config) {
         return new DmxRateLimiter(RateLimiter.of(name, config));
     }
@@ -45,6 +56,8 @@ public final class DmxRateLimiter {
     /**
      * Executes the supplier through the rate limiter.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Success(value)} on success,
      *         {@code Failure(RequestNotPermitted)} when the rate limit is exceeded,
      *         or {@code Failure(cause)} when the call itself fails
@@ -60,6 +73,8 @@ public final class DmxRateLimiter {
     /**
      * Executes the supplier through the rate limiter.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Ok(value)} on success, {@code Err(cause)} on any failure
      */
     public <V> Result<V, Throwable> executeResult(CheckedSupplier<V> supplier) {
@@ -70,6 +85,8 @@ public final class DmxRateLimiter {
      * Executes the supplier through the rate limiter, surfacing rate-limit rejections
      * as a typed error.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Ok(value)} on success,
      *         {@code Err(RequestNotPermitted)} when the rate limit is exceeded;
      *         other exceptions from the call propagate as unchecked

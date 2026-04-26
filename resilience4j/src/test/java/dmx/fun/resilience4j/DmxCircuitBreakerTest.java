@@ -1,7 +1,5 @@
 package dmx.fun.resilience4j;
 
-import dmx.fun.Result;
-import dmx.fun.Try;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
@@ -11,11 +9,12 @@ import org.junit.jupiter.api.Test;
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DmxCircuitBreakerTest {
 
     private static DmxCircuitBreaker openCircuit() {
-        CircuitBreaker cb = CircuitBreaker.of("test", CircuitBreakerConfig.ofDefaults());
+        var cb = CircuitBreaker.of("test", CircuitBreakerConfig.ofDefaults());
         cb.transitionToOpenState();
         return DmxCircuitBreaker.of(cb);
     }
@@ -26,15 +25,15 @@ class DmxCircuitBreakerTest {
 
     @Test
     void executeTry_success() {
-        Try<String> result = closedCircuit().executeTry(() -> "ok");
+        var result = closedCircuit().executeTry(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeTry_callFailure_returnsFailure() {
-        IOException boom = new IOException("boom");
-        Try<String> result = closedCircuit().executeTry(() -> { throw boom; });
+        var boom = new IOException("boom");
+        var result = closedCircuit().executeTry(() -> { throw boom; });
 
         assertThat(result).failsWith(IOException.class);
         assertThat(result.getCause()).isSameAs(boom);
@@ -42,28 +41,28 @@ class DmxCircuitBreakerTest {
 
     @Test
     void executeTry_circuitOpen_returnsCallNotPermittedException() {
-        Try<String> result = openCircuit().executeTry(() -> "ok");
+        var result = openCircuit().executeTry(() -> "ok");
 
         assertThat(result).failsWith(CallNotPermittedException.class);
     }
 
     @Test
     void executeResult_success() {
-        Result<String, Throwable> result = closedCircuit().executeResult(() -> "ok");
+        var result = closedCircuit().executeResult(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeResultTyped_success() {
-        Result<String, CallNotPermittedException> result = closedCircuit().executeResultTyped(() -> "ok");
+        var result = closedCircuit().executeResultTyped(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeResultTyped_circuitOpen_returnsErr() {
-        Result<String, CallNotPermittedException> result = openCircuit().executeResultTyped(() -> "ok");
+        var result = openCircuit().executeResultTyped(() -> "ok");
 
         assertThat(result).isErr();
         assertThat(result.getError()).isInstanceOf(CallNotPermittedException.class);
@@ -78,9 +77,16 @@ class DmxCircuitBreakerTest {
 
     @Test
     void of_wrapsExistingCircuitBreaker() {
-        CircuitBreaker cb = CircuitBreaker.ofDefaults("existing");
-        DmxCircuitBreaker dmxCb = DmxCircuitBreaker.of(cb);
+        var cb = CircuitBreaker.ofDefaults("existing");
+        var dmxCb = DmxCircuitBreaker.of(cb);
 
         assertThat(dmxCb.executeTry(() -> 42)).containsValue(42);
+    }
+
+    // ── null contracts ────────────────────────────────────────────────────────────
+
+    @Test
+    void of_nullCircuitBreaker_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> DmxCircuitBreaker.of(null));
     }
 }

@@ -1,7 +1,5 @@
 package dmx.fun.resilience4j;
 
-import dmx.fun.Result;
-import dmx.fun.Try;
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
@@ -13,11 +11,12 @@ import org.junit.jupiter.api.Test;
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DmxBulkheadTest {
 
     private static DmxBulkhead withMaxConcurrent(int max) {
-        BulkheadConfig config = BulkheadConfig.custom()
+        var config = BulkheadConfig.custom()
             .maxConcurrentCalls(max)
             .maxWaitDuration(Duration.ZERO)
             .build();
@@ -26,15 +25,15 @@ class DmxBulkheadTest {
 
     @Test
     void executeTry_success() {
-        Try<String> result = withMaxConcurrent(10).executeTry(() -> "ok");
+        var result = withMaxConcurrent(10).executeTry(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeTry_callFailure_returnsFailure() {
-        IOException boom = new IOException("boom");
-        Try<String> result = withMaxConcurrent(10).executeTry(() -> {
+        var boom = new IOException("boom");
+        var result = withMaxConcurrent(10).executeTry(() -> {
             throw boom;
         });
 
@@ -44,11 +43,11 @@ class DmxBulkheadTest {
 
     @Test
     void executeTry_bulkheadFull_returnsBulkheadFullException() throws Exception {
-        DmxBulkhead bh = withMaxConcurrent(1);
-        CountDownLatch hold = new CountDownLatch(1);
-        CountDownLatch inside = new CountDownLatch(1);
+        var bh = withMaxConcurrent(1);
+        var hold = new CountDownLatch(1);
+        var inside = new CountDownLatch(1);
 
-        Thread occupier = Thread.ofVirtual().start(() ->
+        var occupier = Thread.ofVirtual().start(() ->
             bh.executeTry(() -> {
                 inside.countDown();
                 hold.await();
@@ -57,7 +56,7 @@ class DmxBulkheadTest {
         );
         inside.await();
 
-        Try<String> result = bh.executeTry(() -> "second");
+        var result = bh.executeTry(() -> "second");
 
         hold.countDown();
         occupier.join();
@@ -67,25 +66,25 @@ class DmxBulkheadTest {
 
     @Test
     void executeResult_success() {
-        Result<String, Throwable> result = withMaxConcurrent(10).executeResult(() -> "ok");
+        var result = withMaxConcurrent(10).executeResult(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeResultTyped_success() {
-        Result<String, BulkheadFullException> result = withMaxConcurrent(10).executeResultTyped(() -> "ok");
+        var result = withMaxConcurrent(10).executeResultTyped(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeResultTyped_bulkheadFull_returnsErr() throws Exception {
-        DmxBulkhead bh = withMaxConcurrent(1);
-        CountDownLatch hold = new CountDownLatch(1);
-        CountDownLatch inside = new CountDownLatch(1);
+        var bh = withMaxConcurrent(1);
+        var hold = new CountDownLatch(1);
+        var inside = new CountDownLatch(1);
 
-        Thread occupier = Thread.ofVirtual().start(() ->
+        var occupier = Thread.ofVirtual().start(() ->
             bh.executeResultTyped(() -> {
                 inside.countDown();
                 hold.await();
@@ -94,7 +93,7 @@ class DmxBulkheadTest {
         );
         inside.await();
 
-        Result<String, BulkheadFullException> result = bh.executeResultTyped(() -> "second");
+        var result = bh.executeResultTyped(() -> "second");
 
         hold.countDown();
         occupier.join();
@@ -114,9 +113,16 @@ class DmxBulkheadTest {
 
     @Test
     void of_wrapsExistingBulkhead() {
-        Bulkhead bh = Bulkhead.ofDefaults("existing");
-        DmxBulkhead dmxBh = DmxBulkhead.of(bh);
+        var bh = Bulkhead.ofDefaults("existing");
+        var dmxBh = DmxBulkhead.of(bh);
 
         assertThat(dmxBh.executeTry(() -> 42)).containsValue(42);
+    }
+
+    // ── null contracts ────────────────────────────────────────────────────────────
+
+    @Test
+    void of_nullBulkhead_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> DmxBulkhead.of(null));
     }
 }

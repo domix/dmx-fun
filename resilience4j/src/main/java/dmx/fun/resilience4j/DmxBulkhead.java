@@ -32,12 +32,23 @@ public final class DmxBulkhead {
         this.bulkhead = bulkhead;
     }
 
-    /** Wraps an existing {@link Bulkhead} instance. */
+    /**
+     * Wraps an existing {@link Bulkhead} instance.
+     *
+     * @param bulkhead the Resilience4J bulkhead to wrap
+     * @return a new {@code DmxBulkhead} backed by the given bulkhead
+     */
     public static DmxBulkhead of(Bulkhead bulkhead) {
         return new DmxBulkhead(Objects.requireNonNull(bulkhead, "bulkhead"));
     }
 
-    /** Creates a new {@link Bulkhead} from the given name and config, then wraps it. */
+    /**
+     * Creates a new {@link Bulkhead} from the given name and config, then wraps it.
+     *
+     * @param name   the bulkhead name
+     * @param config the bulkhead configuration
+     * @return a new {@code DmxBulkhead} backed by the created bulkhead
+     */
     public static DmxBulkhead of(String name, BulkheadConfig config) {
         return new DmxBulkhead(Bulkhead.of(name, config));
     }
@@ -45,6 +56,8 @@ public final class DmxBulkhead {
     /**
      * Executes the supplier through the bulkhead.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Success(value)} on success,
      *         {@code Failure(BulkheadFullException)} when the bulkhead is saturated,
      *         or {@code Failure(cause)} when the call itself fails
@@ -60,6 +73,8 @@ public final class DmxBulkhead {
     /**
      * Executes the supplier through the bulkhead.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Ok(value)} on success, {@code Err(cause)} on any failure
      */
     public <V> Result<V, Throwable> executeResult(CheckedSupplier<V> supplier) {
@@ -70,6 +85,8 @@ public final class DmxBulkhead {
      * Executes the supplier through the bulkhead, surfacing bulkhead-full rejections
      * as a typed error.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Ok(value)} on success,
      *         {@code Err(BulkheadFullException)} when the bulkhead is saturated;
      *         other exceptions from the call propagate as unchecked

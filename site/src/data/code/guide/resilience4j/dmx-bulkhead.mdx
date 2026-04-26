@@ -24,11 +24,15 @@ result
     .onSuccess(pdf -> respond(pdf))
     .onFailure(ex  -> respondBusy());
 
+// executeResult — bulkhead full lands in Err(BulkheadFullException)
+Result<byte[], Throwable> result2 = bh.executeResult(() -> pdfRenderer.render(document));
+
 // executeResultTyped — bulkhead full becomes Err; call errors propagate as unchecked
-Result<byte[], BulkheadFullException> result2 =
+// Note: checked exceptions thrown by the supplier are wrapped in RuntimeException
+Result<byte[], BulkheadFullException> result3 =
     bh.executeResultTyped(() -> pdfRenderer.render(document));
 
-result2.fold(
+result3.fold(
     ex  -> respondBusy(),        // BulkheadFullException — too many concurrent calls
     pdf -> respond(pdf)
 );
@@ -37,8 +41,8 @@ result2.fold(
 DmxBulkhead wrapping = DmxBulkhead.of(existingBulkhead);
 ```
 
-| Method | Returns | Bulkhead full | Call throws |
-|---|---|---|---|
-| `executeTry(supplier)` | `Try<V>` | `Failure(BulkheadFullException)` | `Failure(cause)` |
-| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(BulkheadFullException)` | `Err(cause)` |
-| `executeResultTyped(supplier)` | `Result<V, BulkheadFullException>` | `Err(BulkheadFullException)` | rethrows unchecked |
+| Method | Returns | Bulkhead full | Call throws checked | Call throws unchecked |
+|---|---|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(BulkheadFullException)` | `Failure(cause)` | `Failure(cause)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(BulkheadFullException)` | `Err(cause)` | `Err(cause)` |
+| `executeResultTyped(supplier)` | `Result<V, BulkheadFullException>` | `Err(BulkheadFullException)` | `throw new RuntimeException(cause)` | rethrows as-is |

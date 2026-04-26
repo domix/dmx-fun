@@ -28,11 +28,15 @@ result
         else renderError(ex);
     });
 
+// executeResult — rate limit exceeded lands in Err(RequestNotPermitted)
+Result<SearchResult, Throwable> result2 = rl.executeResult(() -> searchApi.query(request));
+
 // executeResultTyped — rate-limit rejection becomes Err; call errors propagate as unchecked
-Result<SearchResult, RequestNotPermitted> result2 =
+// Note: checked exceptions thrown by the supplier are wrapped in RuntimeException
+Result<SearchResult, RequestNotPermitted> result3 =
     rl.executeResultTyped(() -> searchApi.query(request));
 
-result2.fold(
+result3.fold(
     ex     -> renderRateLimited(),  // RequestNotPermitted
     search -> render(search)
 );
@@ -41,8 +45,8 @@ result2.fold(
 DmxRateLimiter wrapping = DmxRateLimiter.of(existingRateLimiter);
 ```
 
-| Method | Returns | Rate limit exceeded | Call throws |
-|---|---|---|---|
-| `executeTry(supplier)` | `Try<V>` | `Failure(RequestNotPermitted)` | `Failure(cause)` |
-| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(RequestNotPermitted)` | `Err(cause)` |
-| `executeResultTyped(supplier)` | `Result<V, RequestNotPermitted>` | `Err(RequestNotPermitted)` | rethrows unchecked |
+| Method | Returns | Rate limit exceeded | Call throws checked | Call throws unchecked |
+|---|---|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(RequestNotPermitted)` | `Failure(cause)` | `Failure(cause)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(RequestNotPermitted)` | `Err(cause)` | `Err(cause)` |
+| `executeResultTyped(supplier)` | `Result<V, RequestNotPermitted>` | `Err(RequestNotPermitted)` | `throw new RuntimeException(cause)` | rethrows as-is |

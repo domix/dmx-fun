@@ -32,12 +32,23 @@ public final class DmxCircuitBreaker {
         this.circuitBreaker = circuitBreaker;
     }
 
-    /** Wraps an existing {@link CircuitBreaker} instance. */
+    /**
+     * Wraps an existing {@link CircuitBreaker} instance.
+     *
+     * @param circuitBreaker the Resilience4J circuit breaker to wrap
+     * @return a new {@code DmxCircuitBreaker} backed by the given circuit breaker
+     */
     public static DmxCircuitBreaker of(CircuitBreaker circuitBreaker) {
         return new DmxCircuitBreaker(Objects.requireNonNull(circuitBreaker, "circuitBreaker"));
     }
 
-    /** Creates a new {@link CircuitBreaker} from the given name and config, then wraps it. */
+    /**
+     * Creates a new {@link CircuitBreaker} from the given name and config, then wraps it.
+     *
+     * @param name   the circuit breaker name
+     * @param config the circuit breaker configuration
+     * @return a new {@code DmxCircuitBreaker} backed by the created circuit breaker
+     */
     public static DmxCircuitBreaker of(String name, CircuitBreakerConfig config) {
         return new DmxCircuitBreaker(CircuitBreaker.of(name, config));
     }
@@ -45,6 +56,8 @@ public final class DmxCircuitBreaker {
     /**
      * Executes the supplier through the circuit breaker.
      *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Success(value)} on success,
      *         {@code Failure(CallNotPermittedException)} when the circuit is open,
      *         or {@code Failure(cause)} when the call itself fails
@@ -60,7 +73,11 @@ public final class DmxCircuitBreaker {
     /**
      * Executes the supplier through the circuit breaker.
      *
-     * @return {@code Ok(value)} on success, {@code Err(cause)} on any failure
+     * @param <V>      the value type
+     * @param supplier the operation to execute
+     * @return {@code Ok(value)} on success,
+     *         {@code Err(CallNotPermittedException)} when the circuit is open,
+     *         or {@code Err(cause)} when the call itself fails
      */
     public <V> Result<V, Throwable> executeResult(CheckedSupplier<V> supplier) {
         return executeTry(supplier).toResult();
@@ -70,15 +87,8 @@ public final class DmxCircuitBreaker {
      * Executes the supplier through the circuit breaker, surfacing circuit-open rejections
      * as a typed error.
      *
-     * <p>Use this overload when you want to pattern-match on the exact resilience failure:
-     * <pre>{@code
-     * cb.executeResultTyped(() -> service.call())
-     *   .fold(
-     *       ex  -> handleOpen(ex),   // CallNotPermittedException
-     *       val -> process(val)
-     *   );
-     * }</pre>
-     *
+     * @param <V>      the value type
+     * @param supplier the operation to execute
      * @return {@code Ok(value)} on success,
      *         {@code Err(CallNotPermittedException)} when the circuit is open;
      *         other exceptions from the call propagate as unchecked

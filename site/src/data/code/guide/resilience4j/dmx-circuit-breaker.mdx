@@ -41,8 +41,8 @@ result3.fold(
 DmxCircuitBreaker wrapping = DmxCircuitBreaker.of(existingCircuitBreaker);
 ```
 
-| Method | Returns | Circuit open | Call throws |
-|---|---|---|---|
-| `executeTry(supplier)` | `Try<V>` | `Failure(CallNotPermittedException)` | `Failure(cause)` |
-| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(CallNotPermittedException)` | `Err(cause)` |
-| `executeResultTyped(supplier)` | `Result<V, CallNotPermittedException>` | `Err(CallNotPermittedException)` | rethrows unchecked |
+| Method | Returns | Circuit open | Call throws checked | Call throws unchecked |
+|---|---|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(CallNotPermittedException)` | `Failure(cause)` | `Failure(cause)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(CallNotPermittedException)` | `Err(cause)` | `Err(cause)` |
+| `executeResultTyped(supplier)` | `Result<V, CallNotPermittedException>` | `Err(CallNotPermittedException)` | `throw new RuntimeException(cause)` | rethrows as-is |

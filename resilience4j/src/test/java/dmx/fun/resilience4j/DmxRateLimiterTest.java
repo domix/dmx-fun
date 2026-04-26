@@ -1,7 +1,5 @@
 package dmx.fun.resilience4j;
 
-import dmx.fun.Result;
-import dmx.fun.Try;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
@@ -12,12 +10,13 @@ import org.junit.jupiter.api.Test;
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DmxRateLimiterTest {
 
     /** Rate limiter that allows 1 call per hour — any second call is immediately rejected. */
     private static DmxRateLimiter saturatedAfterOne() {
-        RateLimiterConfig config = RateLimiterConfig.custom()
+        var config = RateLimiterConfig.custom()
             .limitForPeriod(1)
             .limitRefreshPeriod(Duration.ofHours(1))
             .timeoutDuration(Duration.ZERO)
@@ -31,15 +30,15 @@ class DmxRateLimiterTest {
 
     @Test
     void executeTry_success() {
-        Try<String> result = generous().executeTry(() -> "ok");
+        var result = generous().executeTry(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeTry_callFailure_returnsFailure() {
-        IOException boom = new IOException("boom");
-        Try<String> result = generous().executeTry(() -> { throw boom; });
+        var boom = new IOException("boom");
+        var result = generous().executeTry(() -> { throw boom; });
 
         assertThat(result).failsWith(IOException.class);
         assertThat(result.getCause()).isSameAs(boom);
@@ -47,34 +46,34 @@ class DmxRateLimiterTest {
 
     @Test
     void executeTry_rateLimitExceeded_returnsRequestNotPermitted() {
-        DmxRateLimiter rl = saturatedAfterOne();
-        rl.executeTry(() -> "first");
+        var rl = saturatedAfterOne();
+        assertThat(rl.executeTry(() -> "first")).containsValue("first");
 
-        Try<String> result = rl.executeTry(() -> "second");
+        var result = rl.executeTry(() -> "second");
 
         assertThat(result).failsWith(RequestNotPermitted.class);
     }
 
     @Test
     void executeResult_success() {
-        Result<String, Throwable> result = generous().executeResult(() -> "ok");
+        var result = generous().executeResult(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeResultTyped_success() {
-        Result<String, RequestNotPermitted> result = generous().executeResultTyped(() -> "ok");
+        var result = generous().executeResultTyped(() -> "ok");
 
         assertThat(result).containsValue("ok");
     }
 
     @Test
     void executeResultTyped_rateLimitExceeded_returnsErr() {
-        DmxRateLimiter rl = saturatedAfterOne();
-        rl.executeResultTyped(() -> "first");
+        var rl = saturatedAfterOne();
+        assertThat(rl.executeResultTyped(() -> "first")).containsValue("first");
 
-        Result<String, RequestNotPermitted> result = rl.executeResultTyped(() -> "second");
+        var result = rl.executeResultTyped(() -> "second");
 
         assertThat(result).isErr();
         assertThat(result.getError()).isInstanceOf(RequestNotPermitted.class);
@@ -89,9 +88,16 @@ class DmxRateLimiterTest {
 
     @Test
     void of_wrapsExistingRateLimiter() {
-        RateLimiter rl = RateLimiter.ofDefaults("existing");
-        DmxRateLimiter dmxRl = DmxRateLimiter.of(rl);
+        var rl = RateLimiter.ofDefaults("existing");
+        var dmxRl = DmxRateLimiter.of(rl);
 
         assertThat(dmxRl.executeTry(() -> 42)).containsValue(42);
+    }
+
+    // ── null contracts ────────────────────────────────────────────────────────────
+
+    @Test
+    void of_nullRateLimiter_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> DmxRateLimiter.of(null));
     }
 }
