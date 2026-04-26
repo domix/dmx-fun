@@ -22,6 +22,7 @@ All modules are published to Maven Central. Add only what you need.
 | `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   | Spring Boot auto-configuration for dmx-fun. Registers beans automatically when dependencies are on the classpath. |
 | `fun-resilience4j` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j) | Resilience4J adapters (Retry, CircuitBreaker, RateLimiter, Bulkhead) that return `Try`/`Result` instead of throwing. |
 | `fun-micrometer`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)     | Counters, timers, and failure metrics for `Try` and `Result` via Micrometer.                  |
+| `fun-jakarta-validation` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jakarta-validation)](https://central.sonatype.com/artifact/codes.domix/fun-jakarta-validation) | Jakarta Validation adapter — returns `Validated<NonEmptyList<E>, A>` instead of throwing `ConstraintViolationException`. |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
 
@@ -159,6 +160,37 @@ Automatic counters, timers, and failure metrics for `Try` and `Result` operation
 ```groovy
 implementation("codes.domix:fun-micrometer:LATEST_VERSION")
 implementation("io.micrometer:micrometer-core:1.16.5")
+```
+
+### Jakarta Validation integration (optional)
+
+Validates objects and returns `Validated<NonEmptyList<E>, A>` instead of throwing `ConstraintViolationException` — all constraint violations accumulate in a single return value. Jakarta Validation is declared as `compileOnly`; bring your own version (tested: 3.0.x – 3.1.x) and provider.
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-jakarta-validation</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<dependency>
+    <groupId>jakarta.validation</groupId>
+    <artifactId>jakarta.validation-api</artifactId>
+    <version>3.1.1</version>
+</dependency>
+<!-- A Jakarta Validation provider, e.g. Hibernate Validator: -->
+<dependency>
+    <groupId>org.hibernate.validator</groupId>
+    <artifactId>hibernate-validator</artifactId>
+    <version>9.1.0.Final</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-jakarta-validation:LATEST_VERSION")
+implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+implementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
 ```
 
 ### Resilience4J integration (optional)

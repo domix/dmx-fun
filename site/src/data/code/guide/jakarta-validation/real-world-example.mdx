@@ -1,0 +1,64 @@
+---
+fileName: 'UserRegistrationService.java'
+---
+
+```java
+import dmx.fun.NonEmptyList;
+import dmx.fun.Result;
+import dmx.fun.Validated;
+import dmx.fun.jakarta.validation.DmxValidator;
+import jakarta.validation.Valid;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+// ── Domain model ──────────────────────────────────────────────────────────────
+
+record RegisterUserCommand(
+    @NotBlank                  String username,
+    @Email @NotBlank           String email,
+    @Size(min = 8, max = 72)   String password
+) {}
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+class UserRegistrationService {
+
+    private final Validator  validator;
+    private final UserRepo   repo;
+
+    UserRegistrationService(Validator validator, UserRepo repo) {
+        this.validator = validator;
+        this.repo      = repo;
+    }
+
+    /**
+     * Validates the command and, if valid, persists the new user.
+     *
+     * Returns all validation errors at once — no ConstraintViolationException escapes.
+     */
+    public Result<User, NonEmptyList<String>> register(RegisterUserCommand cmd) {
+        return DmxValidator.validate(validator, cmd)
+            .toResult()                          // Validated → Result, errors as NonEmptyList<String>
+            .flatMap(validCmd ->
+                repo.save(validCmd)              // Result<User, NonEmptyList<String>>
+            );
+    }
+}
+
+// ── Calling the service ───────────────────────────────────────────────────────
+
+var result = service.register(new RegisterUserCommand("", "not-an-email", "short"));
+
+result.fold(
+    errors -> {
+        // All three validation errors returned at once:
+        //   "email: must be a well-formed email address"
+        //   "password: size must be between 8 and 72"
+        //   "username: must not be blank"
+        return Response.badRequest(errors.stream().toList());
+    },
+    user -> Response.created(user.id())
+);
+```

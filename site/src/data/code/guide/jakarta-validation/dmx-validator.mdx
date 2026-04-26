@@ -1,0 +1,62 @@
+---
+fileName: 'DmxValidator usage'
+---
+
+```java
+import dmx.fun.NonEmptyList;
+import dmx.fun.Validated;
+import dmx.fun.jakarta.validation.DmxValidator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+
+record CreateItemRequest(@NotBlank String name, @Min(1) int quantity) {}
+
+Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
+// ── validate — messages only ──────────────────────────────────────────────────
+
+Validated<NonEmptyList<String>, CreateItemRequest> result =
+    DmxValidator.validate(validator, new CreateItemRequest("", 0));
+
+result
+    .peekError(errors -> errors.stream().forEach(System.out::println))
+    //  "name: must not be blank"
+    //  "quantity: must be greater than or equal to 1"
+    .peek(item -> processItem(item));
+
+// ── validateRaw — full ConstraintViolation detail ─────────────────────────────
+
+Validated<NonEmptyList<ConstraintViolation<CreateItemRequest>>, CreateItemRequest> raw =
+    DmxValidator.validateRaw(validator, new CreateItemRequest("", 0));
+
+raw
+    .peekError(violations -> violations.stream()
+        .forEach(v -> log.warn("{} {}", v.getPropertyPath(), v.getMessage())))
+    .peek(item -> processItem(item));
+
+// ── valid input ───────────────────────────────────────────────────────────────
+
+Validated<NonEmptyList<String>, CreateItemRequest> ok =
+    DmxValidator.validate(validator, new CreateItemRequest("widget", 5));
+
+// ok.isValid() == true
+// ok.get()     == CreateItemRequest("widget", 5)
+
+// ── validation groups ─────────────────────────────────────────────────────────
+
+interface OnCreate {}
+
+DmxValidator.validate(validator, request, OnCreate.class);
+```
+
+| Method | Returns | Valid input | Invalid input |
+|---|---|---|---|
+| `validate(validator, object, groups...)` | `Validated<NonEmptyList<String>, T>` | `Valid(object)` | `Invalid(messages)` |
+| `validateRaw(validator, object, groups...)` | `Validated<NonEmptyList<ConstraintViolation<T>>, T>` | `Valid(object)` | `Invalid(violations)` |
+
+Messages from `validate` have the form `"propertyPath: constraintMessage"` and are sorted
+alphabetically for deterministic ordering. Violations from `validateRaw` are sorted by
+property path.

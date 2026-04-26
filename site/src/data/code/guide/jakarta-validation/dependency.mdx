@@ -1,0 +1,43 @@
+---
+fileName: 'build.gradle / pom.xml'
+---
+
+```groovy
+// Gradle
+implementation("codes.domix:fun-jakarta-validation:LATEST_VERSION")
+// Jakarta Validation — bring your own version (tested: 3.0.x – 3.1.x)
+implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+// A Jakarta Validation provider, e.g. Hibernate Validator:
+implementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
+runtimeOnly("org.glassfish.expressly:expressly:6.0.0")
+```
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-jakarta-validation</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- Jakarta Validation — bring your own version (tested: 3.0.x – 3.1.x) -->
+<dependency>
+    <groupId>jakarta.validation</groupId>
+    <artifactId>jakarta.validation-api</artifactId>
+    <version>3.1.1</version>
+</dependency>
+<!-- A Jakarta Validation provider, e.g. Hibernate Validator: -->
+<dependency>
+    <groupId>org.hibernate.validator</groupId>
+    <artifactId>hibernate-validator</artifactId>
+    <version>9.1.0.Final</version>
+</dependency>
+<dependency>
+    <groupId>org.glassfish.expressly</groupId>
+    <artifactId>expressly</artifactId>
+    <version>6.0.0</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+> `fun-jakarta-validation` declares `jakarta.validation-api` as `compileOnly`. You bring your own
+> Jakarta Validation provider — any compliant implementation works (Hibernate Validator, Apache BVal, etc.).
