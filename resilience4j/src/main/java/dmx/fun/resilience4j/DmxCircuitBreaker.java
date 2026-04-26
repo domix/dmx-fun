@@ -75,7 +75,9 @@ public final class DmxCircuitBreaker {
      *
      * @param <V>      the value type
      * @param supplier the operation to execute
-     * @return {@code Ok(value)} on success, {@code Err(cause)} on any failure
+     * @return {@code Ok(value)} on success,
+     *         {@code Err(CallNotPermittedException)} when the circuit is open,
+     *         or {@code Err(cause)} when the call itself fails
      */
     public <V> Result<V, Throwable> executeResult(CheckedSupplier<V> supplier) {
         return executeTry(supplier).toResult();
