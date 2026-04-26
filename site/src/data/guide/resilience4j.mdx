@@ -40,11 +40,11 @@ the artifacts you actually use explicitly to your classpath. Any version from
 
 Each adapter offers three execution methods:
 
-| Method | Return type | Policy rejection | Call failure |
-|---|---|---|---|
-| `executeTry(supplier)` | `Try<V>` | `Failure(ex)` | `Failure(cause)` |
-| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(ex)` | `Err(cause)` |
-| `executeResultTyped(supplier)` | `Result<V, SpecificException>` | `Err(specificEx)` | rethrows unchecked |
+| Method | Return type | Policy rejection | Call throws checked | Call throws unchecked |
+|---|---|---|---|---|
+| `executeTry(supplier)` | `Try<V>` | `Failure(ex)` | `Failure(cause)` | `Failure(cause)` |
+| `executeResult(supplier)` | `Result<V, Throwable>` | `Err(ex)` | `Err(cause)` | `Err(cause)` |
+| `executeResultTyped(supplier)` | `Result<V, SpecificException>` | `Err(specificEx)` | `throw new RuntimeException(cause)` | rethrows as-is |
 
 > `DmxRetry` does not have `executeResultTyped` — retries always surface the last exception,
 > so `executeResult` already gives you `Result<V, Throwable>`.
