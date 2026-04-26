@@ -5,7 +5,10 @@ import dmx.fun.Validated;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -31,13 +34,16 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class DmxValidator {
 
-    private DmxValidator() {}
+    private DmxValidator() {
+    }
 
     /**
      * Validates {@code object} and returns violation messages as a
      * {@link NonEmptyList NonEmptyList&lt;String&gt;}.
      *
-     * <p>Each message has the form {@code "propertyPath: constraintMessage"}.
+     * <p>Each message has the form {@code "propertyPath: constraintMessage"} for
+     * property-level constraints. For class-level constraints (where the property path
+     * is empty), only the constraint message is returned without a path prefix.
      * Messages are sorted alphabetically for deterministic ordering across JVM runs.
      *
      * @param <T>       the type of the object being validated
@@ -45,33 +51,25 @@ public final class DmxValidator {
      * @param object    the object to validate
      * @param groups    the validation groups to apply; empty means the default group
      * @return {@code Valid(object)} when all constraints pass,
-     *         {@code Invalid(NonEmptyList.of(messages))} when at least one is violated
+     * {@code Invalid(NonEmptyList.of(messages))} when at least one is violated
      * @throws NullPointerException if {@code validator} or {@code object} is {@code null}
      */
     public static <T> Validated<NonEmptyList<String>, T> validate(
-            Validator validator,
-            T object,
-            Class<?>... groups
+        Validator validator,
+        T object,
+        Class<?>... groups
     ) {
-        Objects.requireNonNull(validator, "validator");
-        Objects.requireNonNull(object, "object");
-
-        var violations = validator.validate(object, groups);
-
-        if (violations.isEmpty()) {
-            return Validated.valid(object);
-        }
-
-        var messages = violations.stream()
-            .map(v -> "%s: %s".formatted(v.getPropertyPath(), v.getMessage()))
-            .sorted()
-            .toList();
-
-        return Validated.invalid(
-            NonEmptyList.of(
-                messages.getFirst(),
-                messages.subList(1, messages.size())
-            )
+        return buildNel(
+            validator,
+            object,
+            groups,
+            violations -> violations.stream()
+                .map(v -> {
+                    var path = v.getPropertyPath().toString();
+                    return path.isEmpty() ? v.getMessage() : "%s: %s".formatted(path, v.getMessage());
+                })
+                .sorted()
+                .toList()
         );
     }
 
@@ -88,31 +86,44 @@ public final class DmxValidator {
      * @param object    the object to validate
      * @param groups    the validation groups to apply; empty means the default group
      * @return {@code Valid(object)} when all constraints pass,
-     *         {@code Invalid(NonEmptyList.of(violations))} when at least one is violated
+     * {@code Invalid(NonEmptyList.of(violations))} when at least one is violated
      * @throws NullPointerException if {@code validator} or {@code object} is {@code null}
      */
     public static <T> Validated<NonEmptyList<ConstraintViolation<T>>, T> validateRaw(
-            Validator validator,
-            T object,
-            Class<?>... groups
+        Validator validator,
+        T object,
+        Class<?>... groups
+    ) {
+        return buildNel(
+            validator,
+            object,
+            groups,
+            violations -> violations.stream()
+                .sorted(Comparator.comparing(v -> v.getPropertyPath().toString()))
+                .toList()
+        );
+    }
+
+    private static <T, V> Validated<NonEmptyList<V>, T> buildNel(
+        Validator validator,
+        T object,
+        Class<?>[] groups,
+        Function<Set<ConstraintViolation<T>>, List<V>> transform
     ) {
         Objects.requireNonNull(validator, "validator");
         Objects.requireNonNull(object, "object");
-
         var violations = validator.validate(object, groups);
 
         if (violations.isEmpty()) {
             return Validated.valid(object);
         }
 
-        var sorted = violations.stream()
-            .sorted(Comparator.comparing(v -> v.getPropertyPath().toString()))
-            .toList();
+        var list = transform.apply(violations);
 
         return Validated.invalid(
             NonEmptyList.of(
-                sorted.getFirst(),
-                sorted.subList(1, sorted.size())
+                list.getFirst(),
+                list.subList(1, list.size())
             )
         );
     }

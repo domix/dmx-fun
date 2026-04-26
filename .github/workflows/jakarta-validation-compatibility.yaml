@@ -4,7 +4,7 @@
 #
 # Triggered only on pull requests that touch jakarta-validation/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :jakarta-validation:test -PjakartaValidationVersion=3.0.2 -PhibernateValidatorVersion=8.0.2.Final
+#   ./gradlew :jakarta-validation:test -PjakartaValidationVersion=3.0.2 -PhibernateValidatorVersion=9.0.1.Final
 name: Jakarta Validation compatibility
 
 on:
@@ -18,6 +18,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - jakarta-validation-version: '3.0.2'

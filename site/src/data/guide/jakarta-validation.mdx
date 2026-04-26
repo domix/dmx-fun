@@ -57,12 +57,13 @@ Result<User, NonEmptyList<String>> result =
 // Flatten into a single pipeline: validate then persist
 Result<User, NonEmptyList<String>> saved =
     DmxValidator.validate(validator, cmd)
+        .toResult()
         .flatMap(validCmd -> repo.save(validCmd));
 
 // Combine two independent validated values (applicative style)
 Validated<NonEmptyList<String>, Order> order =
     DmxValidator.validate(validator, header)
-        .product(DmxValidator.validate(validator, lines),
+        .combine(DmxValidator.validate(validator, lines),
                  NonEmptyList::concat,
                  Order::new);
 ```

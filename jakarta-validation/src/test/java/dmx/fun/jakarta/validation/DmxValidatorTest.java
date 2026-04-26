@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import org.assertj.core.api.Assertions;
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DmxValidatorTest {
@@ -40,7 +40,7 @@ class DmxValidatorTest {
 
         assertThat(result)
             .isInvalid();
-        assertThat(result.getError())
+        Assertions.assertThat(result.getError())
             .hasSize(1);
     }
 
@@ -51,7 +51,7 @@ class DmxValidatorTest {
 
         assertThat(result)
             .isInvalid();
-        assertThat(result.getError())
+        Assertions.assertThat(result.getError())
             .hasSize(2);
     }
 
@@ -64,9 +64,9 @@ class DmxValidatorTest {
             .toList();
 
         // "name:..." sorts before "quantity:..."
-        assertThat(messages.get(0))
+        Assertions.assertThat(messages.get(0))
             .startsWith("name:");
-        assertThat(messages.get(1))
+        Assertions.assertThat(messages.get(1))
             .startsWith("quantity:");
     }
 
@@ -90,9 +90,9 @@ class DmxValidatorTest {
         assertThat(result).isInvalid();
         var violations = result.getError();
 
-        assertThat(violations)
+        Assertions.assertThat(violations)
             .hasSize(1);
-        assertThat(
+        Assertions.assertThat(
             violations.stream()
                 .findFirst()
                 .orElseThrow()
@@ -106,9 +106,9 @@ class DmxValidatorTest {
         var result = DmxValidator.validateRaw(validator, new Item("", 0));
         var violations = result.getError().stream().toList();
 
-        assertThat(violations).hasSize(2);
-        assertThat(violations.get(0).getPropertyPath().toString()).isEqualTo("name");
-        assertThat(violations.get(1).getPropertyPath().toString()).isEqualTo("quantity");
+        Assertions.assertThat(violations).hasSize(2);
+        Assertions.assertThat(violations.get(0).getPropertyPath().toString()).isEqualTo("name");
+        Assertions.assertThat(violations.get(1).getPropertyPath().toString()).isEqualTo("quantity");
     }
 
     @Test
@@ -117,8 +117,8 @@ class DmxValidatorTest {
 
         assertThat(result).isInvalid();
         var violation = result.getError().stream().findFirst().orElseThrow();
-        assertThat(violation.getInvalidValue()).isEqualTo(0);
-        assertThat(violation.getPropertyPath().toString()).isEqualTo("quantity");
+        Assertions.assertThat(violation.getInvalidValue()).isEqualTo(0);
+        Assertions.assertThat(violation.getPropertyPath().toString()).isEqualTo("quantity");
     }
 
     // ── null contracts ────────────────────────────────────────────────────────────

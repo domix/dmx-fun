@@ -40,7 +40,7 @@ class UserRegistrationService {
      */
     public Result<User, NonEmptyList<String>> register(RegisterUserCommand cmd) {
         return DmxValidator.validate(validator, cmd)
-            .mapError(errors -> errors)          // NonEmptyList<String> — all errors at once
+            .toResult()                          // Validated → Result, errors as NonEmptyList<String>
             .flatMap(validCmd ->
                 repo.save(validCmd)              // Result<User, NonEmptyList<String>>
             );

@@ -21,23 +21,21 @@ Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 Validated<NonEmptyList<String>, CreateItemRequest> result =
     DmxValidator.validate(validator, new CreateItemRequest("", 0));
 
-result.fold(
-    errors -> errors.stream().forEach(System.out::println),
+result
+    .peekError(errors -> errors.stream().forEach(System.out::println))
     //  "name: must not be blank"
     //  "quantity: must be greater than or equal to 1"
-    item -> processItem(item)
-);
+    .peek(item -> processItem(item));
 
 // ── validateRaw — full ConstraintViolation detail ─────────────────────────────
 
 Validated<NonEmptyList<ConstraintViolation<CreateItemRequest>>, CreateItemRequest> raw =
     DmxValidator.validateRaw(validator, new CreateItemRequest("", 0));
 
-raw.fold(
-    violations -> violations.stream()
-        .forEach(v -> log.warn("{} {}", v.getPropertyPath(), v.getMessage())),
-    item -> processItem(item)
-);
+raw
+    .peekError(violations -> violations.stream()
+        .forEach(v -> log.warn("{} {}", v.getPropertyPath(), v.getMessage())))
+    .peek(item -> processItem(item));
 
 // ── valid input ───────────────────────────────────────────────────────────────
 
