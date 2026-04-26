@@ -1,0 +1,108 @@
+---
+title: "Jakarta Validation Integration — Developer Guide"
+description: "How to use the optional fun-jakarta-validation module: DmxValidator bridges Jakarta Bean Validation with Validated<NonEmptyList<E>, A> so all constraint violations accumulate without throwing ConstraintViolationException."
+order: 19
+h1: "Jakarta Validation Integration"
+---
+
+import {Content as Dependency}   from '../code/guide/jakarta-validation/dependency.mdx';
+import {Content as DmxValidator} from '../code/guide/jakarta-validation/dmx-validator.mdx';
+import {Content as RealWorld}    from '../code/guide/jakarta-validation/real-world-example.mdx';
+
+The `fun-jakarta-validation` module bridges [Jakarta Bean Validation](https://jakarta.ee/specifications/bean-validation/)
+with dmx-fun's functional types. Instead of throwing `ConstraintViolationException`,
+validation results are captured as `Validated<NonEmptyList<E>, A>`, keeping the
+functional pipeline intact and surfacing **all** constraint violations at once.
+
+It is an **optional** dependency — the core `fun` library has no runtime dependency
+on Jakarta Validation. `fun-jakarta-validation` declares `jakarta.validation-api` as
+`compileOnly`, following the same peer-dependency pattern used by `fun-spring` and
+`fun-jackson`.
+
+## Adding the dependency
+
+Any compliant Jakarta Validation 3.x provider is supported. Hibernate Validator
+is the most common choice; see [version compatibility](#version-compatibility) below.
+
+<Dependency/>
+
+## API overview
+
+`DmxValidator` is a static utility class with two methods:
+
+| Method | Error type | When to use |
+|---|---|---|
+| `validate(validator, object, groups...)` | `NonEmptyList<String>` | Display errors to users; messages are ready to render |
+| `validateRaw(validator, object, groups...)` | `NonEmptyList<ConstraintViolation<T>>` | Programmatic inspection of constraint metadata |
+
+Both methods return `Validated.valid(object)` when all constraints pass, and
+`Validated.invalid(NonEmptyList.of(...))` when at least one constraint is violated.
+Because the return type is `Validated` (not `Result`), **all violations accumulate** —
+there is no fail-fast short-circuit.
+
+## `DmxValidator`
+
+<DmxValidator/>
+
+## Composing with other dmx-fun types
+
+`Validated` integrates with `Result` and `Try` through the standard conversion methods:
+
+```java
+// Validated → Result (NonEmptyList<String> as error)
+Result<User, NonEmptyList<String>> result =
+    DmxValidator.validate(validator, cmd)
+        .toResult();
+
+// Flatten into a single pipeline: validate then persist
+Result<User, NonEmptyList<String>> saved =
+    DmxValidator.validate(validator, cmd)
+        .flatMap(validCmd -> repo.save(validCmd));
+
+// Combine two independent validated values (applicative style)
+Validated<NonEmptyList<String>, Order> order =
+    DmxValidator.validate(validator, header)
+        .product(DmxValidator.validate(validator, lines),
+                 NonEmptyList::concat,
+                 Order::new);
+```
+
+## Choosing `validate` vs `validateRaw`
+
+Use **`validate`** when:
+- Errors are displayed to end users (API responses, form feedback).
+- You only need the human-readable message and property path.
+- You want a `NonEmptyList<String>` that can be serialised directly to JSON.
+
+Use **`validateRaw`** when:
+- You need the constraint annotation type (`v.getConstraintDescriptor().getAnnotation()`).
+- You need the invalid value (`v.getInvalidValue()`).
+- You need to branch on a specific constraint class in programmatic logic.
+
+## Real-world example
+
+A user registration service that validates a command record and returns all
+errors at once — username blank, email malformed, and password too short are
+reported together rather than one at a time.
+
+<RealWorld/>
+
+## Version compatibility
+
+The module is tested in CI against the following combinations on every pull
+request that touches the `jakarta-validation/` module:
+
+| Jakarta Validation | Hibernate Validator | Status  |
+|--------------------|---------------------|---------|
+| 3.1.1              | 9.1.0.Final         | tested  |
+| 3.1.1              | 9.0.1.Final         | tested  |
+| 3.0.2              | 9.1.0.Final         | tested  |
+| 3.0.2              | 9.0.1.Final         | tested  |
+
+To test locally against a specific combination:
+
+```bash
+./gradlew :jakarta-validation:test \
+  -PjakartaValidationVersion=3.0.2 \
+  -PhibernateValidatorVersion=9.0.1.Final
+```
