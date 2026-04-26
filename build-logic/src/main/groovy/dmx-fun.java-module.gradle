@@ -2,6 +2,7 @@ plugins {
     id 'dmx-fun.java-base'
     id 'com.github.ben-manes.versions'
     id 'com.vanniktech.maven.publish'
+    id 'org.cyclonedx.bom'
 }
 
 def isNonStable = { String version ->
@@ -49,6 +50,45 @@ mavenPublishing {
             system = 'GitHub Actions'
             url = 'https://github.com/domix/dmx-fun/actions'
         }
+    }
+}
+
+// ── CycloneDX SBOM ───────────────────────────────────────────────────────────
+//
+// Generate a CycloneDX SBOM for each module as part of the assemble lifecycle.
+// The JSON artifact is attached to the Maven publication so it is uploaded to
+// Maven Central alongside the JAR and POM.
+
+tasks.named("cyclonedxDirectBom").configure {
+    includeConfigs = ["runtimeClasspath"]
+    projectType    = "library"
+}
+
+def bomTask = tasks.named("cyclonedxDirectBom")
+
+publishing {
+    publications {
+        withType(MavenPublication).configureEach { pub ->
+            pub.artifact(bomTask.flatMap { it.jsonOutput }) {
+                classifier = "cyclonedx"
+                extension  = "json"
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    def mavenPubs = publishing.publications.withType(MavenPublication)
+    if (mavenPubs.size() > 1) {
+        throw new GradleException(
+            "dmx-fun.java-module: found ${mavenPubs.size()} MavenPublication instances " +
+            "in project '${project.name}' — cannot derive a unique componentName for the " +
+            "CycloneDX SBOM. Remove the extra publications or set componentName explicitly."
+        )
+    }
+    def pub = mavenPubs.find()
+    if (pub != null) {
+        bomTask.configure { componentName = pub.artifactId }
     }
 }
 

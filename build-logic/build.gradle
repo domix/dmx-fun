@@ -9,4 +9,5 @@ repositories {
 dependencies {
     implementation 'com.github.ben-manes:gradle-versions-plugin:0.53.0'
     implementation 'com.vanniktech:gradle-maven-publish-plugin:0.36.0'
+    implementation 'org.cyclonedx:cyclonedx-gradle-plugin:3.2.4'
 }
