@@ -28,5 +28,3 @@ mavenPublishing {
         description = 'Functional types for Java: Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList. Makes failures, absence, and validation explicit in the type system.'
     }
 }
-
-tasks.named("cyclonedxDirectBom").configure { componentName = "fun" }

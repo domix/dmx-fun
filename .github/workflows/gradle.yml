@@ -81,13 +81,15 @@ jobs:
     - name: Install CycloneDX CLI
       run: |
         curl -sSL https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.30.0/cyclonedx-linux-musl-x64 -o cyclonedx
+        echo "fd4c058f08a900ff611809c6910282d50c2f7ff4ed85686d62b4778b24f3d190  cyclonedx" | sha256sum --check
         chmod +x cyclonedx
         sudo mv cyclonedx /usr/local/bin/cyclonedx
 
     - name: Validate SBOMs
       run: |
-        find . -name "bom.json" -path "*/build/reports/cyclonedx-direct/*" \
-          -exec cyclonedx validate --input-file {} --input-format json --fail-on-errors \;
+        readarray -d '' boms < <(find . -name "bom.json" -path "*/build/reports/cyclonedx-direct/*" -print0)
+        [[ ${#boms[@]} -gt 0 ]] || { echo "No SBOM files found" >&2; exit 1; }
+        printf '%s\0' "${boms[@]}" | xargs -0 -I {} cyclonedx validate --input-file {} --input-format json --fail-on-errors
 
     - name: Add coverage to PR
       id: jacoco

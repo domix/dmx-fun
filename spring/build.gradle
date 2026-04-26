@@ -69,5 +69,3 @@ mavenPublishing {
         description = 'Spring module for dmx-fun: transaction support for Result, Try, Option, and Validated without giving up declarative transaction management.'
     }
 }
-
-tasks.named("cyclonedxDirectBom").configure { componentName = "fun-spring" }

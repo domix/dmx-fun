@@ -34,5 +34,3 @@ mavenPublishing {
         description = 'Resilience4J adapter for dmx-fun: wraps Retry, CircuitBreaker, RateLimiter, and Bulkhead to return Try<V> and Result<V, E> instead of throwing exceptions.'
     }
 }
-
-tasks.named("cyclonedxDirectBom").configure { componentName = "fun-resilience4j" }

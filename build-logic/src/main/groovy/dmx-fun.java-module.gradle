@@ -67,11 +67,21 @@ tasks.named("cyclonedxDirectBom").configure {
 publishing {
     publications {
         withType(MavenPublication).configureEach { pub ->
-            pub.artifact(layout.buildDirectory.file("reports/cyclonedx-direct/bom.json")) {
+            def bomTask = tasks.named("cyclonedxDirectBom")
+            pub.artifact(bomTask.flatMap { it.jsonOutput }) {
                 classifier = "cyclonedx"
                 extension  = "json"
-                builtBy tasks.named("cyclonedxDirectBom")
+                builtBy bomTask
             }
+        }
+    }
+}
+
+afterEvaluate {
+    def pub = publishing.publications.withType(MavenPublication).find()
+    if (pub != null) {
+        tasks.named("cyclonedxDirectBom").configure {
+            componentName = pub.artifactId
         }
     }
 }

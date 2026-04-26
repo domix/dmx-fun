@@ -32,5 +32,3 @@ mavenPublishing {
         description = 'Micrometer adapter for dmx-fun: instruments Try and Result executions with counters, timers, and failure metrics.'
     }
 }
-
-tasks.named("cyclonedxDirectBom").configure { componentName = "fun-micrometer" }

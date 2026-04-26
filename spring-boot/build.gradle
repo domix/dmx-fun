@@ -49,5 +49,3 @@ mavenPublishing {
         description = 'Spring Boot autoconfiguration for dmx-fun: automatically registers TxResult, TxTry, TxValidated, and DmxTransactionalAspect when the corresponding dependencies are on the classpath.'
     }
 }
-
-tasks.named("cyclonedxDirectBom").configure { componentName = "fun-spring-boot" }
