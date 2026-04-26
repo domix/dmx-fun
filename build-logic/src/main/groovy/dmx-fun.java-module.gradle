@@ -64,25 +64,31 @@ tasks.named("cyclonedxDirectBom").configure {
     projectType    = "library"
 }
 
+def bomTask = tasks.named("cyclonedxDirectBom")
+
 publishing {
     publications {
         withType(MavenPublication).configureEach { pub ->
-            def bomTask = tasks.named("cyclonedxDirectBom")
             pub.artifact(bomTask.flatMap { it.jsonOutput }) {
                 classifier = "cyclonedx"
                 extension  = "json"
-                builtBy bomTask
             }
         }
     }
 }
 
 afterEvaluate {
-    def pub = publishing.publications.withType(MavenPublication).find()
+    def mavenPubs = publishing.publications.withType(MavenPublication)
+    if (mavenPubs.size() > 1) {
+        throw new GradleException(
+            "dmx-fun.java-module: found ${mavenPubs.size()} MavenPublication instances " +
+            "in project '${project.name}' — cannot derive a unique componentName for the " +
+            "CycloneDX SBOM. Remove the extra publications or set componentName explicitly."
+        )
+    }
+    def pub = mavenPubs.find()
     if (pub != null) {
-        tasks.named("cyclonedxDirectBom").configure {
-            componentName = pub.artifactId
-        }
+        bomTask.configure { componentName = pub.artifactId }
     }
 }
 
