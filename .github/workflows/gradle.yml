@@ -87,9 +87,12 @@ jobs:
 
     - name: Validate SBOMs
       run: |
-        readarray -d '' boms < <(find . -name "bom.json" -path "*/build/reports/cyclonedx-direct/*" -print0)
-        [[ ${#boms[@]} -gt 0 ]] || { echo "No SBOM files found" >&2; exit 1; }
-        printf '%s\0' "${boms[@]}" | xargs -0 -I {} cyclonedx validate --input-file {} --input-format json --fail-on-errors
+        count=0
+        while IFS= read -r -d '' f; do
+          cyclonedx validate --input-file "$f" --input-format json --fail-on-errors
+          count=$((count + 1))
+        done < <(find . -name "bom.json" -path "*/build/reports/cyclonedx-direct/*" -print0)
+        [[ $count -gt 0 ]] || { echo "No SBOM files found" >&2; exit 1; }
 
     - name: Add coverage to PR
       id: jacoco
