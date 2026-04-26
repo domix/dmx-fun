@@ -30,3 +30,5 @@ mavenPublishing {
         description = 'AssertJ module for dmx-fun: fluent custom assertions for Option, Result, Try, Validated, Either, Tuple2/3/4, and NonEmptyList.'
     }
 }
+
+tasks.named("cyclonedxDirectBom").configure { componentName = "fun-assertj" }

@@ -75,6 +75,20 @@ jobs:
     - name: Build with Gradle Wrapper
       run: ./gradlew build
 
+    - name: Generate SBOMs
+      run: ./gradlew cyclonedxDirectBom
+
+    - name: Install CycloneDX CLI
+      run: |
+        curl -sSL https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.30.0/cyclonedx-linux-musl-x64 -o cyclonedx
+        chmod +x cyclonedx
+        sudo mv cyclonedx /usr/local/bin/cyclonedx
+
+    - name: Validate SBOMs
+      run: |
+        find . -name "bom.json" -path "*/build/reports/cyclonedx-direct/*" \
+          -exec cyclonedx validate --input-file {} --input-format json --fail-on-errors \;
+
     - name: Add coverage to PR
       id: jacoco
       uses: madrapps/jacoco-report@v1.7.2

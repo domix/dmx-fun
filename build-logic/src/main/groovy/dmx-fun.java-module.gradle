@@ -2,6 +2,7 @@ plugins {
     id 'dmx-fun.java-base'
     id 'com.github.ben-manes.versions'
     id 'com.vanniktech.maven.publish'
+    id 'org.cyclonedx.bom'
 }
 
 def isNonStable = { String version ->
@@ -48,6 +49,29 @@ mavenPublishing {
         ciManagement {
             system = 'GitHub Actions'
             url = 'https://github.com/domix/dmx-fun/actions'
+        }
+    }
+}
+
+// ── CycloneDX SBOM ───────────────────────────────────────────────────────────
+//
+// Generate a CycloneDX SBOM for each module as part of the assemble lifecycle.
+// The JSON artifact is attached to the Maven publication so it is uploaded to
+// Maven Central alongside the JAR and POM.
+
+tasks.named("cyclonedxDirectBom").configure {
+    includeConfigs = ["runtimeClasspath"]
+    projectType    = "library"
+}
+
+publishing {
+    publications {
+        withType(MavenPublication).configureEach { pub ->
+            pub.artifact(layout.buildDirectory.file("reports/cyclonedx-direct/bom.json")) {
+                classifier = "cyclonedx"
+                extension  = "json"
+                builtBy tasks.named("cyclonedxDirectBom")
+            }
         }
     }
 }
