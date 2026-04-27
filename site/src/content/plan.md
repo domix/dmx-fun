@@ -75,7 +75,7 @@
 ### Critical and opinionated topics
 
 56. Is functional programming overrated?
-57. Common mistakes when learning functional programming
+57. ~~Common mistakes when learning functional programming~~
 58. Why so many developers reject functional programming
 59. ~~Pragmatic functional programming vs academic purism~~ [74]
 60. The problem with explaining monads too early
