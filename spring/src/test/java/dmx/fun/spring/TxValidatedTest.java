@@ -11,8 +11,9 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import org.assertj.core.api.Assertions;
+
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TxValidatedTest {
@@ -38,7 +39,7 @@ class TxValidatedTest {
     }
 
     private int countRows() {
-        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
+        var count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
         return count != null ? count : 0;
     }
 
@@ -59,24 +60,24 @@ class TxValidatedTest {
 
     @Test
     void execute_onValid_commits() {
-        Validated<String, Integer> result = txValidated.execute(() -> {
+        var result = txValidated.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (1, 'test')");
             return Validated.valid(1);
         });
 
         assertThat(result).isValid().containsValue(1);
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void execute_onInvalid_rollsBack() {
-        Validated<String, Integer> result = txValidated.execute(() -> {
+        var result = txValidated.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (2, 'test')");
             return Validated.invalid("validation failed");
         });
 
         assertThat(result).isInvalid().hasError("validation failed");
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -87,7 +88,7 @@ class TxValidatedTest {
         })).isInstanceOf(RuntimeException.class)
            .hasMessage("boom");
 
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -110,25 +111,25 @@ class TxValidatedTest {
     @Test
     void executeWithDef_onValid_commits() {
         var def = new DefaultTransactionDefinition();
-        Validated<String, Integer> result = txValidated.execute(def, () -> {
+        var result = txValidated.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (4, 'def')");
             return Validated.valid(4);
         });
 
         assertThat(result).isValid();
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void executeWithDef_onInvalid_rollsBack() {
         var def = new DefaultTransactionDefinition();
-        Validated<String, Integer> result = txValidated.execute(def, () -> {
+        var result = txValidated.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (5, 'def')");
             return Validated.invalid("rollback me");
         });
 
         assertThat(result).isInvalid();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -151,25 +152,25 @@ class TxValidatedTest {
 
     @Test
     void execute_multipleInserts_allRollBackOnInvalid() {
-        Validated<String, Integer> result = txValidated.execute(() -> {
+        var result = txValidated.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (10, 'a')");
             jdbc.update("INSERT INTO events VALUES (11, 'b')");
             return Validated.invalid("partial work");
         });
 
         assertThat(result).isInvalid();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void execute_multipleInserts_commitAll() {
-        Validated<String, Integer> result = txValidated.execute(() -> {
+        var result = txValidated.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (20, 'x')");
             jdbc.update("INSERT INTO events VALUES (21, 'y')");
             return Validated.valid(2);
         });
 
         assertThat(result).isValid();
-        assertThat(countRows()).isEqualTo(2);
+        Assertions.assertThat(countRows()).isEqualTo(2);
     }
 }

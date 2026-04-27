@@ -144,6 +144,9 @@ public class DmxTransactionalAspect {
         try {
             return (T) pjp.proceed();
         } catch (RuntimeException | Error e) {
+            // Re-throw unchecked throwables as-is — without this clause they would
+            // fall into the Throwable catch and be wrapped in a new RuntimeException,
+            // hiding the original exception type from the caller.
             throw e;
         } catch (Throwable t) {
             throw new RuntimeException(t);
