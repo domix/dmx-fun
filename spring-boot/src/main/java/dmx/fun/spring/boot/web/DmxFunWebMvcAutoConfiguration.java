@@ -1,7 +1,6 @@
 package dmx.fun.spring.boot.web;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.BeansException;
@@ -16,7 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
 /**
- * Spring Boot auto-configuration that registers dmx-fun Spring MVC
+ * Spring Boot autoconfiguration that registers dmx-fun Spring MVC
  * {@link org.springframework.web.method.support.HandlerMethodReturnValueHandler}s
  * in Spring MVC's {@link RequestMappingHandlerAdapter}.
  *
@@ -66,21 +65,29 @@ public class DmxFunWebMvcAutoConfiguration {
         return new BeanPostProcessor() {
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-                if (!(bean instanceof RequestMappingHandlerAdapter adapter)) return bean;
+                if (!(bean instanceof RequestMappingHandlerAdapter adapter)) {
+                    return bean;
+                }
 
-                List<HandlerMethodReturnValueHandler> current = adapter.getReturnValueHandlers();
-                if (current == null) return bean;
+                var current = adapter.getReturnValueHandlers();
+                if (current == null) {
+                    return bean;
+                }
 
-                List<HandlerMethodReturnValueHandler> handlers = new ArrayList<>(current);
-                if (handlers.stream().anyMatch(guard::isInstance)) return bean;
+                var handlers = new ArrayList<>(current);
+                if (handlers.stream().anyMatch(guard::isInstance)) {
+                    return bean;
+                }
 
-                HandlerMethodReturnValueHandler bodyProcessor = handlers.stream()
+                var bodyProcessor = handlers.stream()
                     .filter(h -> h instanceof RequestResponseBodyMethodProcessor)
                     .findFirst()
                     .orElse(null);
-                if (bodyProcessor == null) return bean;
+                if (bodyProcessor == null) {
+                    return bean;
+                }
 
-                handlers.add(0, factory.apply(bodyProcessor));
+                handlers.addFirst(factory.apply(bodyProcessor));
                 adapter.setReturnValueHandlers(handlers);
                 return bean;
             }

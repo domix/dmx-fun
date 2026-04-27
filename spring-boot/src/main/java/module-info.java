@@ -9,6 +9,8 @@
 module dmx.fun.spring.boot {
     requires dmx.fun;
     requires dmx.fun.spring;
+    requires spring.core;
+    requires spring.beans;
     requires spring.context;
     requires spring.tx;
     requires static spring.boot.autoconfigure;

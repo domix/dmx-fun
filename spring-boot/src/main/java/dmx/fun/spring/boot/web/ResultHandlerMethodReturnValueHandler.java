@@ -86,7 +86,7 @@ public final class ResultHandlerMethodReturnValueHandler implements HandlerMetho
     }
 
     private static void set500(NativeWebRequest webRequest) {
-        HttpServletResponse response = webRequest.getNativeResponse(HttpServletResponse.class);
+        var response = webRequest.getNativeResponse(HttpServletResponse.class);
         if (response != null) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
