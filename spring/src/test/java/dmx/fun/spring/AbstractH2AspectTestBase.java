@@ -42,7 +42,8 @@ abstract class AbstractH2AspectTestBase {
     }
 
     int countRows() {
-        return jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
+        var count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
+        return count != null ? count : 0;
     }
 
     @Configuration
