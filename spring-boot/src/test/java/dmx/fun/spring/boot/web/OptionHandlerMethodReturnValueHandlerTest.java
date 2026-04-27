@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
@@ -98,7 +99,7 @@ class OptionHandlerMethodReturnValueHandlerTest {
 
         @Override
         public void handleReturnValue(Object returnValue, MethodParameter returnType,
-                ModelAndViewContainer mavContainer, org.springframework.web.context.request.NativeWebRequest webRequest) {
+                ModelAndViewContainer mavContainer, NativeWebRequest webRequest) {
             calls.add(returnValue);
             mavContainer.setRequestHandled(true);
         }

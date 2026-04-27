@@ -23,6 +23,14 @@ public final class ResultHandlerMethodReturnValueHandler implements HandlerMetho
 
     private final HandlerMethodReturnValueHandler delegate;
 
+    /**
+     * Creates a handler that unwraps {@link dmx.fun.Result}, {@link dmx.fun.Validated}, and
+     * {@link dmx.fun.Try} return values and delegates serialization of the unwrapped value (or
+     * error) to the given handler.
+     *
+     * @param delegate the handler that writes the response body — typically a
+     *                 {@code RequestResponseBodyMethodProcessor}
+     */
     public ResultHandlerMethodReturnValueHandler(HandlerMethodReturnValueHandler delegate) {
         this.delegate = delegate;
     }

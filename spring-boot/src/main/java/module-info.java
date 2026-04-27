@@ -1,3 +1,11 @@
+/**
+ * Spring Boot autoconfiguration for the dmx-fun library.
+ *
+ * <p>Provides autoconfiguration for Spring transaction helpers ({@link dmx.fun.spring.TxResult},
+ * {@link dmx.fun.spring.TxTry}, {@link dmx.fun.spring.TxValidated}), the transactional AOP
+ * aspect, Jackson serialization support, and Spring MVC return-value handlers for
+ * {@code Option}, {@code Result}, {@code Validated}, and {@code Try}.
+ */
 module dmx.fun.spring.boot {
     requires dmx.fun;
     requires dmx.fun.spring;
