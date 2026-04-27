@@ -10,7 +10,7 @@
 7. First steps with function composition
 8. Higher-order functions explained with real examples
 9. map, filter, and reduce beyond the basic tutorial
-10. Why avoid mutable state?
+10. ~~Why avoid mutable state?~~
 
 ### Practical topics
 
