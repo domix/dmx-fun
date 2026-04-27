@@ -10,7 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 /**
- * Spring Boot auto-configuration that registers {@link DmxFunModule} with the application's
+ * Spring Boot autoconfiguration that registers {@link DmxFunModule} with the application's
  * Jackson {@link ObjectMapper}.
  *
  * <p>Activates only when both {@code jackson-databind} and {@code fun-jackson} are on the
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Bean;
  * call is needed.
  *
  * <p>Back-off: if the application already declares a {@link DmxFunModule} bean, this
- * auto-configuration does not register a second one.
+ * autoconfiguration does not register a second one.
  *
  * <p>Opt out: set {@code dmx.fun.jackson.enabled=false} in {@code application.properties}.
  */

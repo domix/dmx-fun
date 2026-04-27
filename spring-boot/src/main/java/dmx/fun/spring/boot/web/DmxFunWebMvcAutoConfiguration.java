@@ -1,9 +1,8 @@
 package dmx.fun.spring.boot.web;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -16,7 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
 /**
- * Spring Boot auto-configuration that registers dmx-fun Spring MVC
+ * Spring Boot autoconfiguration that registers dmx-fun Spring MVC
  * {@link org.springframework.web.method.support.HandlerMethodReturnValueHandler}s
  * in Spring MVC's {@link RequestMappingHandlerAdapter}.
  *
@@ -41,63 +40,55 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBody
 @NullMarked
 public class DmxFunWebMvcAutoConfiguration {
 
+    /** Default constructor required for Spring Boot auto-configuration instantiation. */
+    public DmxFunWebMvcAutoConfiguration() {}
+
     @Bean
     @ConditionalOnProperty(name = "dmx.fun.mvc.result-handler.enabled", havingValue = "true", matchIfMissing = true)
     static BeanPostProcessor resultReturnValueHandlerPostProcessor() {
-        return new BeanPostProcessor() {
-            @Override
-            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-                if (!(bean instanceof RequestMappingHandlerAdapter adapter)) return bean;
-
-                List<HandlerMethodReturnValueHandler> current = adapter.getReturnValueHandlers();
-                if (current == null) return bean;
-
-                List<HandlerMethodReturnValueHandler> handlers = new ArrayList<>(current);
-
-                boolean alreadyPresent = handlers.stream()
-                    .anyMatch(h -> h instanceof ResultHandlerMethodReturnValueHandler);
-                if (alreadyPresent) return bean;
-
-                @Nullable HandlerMethodReturnValueHandler bodyProcessor = handlers.stream()
-                    .filter(h -> h instanceof RequestResponseBodyMethodProcessor)
-                    .findFirst()
-                    .orElse(null);
-                if (bodyProcessor == null) return bean;
-
-                handlers.add(0, new ResultHandlerMethodReturnValueHandler(bodyProcessor));
-                adapter.setReturnValueHandlers(handlers);
-
-                return bean;
-            }
-        };
+        return insertionPostProcessor(
+            ResultHandlerMethodReturnValueHandler.class,
+            ResultHandlerMethodReturnValueHandler::new);
     }
 
     @Bean
     @ConditionalOnProperty(name = "dmx.fun.mvc.option-handler.enabled", havingValue = "true", matchIfMissing = true)
     static BeanPostProcessor optionReturnValueHandlerPostProcessor() {
+        return insertionPostProcessor(
+            OptionHandlerMethodReturnValueHandler.class,
+            OptionHandlerMethodReturnValueHandler::new);
+    }
+
+    private static BeanPostProcessor insertionPostProcessor(
+            Class<? extends HandlerMethodReturnValueHandler> guard,
+            Function<HandlerMethodReturnValueHandler, HandlerMethodReturnValueHandler> factory) {
         return new BeanPostProcessor() {
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-                if (!(bean instanceof RequestMappingHandlerAdapter adapter)) return bean;
+                if (!(bean instanceof RequestMappingHandlerAdapter adapter)) {
+                    return bean;
+                }
 
-                List<HandlerMethodReturnValueHandler> current = adapter.getReturnValueHandlers();
-                if (current == null) return bean;
+                var current = adapter.getReturnValueHandlers();
+                if (current == null) {
+                    return bean;
+                }
 
-                List<HandlerMethodReturnValueHandler> handlers = new ArrayList<>(current);
+                var handlers = new ArrayList<>(current);
+                if (handlers.stream().anyMatch(guard::isInstance)) {
+                    return bean;
+                }
 
-                boolean alreadyPresent = handlers.stream()
-                    .anyMatch(h -> h instanceof OptionHandlerMethodReturnValueHandler);
-                if (alreadyPresent) return bean;
-
-                @Nullable HandlerMethodReturnValueHandler bodyProcessor = handlers.stream()
+                var bodyProcessor = handlers.stream()
                     .filter(h -> h instanceof RequestResponseBodyMethodProcessor)
                     .findFirst()
                     .orElse(null);
-                if (bodyProcessor == null) return bean;
+                if (bodyProcessor == null) {
+                    return bean;
+                }
 
-                handlers.add(0, new OptionHandlerMethodReturnValueHandler(bodyProcessor));
+                handlers.addFirst(factory.apply(bodyProcessor));
                 adapter.setReturnValueHandlers(handlers);
-
                 return bean;
             }
         };

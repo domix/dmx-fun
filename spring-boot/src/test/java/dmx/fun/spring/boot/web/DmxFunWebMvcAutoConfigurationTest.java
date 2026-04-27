@@ -50,7 +50,7 @@ class DmxFunWebMvcAutoConfigurationTest {
     @Test
     void optionPostProcessor_ignoresNonAdapterBeans() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
             Object other = "not-an-adapter";
             assertThat(bpp.postProcessAfterInitialization(other, "x")).isSameAs(other);
         });
@@ -59,7 +59,7 @@ class DmxFunWebMvcAutoConfigurationTest {
     @Test
     void resultPostProcessor_ignoresNonAdapterBeans() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
             Object other = "not-an-adapter";
             assertThat(bpp.postProcessAfterInitialization(other, "x")).isSameAs(other);
         });
@@ -68,8 +68,8 @@ class DmxFunWebMvcAutoConfigurationTest {
     @Test
     void optionPostProcessor_returnsEarly_whenHandlersNull() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            StubAdapter adapter = new StubAdapter(null);
+            var bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var adapter = new StubAdapter(null);
             assertThat(bpp.postProcessAfterInitialization(adapter, "adapter")).isSameAs(adapter);
             assertThat(adapter.handlers).isNull();
         });
@@ -78,8 +78,8 @@ class DmxFunWebMvcAutoConfigurationTest {
     @Test
     void resultPostProcessor_returnsEarly_whenHandlersNull() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            StubAdapter adapter = new StubAdapter(null);
+            var bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var adapter = new StubAdapter(null);
             assertThat(bpp.postProcessAfterInitialization(adapter, "adapter")).isSameAs(adapter);
             assertThat(adapter.handlers).isNull();
         });
@@ -88,9 +88,9 @@ class DmxFunWebMvcAutoConfigurationTest {
     @Test
     void optionPostProcessor_insertsHandler_atIndex0_beforeBodyProcessor() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
-            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(bodyProcessor)));
+            var bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var bodyProcessor = new StubBodyProcessor();
+            var adapter = new StubAdapter(new ArrayList<>(List.of(bodyProcessor)));
 
             bpp.postProcessAfterInitialization(adapter, "adapter");
 
@@ -103,9 +103,9 @@ class DmxFunWebMvcAutoConfigurationTest {
     @Test
     void resultPostProcessor_insertsHandler_atIndex0_beforeBodyProcessor() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
-            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(bodyProcessor)));
+            var bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var bodyProcessor = new StubBodyProcessor();
+            var adapter = new StubAdapter(new ArrayList<>(List.of(bodyProcessor)));
 
             bpp.postProcessAfterInitialization(adapter, "adapter");
 
@@ -118,58 +118,58 @@ class DmxFunWebMvcAutoConfigurationTest {
     @Test
     void optionPostProcessor_isIdempotent_whenHandlerAlreadyPresent() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
-            OptionHandlerMethodReturnValueHandler existing = new OptionHandlerMethodReturnValueHandler(bodyProcessor);
-            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(existing, bodyProcessor)));
+            var bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var bodyProcessor = new StubBodyProcessor();
+            var existing = new OptionHandlerMethodReturnValueHandler(bodyProcessor);
+            var adapter = new StubAdapter(new ArrayList<>(List.of(existing, bodyProcessor)));
 
             bpp.postProcessAfterInitialization(adapter, "adapter");
 
             assertThat(adapter.handlers).hasSize(2);
-            assertThat(adapter.handlers.get(0)).isSameAs(existing);
+            assertThat(adapter.handlers.getFirst()).isSameAs(existing);
         });
     }
 
     @Test
     void resultPostProcessor_isIdempotent_whenHandlerAlreadyPresent() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            HandlerMethodReturnValueHandler bodyProcessor = new StubBodyProcessor();
-            ResultHandlerMethodReturnValueHandler existing = new ResultHandlerMethodReturnValueHandler(bodyProcessor);
-            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(existing, bodyProcessor)));
+            var bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var bodyProcessor = new StubBodyProcessor();
+            var existing = new ResultHandlerMethodReturnValueHandler(bodyProcessor);
+            var adapter = new StubAdapter(new ArrayList<>(List.of(existing, bodyProcessor)));
 
             bpp.postProcessAfterInitialization(adapter, "adapter");
 
             assertThat(adapter.handlers).hasSize(2);
-            assertThat(adapter.handlers.get(0)).isSameAs(existing);
+            assertThat(adapter.handlers.getFirst()).isSameAs(existing);
         });
     }
 
     @Test
     void optionPostProcessor_skipsInsert_whenNoBodyProcessorFound() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            HandlerMethodReturnValueHandler other = new StubHandler();
-            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(other)));
+            var bpp = ctx.getBean("optionReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var other = new StubHandler();
+            var adapter = new StubAdapter(new ArrayList<>(List.of(other)));
 
             bpp.postProcessAfterInitialization(adapter, "adapter");
 
             assertThat(adapter.handlers).hasSize(1);
-            assertThat(adapter.handlers.get(0)).isSameAs(other);
+            assertThat(adapter.handlers.getFirst()).isSameAs(other);
         });
     }
 
     @Test
     void resultPostProcessor_skipsInsert_whenNoBodyProcessorFound() {
         runner.run(ctx -> {
-            BeanPostProcessor bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
-            HandlerMethodReturnValueHandler other = new StubHandler();
-            StubAdapter adapter = new StubAdapter(new ArrayList<>(List.of(other)));
+            var bpp = ctx.getBean("resultReturnValueHandlerPostProcessor", BeanPostProcessor.class);
+            var other = new StubHandler();
+            var adapter = new StubAdapter(new ArrayList<>(List.of(other)));
 
             bpp.postProcessAfterInitialization(adapter, "adapter");
 
             assertThat(adapter.handlers).hasSize(1);
-            assertThat(adapter.handlers.get(0)).isSameAs(other);
+            assertThat(adapter.handlers.getFirst()).isSameAs(other);
         });
     }
 

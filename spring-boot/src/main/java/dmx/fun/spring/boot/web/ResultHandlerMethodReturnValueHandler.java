@@ -23,6 +23,14 @@ public final class ResultHandlerMethodReturnValueHandler implements HandlerMetho
 
     private final HandlerMethodReturnValueHandler delegate;
 
+    /**
+     * Creates a handler that unwraps {@link dmx.fun.Result}, {@link dmx.fun.Validated}, and
+     * {@link dmx.fun.Try} return values and delegates serialization of the unwrapped value (or
+     * error) to the given handler.
+     *
+     * @param delegate the handler that writes the response body — typically a
+     *                 {@code RequestResponseBodyMethodProcessor}
+     */
     public ResultHandlerMethodReturnValueHandler(HandlerMethodReturnValueHandler delegate) {
         this.delegate = delegate;
     }
@@ -78,7 +86,7 @@ public final class ResultHandlerMethodReturnValueHandler implements HandlerMetho
     }
 
     private static void set500(NativeWebRequest webRequest) {
-        HttpServletResponse response = webRequest.getNativeResponse(HttpServletResponse.class);
+        var response = webRequest.getNativeResponse(HttpServletResponse.class);
         if (response != null) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
