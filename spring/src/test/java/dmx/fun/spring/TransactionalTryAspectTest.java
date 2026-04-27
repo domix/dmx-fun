@@ -1,55 +1,24 @@
 package dmx.fun.spring;
 
 import dmx.fun.Try;
-import org.junit.jupiter.api.AfterAll;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class TransactionalTryAspectTest {
+class TransactionalTryAspectTest extends AbstractH2AspectTestBase {
 
-    static AnnotationConfigApplicationContext ctx;
-    static JdbcTemplate jdbc;
     static TryService service;
-    static RecordingTxManager recording;
 
     @BeforeAll
     static void startContext() {
-        ctx = new AnnotationConfigApplicationContext(TestConfig.class);
-        jdbc = ctx.getBean(JdbcTemplate.class);
+        initContext(ServiceConfig.class);
         service = ctx.getBean(TryService.class);
-        recording = ctx.getBean("secondaryTxManager", RecordingTxManager.class);
-    }
-
-    @BeforeEach
-    void clearTable() {
-        jdbc.execute("DELETE FROM events");
-        recording.reset();
-    }
-
-    @AfterAll
-    static void stopContext() {
-        ctx.close();
-    }
-
-    private int countRows() {
-        return jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
     }
 
     // -------------------------------------------------------------------------
@@ -60,7 +29,7 @@ class TransactionalTryAspectTest {
     void onSuccess_commits() {
         var result = service.insertAndSucceed(1);
         assertThat(result).isSuccess().containsValue(1);
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
@@ -68,8 +37,8 @@ class TransactionalTryAspectTest {
         var ex = new RuntimeException("domain-failure");
         var result = service.insertAndFail(2, ex);
         assertThat(result).isFailure();
-        assertThat(result.getCause()).isSameAs(ex);
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(result.getCause()).isSameAs(ex);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -77,14 +46,14 @@ class TransactionalTryAspectTest {
         assertThatThrownBy(() -> service.insertAndThrow(3))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("boom");
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void onNullReturn_rollsBackAndThrowsNPE() {
         assertThatThrownBy(() -> service.insertAndReturnNull(4))
             .isInstanceOf(NullPointerException.class);
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     // -------------------------------------------------------------------------
@@ -95,16 +64,18 @@ class TransactionalTryAspectTest {
     void namedTransactionManager_onSuccess_commits() {
         var result = service.insertWithNamedTxManager(5);
         assertThat(result).isSuccess();
-        assertThat(countRows()).isEqualTo(1);
-        assertThat(recording.wasUsed()).isTrue();
+        Assertions.assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(secondaryRecording.wasUsed()).isTrue();
+        Assertions.assertThat(primaryRecording.wasUsed()).isFalse();
     }
 
     @Test
     void namedTransactionManager_onFailure_rollsBack() {
         var result = service.insertWithNamedTxManagerAndFail(6);
         assertThat(result).isFailure();
-        assertThat(countRows()).isEqualTo(0);
-        assertThat(recording.wasUsed()).isTrue();
+        Assertions.assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(secondaryRecording.wasUsed()).isTrue();
+        Assertions.assertThat(primaryRecording.wasUsed()).isFalse();
     }
 
     // -------------------------------------------------------------------------
@@ -172,49 +143,14 @@ class TransactionalTryAspectTest {
     }
 
     // -------------------------------------------------------------------------
-    // Spring configuration
+    // Service configuration
     // -------------------------------------------------------------------------
 
     @Configuration
-    @EnableAspectJAutoProxy
-    static class TestConfig {
-
-        @Bean
-        EmbeddedDatabase dataSource() {
-            return new EmbeddedDatabaseBuilder()
-                .setType(EmbeddedDatabaseType.H2)
-                .generateUniqueName(true)
-                .build();
-        }
-
-        @Bean
-        JdbcTemplate jdbcTemplate(EmbeddedDatabase ds) {
-            var tmpl = new JdbcTemplate(ds);
-            tmpl.execute("CREATE TABLE events (id INT PRIMARY KEY, label VARCHAR(255))");
-            return tmpl;
-        }
-
-        @Primary
-        @Bean
-        DataSourceTransactionManager txManager(EmbeddedDatabase ds) {
-            return new DataSourceTransactionManager(ds);
-        }
-
-        @Bean
-        RecordingTxManager secondaryTxManager(EmbeddedDatabase ds) {
-            return new RecordingTxManager(new DataSourceTransactionManager(ds));
-        }
-
-        @Bean
-        DmxTransactionalAspect dmxTransactionalAspect(
-                PlatformTransactionManager txManager, BeanFactory beanFactory) {
-            return new DmxTransactionalAspect(txManager, beanFactory);
-        }
-
+    static class ServiceConfig {
         @Bean
         TryServiceImpl tryService(JdbcTemplate jdbcTemplate) {
             return new TryServiceImpl(jdbcTemplate);
         }
     }
-
 }

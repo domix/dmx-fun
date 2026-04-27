@@ -12,8 +12,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import org.assertj.core.api.Assertions;
+
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -53,24 +54,24 @@ class TxValidatedPostgresTest {
 
     @Test
     void execute_onValid_commits() {
-        Validated<String, Integer> result = txValidated.execute(() -> {
+        var result = txValidated.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (1, 'pg-test')");
             return Validated.valid(1);
         });
 
         assertThat(result).isValid();
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void execute_onInvalid_rollsBack() {
-        Validated<String, Integer> result = txValidated.execute(() -> {
+        var result = txValidated.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (2, 'pg-test')");
             return Validated.invalid("validation error");
         });
 
         assertThat(result).isInvalid();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -81,30 +82,30 @@ class TxValidatedPostgresTest {
         })).isInstanceOf(RuntimeException.class)
            .hasMessage("boom");
 
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void execute_withExplicitDef_onInvalid_rollsBack() {
         var def = new DefaultTransactionDefinition();
-        Validated<String, Integer> result = txValidated.execute(def, () -> {
+        var result = txValidated.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (4, 'pg-def')");
             return Validated.invalid("rollback");
         });
 
         assertThat(result).isInvalid();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void execute_multipleInserts_allRollBackOnInvalid() {
-        Validated<String, Integer> result = txValidated.execute(() -> {
+        var result = txValidated.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (10, 'a')");
             jdbc.update("INSERT INTO events VALUES (11, 'b')");
             return Validated.invalid("partial");
         });
 
         assertThat(result).isInvalid();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 }

@@ -12,8 +12,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import org.assertj.core.api.Assertions;
+
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -56,25 +57,25 @@ class TxTryPostgresTest {
 
     @Test
     void execute_onSuccess_commits() {
-        Try<Integer> result = txTry.execute(() -> {
+        var result = txTry.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (1, 'pg-test')");
             return Try.success(1);
         });
 
         assertThat(result).isSuccess();
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void execute_onFailure_rollsBack() {
         var ex = new RuntimeException("domain failure");
-        Try<Integer> result = txTry.execute(() -> {
+        var result = txTry.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (2, 'pg-test')");
             return Try.failure(ex);
         });
 
         assertThat(result).isFailure();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -85,30 +86,30 @@ class TxTryPostgresTest {
         })).isInstanceOf(RuntimeException.class)
            .hasMessage("boom");
 
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void execute_withExplicitDef_onFailure_rollsBack() {
         var def = new DefaultTransactionDefinition();
-        Try<Integer> result = txTry.execute(def, () -> {
+        var result = txTry.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (4, 'pg-def')");
             return Try.failure(new RuntimeException("rollback"));
         });
 
         assertThat(result).isFailure();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void execute_multipleInserts_allRollBackOnFailure() {
-        Try<Integer> result = txTry.execute(() -> {
+        var result = txTry.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (10, 'a')");
             jdbc.update("INSERT INTO events VALUES (11, 'b')");
             return Try.failure(new RuntimeException("partial"));
         });
 
         assertThat(result).isFailure();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 }
