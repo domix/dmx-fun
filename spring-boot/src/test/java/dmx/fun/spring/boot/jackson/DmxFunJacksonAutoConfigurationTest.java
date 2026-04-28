@@ -26,17 +26,19 @@ class DmxFunJacksonAutoConfigurationTest {
     @Test
     void disabled_whenPropertyFalse() {
         runner.withPropertyValues("dmx.fun.jackson.enabled=false")
-            .run(ctx -> assertThat(ctx).doesNotHaveBean(DmxFunModule.class));
+            .run(ctx -> assertThat(ctx)
+                .doesNotHaveBean(DmxFunModule.class));
     }
 
     // ── @ConditionalOnMissingBean back-off ───────────────────────────────────
 
     @Test
     void backsOff_whenDmxFunModuleAlreadyPresent() {
-        runner.withUserConfiguration(CustomModuleConfig.class).run(ctx -> {
-            assertThat(ctx).hasSingleBean(DmxFunModule.class);
-            assertThat(ctx.getBean(DmxFunModule.class)).isSameAs(ctx.getBean("customModule"));
-        });
+        runner.withUserConfiguration(CustomModuleConfig.class)
+            .run(ctx -> {
+                assertThat(ctx).hasSingleBean(DmxFunModule.class);
+                assertThat(ctx.getBean(DmxFunModule.class)).isSameAs(ctx.getBean("customModule"));
+            });
     }
 
     // ── Test configurations ───────────────────────────────────────────────────
@@ -44,6 +46,8 @@ class DmxFunJacksonAutoConfigurationTest {
     @Configuration
     static class CustomModuleConfig {
         @Bean
-        DmxFunModule customModule() { return new DmxFunModule(); }
+        DmxFunModule customModule() {
+            return new DmxFunModule();
+        }
     }
 }

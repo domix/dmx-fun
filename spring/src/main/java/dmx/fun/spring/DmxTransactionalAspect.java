@@ -79,7 +79,7 @@ public class DmxTransactionalAspect {
     public Object aroundResult(ProceedingJoinPoint pjp, TransactionalResult ann) {
         return executor(ann.transactionManager())
             .execute(
-                definition(ann.propagation(), ann.isolation(), ann.timeout()),
+                definition(ann.propagation(), ann.isolation(), ann.timeout(), ann.readOnly()),
                 () -> (Result<Object, Object>) proceed(pjp),
                 Result::isError
             );
@@ -98,7 +98,7 @@ public class DmxTransactionalAspect {
     public Object aroundTry(ProceedingJoinPoint pjp, TransactionalTry ann) {
         return executor(ann.transactionManager())
             .execute(
-                definition(ann.propagation(), ann.isolation(), ann.timeout()),
+                definition(ann.propagation(), ann.isolation(), ann.timeout(), ann.readOnly()),
                 () -> (Try<Object>) proceed(pjp),
                 Try::isFailure
             );
@@ -117,7 +117,7 @@ public class DmxTransactionalAspect {
     public Object aroundValidated(ProceedingJoinPoint pjp, TransactionalValidated ann) {
         return executor(ann.transactionManager())
             .execute(
-                definition(ann.propagation(), ann.isolation(), ann.timeout()),
+                definition(ann.propagation(), ann.isolation(), ann.timeout(), ann.readOnly()),
                 () -> (Validated<Object, Object>) proceed(pjp),
                 Validated::isInvalid
             );
@@ -131,11 +131,12 @@ public class DmxTransactionalAspect {
     }
 
     private static DefaultTransactionDefinition definition(
-            Propagation propagation, Isolation isolation, int timeout) {
+            Propagation propagation, Isolation isolation, int timeout, boolean readOnly) {
         var def = new DefaultTransactionDefinition();
         def.setPropagationBehavior(propagation.value());
         def.setIsolationLevel(isolation.value());
         def.setTimeout(timeout);
+        def.setReadOnly(readOnly);
         return def;
     }
 
@@ -144,6 +145,9 @@ public class DmxTransactionalAspect {
         try {
             return (T) pjp.proceed();
         } catch (RuntimeException | Error e) {
+            // Re-throw unchecked throwables as-is — without this clause they would
+            // fall into the Throwable catch and be wrapped in a new RuntimeException,
+            // hiding the original exception type from the caller.
             throw e;
         } catch (Throwable t) {
             throw new RuntimeException(t);

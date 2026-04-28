@@ -260,12 +260,13 @@ or register the aspect explicitly with the `@Bean` declaration shown above.
 
 All three annotations accept the same attributes as Spring's `@Transactional`:
 
-| Attribute | Type | Default |
-|---|---|---|
-| `propagation` | `Propagation` | `REQUIRED` |
-| `isolation` | `Isolation` | `DEFAULT` |
-| `timeout` | `int` (seconds) | `TIMEOUT_DEFAULT` (-1, no explicit timeout) |
-| `transactionManager` | `String` (bean name) | primary `PlatformTransactionManager` |
+| Attribute | Type | Default | Notes |
+|---|---|---|---|
+| `propagation` | `Propagation` | `REQUIRED` | |
+| `isolation` | `Isolation` | `DEFAULT` | |
+| `timeout` | `int` (seconds) | `TIMEOUT_DEFAULT` (-1) | |
+| `readOnly` | `boolean` | `false` | Hint to the driver/ORM; enforcement depends on the transaction manager |
+| `transactionManager` | `String` (bean name) | primary `PlatformTransactionManager` | |
 
 <TransactionalAttributes/>
 
