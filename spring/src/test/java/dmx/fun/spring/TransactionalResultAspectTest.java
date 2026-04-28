@@ -77,6 +77,17 @@ class TransactionalResultAspectTest extends AbstractH2AspectTestBase {
     }
 
     // -------------------------------------------------------------------------
+    // readOnly flag
+    // -------------------------------------------------------------------------
+
+    @Test
+    void readOnly_forwardsHintToTransactionManager() {
+        service.selectReadOnly(1);
+        Assertions.assertThat(primaryRecording.lastDefinition()).isNotNull();
+        Assertions.assertThat(primaryRecording.lastDefinition().isReadOnly()).isTrue();
+    }
+
+    // -------------------------------------------------------------------------
     // Test service
     // -------------------------------------------------------------------------
 
@@ -87,6 +98,7 @@ class TransactionalResultAspectTest extends AbstractH2AspectTestBase {
         Result<Integer, String> insertAndReturnNull(int id);
         Result<Integer, String> insertWithNamedTxManager(int id);
         Result<Integer, String> insertWithNamedTxManagerAndErr(int id);
+        Result<Integer, String> selectReadOnly(int id);
     }
 
     static class ResultServiceImpl implements ResultService {
@@ -137,6 +149,12 @@ class TransactionalResultAspectTest extends AbstractH2AspectTestBase {
         public Result<Integer, String> insertWithNamedTxManagerAndErr(int id) {
             jdbc.update("INSERT INTO events VALUES (?, 'named-err')", id);
             return Result.err("named-error");
+        }
+
+        @Override
+        @TransactionalResult(readOnly = true)
+        public Result<Integer, String> selectReadOnly(int id) {
+            return Result.ok(id);
         }
     }
 

@@ -7,17 +7,20 @@ import org.springframework.transaction.TransactionStatus;
 class RecordingTxManager implements PlatformTransactionManager {
     private final PlatformTransactionManager delegate;
     private boolean used = false;
+    private TransactionDefinition lastDefinition = null;
 
     RecordingTxManager(PlatformTransactionManager delegate) {
         this.delegate = delegate;
     }
 
-    void reset() { used = false; }
+    void reset() { used = false; lastDefinition = null; }
     boolean wasUsed() { return used; }
+    TransactionDefinition lastDefinition() { return lastDefinition; }
 
     @Override
     public TransactionStatus getTransaction(TransactionDefinition definition) {
         used = true;
+        lastDefinition = definition;
         return delegate.getTransaction(definition);
     }
 
