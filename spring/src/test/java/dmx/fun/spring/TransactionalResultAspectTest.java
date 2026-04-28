@@ -83,6 +83,7 @@ class TransactionalResultAspectTest extends AbstractH2AspectTestBase {
     @Test
     void readOnly_forwardsHintToTransactionManager() {
         service.selectReadOnly(1);
+        Assertions.assertThat(primaryRecording.lastDefinition()).isNotNull();
         Assertions.assertThat(primaryRecording.lastDefinition().isReadOnly()).isTrue();
     }
 

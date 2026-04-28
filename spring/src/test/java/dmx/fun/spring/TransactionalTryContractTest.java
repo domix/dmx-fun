@@ -20,15 +20,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * behave consistently with Spring's {@link org.springframework.transaction.annotation.Transactional}
  * contract.
  *
- * <p>Covers the subset of propagation modes that are most likely to vary in
- * behaviour for {@code Try}-returning methods:
+ * <p>Each propagation mode is exercised in both its success and failure paths to confirm
+ * that commit/rollback semantics match Spring's documented behaviour:
  * <ul>
  *   <li>{@code REQUIRED} — joins an existing outer transaction; inner failure marks
- *       the shared transaction globally rollback-only.</li>
- *   <li>{@code REQUIRES_NEW} — independent inner transaction; commit/rollback does
- *       not affect the outer.</li>
+ *       the shared transaction globally rollback-only, causing the outer commit to throw
+ *       {@link org.springframework.transaction.UnexpectedRollbackException}.</li>
+ *   <li>{@code REQUIRES_NEW} — suspends the outer transaction and starts an independent
+ *       one; commit/rollback of the inner transaction does not affect the outer.</li>
  *   <li>{@code MANDATORY} — throws {@link IllegalTransactionStateException} when no
  *       active transaction is present.</li>
+ *   <li>{@code NEVER} — throws {@link IllegalTransactionStateException} when an active
+ *       transaction is present.</li>
+ *   <li>{@code SUPPORTS} — runs non-transactionally (auto-commit) when no outer tx is
+ *       present; a failure return cannot roll back what was already auto-committed.</li>
+ *   <li>{@code NOT_SUPPORTED} — suspends the outer transaction; the inner method runs
+ *       without a transaction (auto-commit), so its work persists regardless of what
+ *       the outer transaction does.</li>
  * </ul>
  */
 class TransactionalTryContractTest extends AbstractH2AspectTestBase {
@@ -115,6 +123,68 @@ class TransactionalTryContractTest extends AbstractH2AspectTestBase {
         Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
+    // ── Propagation.NEVER ────────────────────────────────────────────────────
+
+    @Test
+    void never_throwsWhenActiveTxPresent() {
+        assertThatThrownBy(() ->
+            new TransactionTemplate(primaryRecording).execute(status -> {
+                service.insertNeverAndSucceed(1);
+                return null;
+            })
+        ).isInstanceOf(IllegalTransactionStateException.class);
+        Assertions.assertThat(countRows()).isEqualTo(0);
+    }
+
+    @Test
+    void never_runsWithoutTx_whenNoActiveTx() {
+        var result = service.insertNeverAndSucceed(1);
+        assertThat(result).isSuccess();
+        Assertions.assertThat(countRows()).isEqualTo(1);
+    }
+
+    // ── Propagation.SUPPORTS ─────────────────────────────────────────────────
+
+    @Test
+    void supports_withoutActiveTx_failDoesNotRollBack() {
+        // Without an outer tx the method runs on an auto-commit connection.
+        // A failure return has nothing to roll back, so the insert persists.
+        var result = service.insertSupportsAndFail(1);
+        assertThat(result).isFailure();
+        Assertions.assertThat(countRows()).isEqualTo(1);
+    }
+
+    @Test
+    void supports_withinActiveTx_failMarksGlobalRollbackOnly() {
+        // Within an outer tx, SUPPORTS behaves like REQUIRED: the inner failure
+        // marks the shared tx globally rollback-only, causing UnexpectedRollbackException.
+        assertThatThrownBy(() ->
+            new TransactionTemplate(primaryRecording).execute(status -> {
+                service.insertSupportsAndFail(1);
+                return null;
+            })
+        ).isInstanceOf(UnexpectedRollbackException.class);
+        Assertions.assertThat(countRows()).isEqualTo(0);
+    }
+
+    // ── Propagation.NOT_SUPPORTED ────────────────────────────────────────────
+
+    @Test
+    void notSupported_withinActiveTx_innerInsertPersists_outerRollbackDoesNotAffectInner() {
+        // NOT_SUPPORTED suspends the outer tx; the inner method runs on a fresh
+        // auto-commit connection, so its insert persists even after the outer rolls back.
+        new TransactionTemplate(primaryRecording).execute(status -> {
+            jdbc.update("INSERT INTO events VALUES (300, 'outer')");
+            service.insertNotSupportedAndFail(301);
+            status.setRollbackOnly();
+            return null;
+        });
+        Assertions.assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(
+            jdbc.queryForObject("SELECT COUNT(*) FROM events WHERE id = 301", Integer.class)
+        ).isEqualTo(1);
+    }
+
     // ── Service ──────────────────────────────────────────────────────────────
 
     interface ContractService {
@@ -123,6 +193,9 @@ class TransactionalTryContractTest extends AbstractH2AspectTestBase {
         Try<Integer> insertRequiresNewAndSucceed(int id);
         Try<Integer> insertRequiresNewAndFail(int id);
         Try<Integer> insertMandatoryAndSucceed(int id);
+        Try<Integer> insertNeverAndSucceed(int id);
+        Try<Integer> insertSupportsAndFail(int id);
+        Try<Integer> insertNotSupportedAndFail(int id);
     }
 
     static class ContractServiceImpl implements ContractService {
@@ -165,6 +238,27 @@ class TransactionalTryContractTest extends AbstractH2AspectTestBase {
         public Try<Integer> insertMandatoryAndSucceed(int id) {
             jdbc.update("INSERT INTO events VALUES (?, 'mand-ok')", id);
             return Try.success(id);
+        }
+
+        @Override
+        @TransactionalTry(propagation = Propagation.NEVER)
+        public Try<Integer> insertNeverAndSucceed(int id) {
+            jdbc.update("INSERT INTO events VALUES (?, 'never-ok')", id);
+            return Try.success(id);
+        }
+
+        @Override
+        @TransactionalTry(propagation = Propagation.SUPPORTS)
+        public Try<Integer> insertSupportsAndFail(int id) {
+            jdbc.update("INSERT INTO events VALUES (?, 'supp-fail')", id);
+            return Try.failure(new RuntimeException("fail"));
+        }
+
+        @Override
+        @TransactionalTry(propagation = Propagation.NOT_SUPPORTED)
+        public Try<Integer> insertNotSupportedAndFail(int id) {
+            jdbc.update("INSERT INTO events VALUES (?, 'notsup-fail')", id);
+            return Try.failure(new RuntimeException("fail"));
         }
     }
 
