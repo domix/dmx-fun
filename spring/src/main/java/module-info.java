@@ -10,6 +10,7 @@
  */
 module dmx.fun.spring {
     requires dmx.fun;
+    requires spring.beans;
     requires spring.tx;
     requires spring.context;
     requires static org.aspectj.weaver;

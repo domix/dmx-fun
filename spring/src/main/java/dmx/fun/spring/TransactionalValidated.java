@@ -44,7 +44,7 @@ import org.springframework.transaction.annotation.Propagation;
 public @interface TransactionalValidated {
 
     /**
-     * Transaction propagation behaviour.
+     * Transaction propagation behavior.
      *
      * @return propagation setting; defaults to {@link Propagation#REQUIRED}
      */
@@ -69,8 +69,8 @@ public @interface TransactionalValidated {
      * Whether the transaction is read-only.
      *
      * <p>A read-only hint allows the underlying JDBC driver or ORM to apply
-     * optimisations (e.g. skip dirty checking, use a read replica). It does
-     * not prevent write statements — enforcement depends on the actual
+     * optimizations (e.g., skip dirty checking, use a read replica). It does
+     * not prevent writing statements — enforcement depends on the actual
      * transaction manager and data source.
      *
      * @return {@code true} to request a read-only transaction;
