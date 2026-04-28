@@ -87,7 +87,7 @@
 
 ### More random ideas to blog
 
-* **What functional programming means for a backend engineer**
+* ~~**What functional programming means for a backend engineer**~~
 * **Immutability in real systems: fewer bugs, fewer surprises**
 * **Error handling without exceptions: a functional approach**
 * **Option, Result, and Try explained pragmatically**
