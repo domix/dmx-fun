@@ -5,10 +5,11 @@ order: 20
 h1: "Micrometer Tracing Integration"
 ---
 
-import {Content as Dependency}  from '../code/guide/tracing/dependency.mdx';
-import {Content as DmxTracing}  from '../code/guide/tracing/dmx-tracing.mdx';
-import {Content as DmxTraced}   from '../code/guide/tracing/dmx-traced.mdx';
-import {Content as RealWorld}   from '../code/guide/tracing/real-world-example.mdx';
+import {Content as Dependency}       from '../code/guide/tracing/dependency.mdx';
+import {Content as DmxTracingSnippet} from '../code/guide/tracing/dmx-tracing.mdx';
+import {Content as DmxTraced}         from '../code/guide/tracing/dmx-traced.mdx';
+import {Content as RealWorld}         from '../code/guide/tracing/real-world-example.mdx';
+import {Content as SpringBootAuto}    from '../code/guide/tracing/spring-boot-auto.mdx';
 
 The `fun-tracing` module instruments `Try` and `Result` executions with distributed tracing
 spans automatically, opening a named child span for each call and recording outcome signals
@@ -68,7 +69,7 @@ The `exception` tag uses the simple class name of the thrown exception (e.g. `IO
 The primary entry point. Create one instance per `Tracer` (typically application-scoped)
 and call `traceTry` or `traceResult` at each instrumentation point.
 
-<DmxTracing/>
+<DmxTracingSnippet/>
 
 ## `DmxTraced` — fluent builder
 
@@ -82,9 +83,9 @@ factory method or when wiring the span name and tracer at different call sites �
 
 | Scenario | Recommendation |
 |---|---|
-| Multiple operations in the same class | `DmxTracing.of(tracer)` — inject once, call many times |
+| Spring Boot with `fun-spring-boot` | Inject `DmxTracing` directly — auto-configured, no setup needed |
+| Multiple operations in the same class (plain Spring) | `DmxTracing.of(tracer)` — inject `Tracer`, wrap once in the constructor |
 | Single ad-hoc operation or factory method | `DmxTraced.of(name).tracer(tracer).traceTry(...)` |
-| Spring Boot bean | Inject `Tracer`, wrap with `DmxTracing.of(tracer)` in the constructor |
 
 ## Real-world example
 
@@ -96,8 +97,46 @@ in the business logic; every step appears in the trace timeline automatically.
 
 ## Spring Boot integration
 
-Spring Boot auto-configures a `Tracer` bean when a Micrometer Tracing bridge is on the
-classpath. Inject it directly:
+When `fun-spring-boot`, `fun-tracing`, and a Micrometer Tracing bridge are all on the
+classpath, Spring Boot registers a `DmxTracing` bean automatically — no `@Bean` declaration
+or manual wiring required. Inject it directly into your services:
+
+<SpringBootAuto/>
+
+### How it works
+
+`DmxFunTracingAutoConfiguration` activates when:
+
+1. `micrometer-tracing` and `fun-tracing` are on the classpath (`@ConditionalOnClass`).
+2. A `Tracer` bean is present in the context (`@ConditionalOnBean`) — Spring Boot
+   registers one automatically when a bridge (`micrometer-tracing-bridge-otel` or
+   `micrometer-tracing-bridge-brave`) is on the classpath.
+
+The `DmxTracing` bean is backed by that `Tracer`, so all spans it opens inherit the active
+trace context (W3C TraceContext, B3, etc.) without any extra wiring.
+
+### Opting out
+
+```properties
+dmx.fun.tracing.enabled=false   # disable DmxTracing auto-configuration
+```
+
+### Replacing the bean
+
+The bean is guarded by `@ConditionalOnMissingBean`. Declare your own `@Bean` of type
+`DmxTracing` and the auto-configuration backs off:
+
+```java
+@Bean
+DmxTracing dmxTracing(Tracer tracer) {
+    return DmxTracing.of(tracer);  // or any custom Tracer
+}
+```
+
+### Without `fun-spring-boot`
+
+If you use plain Spring (no `fun-spring-boot`), construct `DmxTracing` manually in your
+`@Bean` or constructor:
 
 ```java
 @Service
@@ -108,17 +147,8 @@ public class PaymentService {
     public PaymentService(Tracer tracer) {
         this.dmx = DmxTracing.of(tracer);
     }
-
-    public Try<Receipt> charge(Amount amount, PaymentToken token) {
-        return dmx.traceTry("payment.charge",
-            () -> gateway.charge(amount, token)
-        );
-    }
 }
 ```
-
-No additional configuration is required — the bridge wires `Tracer` to the active
-propagation context (W3C TraceContext, B3, etc.) automatically.
 
 ## Version compatibility
 

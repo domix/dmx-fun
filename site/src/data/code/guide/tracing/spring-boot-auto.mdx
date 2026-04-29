@@ -1,0 +1,25 @@
+---
+fileName: 'PaymentService.java — Spring Boot auto-configured'
+---
+
+```java
+import dmx.fun.Try;
+import dmx.fun.tracing.DmxTracing;
+import org.springframework.stereotype.Service;
+
+@Service
+public class PaymentService {
+
+    private final DmxTracing dmx;  // injected — auto-configured by fun-spring-boot
+
+    public PaymentService(DmxTracing dmx) {
+        this.dmx = dmx;
+    }
+
+    public Try<Receipt> charge(Amount amount, PaymentToken token) {
+        return dmx.traceTry("payment.charge",
+            () -> gateway.charge(amount, token)
+        );
+    }
+}
+```
