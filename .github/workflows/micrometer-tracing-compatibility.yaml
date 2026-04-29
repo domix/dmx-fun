@@ -10,10 +10,11 @@ name: Micrometer Tracing compatibility
 
 on:
   pull_request:
-    # Run when the tracing module or this workflow file is modified.
+    # Run when the tracing module, this workflow file, or the version catalog is modified.
     paths:
       - 'tracing/**'
       - '.github/workflows/micrometer-tracing-compatibility.yaml'
+      - 'gradle/libs.versions.toml'
 
 jobs:
   test:
