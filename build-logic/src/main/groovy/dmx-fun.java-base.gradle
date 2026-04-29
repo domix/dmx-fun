@@ -7,6 +7,12 @@ repositories {
     mavenCentral()
 }
 
+// Spring 6+ embeds org.aopalliance.* inside spring-aop; the standalone aopalliance jar
+// causes a JPMS split-package error when both appear on the same module path (e.g. aggregateJavadoc).
+configurations.all {
+    exclude group: 'aopalliance', module: 'aopalliance'
+}
+
 dependencies {
     testImplementation libs.assertj.core
     testImplementation(platform(libs.junit.bom))

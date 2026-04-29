@@ -19,6 +19,7 @@ def moduleMap = [
     ':spring-boot'        : 'dmx.fun.spring.boot',
     ':resilience4j'       : 'dmx.fun.resilience4j',
     ':micrometer'         : 'dmx.fun.micrometer',
+    ':tracing'            : 'dmx.fun.tracing',
     ':jakarta-validation' : 'dmx.fun.jakarta.validation'
 ]
 

@@ -1,0 +1,41 @@
+# Verifies that the fun-tracing module remains compatible with multiple
+# Micrometer Tracing versions. micrometer-tracing is declared as compileOnly
+# so users bring their own version and bridge; this matrix catches regressions
+# before they reach main.
+#
+# Triggered only on pull requests that touch tracing/** or this workflow file.
+# To run a specific version locally:
+#   ./gradlew :tracing:test -PmicrometerTracingVersion=1.5.11
+name: Micrometer Tracing compatibility
+
+on:
+  pull_request:
+    # Run when the tracing module, this workflow file, or the version catalog is modified.
+    paths:
+      - 'tracing/**'
+      - '.github/workflows/micrometer-tracing-compatibility.yaml'
+      - 'gradle/libs.versions.toml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        micrometer-tracing-version:
+          - '1.6.5'
+          - '1.5.11'
+          - '1.4.13'
+          - '1.3.13'
+          - '1.2.12'
+    name: Micrometer Tracing ${{ matrix.micrometer-tracing-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      # Pass the matrix version as a Gradle property; the build falls back to
+      # the catalog version when the property is absent (local development).
+      - run: ./gradlew :tracing:test -PmicrometerTracingVersion=${{ matrix.micrometer-tracing-version }}

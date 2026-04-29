@@ -1,0 +1,170 @@
+---
+title: "Micrometer Tracing Integration — Developer Guide"
+description: "How to use the optional fun-tracing module: automatic distributed tracing spans for Try and Result operations via DmxTracing and the DmxTraced fluent builder."
+order: 20
+h1: "Micrometer Tracing Integration"
+---
+
+import {Content as Dependency}       from '../code/guide/tracing/dependency.mdx';
+import {Content as DmxTracingSnippet} from '../code/guide/tracing/dmx-tracing.mdx';
+import {Content as DmxTraced}         from '../code/guide/tracing/dmx-traced.mdx';
+import {Content as RealWorld}         from '../code/guide/tracing/real-world-example.mdx';
+import {Content as SpringBootAuto}    from '../code/guide/tracing/spring-boot-auto.mdx';
+
+The `fun-tracing` module instruments `Try` and `Result` executions with distributed tracing
+spans automatically, opening a named child span for each call and recording outcome signals
+without requiring manual `Span.start()` / `Span.end()` management at call sites. It is an
+**optional** dependency — the core `fun` library has no runtime dependency on Micrometer Tracing.
+
+`fun-tracing` declares `micrometer-tracing` as `compileOnly`. You bring your own version
+and bridge (OpenTelemetry or Brave), following the same pattern as `fun-micrometer` and
+`fun-resilience4j`. Any version from **1.2.x through 1.6.x** is supported
+(see [version compatibility](#version-compatibility) below).
+
+## Adding the dependency
+
+<Dependency/>
+
+## Signals recorded
+
+For every instrumented call, the following signals are written to the active span:
+
+| Signal | When |
+|---|---|
+| Span named `{name}` | Always — the span name is the `name` argument |
+| `outcome=success` tag | Supplier returned normally |
+| `outcome=failure` tag | Supplier threw any exception |
+| `exception=<SimpleClassName>` tag | Supplier threw — simple class name of the cause |
+| Span marked as error | Supplier threw — recorded via `span.error(cause)` |
+
+The span is always ended before the method returns, even when the supplier throws.
+
+## Span naming convention
+
+Use stable, low-cardinality operation names. A practical convention is:
+
+`<bounded-context>.<operation>`
+
+Examples:
+- `payment.charge`
+- `inventory.reserve`
+- `order.place`
+- `http.client.get`
+
+Avoid embedding IDs or user input in span names — those belong in log fields or baggage,
+not in span names, as high-cardinality names generate excessive trace index entries in
+Zipkin, Jaeger, and similar backends.
+
+## `exception` tag cardinality
+
+The `exception` tag uses the simple class name of the thrown exception (e.g. `IOException`,
+`TimeoutException`). Keep this cardinality bounded:
+
+- Prefer stable exception classes from your own domain or the JDK.
+- Avoid dynamically generated exception types.
+- Do not encode request-specific values in exception class names.
+
+## `DmxTracing`
+
+The primary entry point. Create one instance per `Tracer` (typically application-scoped)
+and call `traceTry` or `traceResult` at each instrumentation point.
+
+<DmxTracingSnippet/>
+
+## `DmxTraced` — fluent builder
+
+When you prefer to configure name and tracer in a single chain — for example inside a
+factory method or when wiring the span name and tracer at different call sites — use the
+`DmxTraced` fluent builder:
+
+<DmxTraced/>
+
+## Choosing `DmxTracing` vs `DmxTraced`
+
+| Scenario | Recommendation |
+|---|---|
+| Spring Boot with `fun-spring-boot` | Inject `DmxTracing` directly — auto-configured, no setup needed |
+| Multiple operations in the same class (plain Spring) | `DmxTracing.of(tracer)` — inject `Tracer`, wrap once in the constructor |
+| Single ad-hoc operation or factory method | `DmxTraced.of(name).tracer(tracer).traceTry(...)` |
+
+## Real-world example
+
+An order service where every step — inventory reservation, payment charge, and
+persistence — is instrumented as an independent child span. No manual span bookkeeping
+in the business logic; every step appears in the trace timeline automatically.
+
+<RealWorld/>
+
+## Spring Boot integration
+
+When `fun-spring-boot`, `fun-tracing`, and a Micrometer Tracing bridge are all on the
+classpath, Spring Boot registers a `DmxTracing` bean automatically — no `@Bean` declaration
+or manual wiring required. Inject it directly into your services:
+
+<SpringBootAuto/>
+
+### How it works
+
+`DmxFunTracingAutoConfiguration` activates when:
+
+1. `micrometer-tracing` and `fun-tracing` are on the classpath (`@ConditionalOnClass`).
+2. A `Tracer` bean is present in the context (`@ConditionalOnBean`) — Spring Boot
+   registers one automatically when a bridge (`micrometer-tracing-bridge-otel` or
+   `micrometer-tracing-bridge-brave`) is on the classpath.
+
+The `DmxTracing` bean is backed by that `Tracer`, so all spans it opens inherit the active
+trace context (W3C TraceContext, B3, etc.) without any extra wiring.
+
+### Opting out
+
+```properties
+dmx.fun.tracing.enabled=false   # disable DmxTracing auto-configuration
+```
+
+### Replacing the bean
+
+The bean is guarded by `@ConditionalOnMissingBean`. Declare your own `@Bean` of type
+`DmxTracing` and the auto-configuration backs off:
+
+```java
+@Bean
+DmxTracing dmxTracing(Tracer tracer) {
+    return DmxTracing.of(tracer);  // or any custom Tracer
+}
+```
+
+### Without `fun-spring-boot`
+
+If you use plain Spring (no `fun-spring-boot`), construct `DmxTracing` manually in your
+`@Bean` or constructor:
+
+```java
+@Service
+public class PaymentService {
+
+    private final DmxTracing dmx;
+
+    public PaymentService(Tracer tracer) {
+        this.dmx = DmxTracing.of(tracer);
+    }
+}
+```
+
+## Version compatibility
+
+The module is tested in CI against the following Micrometer Tracing versions on every
+pull request that touches the `tracing/` module:
+
+| Micrometer Tracing | Spring Boot | Status  |
+|--------------------|-------------|---------|
+| 1.6.x              | 3.5.x       | tested  |
+| 1.5.x              | 3.4.x       | tested  |
+| 1.4.x              | 3.3.x       | tested  |
+| 1.3.x              | 3.2.x       | tested  |
+| 1.2.x              | 3.1.x       | tested  |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :tracing:test -PmicrometerTracingVersion=1.5.11
+```

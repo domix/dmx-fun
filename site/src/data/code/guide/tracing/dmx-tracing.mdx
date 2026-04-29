@@ -1,0 +1,37 @@
+---
+fileName: 'DmxTracing usage'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.tracing.DmxTracing;
+import io.micrometer.tracing.Tracer;
+
+// One-time setup — typically injected from the application context
+DmxTracing dmx = DmxTracing.of(tracer);  // io.micrometer.tracing.Tracer
+
+// Instrument a Try operation — name becomes the span name
+Try<Response> result = dmx.traceTry("http.client.get",
+    () -> httpClient.get(url)
+);
+
+result
+    .onSuccess(r  -> render(r))
+    .onFailure(ex -> renderError(ex));
+
+// Instrument a Result operation
+Result<User, Throwable> user = dmx.traceResult("db.user.find",
+    () -> userRepo.findById(id)
+);
+```
+
+**Signals recorded for each call:**
+
+| Signal | When |
+|---|---|
+| Span named `{name}` | Always |
+| `outcome=success` tag | Supplier returned normally |
+| `outcome=failure` tag | Supplier threw |
+| `exception=<SimpleClassName>` tag | Supplier threw |
+| Span marked as error | Supplier threw |
