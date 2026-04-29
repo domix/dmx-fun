@@ -1,0 +1,25 @@
+---
+fileName: 'PaymentService.java — Spring Boot auto-configured'
+---
+
+```java
+import dmx.fun.Try;
+import dmx.fun.observation.DmxObservation;
+import org.springframework.stereotype.Service;
+
+@Service
+public class PaymentService {
+
+    private final DmxObservation dmx;  // injected — auto-configured by fun-spring-boot
+
+    public PaymentService(DmxObservation dmx) {
+        this.dmx = dmx;
+    }
+
+    public Try<Receipt> charge(Amount amount, PaymentToken token) {
+        return dmx.observeTry("payment.charge",
+            () -> gateway.charge(amount, token)
+        );
+    }
+}
+```

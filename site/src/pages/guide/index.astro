@@ -202,6 +202,14 @@ const modules = [
         tag: 'Observability',
     },
     {
+        name: 'Micrometer Observation integration',
+        href: `${base}guide/observation`,
+        summary: 'Automatic metrics and distributed tracing spans for Try and Result executions via DmxObservation and the DmxObserved fluent builder — both signals from a single call.',
+        whenToUse: 'You want metrics and spans for Try/Result operations without scattering manual instrumentation through business logic. Prefer this over fun-tracing for new projects.',
+        avoidWhen: 'You are not using Micrometer — the module is optional and has no effect without it.',
+        tag: 'Observability',
+    },
+    {
         name: 'Jakarta Validation integration',
         href: `${base}guide/jakarta-validation`,
         summary: 'DmxValidator bridges Jakarta Bean Validation with Validated<NonEmptyList<E>, A> so all constraint violations accumulate without throwing ConstraintViolationException.',

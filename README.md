@@ -19,10 +19,11 @@ All modules are published to Maven Central. Add only what you need.
 | `fun-jackson`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson)](https://central.sonatype.com/artifact/codes.domix/fun-jackson)           | Jackson serializers and deserializers for all dmx-fun types.                                  |
 | `fun-assertj`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)           | Fluent AssertJ assertions for all dmx-fun types. Use in `test` scope.                         |
 | `fun-spring`       | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)             | `@Transactional` support for `Result`, `Try`, `Option`, and `Validated`.                      |
-| `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   | Spring Boot auto-configuration for dmx-fun. Registers `TxResult`/`TxTry`/`TxValidated`, `DmxFunModule` (Jackson), `DmxTracing`, and MVC handlers automatically when the corresponding dependencies are on the classpath. |
+| `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   | Spring Boot auto-configuration for dmx-fun. Registers `TxResult`/`TxTry`/`TxValidated`, `DmxFunModule` (Jackson), `DmxTracing`, `DmxObservation`, and MVC handlers automatically when the corresponding dependencies are on the classpath. |
 | `fun-resilience4j` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j) | Resilience4J adapters (Retry, CircuitBreaker, RateLimiter, Bulkhead) that return `Try`/`Result` instead of throwing. |
 | `fun-micrometer`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)     | Counters, timers, and failure metrics for `Try` and `Result` via Micrometer.                  |
 | `fun-tracing`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-tracing)](https://central.sonatype.com/artifact/codes.domix/fun-tracing)           | Distributed tracing spans for `Try` and `Result` via Micrometer Tracing. Auto-configured by `fun-spring-boot`. |
+| `fun-observation`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-observation)](https://central.sonatype.com/artifact/codes.domix/fun-observation)   | Metrics **and** distributed tracing spans for `Try` and `Result` via the Micrometer Observation API. Auto-configured by `fun-spring-boot`. |
 | `fun-jakarta-validation` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jakarta-validation)](https://central.sonatype.com/artifact/codes.domix/fun-jakarta-validation) | Jakarta Validation adapter — returns `Validated<NonEmptyList<E>, A>` instead of throwing `ConstraintViolationException`. |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
@@ -196,6 +197,44 @@ implementation("codes.domix:fun-tracing:LATEST_VERSION")
 implementation("io.micrometer:micrometer-tracing:1.6.5")
 // A Micrometer Tracing bridge, e.g. OpenTelemetry:
 implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
+```
+
+### Micrometer Observation integration (optional)
+
+Instruments `Try` and `Result` executions using the Micrometer Observation API — a single call
+produces **both** metrics and distributed tracing spans through whatever `ObservationHandler`s are
+registered. `micrometer-core` is declared as `compileOnly`; bring your own version (1.10.x – 1.16.x).
+When `fun-spring-boot` is also on the classpath, a `DmxObservation` bean is registered automatically
+whenever an `ObservationRegistry` bean is present (Spring Boot provides one via `ObservationAutoConfiguration`).
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-observation</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+    <version>1.16.5</version>
+</dependency>
+<!-- Optional: add a tracing bridge to also get distributed tracing spans -->
+<!--
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    <version>1.6.5</version>
+</dependency>
+-->
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-observation:LATEST_VERSION")
+implementation("io.micrometer:micrometer-core:1.16.5")
+// Optional: add a tracing bridge to also get distributed tracing spans
+// implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
 ```
 
 ### Jakarta Validation integration (optional)
