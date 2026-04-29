@@ -45,6 +45,11 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class DmxObservation {
 
+    static final String OUTCOME_KEY     = "outcome";
+    static final String EXCEPTION_KEY   = "exception";
+    static final String OUTCOME_SUCCESS = "success";
+    static final String OUTCOME_FAILURE = "failure";
+
     private final ObservationRegistry registry;
 
     private DmxObservation(ObservationRegistry registry) {
@@ -85,10 +90,10 @@ public final class DmxObservation {
 
         try (var _ = observation.openScope()) {
             result = Try.of(supplier)
-                .onSuccess(_ -> observation.lowCardinalityKeyValue("outcome", "success"))
+                .onSuccess(_ -> observation.lowCardinalityKeyValue(OUTCOME_KEY, OUTCOME_SUCCESS))
                 .onFailure(cause -> {
-                    observation.lowCardinalityKeyValue("outcome", "failure");
-                    observation.lowCardinalityKeyValue("exception", cause.getClass().getSimpleName());
+                    observation.lowCardinalityKeyValue(OUTCOME_KEY, OUTCOME_FAILURE);
+                    observation.lowCardinalityKeyValue(EXCEPTION_KEY, cause.getClass().getSimpleName());
                     observation.error(cause);
                 });
         } finally {
