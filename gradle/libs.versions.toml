@@ -14,6 +14,7 @@ jspecify = "1.0.0"
 junit = "6.0.3"
 resilience4j = "2.4.0"
 micrometer = "1.16.5"
+micrometerTracing = "1.6.5"
 jakartaValidation = "3.1.1"
 hibernateValidator = "9.1.0.Final"
 expressly = "6.0.0"
@@ -41,6 +42,8 @@ resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-ci
 resilience4j-ratelimiter = { module = "io.github.resilience4j:resilience4j-ratelimiter", version.ref = "resilience4j" }
 resilience4j-bulkhead = { module = "io.github.resilience4j:resilience4j-bulkhead", version.ref = "resilience4j" }
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
+micrometer-tracing = { module = "io.micrometer:micrometer-tracing", version.ref = "micrometerTracing" }
+micrometer-tracing-test = { module = "io.micrometer:micrometer-tracing-test", version.ref = "micrometerTracing" }
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakartaValidation" }
 hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "hibernateValidator" }
 expressly = { module = "org.glassfish.expressly:expressly", version.ref = "expressly" }
