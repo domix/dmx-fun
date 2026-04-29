@@ -1,0 +1,68 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.tracing.DmxTracing;
+import io.micrometer.tracing.Tracer;
+
+/**
+ * An order service where each step — inventory reservation, payment charge,
+ * and persistence — is wrapped in its own named span.
+ *
+ * After a request completes, the trace backend (Zipkin, Jaeger, etc.) shows
+ * a timeline of child spans, each tagged with outcome=success|failure.
+ * Failed steps also carry exception=<ClassName> and are marked as errors,
+ * making the root cause visible at a glance without digging into logs.
+ */
+public class OrderService {
+
+    private final DmxTracing dmx;
+    private final PaymentGateway paymentGateway;
+    private final InventoryClient inventoryClient;
+    private final OrderRepository orderRepository;
+
+    public OrderService(Tracer tracer,
+                        PaymentGateway paymentGateway,
+                        InventoryClient inventoryClient,
+                        OrderRepository orderRepository) {
+        this.dmx               = DmxTracing.of(tracer);
+        this.paymentGateway    = paymentGateway;
+        this.inventoryClient   = inventoryClient;
+        this.orderRepository   = orderRepository;
+    }
+
+    /**
+     * Places an order: reserves inventory, charges payment, and persists.
+     * Each step is a child span of the active trace context — no manual
+     * Span.start() / Span.end() calls needed.
+     */
+    public Result<Order, String> placeOrder(PlaceOrderCommand cmd) {
+
+        // 1. Reserve inventory — span: inventory.reserve
+        Try<Reservation> reservation = dmx.traceTry("inventory.reserve",
+            () -> inventoryClient.reserve(cmd.items())
+        );
+        if (reservation.isFailure()) {
+            return Result.err("Inventory unavailable: " + reservation.getCause().getMessage());
+        }
+
+        // 2. Charge payment — span: payment.charge
+        Try<Receipt> receipt = dmx.traceTry("payment.charge",
+            () -> paymentGateway.charge(cmd.amount(), cmd.paymentToken())
+        );
+        if (receipt.isFailure()) {
+            inventoryClient.release(reservation.get());
+            return Result.err("Payment failed: " + receipt.getCause().getMessage());
+        }
+
+        // 3. Persist order — span: order.place
+        return dmx.traceResult("order.place",
+            () -> orderRepository.save(Order.from(cmd, reservation.get(), receipt.get()))
+        )
+        .mapError(ex -> "Failed to persist order: " + ex.getMessage());
+    }
+}
+```

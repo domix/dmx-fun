@@ -194,6 +194,14 @@ const modules = [
         tag: 'Observability',
     },
     {
+        name: 'Micrometer Tracing integration',
+        href: `${base}guide/tracing`,
+        summary: 'Automatic distributed tracing spans for Try and Result executions via DmxTracing and the DmxTraced fluent builder.',
+        whenToUse: 'You want each Try/Result operation to appear as a named child span in your trace backend (Zipkin, Jaeger, etc.) without manual Span.start()/end() calls.',
+        avoidWhen: 'You are not using Micrometer Tracing — the module is optional and has no effect without it.',
+        tag: 'Observability',
+    },
+    {
         name: 'Jakarta Validation integration',
         href: `${base}guide/jakarta-validation`,
         summary: 'DmxValidator bridges Jakarta Bean Validation with Validated<NonEmptyList<E>, A> so all constraint violations accumulate without throwing ConstraintViolationException.',
