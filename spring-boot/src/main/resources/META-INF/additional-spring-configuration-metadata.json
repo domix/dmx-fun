@@ -35,6 +35,12 @@
       "type": "java.lang.Boolean",
       "defaultValue": true,
       "description": "Whether to auto-configure the Spring MVC Result/Validated/Try return-value handler. Set to false to disable success -> 200 and error/failure -> 500 mapping."
+    },
+    {
+      "name": "dmx.fun.tracing.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a DmxTracing bean. Set to false to disable automatic distributed tracing span instrumentation for Try and Result operations."
     }
   ]
 }

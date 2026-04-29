@@ -20,9 +20,12 @@ module dmx.fun.spring.boot {
     requires static jakarta.servlet;
     requires static dmx.fun.jackson;
     requires static com.fasterxml.jackson.databind;
+    requires static dmx.fun.tracing;
+    requires static micrometer.tracing;
     requires org.jspecify;
 
     exports dmx.fun.spring.boot;
     exports dmx.fun.spring.boot.web;
     exports dmx.fun.spring.boot.jackson;
+    exports dmx.fun.spring.boot.tracing;
 }
