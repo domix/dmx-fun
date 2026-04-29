@@ -2,3 +2,4 @@ dmx.fun.spring.boot.DmxFunSpringAutoConfiguration
 dmx.fun.spring.boot.web.DmxFunWebMvcAutoConfiguration
 dmx.fun.spring.boot.jackson.DmxFunJacksonAutoConfiguration
 dmx.fun.spring.boot.tracing.DmxFunTracingAutoConfiguration
+dmx.fun.spring.boot.observation.DmxFunObservationAutoConfiguration

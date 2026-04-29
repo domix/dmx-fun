@@ -41,6 +41,12 @@
       "type": "java.lang.Boolean",
       "defaultValue": true,
       "description": "Whether to auto-configure a DmxTracing bean. Set to false to disable automatic distributed tracing span instrumentation for Try and Result operations."
+    },
+    {
+      "name": "dmx.fun.observation.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a DmxObservation bean. Set to false to disable automatic metrics and distributed tracing instrumentation for Try and Result operations via the Micrometer Observation API."
     }
   ]
 }

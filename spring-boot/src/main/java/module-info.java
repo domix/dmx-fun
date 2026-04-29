@@ -22,10 +22,14 @@ module dmx.fun.spring.boot {
     requires static com.fasterxml.jackson.databind;
     requires static dmx.fun.tracing;
     requires static micrometer.tracing;
+    requires static dmx.fun.observation;
+    requires static micrometer.core;
     requires org.jspecify;
+    requires micrometer.observation;
 
     exports dmx.fun.spring.boot;
     exports dmx.fun.spring.boot.web;
     exports dmx.fun.spring.boot.jackson;
     exports dmx.fun.spring.boot.tracing;
+    exports dmx.fun.spring.boot.observation;
 }

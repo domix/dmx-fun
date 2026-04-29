@@ -20,6 +20,7 @@ def moduleMap = [
     ':resilience4j'       : 'dmx.fun.resilience4j',
     ':micrometer'         : 'dmx.fun.micrometer',
     ':tracing'            : 'dmx.fun.tracing',
+    ':observation'        : 'dmx.fun.observation',
     ':jakarta-validation' : 'dmx.fun.jakarta.validation'
 ]
 
