@@ -83,7 +83,7 @@ public final class DmxObservation {
 
         Try<V> result;
 
-        try (var ignored = observation.openScope()) {
+        try (var _ = observation.openScope()) {
             result = Try.of(supplier)
                 .onSuccess(_ -> observation.lowCardinalityKeyValue("outcome", "success"))
                 .onFailure(cause -> {
@@ -108,6 +108,7 @@ public final class DmxObservation {
      * @return {@code Ok(value)} on success, {@code Err(cause)} on any exception
      */
     public <V> Result<V, Throwable> observeResult(String name, CheckedSupplier<V> supplier) {
-        return observeTry(name, supplier).toResult();
+        return observeTry(name, supplier)
+            .toResult();
     }
 }

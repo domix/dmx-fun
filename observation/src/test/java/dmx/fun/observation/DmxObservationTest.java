@@ -4,6 +4,9 @@ import io.micrometer.observation.tck.TestObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistryAssert;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.util.stream.Stream;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -128,15 +131,23 @@ class DmxObservationTest {
             .hasLowCardinalityKeyValue("outcome", "failure");
     }
 
-    @Test
-    void observeTry_failure_tagsExceptionSimpleClassName() {
-        dmx.observeTry("op", () -> { throw new IOException("boom"); });
+    static Stream<Exception> exceptionTypes() {
+        return Stream.of(
+            new IOException("boom"),
+            new IllegalArgumentException("bad")
+        );
+    }
+
+    @ParameterizedTest(name = "exception tag uses simple class name: {0}")
+    @MethodSource("exceptionTypes")
+    void observeTry_failure_exceptionTagUsesSimpleClassName(Exception cause) {
+        dmx.observeTry("op", () -> { throw cause; });
 
         TestObservationRegistryAssert
             .assertThat(registry)
             .hasObservationWithNameEqualTo("op")
             .that()
-            .hasLowCardinalityKeyValue("exception", "IOException");
+            .hasLowCardinalityKeyValue("exception", cause.getClass().getSimpleName());
     }
 
     @Test
@@ -158,17 +169,6 @@ class DmxObservationTest {
             .hasObservationWithNameEqualTo("op")
             .that()
             .hasBeenStopped();
-    }
-
-    @Test
-    void observeTry_failure_exceptionTagUsesSimpleClassName() {
-        dmx.observeTry("op", () -> { throw new IllegalArgumentException("bad"); });
-
-        TestObservationRegistryAssert
-            .assertThat(registry)
-            .hasObservationWithNameEqualTo("op")
-            .that()
-            .hasLowCardinalityKeyValue("exception", "IllegalArgumentException");
     }
 
     // ── observeResult ──────────────────────────────────────────────────────────

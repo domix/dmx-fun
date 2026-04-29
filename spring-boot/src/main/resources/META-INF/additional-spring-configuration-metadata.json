@@ -46,7 +46,7 @@
       "name": "dmx.fun.observation.enabled",
       "type": "java.lang.Boolean",
       "defaultValue": true,
-      "description": "Whether to auto-configure a DmxObservation bean. Set to false to disable automatic metrics and distributed tracing instrumentation for Try and Result operations via the Micrometer Observation API."
+      "description": "Whether to auto-configure a DmxObservation bean. When enabled, registers Micrometer Observation instrumentation for Try and Result operations (timers and low-cardinality tags are always recorded; distributed tracing spans are emitted only if a tracing bridge and matching ObservationHandler are configured). Set to false to disable this instrumentation entirely."
     }
   ]
 }

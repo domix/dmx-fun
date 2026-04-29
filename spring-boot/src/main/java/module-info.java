@@ -25,7 +25,7 @@ module dmx.fun.spring.boot {
     requires static dmx.fun.observation;
     requires static micrometer.core;
     requires org.jspecify;
-    requires micrometer.observation;
+    requires static micrometer.observation;
 
     exports dmx.fun.spring.boot;
     exports dmx.fun.spring.boot.web;
