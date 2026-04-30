@@ -217,6 +217,14 @@ const modules = [
         avoidWhen: 'You are not using Jakarta Validation — the module is optional and has no effect without it.',
         tag: 'Validation',
     },
+    {
+        name: 'Jakarta JSON-B + JAXB integration',
+        href: `${base}guide/jakarta-jaxb`,
+        summary: 'JsonbAdapter and XmlAdapter implementations for all dmx-fun types via the optional fun-jakarta-jaxb module.',
+        whenToUse: 'You need to serialize dmx-fun types to JSON with a JSON-B runtime (Yasson, Apache Johnzon) or to XML with a JAXB runtime.',
+        avoidWhen: 'You use Jackson for JSON — prefer fun-jackson instead, which offers richer type-level mapping.',
+        tag: 'Serialization',
+    },
 ];
 ---
 

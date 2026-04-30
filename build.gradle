@@ -21,7 +21,8 @@ def moduleMap = [
     ':micrometer'         : 'dmx.fun.micrometer',
     ':tracing'            : 'dmx.fun.tracing',
     ':observation'        : 'dmx.fun.observation',
-    ':jakarta-validation' : 'dmx.fun.jakarta.validation'
+    ':jakarta-validation' : 'dmx.fun.jakarta.validation',
+    ':jakarta-jaxb'       : 'dmx.fun.jakarta.jaxb'
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────
