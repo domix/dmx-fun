@@ -13,15 +13,18 @@ def r4jVersion = findProperty('resilience4jVersion') ?: libs.versions.resilience
 dependencies {
     api project(':lib')
 
-    compileOnly "io.github.resilience4j:resilience4j-retry:${r4jVersion}"
-    compileOnly "io.github.resilience4j:resilience4j-circuitbreaker:${r4jVersion}"
-    compileOnly "io.github.resilience4j:resilience4j-ratelimiter:${r4jVersion}"
-    compileOnly "io.github.resilience4j:resilience4j-bulkhead:${r4jVersion}"
+    compileOnly     platform("io.github.resilience4j:resilience4j-bom:${r4jVersion}")
+    testImplementation platform("io.github.resilience4j:resilience4j-bom:${r4jVersion}")
 
-    testImplementation "io.github.resilience4j:resilience4j-retry:${r4jVersion}"
-    testImplementation "io.github.resilience4j:resilience4j-circuitbreaker:${r4jVersion}"
-    testImplementation "io.github.resilience4j:resilience4j-ratelimiter:${r4jVersion}"
-    testImplementation "io.github.resilience4j:resilience4j-bulkhead:${r4jVersion}"
+    compileOnly "io.github.resilience4j:resilience4j-retry"
+    compileOnly "io.github.resilience4j:resilience4j-circuitbreaker"
+    compileOnly "io.github.resilience4j:resilience4j-ratelimiter"
+    compileOnly "io.github.resilience4j:resilience4j-bulkhead"
+
+    testImplementation "io.github.resilience4j:resilience4j-retry"
+    testImplementation "io.github.resilience4j:resilience4j-circuitbreaker"
+    testImplementation "io.github.resilience4j:resilience4j-ratelimiter"
+    testImplementation "io.github.resilience4j:resilience4j-bulkhead"
 
     compileOnly        project(':assertj')
     testImplementation project(':assertj')
