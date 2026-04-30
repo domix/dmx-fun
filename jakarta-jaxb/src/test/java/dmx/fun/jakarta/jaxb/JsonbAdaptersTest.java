@@ -108,7 +108,7 @@ class JsonbAdaptersTest {
         void bothOkAndErrKeyThrows() {
             assertThatThrownBy(() -> adapter.adaptFromJson(Map.of("ok", "v", "err", "e")))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Ambiguous");
+                .hasMessageContaining("expected exactly one key ('ok' or 'err')");
         }
 
         @Test

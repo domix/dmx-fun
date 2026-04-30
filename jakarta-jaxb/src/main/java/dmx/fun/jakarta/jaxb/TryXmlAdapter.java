@@ -51,6 +51,9 @@ public final class TryXmlAdapter extends XmlAdapter<TryXmlAdapter.TryElement, Tr
         if (v == null) {
             return Try.failure(new RuntimeException("Cannot deserialize null XML element as Try"));
         }
+        if (v.value == null && v.error == null) {
+            return Try.failure(new RuntimeException("Missing both <value> and <error> in Try XML"));
+        }
         if (v.value != null && v.error != null) {
             return Try.failure(new RuntimeException("Ambiguous Try XML: both <value> and <error> children present"));
         }
