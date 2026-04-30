@@ -46,6 +46,10 @@ dependencies {
     testImplementation project(':observation')
     testImplementation "io.micrometer:micrometer-core:${micrometerVersion}"
     testImplementation "io.micrometer:micrometer-observation-test:${micrometerVersion}"
+
+    // Integration tests — real transaction commit/rollback against H2 embedded database.
+    testImplementation libs.h2
+    testImplementation libs.spring.jdbc
 }
 
 // spring.boot.autoconfigure is required static (optional at runtime): add it

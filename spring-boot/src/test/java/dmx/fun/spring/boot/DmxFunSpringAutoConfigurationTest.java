@@ -68,6 +68,22 @@ class DmxFunSpringAutoConfigurationTest {
             .run(ctx -> assertThat(ctx).doesNotHaveBean(DmxTransactionalAspect.class));
     }
 
+    // ── @ConditionalOnSingleCandidate — multiple PTM ambiguity ───────────────
+
+    @Test
+    void doesNotRegisterBeans_whenMultiplePlatformTransactionManagers() {
+        // Two unambiguous PTMs → @ConditionalOnSingleCandidate blocks all beans.
+        new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(DmxFunSpringAutoConfiguration.class))
+            .withUserConfiguration(MultipleTxManagersConfig.class)
+            .run(ctx -> {
+                assertThat(ctx).doesNotHaveBean(TxResult.class);
+                assertThat(ctx).doesNotHaveBean(TxTry.class);
+                assertThat(ctx).doesNotHaveBean(TxValidated.class);
+                assertThat(ctx).doesNotHaveBean(DmxTransactionalAspect.class);
+            });
+    }
+
     // ── @ConditionalOnMissingBean back-off ────────────────────────────────────
 
     @Test
@@ -142,6 +158,12 @@ class DmxFunSpringAutoConfigurationTest {
                 org.springframework.beans.factory.BeanFactory beanFactory) {
             return new DmxTransactionalAspect(txManager, beanFactory);
         }
+    }
+
+    @Configuration
+    static class MultipleTxManagersConfig {
+        @Bean PlatformTransactionManager txManager1() { return new StubTxManager(); }
+        @Bean PlatformTransactionManager txManager2() { return new StubTxManager(); }
     }
 
 }
