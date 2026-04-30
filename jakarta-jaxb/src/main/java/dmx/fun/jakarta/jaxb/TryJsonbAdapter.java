@@ -35,6 +35,9 @@ public final class TryJsonbAdapter implements JsonbAdapter<Try<?>, Map<String, O
 
     @Override
     public Try<?> adaptFromJson(Map<String, Object> obj) throws Exception {
+        if (obj == null) {
+            throw new IllegalArgumentException("Malformed Try JSON: payload must not be null");
+        }
         boolean hasValue = obj.containsKey("value");
         boolean hasError = obj.containsKey("error");
         if (hasValue && hasError) {
