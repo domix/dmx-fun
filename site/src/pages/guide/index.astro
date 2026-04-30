@@ -225,6 +225,14 @@ const modules = [
         avoidWhen: 'You use Jackson for JSON — prefer fun-jackson instead, which offers richer type-level mapping.',
         tag: 'Serialization',
     },
+    {
+        name: 'HTTP Client integration',
+        href: `${base}guide/http`,
+        summary: 'Wraps java.net.http.HttpClient so every call returns Result<T, HttpError> with typed variants for 4xx, 5xx, timeouts, and network failures. No external dependencies.',
+        whenToUse: 'You make outbound HTTP calls and want both network exceptions and HTTP error codes surfaced as a single typed Result instead of two separate failure paths.',
+        avoidWhen: 'You already use a reactive HTTP client (WebClient, Vert.x, etc.) — this module targets the synchronous and async JDK client only.',
+        tag: 'HTTP',
+    },
 ];
 ---
 

@@ -22,7 +22,8 @@ def moduleMap = [
     ':tracing'            : 'dmx.fun.tracing',
     ':observation'        : 'dmx.fun.observation',
     ':jakarta-validation' : 'dmx.fun.jakarta.validation',
-    ':jakarta-jaxb'       : 'dmx.fun.jakarta.jaxb'
+    ':jakarta-jaxb'       : 'dmx.fun.jakarta.jaxb',
+    ':http'               : 'dmx.fun.http'
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────
