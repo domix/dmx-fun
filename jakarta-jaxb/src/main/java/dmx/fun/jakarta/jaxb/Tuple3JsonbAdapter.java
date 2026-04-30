@@ -14,6 +14,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class Tuple3JsonbAdapter implements JsonbAdapter<Tuple3<?, ?, ?>, Map<String, Object>> {
 
+    /** Creates a new instance. */
+    public Tuple3JsonbAdapter() {}
+
     @Override
     public Map<String, Object> adaptToJson(Tuple3<?, ?, ?> obj) throws Exception {
         var map = new LinkedHashMap<String, Object>();

@@ -29,10 +29,18 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public final class OptionXmlAdapter extends XmlAdapter<OptionXmlAdapter.OptionElement, Option<?>> {
 
+    /** Creates a new instance. */
+    public OptionXmlAdapter() {}
+
+    /** JAXB-mapped element for {@link Option}. */
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class OptionElement {
+        /** The wrapped value; {@code null} represents {@code Option.none()}. */
         @XmlElement(name = "value")
         public @Nullable String value;
+
+        /** JAXB-required no-arg constructor. */
+        public OptionElement() {}
     }
 
     @Override

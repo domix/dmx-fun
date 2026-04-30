@@ -29,12 +29,21 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public final class TryXmlAdapter extends XmlAdapter<TryXmlAdapter.TryElement, Try<?>> {
 
+    /** Creates a new instance. */
+    public TryXmlAdapter() {}
+
+    /** JAXB-mapped element for {@link Try}. */
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class TryElement {
+        /** Present when the computation succeeded; {@code null} otherwise. */
         @XmlElement(name = "value")
         public @Nullable String value;
+        /** Present when the computation failed; holds the exception message. */
         @XmlElement(name = "error")
         public @Nullable String error;
+
+        /** JAXB-required no-arg constructor. */
+        public TryElement() {}
     }
 
     @Override

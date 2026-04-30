@@ -18,6 +18,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class EitherJsonbAdapter implements JsonbAdapter<Either<?, ?>, Map<String, Object>> {
 
+    /** Creates a new instance. */
+    public EitherJsonbAdapter() {}
+
     @Override
     public Map<String, Object> adaptToJson(Either<?, ?> obj) throws Exception {
         var map = new LinkedHashMap<String, Object>();

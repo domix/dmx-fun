@@ -19,6 +19,9 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public final class TryJsonbAdapter implements JsonbAdapter<Try<?>, Map<String, Object>> {
 
+    /** Creates a new instance. */
+    public TryJsonbAdapter() {}
+
     @Override
     public Map<String, Object> adaptToJson(Try<?> obj) throws Exception {
         var map = new LinkedHashMap<String, Object>();

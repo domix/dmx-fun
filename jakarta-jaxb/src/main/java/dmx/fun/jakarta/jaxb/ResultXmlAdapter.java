@@ -29,12 +29,21 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public final class ResultXmlAdapter extends XmlAdapter<ResultXmlAdapter.ResultElement, Result<?, ?>> {
 
+    /** Creates a new instance. */
+    public ResultXmlAdapter() {}
+
+    /** JAXB-mapped element for {@link Result}. */
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class ResultElement {
+        /** Present when the result is {@code Ok}; {@code null} otherwise. */
         @XmlElement(name = "ok")
         public @Nullable String ok;
+        /** Present when the result is {@code Err}; {@code null} otherwise. */
         @XmlElement(name = "err")
         public @Nullable String err;
+
+        /** JAXB-required no-arg constructor. */
+        public ResultElement() {}
     }
 
     @Override

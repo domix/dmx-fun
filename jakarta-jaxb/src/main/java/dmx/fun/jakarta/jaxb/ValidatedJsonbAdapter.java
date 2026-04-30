@@ -18,6 +18,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class ValidatedJsonbAdapter implements JsonbAdapter<Validated<?, ?>, Map<String, Object>> {
 
+    /** Creates a new instance. */
+    public ValidatedJsonbAdapter() {}
+
     @Override
     public Map<String, Object> adaptToJson(Validated<?, ?> obj) throws Exception {
         var map = new LinkedHashMap<String, Object>();

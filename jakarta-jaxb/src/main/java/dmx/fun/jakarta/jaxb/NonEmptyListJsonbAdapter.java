@@ -15,6 +15,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class NonEmptyListJsonbAdapter implements JsonbAdapter<NonEmptyList<?>, List<Object>> {
 
+    /** Creates a new instance. */
+    public NonEmptyListJsonbAdapter() {}
+
     @Override
     public List<Object> adaptToJson(NonEmptyList<?> obj) throws Exception {
         var list = new ArrayList<>();

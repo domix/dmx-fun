@@ -18,6 +18,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class OptionJsonbAdapter implements JsonbAdapter<Option<?>, Map<String, Object>> {
 
+    /** Creates a new instance. */
+    public OptionJsonbAdapter() {}
+
     @Override
     public Map<String, Object> adaptToJson(Option<?> obj) throws Exception {
         if (obj.isDefined()) {

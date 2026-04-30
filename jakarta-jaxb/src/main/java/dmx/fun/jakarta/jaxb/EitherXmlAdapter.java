@@ -29,12 +29,21 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public final class EitherXmlAdapter extends XmlAdapter<EitherXmlAdapter.EitherElement, Either<?, ?>> {
 
+    /** Creates a new instance. */
+    public EitherXmlAdapter() {}
+
+    /** JAXB-mapped element for {@link Either}. */
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class EitherElement {
+        /** Present when the value is {@code Left}; {@code null} otherwise. */
         @XmlElement(name = "left")
         public @Nullable String left;
+        /** Present when the value is {@code Right}; {@code null} otherwise. */
         @XmlElement(name = "right")
         public @Nullable String right;
+
+        /** JAXB-required no-arg constructor. */
+        public EitherElement() {}
     }
 
     @Override
