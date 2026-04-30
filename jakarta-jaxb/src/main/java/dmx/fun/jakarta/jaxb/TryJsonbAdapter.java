@@ -5,7 +5,6 @@ import jakarta.json.bind.adapter.JsonbAdapter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Jakarta JSON-B adapter for {@link Try}.
@@ -28,7 +27,7 @@ public final class TryJsonbAdapter implements JsonbAdapter<Try<?>, Map<String, O
         if (obj.isSuccess()) {
             map.put("value", obj.get());
         } else {
-            @Nullable String message = obj.getCause().getMessage();
+            var message = obj.getCause().getMessage();
             map.put("error", message != null ? message : obj.getCause().getClass().getSimpleName());
         }
         return map;

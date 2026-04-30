@@ -18,17 +18,19 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class ResultJsonbAdapter implements JsonbAdapter<Result<?, ?>, Map<String, Object>> {
 
-    /** Creates a new instance. */
-    public ResultJsonbAdapter() {}
+    /**
+     * Creates a new instance.
+     */
+    public ResultJsonbAdapter() {
+    }
 
     @Override
     public Map<String, Object> adaptToJson(Result<?, ?> obj) throws Exception {
         var map = new LinkedHashMap<String, Object>();
-        if (obj.isOk()) {
-            map.put("ok", obj.get());
-        } else {
-            map.put("err", obj.getError());
-        }
+
+        obj.peek(value -> map.put("ok", value))
+            .peekError(error -> map.put("err", error));
+
         return map;
     }
 

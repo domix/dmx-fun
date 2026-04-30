@@ -24,11 +24,11 @@ public final class EitherJsonbAdapter implements JsonbAdapter<Either<?, ?>, Map<
     @Override
     public Map<String, Object> adaptToJson(Either<?, ?> obj) throws Exception {
         var map = new LinkedHashMap<String, Object>();
-        if (obj.isRight()) {
-            map.put("right", obj.getRight());
-        } else {
-            map.put("left", obj.getLeft());
-        }
+
+        obj
+            .peek(_ -> map.put("right", obj.getRight()))
+            .peekLeft(_ -> map.put("left", obj.getLeft()));
+
         return map;
     }
 

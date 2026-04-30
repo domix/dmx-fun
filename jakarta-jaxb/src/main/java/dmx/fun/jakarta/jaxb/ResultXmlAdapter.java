@@ -66,11 +66,8 @@ public final class ResultXmlAdapter extends XmlAdapter<ResultXmlAdapter.ResultEl
             return null;
         }
         var element = new ResultElement();
-        if (v.isOk()) {
-            element.ok = String.valueOf(v.get());
-        } else {
-            element.err = String.valueOf(v.getError());
-        }
+        v.peek(value -> element.ok = String.valueOf(value))
+            .peekError(error -> element.err = String.valueOf(error));
         return element;
     }
 }

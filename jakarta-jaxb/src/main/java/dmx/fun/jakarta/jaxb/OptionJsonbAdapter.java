@@ -18,25 +18,25 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class OptionJsonbAdapter implements JsonbAdapter<Option<?>, Map<String, Object>> {
 
-    /** Creates a new instance. */
-    public OptionJsonbAdapter() {}
+    /**
+     * Creates a new instance.
+     */
+    public OptionJsonbAdapter() {
+    }
 
     @Override
     public Map<String, Object> adaptToJson(Option<?> obj) throws Exception {
-        if (obj.isDefined()) {
-            var map = new LinkedHashMap<String, Object>();
-            map.put("value", obj.get());
-            return map;
-        }
-        return Map.of();
+        return obj.map(o -> {
+                var map = new LinkedHashMap<String, Object>();
+                map.put("value", o);
+                return (Map<String, Object>) map;
+            })
+            .getOrElse(Map.of());
     }
 
     @Override
     public Option<?> adaptFromJson(Map<String, Object> obj) throws Exception {
-        var value = obj.get("value");
-        if (value != null) {
-            return Option.some(value);
-        }
-        return Option.none();
+        return Option
+            .ofNullable(obj.get("value"));
     }
 }

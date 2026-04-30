@@ -31,10 +31,12 @@ public final class NonEmptyListJsonbAdapter implements JsonbAdapter<NonEmptyList
         if (obj.isEmpty()) {
             throw new IllegalArgumentException("Cannot deserialize empty JSON array as NonEmptyList");
         }
-        var head = obj.get(0);
-        if (head == null) {
-            throw new IllegalArgumentException("NonEmptyList head element must not be null");
-        }
-        return NonEmptyList.of(head, obj.subList(1, obj.size()));
+
+        var head = obj.getFirst();
+
+        return NonEmptyList.of(
+            head,
+            obj.subList(1, obj.size())
+        );
     }
 }
