@@ -48,11 +48,16 @@ public final class TryXmlAdapter extends XmlAdapter<TryXmlAdapter.TryElement, Tr
 
     @Override
     public Try<?> unmarshal(@Nullable TryElement v) throws Exception {
-        if (v == null || v.value == null) {
-            String message = v != null ? v.error : null;
-            return Try.failure(new RuntimeException(message));
+        if (v == null) {
+            return Try.failure(new RuntimeException("Cannot deserialize null XML element as Try"));
         }
-        return Try.success(v.value);
+        if (v.value != null && v.error != null) {
+            return Try.failure(new RuntimeException("Ambiguous Try XML: both <value> and <error> children present"));
+        }
+        if (v.value != null) {
+            return Try.success(v.value);
+        }
+        return Try.failure(new RuntimeException(v.error));
     }
 
     @Override

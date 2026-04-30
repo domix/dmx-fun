@@ -62,6 +62,13 @@ class JsonbAdaptersTest {
             var result = adapter.adaptFromJson(Map.of());
             assertThat(result).isNone();
         }
+
+        @Test
+        void unknownKeyThrows() {
+            assertThatThrownBy(() -> adapter.adaptFromJson(Map.of("x", "y")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unknown key");
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -95,6 +102,13 @@ class JsonbAdaptersTest {
         void mapWithErrKeyAdaptsFromJsonAsErr() throws Exception {
             var result = adapter.adaptFromJson(Map.of("err", "fail"));
             assertThat(result).isErr();
+        }
+
+        @Test
+        void bothOkAndErrKeyThrows() {
+            assertThatThrownBy(() -> adapter.adaptFromJson(Map.of("ok", "v", "err", "e")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ambiguous");
         }
 
         @Test
@@ -142,6 +156,20 @@ class JsonbAdaptersTest {
             var result = adapter.adaptFromJson(Map.of("error", "oops"));
             assertThat(result).isFailure();
         }
+
+        @Test
+        void bothValueAndErrorKeyThrows() {
+            assertThatThrownBy(() -> adapter.adaptFromJson(Map.of("value", "v", "error", "e")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ambiguous");
+        }
+
+        @Test
+        void neitherKeyThrows() {
+            assertThatThrownBy(() -> adapter.adaptFromJson(Map.of("x", "y")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Malformed");
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -175,6 +203,13 @@ class JsonbAdaptersTest {
         void mapWithLeftKeyAdaptsFromJsonAsLeft() throws Exception {
             var result = adapter.adaptFromJson(Map.of("left", "err"));
             assertThat(result).isLeft();
+        }
+
+        @Test
+        void bothRightAndLeftKeyThrows() {
+            assertThatThrownBy(() -> adapter.adaptFromJson(Map.of("right", "r", "left", "l")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ambiguous");
         }
 
         @Test
@@ -215,6 +250,13 @@ class JsonbAdaptersTest {
         void mapWithInvalidKeyAdaptsFromJsonAsInvalid() throws Exception {
             var result = adapter.adaptFromJson(Map.of("invalid", "e"));
             assertThat(result).isInvalid();
+        }
+
+        @Test
+        void bothValidAndInvalidKeyThrows() {
+            assertThatThrownBy(() -> adapter.adaptFromJson(Map.of("valid", "a", "invalid", "e")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ambiguous");
         }
 
         @Test

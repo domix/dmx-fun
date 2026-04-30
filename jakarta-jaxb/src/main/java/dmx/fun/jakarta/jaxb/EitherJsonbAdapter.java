@@ -34,6 +34,9 @@ public final class EitherJsonbAdapter implements JsonbAdapter<Either<?, ?>, Map<
 
     @Override
     public Either<?, ?> adaptFromJson(Map<String, Object> obj) throws Exception {
+        if (obj.containsKey("right") && obj.containsKey("left")) {
+            throw new IllegalArgumentException("Ambiguous Either JSON: both 'right' and 'left' keys present");
+        }
         if (obj.containsKey("right")) {
             return Either.right(obj.get("right"));
         }

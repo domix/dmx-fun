@@ -36,6 +36,9 @@ public final class ResultJsonbAdapter implements JsonbAdapter<Result<?, ?>, Map<
 
     @Override
     public Result<?, ?> adaptFromJson(Map<String, Object> obj) throws Exception {
+        if (obj.containsKey("ok") && obj.containsKey("err")) {
+            throw new IllegalArgumentException("Ambiguous Result JSON: both 'ok' and 'err' keys present");
+        }
         if (obj.containsKey("ok")) {
             return Result.ok(obj.get("ok"));
         }

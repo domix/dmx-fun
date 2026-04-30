@@ -34,6 +34,9 @@ public final class ValidatedJsonbAdapter implements JsonbAdapter<Validated<?, ?>
 
     @Override
     public Validated<?, ?> adaptFromJson(Map<String, Object> obj) throws Exception {
+        if (obj.containsKey("valid") && obj.containsKey("invalid")) {
+            throw new IllegalArgumentException("Ambiguous Validated JSON: both 'valid' and 'invalid' keys present");
+        }
         if (obj.containsKey("valid")) {
             return Validated.valid(obj.get("valid"));
         }

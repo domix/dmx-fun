@@ -27,6 +27,9 @@ public final class Tuple2JsonbAdapter implements JsonbAdapter<Tuple2<?, ?>, Map<
 
     @Override
     public Tuple2<?, ?> adaptFromJson(Map<String, Object> obj) throws Exception {
+        if (!obj.containsKey("_1") || !obj.containsKey("_2")) {
+            throw new IllegalArgumentException("Malformed Tuple2 JSON: missing '_1' or '_2'; got: " + obj.keySet());
+        }
         return Tuple2.of(obj.get("_1"), obj.get("_2"));
     }
 }

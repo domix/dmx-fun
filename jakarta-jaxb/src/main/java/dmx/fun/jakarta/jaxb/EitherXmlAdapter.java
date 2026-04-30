@@ -51,13 +51,16 @@ public final class EitherXmlAdapter extends XmlAdapter<EitherXmlAdapter.EitherEl
         if (v == null) {
             throw new IllegalArgumentException("Cannot deserialize null XML element as Either");
         }
+        if (v.left != null && v.right != null) {
+            throw new IllegalArgumentException("Ambiguous Either XML: both <left> and <right> children present");
+        }
         if (v.right != null) {
             return Either.right(v.right);
         }
         if (v.left != null) {
             return Either.left(v.left);
         }
-        throw new IllegalArgumentException("Either XML element must have a <left> or <right> child");
+        throw new IllegalArgumentException("Either XML element must have exactly one <left> or <right> child");
     }
 
     @Override

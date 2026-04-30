@@ -36,7 +36,11 @@ public final class OptionJsonbAdapter implements JsonbAdapter<Option<?>, Map<Str
 
     @Override
     public Option<?> adaptFromJson(Map<String, Object> obj) throws Exception {
-        return Option
-            .ofNullable(obj.get("value"));
+        for (var key : obj.keySet()) {
+            if (!"value".equals(key)) {
+                throw new IllegalArgumentException("Unknown key in Option JSON: '" + key + "'; only 'value' is allowed");
+            }
+        }
+        return Option.ofNullable(obj.get("value"));
     }
 }

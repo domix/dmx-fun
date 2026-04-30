@@ -127,6 +127,16 @@ class XmlAdaptersTest {
         }
 
         @Test
+        void elementWithBothChildrenThrows() {
+            var element = new ResultXmlAdapter.ResultElement();
+            element.ok = "v";
+            element.err = "e";
+            assertThatThrownBy(() -> adapter.unmarshal(element))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ambiguous");
+        }
+
+        @Test
         void elementWithNeitherChildThrows() {
             assertThatThrownBy(() -> adapter.unmarshal(new ResultXmlAdapter.ResultElement()))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -185,6 +195,16 @@ class XmlAdaptersTest {
             var result = adapter.unmarshal(null);
             assertThat(result).isFailure();
         }
+
+        @Test
+        void elementWithBothChildrenUnmarshalsAsFailure() throws Exception {
+            var element = new TryXmlAdapter.TryElement();
+            element.value = "v";
+            element.error = "e";
+            var result = adapter.unmarshal(element);
+            assertThat(result).isFailure();
+            assertThat(result.getCause().getMessage()).contains("Ambiguous");
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -238,6 +258,16 @@ class XmlAdaptersTest {
         void nullElementThrows() {
             assertThatThrownBy(() -> adapter.unmarshal(null))
                 .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        void elementWithBothChildrenThrows() {
+            var element = new EitherXmlAdapter.EitherElement();
+            element.left = "l";
+            element.right = "r";
+            assertThatThrownBy(() -> adapter.unmarshal(element))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ambiguous");
         }
 
         @Test

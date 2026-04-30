@@ -51,6 +51,9 @@ public final class ResultXmlAdapter extends XmlAdapter<ResultXmlAdapter.ResultEl
         if (v == null) {
             throw new IllegalArgumentException("Cannot deserialize null XML element as Result");
         }
+        if (v.ok != null && v.err != null) {
+            throw new IllegalArgumentException("Ambiguous Result XML: both <ok> and <err> children present");
+        }
         if (v.ok != null) {
             return Result.ok(v.ok);
         }
