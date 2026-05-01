@@ -26,7 +26,19 @@ class JsonbAdaptersTest {
 
     @Test
     void allReturnsNineAdapters() {
-        assertThat(DmxFunJsonbAdapters.all()).hasSize(9);
+        var adapters = DmxFunJsonbAdapters.all();
+        assertThat(adapters).hasSize(9);
+        assertThat(adapters).extracting(Object::getClass).containsExactly(
+            OptionJsonbAdapter.class,
+            ResultJsonbAdapter.class,
+            TryJsonbAdapter.class,
+            EitherJsonbAdapter.class,
+            ValidatedJsonbAdapter.class,
+            Tuple2JsonbAdapter.class,
+            Tuple3JsonbAdapter.class,
+            Tuple4JsonbAdapter.class,
+            NonEmptyListJsonbAdapter.class
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -96,12 +108,14 @@ class JsonbAdaptersTest {
         void mapWithOkKeyAdaptsFromJsonAsOk() throws Exception {
             var result = adapter.adaptFromJson(Map.of("ok", "val"));
             assertThat(result).isOk();
+            assertThat(result.get()).isEqualTo("val");
         }
 
         @Test
         void mapWithErrKeyAdaptsFromJsonAsErr() throws Exception {
             var result = adapter.adaptFromJson(Map.of("err", "fail"));
             assertThat(result).isErr();
+            assertThat(result.getError()).isEqualTo("fail");
         }
 
         @Test
@@ -149,12 +163,21 @@ class JsonbAdaptersTest {
         void mapWithValueKeyAdaptsFromJsonAsSuccess() throws Exception {
             var result = adapter.adaptFromJson(Map.of("value", "ok"));
             assertThat(result).isSuccess();
+            assertThat(result.get()).isEqualTo("ok");
         }
 
         @Test
         void mapWithErrorKeyAdaptsFromJsonAsFailure() throws Exception {
             var result = adapter.adaptFromJson(Map.of("error", "oops"));
             assertThat(result).isFailure();
+            assertThat(result.getCause().getMessage()).isEqualTo("oops");
+        }
+
+        @Test
+        void nullPayloadThrows() {
+            assertThatThrownBy(() -> adapter.adaptFromJson(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("payload must not be null");
         }
 
         @Test
@@ -197,12 +220,14 @@ class JsonbAdaptersTest {
         void mapWithRightKeyAdaptsFromJsonAsRight() throws Exception {
             var result = adapter.adaptFromJson(Map.of("right", "ok"));
             assertThat(result).isRight();
+            assertThat(result.getRight()).isEqualTo("ok");
         }
 
         @Test
         void mapWithLeftKeyAdaptsFromJsonAsLeft() throws Exception {
             var result = adapter.adaptFromJson(Map.of("left", "err"));
             assertThat(result).isLeft();
+            assertThat(result.getLeft()).isEqualTo("err");
         }
 
         @Test
@@ -244,12 +269,14 @@ class JsonbAdaptersTest {
         void mapWithValidKeyAdaptsFromJsonAsValid() throws Exception {
             var result = adapter.adaptFromJson(Map.of("valid", "a"));
             assertThat(result).isValid();
+            assertThat(result.get()).isEqualTo("a");
         }
 
         @Test
         void mapWithInvalidKeyAdaptsFromJsonAsInvalid() throws Exception {
             var result = adapter.adaptFromJson(Map.of("invalid", "e"));
             assertThat(result).isInvalid();
+            assertThat(result.getError()).isEqualTo("e");
         }
 
         @Test
@@ -333,6 +360,8 @@ class JsonbAdaptersTest {
         void adaptsFromMapPreservingValues() throws Exception {
             var t = adapter.adaptFromJson(Map.of("_1", 1, "_2", 2, "_3", 3, "_4", 4));
             assertThat(t._1()).isEqualTo(1);
+            assertThat(t._2()).isEqualTo(2);
+            assertThat(t._3()).isEqualTo(3);
             assertThat(t._4()).isEqualTo(4);
         }
     }
