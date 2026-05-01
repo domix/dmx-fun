@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -47,6 +48,25 @@ class DmxHttpClientTest {
                 os.write(bytes);
             }
         });
+    }
+
+    private void handleSlow(String path, long delayMs) {
+        server.createContext(path, exchange -> {
+            try {
+                Thread.sleep(delayMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            byte[] bytes = "late".getBytes();
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+            }
+        });
+    }
+
+    private HttpRequest requestWithTimeout(String path, Duration timeout) {
+        return HttpRequest.newBuilder(uri(path)).GET().timeout(timeout).build();
     }
 
     // ── send(request, bodyHandler) ────────────────────────────────────────────
@@ -121,6 +141,17 @@ class DmxHttpClientTest {
             var error = (HttpError.ClientError) result.getError();
             assertThat(error.response()).isNotNull();
             assertThat(error.response().statusCode()).isEqualTo(403);
+        }
+
+        @Test
+        void requestTimeoutReturnsTimeout() {
+            handleSlow("/slow", 500);
+            var result = client.send(
+                requestWithTimeout("/slow", Duration.ofMillis(50)),
+                BodyHandlers.ofString()
+            );
+            assertThat(result).isErr();
+            assertThat(result.getError()).isInstanceOf(HttpError.Timeout.class);
         }
     }
 
@@ -198,6 +229,17 @@ class DmxHttpClientTest {
             server.stop(0);
             var future = client.sendAsync(request("/gone"), BodyHandlers.ofString());
             assertThat(future).isNotCompletedExceptionally();
+        }
+
+        @Test
+        void requestTimeoutReturnsTimeout() throws Exception {
+            handleSlow("/async-slow", 500);
+            var result = client.sendAsync(
+                requestWithTimeout("/async-slow", Duration.ofMillis(50)),
+                BodyHandlers.ofString()
+            ).get();
+            assertThat(result).isErr();
+            assertThat(result.getError()).isInstanceOf(HttpError.Timeout.class);
         }
     }
 

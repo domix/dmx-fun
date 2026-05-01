@@ -27,6 +27,15 @@ import org.jspecify.annotations.NullMarked;
  *     .peek(body -> process(body))
  *     .peekError(err -> log.warn("HTTP call failed: {}", err));
  * }</pre>
+ *
+ * <h2>Limitation: null-body handlers are not supported</h2>
+ * <p>Body handlers that produce a {@code null} body — specifically
+ * {@link HttpResponse.BodyHandlers#discarding()} — are not supported.
+ * {@code Result.ok()} does not accept {@code null} values, so passing a null-body handler
+ * will throw {@link NullPointerException} on a successful response.
+ *
+ * <p>If you need to send a request and ignore the response body, use the plain
+ * {@link HttpClient} directly, or wait for a future {@code sendDiscarding()} overload.
  */
 @NullMarked
 public final class DmxHttpClient {

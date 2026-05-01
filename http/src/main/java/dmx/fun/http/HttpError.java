@@ -47,8 +47,15 @@ public sealed interface HttpError
     record Timeout(HttpTimeoutException cause) implements HttpError {}
 
     /**
-     * {@link java.io.IOException}, {@link InterruptedException}, or any other
-     * transport-level failure that prevented a response from being received.
+     * Any failure that prevented a valid response from being produced. Covers two categories:
+     * <ul>
+     *   <li><strong>Transport failures</strong> — {@link java.io.IOException},
+     *       {@link InterruptedException}, or other network-level errors thrown by the
+     *       underlying {@code HttpClient} before a response is received.</li>
+     *   <li><strong>Processing failures</strong> — exceptions thrown by a caller-supplied
+     *       deserializer (e.g. JSON parse errors) after a successful HTTP response was
+     *       received but before a typed value could be produced.</li>
+     * </ul>
      *
      * @param cause the underlying exception
      */
