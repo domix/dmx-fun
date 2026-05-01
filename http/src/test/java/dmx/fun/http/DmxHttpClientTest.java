@@ -2,6 +2,7 @@ package dmx.fun.http;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
@@ -67,6 +68,27 @@ class DmxHttpClientTest {
 
     private HttpRequest requestWithTimeout(String path, Duration timeout) {
         return HttpRequest.newBuilder(uri(path)).GET().timeout(timeout).build();
+    }
+
+    // ── null contracts ────────────────────────────────────────────────────────
+
+    @Nested
+    class NullContracts {
+
+        @Test
+        void of_nullClient_throwsNullPointerException() {
+            assertThatThrownBy(() -> DmxHttpClient.of(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("client");
+        }
+
+        @Test
+        void send_nullDeserializer_throwsNullPointerException() {
+            assertThatThrownBy(() ->
+                client.send(request("/ok"), BodyHandlers.ofString(), null)
+            ).isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("deserializer");
+        }
     }
 
     // ── send(request, bodyHandler) ────────────────────────────────────────────
@@ -153,6 +175,42 @@ class DmxHttpClientTest {
             assertThat(result).isErr();
             assertThat(result.getError()).isInstanceOf(HttpError.Timeout.class);
         }
+
+        @Test
+        void timeoutErrorExposesCause() {
+            handleSlow("/slow-cause", 500);
+            var result = client.send(
+                requestWithTimeout("/slow-cause", Duration.ofMillis(50)),
+                BodyHandlers.ofString()
+            );
+            assertThat(result).isErr();
+            var timeout = (HttpError.Timeout) result.getError();
+            assertThat(timeout.cause()).isNotNull();
+        }
+
+        @Test
+        void serverErrorExposesStatusCodeAndResponse() {
+            handle("/err", 503, "unavailable");
+            var result = client.send(request("/err"), BodyHandlers.ofString());
+            assertThat(result).isErr();
+            var error = (HttpError.ServerError) result.getError();
+            assertThat(error.statusCode()).isEqualTo(503);
+            assertThat(error.response()).isNotNull();
+            assertThat(error.response().statusCode()).isEqualTo(503);
+        }
+
+        @Test
+        void interruptedThreadMapsToNetworkFailureAndRestoresInterruptFlag() {
+            handle("/ok", 200, "hello");
+            Thread.currentThread().interrupt();
+            var result = client.send(request("/ok"), BodyHandlers.ofString());
+            // Our code calls Thread.currentThread().interrupt() to restore the flag;
+            // Thread.interrupted() reads and clears it so subsequent tests are not affected.
+            assertThat(Thread.interrupted()).isTrue();
+            assertThat(result).isErr();
+            var failure = (HttpError.NetworkFailure) result.getError();
+            assertThat(failure.cause()).isInstanceOf(InterruptedException.class);
+        }
     }
 
     // ── send(request, bodyHandler, deserializer) ──────────────────────────────
@@ -222,6 +280,15 @@ class DmxHttpClientTest {
             var result = client.sendAsync(request("/gone"), BodyHandlers.ofString()).get();
             assertThat(result).isErr();
             assertThat(result.getError()).isInstanceOf(HttpError.NetworkFailure.class);
+        }
+
+        @Test
+        void networkFailureExposesCause() throws Exception {
+            server.stop(0);
+            var result = client.sendAsync(request("/gone"), BodyHandlers.ofString()).get();
+            assertThat(result).isErr();
+            var failure = (HttpError.NetworkFailure) result.getError();
+            assertThat(failure.cause()).isNotNull();
         }
 
         @Test
