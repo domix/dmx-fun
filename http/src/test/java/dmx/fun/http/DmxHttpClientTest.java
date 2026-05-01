@@ -13,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -292,10 +293,12 @@ class DmxHttpClientTest {
         }
 
         @Test
-        void futureNeverCompletesExceptionally() {
+        void futureNeverCompletesExceptionally() throws Exception {
             server.stop(0);
             var future = client.sendAsync(request("/gone"), BodyHandlers.ofString());
-            assertThat(future).isNotCompletedExceptionally();
+            future.get(5, TimeUnit.SECONDS);
+            assertThat(future.isDone()).isTrue();
+            assertThat(future.isCompletedExceptionally()).isFalse();
         }
 
         @Test
