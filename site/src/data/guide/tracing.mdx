@@ -34,7 +34,7 @@ For every instrumented call, the following signals are written to the active spa
 | Span named `{name}` | Always — the span name is the `name` argument |
 | `outcome=success` tag | Supplier returned normally |
 | `outcome=failure` tag | Supplier threw any exception |
-| `exception=<SimpleClassName>` tag | Supplier threw — simple class name of the cause |
+| `exception=<label>` tag | Supplier threw — classifier label of the cause |
 | Span marked as error | Supplier threw — recorded via `span.error(cause)` |
 
 The span is always ended before the method returns, even when the supplier throws.
@@ -57,12 +57,33 @@ Zipkin, Jaeger, and similar backends.
 
 ## `exception` tag cardinality
 
-The `exception` tag uses the simple class name of the thrown exception (e.g. `IOException`,
-`TimeoutException`). Keep this cardinality bounded:
+> **Warning:** The default `exception` tag uses `getClass().getSimpleName()`. When
+> arbitrary third-party exceptions can appear at runtime, this produces an unbounded number
+> of distinct tag values. High-cardinality span tags generate excessive index entries in
+> Zipkin, Jaeger, and similar backends — and bloat sampling metadata in OpenTelemetry exporters.
 
-- Prefer stable exception classes from your own domain or the JDK.
-- Avoid dynamically generated exception types.
-- Do not encode request-specific values in exception class names.
+**In production, always supply an explicit classifier** that maps every reachable exception
+type to one of a small, fixed set of labels:
+
+```java
+DmxTracing dmx = DmxTracing.of(tracer, cause ->
+    switch (cause) {
+        case IOException __          -> "io";
+        case TimeoutException __     -> "timeout";
+        case IllegalStateException __-> "state";
+        default                      -> "other";
+    }
+);
+```
+
+The same option is available on the `DmxTraced` builder:
+
+```java
+DmxTraced.of("payment.charge")
+    .tracer(tracer)
+    .exceptionClassifier(cause -> cause instanceof IOException ? "io" : "other")
+    .traceTry(() -> stripe.charge(amount));
+```
 
 ## `DmxTracing`
 

@@ -102,4 +102,27 @@ class DmxObservedTest {
             DmxObserved.of("op").observeResult(() -> "ok")
         ).isInstanceOf(IllegalStateException.class);
     }
+
+    // ── custom exception classifier ────────────────────────────────────────────
+
+    @Test
+    void exceptionClassifier_customClassifier_usedForExceptionKey() {
+        DmxObserved.of("op")
+            .registry(registry)
+            .exceptionClassifier(cause -> cause instanceof IOException ? "io" : "other")
+            .observeTry(() -> { throw new IOException("boom"); });
+
+        TestObservationRegistryAssert
+            .assertThat(registry)
+            .hasObservationWithNameEqualTo("op")
+            .that()
+            .hasLowCardinalityKeyValue("exception", "io");
+    }
+
+    @Test
+    void exceptionClassifier_nullClassifier_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxObserved.of("op").exceptionClassifier(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionClassifier");
+    }
 }

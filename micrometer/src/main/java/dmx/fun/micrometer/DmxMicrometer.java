@@ -8,6 +8,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import java.util.Objects;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -29,28 +30,74 @@ import org.jspecify.annotations.NullMarked;
  * <ul>
  *   <li>{@code {name}.count} — Counter tagged with {@code outcome=success|failure}</li>
  *   <li>{@code {name}.duration} — Timer tagged with {@code outcome=success|failure}</li>
- *   <li>{@code {name}.failure} — Counter tagged with {@code exception=<ClassName>} (on failure only)</li>
+ *   <li>{@code {name}.failure} — Counter tagged with {@code exception=<label>} (on failure only)</li>
  * </ul>
+ *
+ * <h2>Exception tag cardinality</h2>
+ * <p>By default the {@code exception} tag uses {@code getClass().getSimpleName()}, which is
+ * unbounded when arbitrary third-party exceptions appear at runtime — a violation of
+ * Micrometer's low-cardinality contract. <strong>In production, supply an explicit
+ * {@code exceptionClassifier}</strong> that maps every reachable exception type to one of a
+ * small, fixed set of labels:
+ *
+ * <pre>{@code
+ * DmxMicrometer dmx = DmxMicrometer.of(registry, cause ->
+ *     switch (cause) {
+ *         case IOException __          -> "io";
+ *         case TimeoutException __     -> "timeout";
+ *         default                      -> "other";
+ *     }
+ * );
+ * }</pre>
  *
  * <p>For a fluent builder alternative see {@link DmxMetered}.
  */
 @NullMarked
 public final class DmxMicrometer {
 
-    private final MeterRegistry registry;
+    private static final Function<Throwable, String> DEFAULT_CLASSIFIER =
+        t -> t.getClass().getSimpleName();
 
-    private DmxMicrometer(MeterRegistry registry) {
+    private final MeterRegistry registry;
+    private final Function<Throwable, String> exceptionClassifier;
+
+    private DmxMicrometer(MeterRegistry registry, Function<Throwable, String> exceptionClassifier) {
         this.registry = registry;
+        this.exceptionClassifier = exceptionClassifier;
     }
 
     /**
      * Creates an instance bound to the given {@link MeterRegistry}.
      *
+     * <p><strong>Warning:</strong> uses {@code getClass().getSimpleName()} as the
+     * {@code exception} tag — an unsafe default in production where arbitrary exceptions
+     * may appear. Prefer {@link #of(MeterRegistry, Function)} with an explicit classifier.
+     *
      * @param registry the registry to record metrics into; must not be null
      * @return a new {@code DmxMicrometer} bound to the given registry
      */
     public static DmxMicrometer of(MeterRegistry registry) {
-        return new DmxMicrometer(Objects.requireNonNull(registry, "registry"));
+        return new DmxMicrometer(Objects.requireNonNull(registry, "registry"), DEFAULT_CLASSIFIER);
+    }
+
+    /**
+     * Creates an instance bound to the given {@link MeterRegistry} and exception classifier.
+     *
+     * <p>The {@code exceptionClassifier} maps each failure {@link Throwable} to the value
+     * written to the {@code exception} tag. It must return a value from a small, bounded set
+     * to satisfy Micrometer's low-cardinality requirement.
+     *
+     * @param registry            the registry to record metrics into; must not be null
+     * @param exceptionClassifier maps a failure cause to its {@code exception} tag value;
+     *                            must not be null, must return bounded values
+     * @return a new {@code DmxMicrometer} bound to the given registry and classifier
+     */
+    public static DmxMicrometer of(MeterRegistry registry,
+                                   Function<Throwable, String> exceptionClassifier) {
+        return new DmxMicrometer(
+            Objects.requireNonNull(registry, "registry"),
+            Objects.requireNonNull(exceptionClassifier, "exceptionClassifier")
+        );
     }
 
     /**
@@ -84,7 +131,7 @@ public final class DmxMicrometer {
         if (result.isFailure()) {
             Counter.builder(name + ".failure")
                 .tags(tags)
-                .tag("exception", result.getCause().getClass().getSimpleName())
+                .tag("exception", exceptionClassifier.apply(result.getCause()))
                 .register(registry)
                 .increment();
         }

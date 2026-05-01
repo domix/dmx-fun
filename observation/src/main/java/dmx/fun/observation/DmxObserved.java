@@ -5,6 +5,7 @@ import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.observation.ObservationRegistry;
 import java.util.Objects;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -24,6 +25,10 @@ import org.jspecify.annotations.Nullable;
  * observation is named and tagged with {@code outcome}, and on failure the
  * {@code exception} key is set and the observation is marked as error.
  *
+ * <p>Use {@link #exceptionClassifier} to control the {@code exception} key value and
+ * satisfy Micrometer's low-cardinality contract in production. See
+ * {@link DmxObservation#of(ObservationRegistry, java.util.function.Function)} for details.
+ *
  * <p>This builder is mutable and not thread-safe; do not share one instance across
  * concurrent per-call reconfigurations.
  */
@@ -31,7 +36,8 @@ import org.jspecify.annotations.Nullable;
 public final class DmxObserved {
 
     private final String name;
-    private @Nullable DmxObservation observation;
+    private @Nullable ObservationRegistry observationRegistry;
+    private @Nullable Function<Throwable, String> exceptionClassifier;
 
     private DmxObserved(String name) {
         this.name = name;
@@ -54,7 +60,23 @@ public final class DmxObserved {
      * @return this builder
      */
     public DmxObserved registry(ObservationRegistry registry) {
-        this.observation = DmxObservation.of(registry);
+        this.observationRegistry = Objects.requireNonNull(registry, "registry");
+        return this;
+    }
+
+    /**
+     * Sets the function that maps each failure cause to its {@code exception} key value.
+     *
+     * <p>The classifier must return a value from a small, bounded set (≤ 100 distinct values)
+     * to satisfy Micrometer's low-cardinality contract. When not set, defaults to
+     * {@code getClass().getSimpleName()} — an unsafe default in production.
+     *
+     * @param classifier maps a failure cause to its {@code exception} key value;
+     *                   must not be null, must return bounded values
+     * @return this builder
+     */
+    public DmxObserved exceptionClassifier(Function<Throwable, String> classifier) {
+        this.exceptionClassifier = Objects.requireNonNull(classifier, "exceptionClassifier");
         return this;
     }
 
@@ -85,10 +107,12 @@ public final class DmxObserved {
     }
 
     private DmxObservation requireObservation() {
-        if (observation == null) {
+        if (observationRegistry == null) {
             throw new IllegalStateException(
                 "registry must be set before observing — call .registry(registry) first");
         }
-        return observation;
+        return exceptionClassifier != null
+            ? DmxObservation.of(observationRegistry, exceptionClassifier)
+            : DmxObservation.of(observationRegistry);
     }
 }

@@ -156,6 +156,24 @@ class DmxTracingTest {
             .containsEntry("exception", "IllegalArgumentException");
     }
 
+    @Test
+    void of_withCustomClassifier_usesClassifierForExceptionTag() {
+        var customDmx = DmxTracing.of(tracer, cause ->
+            cause instanceof IOException ? "io" : "other"
+        );
+        customDmx.traceTry("op", () -> { throw new IOException("boom"); });
+
+        assertThat(tracer.getSpans().peekFirst().getTags())
+            .containsEntry("exception", "io");
+    }
+
+    @Test
+    void of_withCustomClassifier_nullClassifier_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxTracing.of(tracer, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionClassifier");
+    }
+
     // ── traceResult ────────────────────────────────────────────────────────────
 
     @Test

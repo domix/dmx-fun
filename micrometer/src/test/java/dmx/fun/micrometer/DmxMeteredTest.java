@@ -109,4 +109,22 @@ class DmxMeteredTest {
         var counter = registry.get("op.count").tag("outcome", "success").counter();
         assertThat(counter.count()).isEqualTo(1.0);
     }
+
+    @Test
+    void exceptionClassifier_customClassifier_usedForExceptionTag() {
+        DmxMetered.of("op")
+            .registry(registry)
+            .exceptionClassifier(cause -> cause instanceof IOException ? "io" : "other")
+            .recordTry(() -> { throw new IOException("boom"); });
+
+        var counter = registry.get("op.failure").tag("exception", "io").counter();
+        assertThat(counter.count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void exceptionClassifier_nullClassifier_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxMetered.of("op").exceptionClassifier(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionClassifier");
+    }
 }

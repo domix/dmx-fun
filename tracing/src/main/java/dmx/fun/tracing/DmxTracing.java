@@ -5,6 +5,7 @@ import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.tracing.Tracer;
 import java.util.Objects;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -25,9 +26,26 @@ import org.jspecify.annotations.NullMarked;
  * <ul>
  *   <li>Span named after the {@code name} argument.</li>
  *   <li>{@code outcome} tag — {@code "success"} or {@code "failure"}.</li>
- *   <li>{@code exception} tag — simple class name of the cause (failure only).</li>
+ *   <li>{@code exception} tag — classifier label of the cause (failure only).</li>
  *   <li>Span marked as error via {@link io.micrometer.tracing.Span#error} (failure only).</li>
  * </ul>
+ *
+ * <h2>Exception tag cardinality</h2>
+ * <p>By default the {@code exception} tag uses {@code getClass().getSimpleName()}, which is
+ * unbounded when arbitrary third-party exceptions can appear at runtime. <strong>In
+ * production, supply an explicit {@code exceptionClassifier}</strong> via
+ * {@link #of(Tracer, Function)} that maps every reachable exception type to one of a small,
+ * fixed set of labels:
+ *
+ * <pre>{@code
+ * DmxTracing dmx = DmxTracing.of(tracer, cause ->
+ *     switch (cause) {
+ *         case IOException __          -> "io";
+ *         case TimeoutException __     -> "timeout";
+ *         default                      -> "other";
+ *     }
+ * );
+ * }</pre>
  *
  * <p>For a fluent builder alternative see {@link DmxTraced}.
  *
@@ -38,20 +56,48 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public final class DmxTracing {
 
-    private final Tracer tracer;
+    private static final Function<Throwable, String> DEFAULT_CLASSIFIER =
+        t -> t.getClass().getSimpleName();
 
-    private DmxTracing(Tracer tracer) {
+    private final Tracer tracer;
+    private final Function<Throwable, String> exceptionClassifier;
+
+    private DmxTracing(Tracer tracer, Function<Throwable, String> exceptionClassifier) {
         this.tracer = tracer;
+        this.exceptionClassifier = exceptionClassifier;
     }
 
     /**
      * Creates an instance bound to the given {@link Tracer}.
      *
+     * <p><strong>Warning:</strong> uses {@code getClass().getSimpleName()} as the
+     * {@code exception} tag — an unsafe default in production where arbitrary exceptions
+     * may appear. Prefer {@link #of(Tracer, Function)} with an explicit classifier.
+     *
      * @param tracer the tracer to open spans with; must not be {@code null}
      * @return a new {@code DmxTracing} bound to the given tracer
      */
     public static DmxTracing of(Tracer tracer) {
-        return new DmxTracing(Objects.requireNonNull(tracer, "tracer"));
+        return new DmxTracing(Objects.requireNonNull(tracer, "tracer"), DEFAULT_CLASSIFIER);
+    }
+
+    /**
+     * Creates an instance bound to the given {@link Tracer} and exception classifier.
+     *
+     * <p>The {@code exceptionClassifier} maps each failure {@link Throwable} to the value
+     * written to the {@code exception} span tag. It should return a value from a small,
+     * bounded set to keep tag cardinality predictable in tracing backends.
+     *
+     * @param tracer              the tracer to open spans with; must not be {@code null}
+     * @param exceptionClassifier maps a failure cause to its {@code exception} tag value;
+     *                            must not be null, should return bounded values
+     * @return a new {@code DmxTracing} bound to the given tracer and classifier
+     */
+    public static DmxTracing of(Tracer tracer, Function<Throwable, String> exceptionClassifier) {
+        return new DmxTracing(
+            Objects.requireNonNull(tracer, "tracer"),
+            Objects.requireNonNull(exceptionClassifier, "exceptionClassifier")
+        );
     }
 
     /**
@@ -80,7 +126,7 @@ public final class DmxTracing {
                 .onSuccess(_ -> span.tag("outcome", "success"))
                 .onFailure(cause -> {
                     span.tag("outcome", "failure");
-                    span.tag("exception", cause.getClass().getSimpleName());
+                    span.tag("exception", exceptionClassifier.apply(cause));
                     span.error(cause);
                 });
         } finally {

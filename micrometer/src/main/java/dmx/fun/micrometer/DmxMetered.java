@@ -6,6 +6,7 @@ import dmx.fun.Try;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import java.util.Objects;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -25,13 +26,18 @@ import org.jspecify.annotations.Nullable;
  * <p>The same metrics are recorded as with {@link DmxMicrometer#recordTry}:
  * {@code {name}.count}, {@code {name}.duration}, and {@code {name}.failure}.
  * This builder is mutable and not thread-safe; avoid sharing one instance for concurrent per-call reconfiguration.
+ *
+ * <p>Use {@link #exceptionClassifier} to control the {@code exception} tag value and
+ * satisfy Micrometer's low-cardinality contract in production. See
+ * {@link DmxMicrometer#of(MeterRegistry, java.util.function.Function)} for details.
  */
 @NullMarked
 public final class DmxMetered {
 
     private final String name;
     private Tags tags = Tags.empty();
-    private @Nullable DmxMicrometer micrometer;
+    private @Nullable MeterRegistry meterRegistry;
+    private @Nullable Function<Throwable, String> exceptionClassifier;
 
     private DmxMetered(String name) {
         this.name = name;
@@ -65,7 +71,23 @@ public final class DmxMetered {
      * @return this builder
      */
     public DmxMetered registry(MeterRegistry registry) {
-        this.micrometer = DmxMicrometer.of(registry);
+        this.meterRegistry = Objects.requireNonNull(registry, "registry");
+        return this;
+    }
+
+    /**
+     * Sets the function that maps each failure cause to its {@code exception} tag value.
+     *
+     * <p>The classifier must return a value from a small, bounded set to satisfy
+     * Micrometer's low-cardinality requirement. When not set, defaults to
+     * {@code getClass().getSimpleName()} — an unsafe default in production.
+     *
+     * @param classifier maps a failure cause to its {@code exception} tag value;
+     *                   must not be null, must return bounded values
+     * @return this builder
+     */
+    public DmxMetered exceptionClassifier(Function<Throwable, String> classifier) {
+        this.exceptionClassifier = Objects.requireNonNull(classifier, "exceptionClassifier");
         return this;
     }
 
@@ -94,9 +116,11 @@ public final class DmxMetered {
     }
 
     private DmxMicrometer requireMicrometer() {
-        if (micrometer == null) {
+        if (meterRegistry == null) {
             throw new IllegalStateException("registry must be set before recording — call .registry(meterRegistry) first");
         }
-        return micrometer;
+        return exceptionClassifier != null
+            ? DmxMicrometer.of(meterRegistry, exceptionClassifier)
+            : DmxMicrometer.of(meterRegistry);
     }
 }
