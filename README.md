@@ -25,6 +25,7 @@ All modules are published to Maven Central. Add only what you need.
 | `fun-tracing`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-tracing)](https://central.sonatype.com/artifact/codes.domix/fun-tracing)           | Distributed tracing spans for `Try` and `Result` via Micrometer Tracing. Auto-configured by `fun-spring-boot`. |
 | `fun-observation`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-observation)](https://central.sonatype.com/artifact/codes.domix/fun-observation)   | Metrics **and** distributed tracing spans for `Try` and `Result` via the Micrometer Observation API. Auto-configured by `fun-spring-boot`. |
 | `fun-jakarta-validation` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jakarta-validation)](https://central.sonatype.com/artifact/codes.domix/fun-jakarta-validation) | Jakarta Validation adapter — returns `Validated<NonEmptyList<E>, A>` instead of throwing `ConstraintViolationException`. |
+| `fun-jakarta-jaxb` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jakarta-jaxb)](https://central.sonatype.com/artifact/codes.domix/fun-jakarta-jaxb) | Jakarta JSON-B (`JsonbAdapter`) and JAXB (`XmlAdapter`) adapters for all dmx-fun types. |
 
 Replace `LATEST_VERSION` with the version shown in the badge above.
 
@@ -266,6 +267,39 @@ Validates objects and returns `Validated<NonEmptyList<E>, A>` instead of throwin
 implementation("codes.domix:fun-jakarta-validation:LATEST_VERSION")
 implementation("jakarta.validation:jakarta.validation-api:3.1.1")
 implementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
+```
+
+### Jakarta JSON-B + JAXB integration (optional)
+
+`JsonbAdapter` and `XmlAdapter` implementations for all dmx-fun types. Both APIs are declared as `compileOnly`; bring your own Jakarta EE or MicroProfile runtime.
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-jakarta-jaxb</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- JSON-B RI (tests / standalone): -->
+<dependency>
+    <groupId>jakarta.json.bind</groupId>
+    <artifactId>jakarta.json.bind-api</artifactId>
+    <version>3.0.1</version>
+</dependency>
+<dependency>
+    <groupId>org.eclipse</groupId>
+    <artifactId>yasson</artifactId>
+    <version>3.0.4</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-jakarta-jaxb:LATEST_VERSION")
+// JSON-B RI (tests / standalone):
+implementation("jakarta.json.bind:jakarta.json.bind-api:3.0.1")
+implementation("org.eclipse:yasson:3.0.4")
+runtimeOnly("org.eclipse.parsson:parsson:1.1.7")
 ```
 
 ### Resilience4J integration (optional)

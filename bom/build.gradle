@@ -24,6 +24,7 @@ dependencies {
         api project(':resilience4j')
         api project(':micrometer')
         api project(':jakarta-validation')
+        api project(':jakarta-jaxb')
     }
 }
 
