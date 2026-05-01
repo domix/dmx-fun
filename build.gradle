@@ -19,7 +19,10 @@ def moduleMap = [
     ':spring-boot'        : 'dmx.fun.spring.boot',
     ':resilience4j'       : 'dmx.fun.resilience4j',
     ':micrometer'         : 'dmx.fun.micrometer',
-    ':jakarta-validation' : 'dmx.fun.jakarta.validation'
+    ':tracing'            : 'dmx.fun.tracing',
+    ':observation'        : 'dmx.fun.observation',
+    ':jakarta-validation' : 'dmx.fun.jakarta.validation',
+    ':jakarta-jaxb'       : 'dmx.fun.jakarta.jaxb'
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────

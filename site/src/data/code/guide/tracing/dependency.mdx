@@ -1,0 +1,37 @@
+---
+fileName: 'build.gradle / pom.xml'
+---
+
+```groovy
+// Gradle
+implementation("codes.domix:fun-tracing:LATEST_VERSION")
+// Micrometer Tracing — bring your own version (1.2.x – 1.6.x)
+implementation("io.micrometer:micrometer-tracing:1.6.5")
+// Add a bridge — OTel (recommended) or Brave:
+implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
+// implementation("io.micrometer:micrometer-tracing-bridge-brave:1.6.5")
+```
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-tracing</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- Micrometer Tracing — bring your own version (1.2.x – 1.6.x) -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing</artifactId>
+    <version>1.6.5</version>
+</dependency>
+<!-- Add a bridge — OTel (recommended) or Brave -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    <version>1.6.5</version>
+</dependency>
+```
+
+> `fun-tracing` declares `micrometer-tracing` as `compileOnly`. You bring your own version
+> and bridge — Spring Boot auto-configures a `Tracer` bean when either bridge is on the classpath.

@@ -1,0 +1,36 @@
+// ── Micrometer Observation adapter module ────────────────────────────────────
+// Instruments Try and Result executions with both metrics and distributed
+// tracing spans via the Micrometer Observation API (micrometer-core ≥ 1.10).
+// micrometer-core is declared compileOnly — users bring their own version and
+// backend.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+// Micrometer version: overridable for CI compatibility matrix.
+//   ./gradlew :observation:test -PmicrometerVersion=1.16.5
+def micrometerVersion = findProperty('micrometerVersion') ?: libs.versions.micrometer.get()
+
+dependencies {
+    api project(':lib')
+
+    compileOnly "io.micrometer:micrometer-core:${micrometerVersion}"
+
+    testImplementation "io.micrometer:micrometer-core:${micrometerVersion}"
+    testImplementation "io.micrometer:micrometer-observation-test:${micrometerVersion}"
+
+    compileOnly        project(':assertj')
+    testImplementation project(':assertj')
+}
+
+jpmsTest {
+    moduleName = 'dmx.fun.observation'
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-observation", "${project.version}")
+    pom {
+        name = 'dmx-fun Micrometer Observation integration'
+        description = 'Micrometer Observation adapter for dmx-fun: instruments Try and Result executions with both metrics and distributed tracing spans via the Observation API.'
+    }
+}

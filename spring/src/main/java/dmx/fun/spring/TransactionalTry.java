@@ -42,7 +42,7 @@ import org.springframework.transaction.annotation.Propagation;
 public @interface TransactionalTry {
 
     /**
-     * Transaction propagation behaviour.
+     * Transaction propagation behavior.
      *
      * @return propagation setting; defaults to {@link Propagation#REQUIRED}
      */
@@ -62,6 +62,19 @@ public @interface TransactionalTry {
      *         (no explicit timeout)
      */
     int timeout() default TransactionDefinition.TIMEOUT_DEFAULT;
+
+    /**
+     * Whether the transaction is read-only.
+     *
+     * <p>A read-only hint allows the underlying JDBC driver or ORM to apply
+     * optimizations (e.g., skip dirty checking, use a read replica). It does
+     * not prevent writing statements — enforcement depends on the actual
+     * transaction manager and data source.
+     *
+     * @return {@code true} to request a read-only transaction;
+     *         defaults to {@code false}
+     */
+    boolean readOnly() default false;
 
     /**
      * Bean name of a specific {@link org.springframework.transaction.PlatformTransactionManager}

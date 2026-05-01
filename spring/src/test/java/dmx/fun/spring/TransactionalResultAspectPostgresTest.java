@@ -7,8 +7,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import org.assertj.core.api.Assertions;
+
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -29,14 +30,14 @@ class TransactionalResultAspectPostgresTest extends AbstractPostgresTestBase {
     void onOk_commits() {
         var result = service.insertAndOk(1);
         assertThat(result).isOk();
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void onErr_rollsBack() {
         var result = service.insertAndErr(2);
         assertThat(result).isErr();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -44,14 +45,14 @@ class TransactionalResultAspectPostgresTest extends AbstractPostgresTestBase {
         assertThatThrownBy(() -> service.insertAndThrow(3))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("boom");
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void multipleInserts_allRollBackOnErr() {
         var result = service.multiInsertAndErr();
         assertThat(result).isErr();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     // -------------------------------------------------------------------------

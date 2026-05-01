@@ -11,8 +11,9 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import org.assertj.core.api.Assertions;
+
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TxTryTest {
@@ -39,7 +40,7 @@ class TxTryTest {
     }
 
     private int countRows() {
-        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
+        var count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
         return count != null ? count : 0;
     }
 
@@ -60,26 +61,26 @@ class TxTryTest {
 
     @Test
     void execute_onSuccess_commits() {
-        Try<Integer> result = txTry.execute(() -> {
+        var result = txTry.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (1, 'test')");
             return Try.success(1);
         });
 
         assertThat(result).isSuccess().containsValue(1);
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void execute_onFailure_rollsBack() {
         var ex = new RuntimeException("domain failure");
-        Try<Integer> result = txTry.execute(() -> {
+        var result = txTry.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (2, 'test')");
             return Try.failure(ex);
         });
 
         assertThat(result).isFailure();
-        assertThat(result.getCause()).isSameAs(ex);
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(result.getCause()).isSameAs(ex);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -90,7 +91,7 @@ class TxTryTest {
         })).isInstanceOf(RuntimeException.class)
            .hasMessage("boom");
 
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -113,25 +114,25 @@ class TxTryTest {
     @Test
     void executeWithDef_onSuccess_commits() {
         var def = new DefaultTransactionDefinition();
-        Try<Integer> result = txTry.execute(def, () -> {
+        var result = txTry.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (4, 'def')");
             return Try.success(4);
         });
 
         assertThat(result).isSuccess();
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void executeWithDef_onFailure_rollsBack() {
         var def = new DefaultTransactionDefinition();
-        Try<Integer> result = txTry.execute(def, () -> {
+        var result = txTry.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (5, 'def')");
             return Try.failure(new RuntimeException("rollback"));
         });
 
         assertThat(result).isFailure();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -154,25 +155,25 @@ class TxTryTest {
 
     @Test
     void execute_multipleInserts_allRollBackOnFailure() {
-        Try<Integer> result = txTry.execute(() -> {
+        var result = txTry.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (10, 'a')");
             jdbc.update("INSERT INTO events VALUES (11, 'b')");
             return Try.failure(new RuntimeException("partial work"));
         });
 
         assertThat(result).isFailure();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void execute_multipleInserts_commitAll() {
-        Try<Integer> result = txTry.execute(() -> {
+        var result = txTry.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (20, 'x')");
             jdbc.update("INSERT INTO events VALUES (21, 'y')");
             return Try.success(2);
         });
 
         assertThat(result).isSuccess();
-        assertThat(countRows()).isEqualTo(2);
+        Assertions.assertThat(countRows()).isEqualTo(2);
     }
 }

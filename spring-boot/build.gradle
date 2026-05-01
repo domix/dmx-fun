@@ -1,10 +1,14 @@
 // ── Spring Boot autoconfiguration module ──────────────────────────────────────
-// Wires the fun-spring beans (TxResult, TxTry, TxValidated, DmxTransactionalAspect)
-// into a Spring Boot application automatically. Users who depend only on :spring
-// receive no Spring Boot or AspectJ transitive dependencies.
+// Wires the fun-spring beans (TxResult, TxTry, TxValidated, DmxTransactionalAspect),
+// fun-tracing (DmxTracing), and fun-observation (DmxObservation) into a Spring Boot
+// application automatically. Users who depend only on :spring receive no Spring Boot
+// or AspectJ transitive dependencies.
 plugins {
     id 'dmx-fun.java-module'
 }
+
+def micrometerTracingVersion = findProperty('micrometerTracingVersion') ?: libs.versions.micrometerTracing.get()
+def micrometerVersion        = findProperty('micrometerVersion')        ?: libs.versions.micrometer.get()
 
 dependencies {
     // Exposes fun-spring types transitively; callers only need one dependency.
@@ -20,6 +24,10 @@ dependencies {
     compileOnly libs.jackson.databind      // ObjectMapper (for @ConditionalOnClass guard)
     compileOnly libs.spring.webmvc          // HandlerMethodReturnValueHandler, RequestMappingHandlerAdapter
     compileOnly libs.jakarta.servlet.api    // HttpServletResponse (provided by servlet container at runtime)
+    compileOnly project(':tracing')                                            // DmxTracing (for @ConditionalOnClass guard)
+    compileOnly "io.micrometer:micrometer-tracing:${micrometerTracingVersion}" // Tracer (for @ConditionalOnClass guard)
+    compileOnly project(':observation')                                        // DmxObservation (for @ConditionalOnClass guard)
+    compileOnly "io.micrometer:micrometer-core:${micrometerVersion}"           // ObservationRegistry (for @ConditionalOnClass guard)
 
     // Tests run against the version passed via -PspringBootVersion=X.Y.Z,
     // falling back to the catalog version locally.
@@ -32,13 +40,23 @@ dependencies {
     testImplementation libs.jackson.databind
     testImplementation libs.spring.webmvc
     testImplementation libs.jakarta.servlet.api
+    testImplementation project(':tracing')
+    testImplementation "io.micrometer:micrometer-tracing:${micrometerTracingVersion}"
+    testImplementation "io.micrometer:micrometer-tracing-test:${micrometerTracingVersion}"
+    testImplementation project(':observation')
+    testImplementation "io.micrometer:micrometer-core:${micrometerVersion}"
+    testImplementation "io.micrometer:micrometer-observation-test:${micrometerVersion}"
+
+    // Integration tests — real transaction commit/rollback against H2 embedded database.
+    testImplementation libs.h2
+    testImplementation libs.spring.jdbc
 }
 
 // spring.boot.autoconfigure is required static (optional at runtime): add it
 // explicitly so the JVM resolves it into the module graph during tests.
 jpmsTest {
     moduleName   = 'dmx.fun.spring.boot'
-    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet', 'dmx.fun.jackson', 'com.fasterxml.jackson.databind']
+    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet', 'dmx.fun.jackson', 'com.fasterxml.jackson.databind', 'micrometer.tracing', 'dmx.fun.tracing', 'micrometer.core', 'dmx.fun.observation']
     extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop', 'spring.boot.autoconfigure', 'spring.webmvc', 'spring.web', 'com.fasterxml.jackson.databind']
 }
 

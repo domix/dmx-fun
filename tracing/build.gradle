@@ -1,0 +1,34 @@
+// ── Micrometer Tracing adapter module ──────────────────────────────────────────
+// Instruments Try and Result executions with distributed tracing spans.
+// micrometer-tracing is declared compileOnly — users bring their own version and bridge.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+// Micrometer Tracing version: overridable for CI compatibility matrix.
+//   ./gradlew :tracing:test -PmicrometerTracingVersion=1.6.5
+def micrometerTracingVersion = findProperty('micrometerTracingVersion') ?: libs.versions.micrometerTracing.get()
+
+dependencies {
+    api project(':lib')
+
+    compileOnly "io.micrometer:micrometer-tracing:${micrometerTracingVersion}"
+
+    testImplementation "io.micrometer:micrometer-tracing:${micrometerTracingVersion}"
+    testImplementation "io.micrometer:micrometer-tracing-test:${micrometerTracingVersion}"
+
+    compileOnly        project(':assertj')
+    testImplementation project(':assertj')
+}
+
+jpmsTest {
+    moduleName = 'dmx.fun.tracing'
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-tracing", "${project.version}")
+    pom {
+        name = 'dmx-fun Micrometer Tracing integration'
+        description = 'Micrometer Tracing adapter for dmx-fun: instruments Try and Result executions with distributed tracing spans.'
+    }
+}

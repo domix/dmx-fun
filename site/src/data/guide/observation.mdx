@@ -1,0 +1,181 @@
+---
+title: "Micrometer Observation Integration — Developer Guide"
+description: "How to use the optional fun-observation module: automatic metrics and distributed tracing spans for Try and Result operations via DmxObservation and the DmxObserved fluent builder."
+order: 21
+h1: "Micrometer Observation Integration"
+---
+
+import {Content as Dependency}        from '../code/guide/observation/dependency.mdx';
+import {Content as DmxObservationSnippet} from '../code/guide/observation/dmx-observation.mdx';
+import {Content as DmxObserved}        from '../code/guide/observation/dmx-observed.mdx';
+import {Content as RealWorld}          from '../code/guide/observation/real-world-example.mdx';
+import {Content as SpringBootAuto}     from '../code/guide/observation/spring-boot-auto.mdx';
+
+The `fun-observation` module instruments `Try` and `Result` executions using the
+**Micrometer Observation API** (`micrometer-core` ≥ 1.10). A single
+`observeTry` or `observeResult` call produces **both** metrics and distributed
+tracing spans, dispatched through whichever `ObservationHandler`s are registered
+— no manual `counter.increment()`, `timer.record()`, or `Span.start()` calls
+required in your business logic.
+
+The module is **optional** — the core `fun` library has no runtime dependency on
+Micrometer. `fun-observation` declares `micrometer-core` as `compileOnly`; you
+bring your own version and backend. Any version from **1.10.x through 1.16.x**
+is supported (see [version compatibility](#version-compatibility) below).
+
+> **`fun-observation` vs `fun-tracing`** — Both modules instrument `Try`/`Result`
+> operations, but they target different Micrometer layers:
+>
+> | Module | API used | What you get |
+> |---|---|---|
+> | `fun-observation` | Micrometer Observation API | Metrics **and** spans from one call — the recommended choice |
+> | `fun-tracing` | Micrometer Tracing API | Spans only — use when you already depend on `micrometer-tracing` directly |
+>
+> Prefer `fun-observation` for new projects. It sits at a higher abstraction layer
+> and will automatically emit metrics, spans, or both depending on the handlers in
+> your `ObservationRegistry` — with no code changes required when you add or change
+> backends.
+
+## Adding the dependency
+
+<Dependency/>
+
+## Signals recorded
+
+For every instrumented call, the following signals are dispatched through the
+registered `ObservationHandler`s:
+
+| Signal | When |
+|---|---|
+| Timer `{name}_seconds` | Always — tagged `outcome=success\|failure` |
+| Span named `{name}` | When a tracing bridge (`micrometer-tracing-bridge-otel` or `-brave`) is configured |
+| `outcome=success\|failure` | Always — low-cardinality key on both metric and span |
+| `exception=<SimpleClassName>` | On failure — low-cardinality key on both metric and span |
+| Observation marked as error | On failure — recorded via `observation.error(cause)` |
+
+The observation is always stopped before the method returns, even when the
+supplier throws.
+
+## Observation naming convention
+
+Use stable, low-cardinality operation names. A practical convention is:
+
+`<bounded-context>.<operation>`
+
+Examples:
+- `payment.charge`
+- `inventory.reserve`
+- `order.place`
+- `db.user.find`
+
+Avoid embedding IDs or user input in observation names — those belong in log
+fields or baggage, not in metric/span names, as high-cardinality names generate
+excessive entries in Prometheus, Zipkin, Jaeger, and similar backends.
+
+## `DmxObservation`
+
+The primary entry point. Create one instance per `ObservationRegistry` (typically
+application-scoped) and call `observeTry` or `observeResult` at each
+instrumentation point.
+
+<DmxObservationSnippet/>
+
+## `DmxObserved` — fluent builder
+
+When you prefer to configure name and registry in a single chain — for example
+inside a factory method or when wiring the observation name and registry at
+different call sites — use the `DmxObserved` fluent builder:
+
+<DmxObserved/>
+
+## Choosing `DmxObservation` vs `DmxObserved`
+
+| Scenario | Recommendation |
+|---|---|
+| Spring Boot with `fun-spring-boot` | Inject `DmxObservation` directly — auto-configured, no setup needed |
+| Multiple operations in the same class (plain Spring) | `DmxObservation.of(registry)` — inject `ObservationRegistry`, wrap once in the constructor |
+| Single ad-hoc operation or factory method | `DmxObserved.of(name).registry(registry).observeTry(...)` |
+
+## Real-world example
+
+An order service where every step — inventory reservation, payment charge, and
+persistence — is instrumented as an independent observation. Each call
+automatically produces a timer metric and, when a tracing bridge is on the
+classpath, a child span. No manual instrumentation in the business logic.
+
+<RealWorld/>
+
+## Spring Boot integration
+
+When `fun-spring-boot` and `fun-observation` are both on the classpath, Spring
+Boot registers a `DmxObservation` bean automatically — no `@Bean` declaration or
+manual wiring required. Inject it directly into your services:
+
+<SpringBootAuto/>
+
+### How it works
+
+`DmxFunObservationAutoConfiguration` activates when:
+
+1. `micrometer-core` and `fun-observation` are on the classpath (`@ConditionalOnClass`).
+2. An `ObservationRegistry` bean is present in the context (`@ConditionalOnBean`) —
+   Spring Boot registers one automatically via `ObservationAutoConfiguration`.
+
+The `DmxObservation` bean is backed by that `ObservationRegistry`, so all signals
+it records inherit the active observation context without any extra wiring.
+
+### Opting out
+
+```properties
+dmx.fun.observation.enabled=false   # disable DmxObservation auto-configuration
+```
+
+### Replacing the bean
+
+The bean is guarded by `@ConditionalOnMissingBean`. Declare your own `@Bean` of
+type `DmxObservation` and the auto-configuration backs off:
+
+```java
+@Bean
+DmxObservation dmxObservation(ObservationRegistry registry) {
+    return DmxObservation.of(registry);  // or any custom ObservationRegistry
+}
+```
+
+### Without `fun-spring-boot`
+
+If you use plain Spring (no `fun-spring-boot`), construct `DmxObservation` manually
+in your `@Bean` or constructor:
+
+```java
+@Service
+public class PaymentService {
+
+    private final DmxObservation dmx;
+
+    public PaymentService(ObservationRegistry registry) {
+        this.dmx = DmxObservation.of(registry);
+    }
+}
+```
+
+## Version compatibility
+
+The module is tested in CI against the following Micrometer versions on every
+pull request that touches the `observation/` module:
+
+| Micrometer Core | Spring Boot | Status  |
+|-----------------|-------------|---------|
+| 1.16.x          | 3.5.x       | tested  |
+| 1.15.x          | 3.4.x       | tested  |
+| 1.14.x          | 3.3.x       | tested  |
+| 1.13.x          | 3.2.x       | tested  |
+| 1.12.x          | 3.1.x       | tested  |
+| 1.11.x          | 3.0.x       | tested  |
+| 1.10.x          | 3.0.x       | tested  |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :observation:test -PmicrometerVersion=1.15.9
+```

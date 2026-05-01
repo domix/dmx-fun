@@ -62,7 +62,7 @@ public final class OptionHandlerMethodReturnValueHandler implements HandlerMetho
             ModelAndViewContainer mavContainer,
             NativeWebRequest webRequest) throws Exception {
 
-        Option<?> option = (Option<?>) returnValue;
+        var option = (Option<?>) returnValue;
 
         if (option != null && option.isDefined()) {
             delegate.handleReturnValue(option.get(), returnType, mavContainer, webRequest);

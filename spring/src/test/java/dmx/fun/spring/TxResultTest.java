@@ -11,8 +11,9 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import org.assertj.core.api.Assertions;
+
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TxResultTest {
@@ -39,7 +40,7 @@ class TxResultTest {
     }
 
     private int countRows() {
-        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
+        var count = jdbc.queryForObject("SELECT COUNT(*) FROM events", Integer.class);
         return count != null ? count : 0;
     }
 
@@ -60,24 +61,24 @@ class TxResultTest {
 
     @Test
     void execute_onOk_commits() {
-        Result<Integer, String> result = txResult.execute(() -> {
+        var result = txResult.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (1, 'test')");
             return Result.ok(1);
         });
 
         assertThat(result).isOk().containsValue(1);
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void execute_onError_rollsBack() {
-        Result<Integer, String> result = txResult.execute(() -> {
+        var result = txResult.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (2, 'test')");
             return Result.err("domain error");
         });
 
         assertThat(result).isErr().containsError("domain error");
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -88,7 +89,7 @@ class TxResultTest {
         })).isInstanceOf(RuntimeException.class)
            .hasMessage("boom");
 
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -111,25 +112,25 @@ class TxResultTest {
     @Test
     void executeWithDef_onOk_commits() {
         var def = new DefaultTransactionDefinition();
-        Result<Integer, String> result = txResult.execute(def, () -> {
+        var result = txResult.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (4, 'def')");
             return Result.ok(4);
         });
 
         assertThat(result).isOk();
-        assertThat(countRows()).isEqualTo(1);
+        Assertions.assertThat(countRows()).isEqualTo(1);
     }
 
     @Test
     void executeWithDef_onError_rollsBack() {
         var def = new DefaultTransactionDefinition();
-        Result<Integer, String> result = txResult.execute(def, () -> {
+        var result = txResult.execute(def, () -> {
             jdbc.update("INSERT INTO events VALUES (5, 'def')");
             return Result.err("rollback me");
         });
 
         assertThat(result).isErr();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
@@ -152,25 +153,25 @@ class TxResultTest {
 
     @Test
     void execute_multipleInserts_allRollBackOnError() {
-        Result<Integer, String> result = txResult.execute(() -> {
+        var result = txResult.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (10, 'a')");
             jdbc.update("INSERT INTO events VALUES (11, 'b')");
             return Result.err("partial work");
         });
 
         assertThat(result).isErr();
-        assertThat(countRows()).isEqualTo(0);
+        Assertions.assertThat(countRows()).isEqualTo(0);
     }
 
     @Test
     void execute_multipleInserts_commitAll() {
-        Result<Integer, String> result = txResult.execute(() -> {
+        var result = txResult.execute(() -> {
             jdbc.update("INSERT INTO events VALUES (20, 'x')");
             jdbc.update("INSERT INTO events VALUES (21, 'y')");
             return Result.ok(2);
         });
 
         assertThat(result).isOk();
-        assertThat(countRows()).isEqualTo(2);
+        Assertions.assertThat(countRows()).isEqualTo(2);
     }
 }
