@@ -12,7 +12,7 @@ import org.jspecify.annotations.NullMarked;
  * dmx-fun adapter for Micrometer Tracing.
  *
  * <p>Instruments {@link Try} and {@link Result} executions automatically, opening
- * a named span around each call and recording outcome without manual span management:
+ * a named span around each call and recording an outcome without manual span management:
  *
  * <pre>{@code
  * DmxTracing dmx = DmxTracing.of(tracer);  // io.micrometer.tracing.Tracer
@@ -31,7 +31,7 @@ import org.jspecify.annotations.NullMarked;
  * </ul>
  *
  * <h2>Exception tag cardinality</h2>
- * <p>By default the {@code exception} tag uses {@code getClass().getSimpleName()}, which is
+ * <p>By default, the {@code exception} tag uses {@code getClass().getSimpleName()}, which is
  * unbounded when arbitrary third-party exceptions can appear at runtime. <strong>In
  * production, supply an explicit {@code exceptionClassifier}</strong> via
  * {@link #of(Tracer, Function)} that maps every reachable exception type to one of a small,
@@ -40,9 +40,9 @@ import org.jspecify.annotations.NullMarked;
  * <pre>{@code
  * DmxTracing dmx = DmxTracing.of(tracer, cause ->
  *     switch (cause) {
- *         case IOException __          -> "io";
- *         case TimeoutException __     -> "timeout";
- *         default                      -> "other";
+ *         case IOException _          -> "io";
+ *         case TimeoutException _     -> "timeout";
+ *         default                     -> "other";
  *     }
  * );
  * }</pre>
@@ -51,7 +51,7 @@ import org.jspecify.annotations.NullMarked;
  *
  * <p>Requires {@code micrometer-tracing} on the classpath at runtime, plus a backend
  * bridge ({@code micrometer-tracing-bridge-otel} or {@code micrometer-tracing-bridge-brave}).
- * Spring Boot auto-configures a {@link Tracer} bean when either bridge is present.
+ * Spring Boot autoconfigures a {@link Tracer} bean when either bridge is present.
  */
 @NullMarked
 public final class DmxTracing {
@@ -104,8 +104,9 @@ public final class DmxTracing {
      * Executes {@code supplier} inside a new span named {@code name}.
      *
      * <p>The span is tagged with {@code outcome=success} on success, or
-     * {@code outcome=failure} plus {@code exception=<SimpleClassName>} and marked as
-     * error on failure. The span is always ended before this method returns.
+     * {@code outcome=failure} plus {@code exception=<classifier result>} (the value
+     * returned by {@code exceptionClassifier.apply(cause)}) and marked as error on failure.
+     * The span is always ended before this method returns.
      *
      * @param <V>      the value type returned on success
      * @param name     the span name; must not be {@code null}

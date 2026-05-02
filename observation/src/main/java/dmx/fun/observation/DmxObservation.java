@@ -44,8 +44,8 @@ import org.jspecify.annotations.NullMarked;
  * <pre>{@code
  * DmxObservation dmx = DmxObservation.of(observationRegistry, cause ->
  *     switch (cause) {
- *         case IOException __          -> "io";
- *         case TimeoutException __     -> "timeout";
+ *         case IOException _           -> "io";
+ *         case TimeoutException _      -> "timeout";
  *         default                      -> "other";
  *     }
  * );
@@ -118,8 +118,9 @@ public final class DmxObservation {
      * Executes {@code supplier} inside a new {@link Observation} named {@code name}.
      *
      * <p>The observation is tagged with {@code outcome=success} on success, or
-     * {@code outcome=failure} plus {@code exception=<SimpleClassName>} and marked as
-     * error on failure. The observation is always stopped before this method returns.
+     * {@code outcome=failure} plus {@code exception=<classifier result>} (the value
+     * returned by {@code exceptionClassifier.apply(cause)}) and marked as error on failure.
+     * The observation is always stopped before this method returns.
      *
      * @param <V>      the value type returned on success
      * @param name     the observation name; must not be {@code null}

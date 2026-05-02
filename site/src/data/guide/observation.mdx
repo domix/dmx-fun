@@ -70,9 +70,9 @@ type to one of a small, fixed set of labels:
 ```java
 DmxObservation dmx = DmxObservation.of(observationRegistry, cause ->
     switch (cause) {
-        case IOException __          -> "io";
-        case TimeoutException __     -> "timeout";
-        case IllegalStateException __-> "state";
+        case IOException _           -> "io";
+        case TimeoutException _      -> "timeout";
+        case IllegalStateException _ -> "state";
         default                      -> "other";
     }
 );
@@ -169,7 +169,8 @@ type `DmxObservation` and the auto-configuration backs off:
 ```java
 @Bean
 DmxObservation dmxObservation(ObservationRegistry registry) {
-    return DmxObservation.of(registry);  // or any custom ObservationRegistry
+    // Supply an explicit classifier in production — see "Exception key cardinality" above.
+    return DmxObservation.of(registry);
 }
 ```
 
@@ -185,6 +186,7 @@ public class PaymentService {
     private final DmxObservation dmx;
 
     public PaymentService(ObservationRegistry registry) {
+        // Supply an explicit classifier in production — see "Exception key cardinality" above.
         this.dmx = DmxObservation.of(registry);
     }
 }

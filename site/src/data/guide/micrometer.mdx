@@ -29,7 +29,7 @@ and backend (Prometheus, Datadog, CloudWatch, etc.), following the same pattern 
 For every instrumented call, these two metric families are updated:
 
 | Metric | Type | Tags |
-|---|---|---|
+|----|----|----|
 | `{name}.count` | Counter | `outcome=success\|failure` + your custom tags |
 | `{name}.duration` | Timer | `outcome=success\|failure` + your custom tags |
 
@@ -69,9 +69,9 @@ type to one of a small, fixed set of labels:
 ```java
 DmxMicrometer dmx = DmxMicrometer.of(registry, cause ->
     switch (cause) {
-        case IOException __          -> "io";
-        case TimeoutException __     -> "timeout";
-        case IllegalStateException __-> "state";
+        case IOException _           -> "io";
+        case TimeoutException _      -> "timeout";
+        case IllegalStateException _ -> "state";
         default                      -> "other";
     }
 );
