@@ -21,8 +21,8 @@ dependencies {
     // compileOnly puts dmx.fun.assertj on compileClasspath so the JPMS module-path
     // plugin can expose it to compileTestJava; testImplementation covers test runtime.
     // assertj-core is already on the classpath via dmx-fun.java-base.
-    compileOnly        project(':assertj')
-    testImplementation project(':assertj')
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
 }
 
 jpmsTest {

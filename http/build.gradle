@@ -8,8 +8,8 @@ plugins {
 dependencies {
     api project(':core:lib')
 
-    compileOnly        project(':assertj')
-    testImplementation project(':assertj')
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
 }
 
 jpmsTest {

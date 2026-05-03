@@ -19,8 +19,8 @@ dependencies {
     testImplementation "io.micrometer:micrometer-core:${micrometerVersion}"
     testImplementation "io.micrometer:micrometer-observation-test:${micrometerVersion}"
 
-    compileOnly        project(':assertj')
-    testImplementation project(':assertj')
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
 }
 
 jpmsTest {

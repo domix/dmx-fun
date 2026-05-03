@@ -26,8 +26,8 @@ dependencies {
     testImplementation "org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}"
     testRuntimeOnly    libs.expressly    // EL implementation required by Hibernate Validator
 
-    compileOnly        project(':assertj')
-    testImplementation project(':assertj')
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
 }
 
 mavenPublishing {

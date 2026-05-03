@@ -7,7 +7,7 @@ rootProject.name = 'dmx-fun'
 includeBuild('build-logic')
 include('bom')
 include('core:lib')
-include('assertj')
+include('core:assertj')
 include('jackson')
 include('spring')
 include('spring-boot')

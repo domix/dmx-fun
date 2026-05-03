@@ -41,7 +41,7 @@ dependencies {
     runtimeOnly libs.postgresql
 
     // ── Test ────────────────────────────────────────────────────────────────
-    testImplementation project(':assertj')                        // DmxFunAssertions.assertThat(result).isOk()…
+    testImplementation project(':core:assertj')                        // DmxFunAssertions.assertThat(result).isOk()…
     testImplementation "org.springframework.boot:spring-boot-starter-test:${sbVersion}"
     testImplementation libs.testcontainers.junit5
     testImplementation libs.testcontainers.postgresql

@@ -12,6 +12,6 @@ dependencies {
     implementation libs.jackson.databind
     implementation libs.micrometer.core
 
-    testImplementation project(':assertj')
+    testImplementation project(':core:assertj')
     testImplementation libs.assertj.core
 }
