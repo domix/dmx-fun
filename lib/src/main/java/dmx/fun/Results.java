@@ -52,7 +52,8 @@ public final class Results {
         /**
          * Converts this partition to the underlying {@link Result.Partition}.
          *
-         * @return a {@link Result.Partition} with the same {@code oks} and {@code errors} lists
+         * @return a {@link Result.Partition} containing the same elements as this partition's
+         *         {@code oks} and {@code errors} collections
          */
         public Result.Partition<V, E> toResultPartition() {
             return new Result.Partition<>(oks, errors);

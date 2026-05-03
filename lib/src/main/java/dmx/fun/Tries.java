@@ -48,7 +48,8 @@ public final class Tries {
         /**
          * Converts this partition to the underlying {@link Try.Partition}.
          *
-         * @return a {@link Try.Partition} with the same {@code successes} and {@code failures} lists
+         * @return a {@link Try.Partition} containing the same elements as this partition's
+         *         {@code successes} and {@code failures} collections
          */
         public Try.Partition<V> toTryPartition() {
             return new Try.Partition<>(successes, failures);
