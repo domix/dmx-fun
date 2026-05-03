@@ -21,9 +21,9 @@ def moduleMap = [
     ':observability:observation'        : 'dmx.fun.observation',
     ':observability:tracing'            : 'dmx.fun.tracing',
     ':resilience:resilience4j'          : 'dmx.fun.resilience4j',
+    ':protocols:http'                   : 'dmx.fun.http',
     ':spring'                           : 'dmx.fun.spring',
-    ':spring-boot'                      : 'dmx.fun.spring.boot',
-    ':http'                             : 'dmx.fun.http'
+    ':spring-boot'                      : 'dmx.fun.spring.boot'
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────

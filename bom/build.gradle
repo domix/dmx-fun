@@ -25,6 +25,7 @@ dependencies {
         api project(':observability:observation')
         api project(':observability:tracing')
         api project(':resilience:resilience4j')
+        api project(':protocols:http')
         api project(':spring')
         api project(':spring-boot')
     }
