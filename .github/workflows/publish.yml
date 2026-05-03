@@ -5,9 +5,12 @@ on:
     branches: [ "main" ]
     paths:
       - 'bom/**'
-      - 'lib/**'
-      - 'jackson/**'
-      - 'assertj/**'
+      - 'core/**'
+      - 'serialization/**'
+      - 'observability/**'
+      - 'resilience/**'
+      - 'protocols/**'
+      - 'frameworks/**'
       - 'settings.gradle'
       - 'gradle.properties'
       - 'gradle/**'

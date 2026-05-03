@@ -11,13 +11,13 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'lib/**'
-      - 'assertj/**'
-      - 'jackson/**'
-      - 'spring/**'
-      - 'resilience4j/**'
-      - 'micrometer/**'
-      - 'jakarta-validation/**'
+      - 'core/**'
+      - 'serialization/**'
+      - 'observability/**'
+      - 'resilience/**'
+      - 'protocols/**'
+      - 'frameworks/**'
+      - 'samples/**'
       - 'settings.gradle'
       - 'gradle.properties'
       - 'gradle/**'
@@ -39,13 +39,13 @@ jobs:
         with:
           filters: |
             relevant:
-              - 'lib/**'
-              - 'assertj/**'
-              - 'jackson/**'
-              - 'spring/**'
-              - 'resilience4j/**'
-              - 'micrometer/**'
-              - 'jakarta-validation/**'
+              - 'core/**'
+              - 'serialization/**'
+              - 'observability/**'
+              - 'resilience/**'
+              - 'protocols/**'
+              - 'frameworks/**'
+              - 'samples/**'
               - 'settings.gradle'
               - 'gradle.properties'
               - 'gradle/**'

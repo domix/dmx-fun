@@ -5,14 +5,14 @@
 #
 # Triggered only on pull requests that touch jackson/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :jackson:test -PjacksonVersion=2.15.4
+#   ./gradlew :serialization:jackson:test -PjacksonVersion=2.15.4
 name: Jackson compatibility
 
 on:
   pull_request:
     # Run when the jackson module or this workflow file is modified.
     paths:
-      - 'jackson/**'
+      - 'serialization/jackson/**'
       - '.github/workflows/jackson-compatibility.yaml'
 
 jobs:
@@ -33,4 +33,4 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       # Pass the matrix version as a Gradle property; the build falls back to
       # the catalog version when the property is absent (local development).
-      - run: ./gradlew :jackson:test -PjacksonVersion=${{ matrix.jackson-version }}
+      - run: ./gradlew :serialization:jackson:test -PjacksonVersion=${{ matrix.jackson-version }}

@@ -5,14 +5,14 @@
 #
 # Triggered only on pull requests that touch tracing/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :tracing:test -PmicrometerTracingVersion=1.5.11
+#   ./gradlew :observability:tracing:test -PmicrometerTracingVersion=1.5.11
 name: Micrometer Tracing compatibility
 
 on:
   pull_request:
     # Run when the tracing module, this workflow file, or the version catalog is modified.
     paths:
-      - 'tracing/**'
+      - 'observability/tracing/**'
       - '.github/workflows/micrometer-tracing-compatibility.yaml'
       - 'gradle/libs.versions.toml'
 
@@ -38,4 +38,4 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       # Pass the matrix version as a Gradle property; the build falls back to
       # the catalog version when the property is absent (local development).
-      - run: ./gradlew :tracing:test -PmicrometerTracingVersion=${{ matrix.micrometer-tracing-version }}
+      - run: ./gradlew :observability:tracing:test -PmicrometerTracingVersion=${{ matrix.micrometer-tracing-version }}

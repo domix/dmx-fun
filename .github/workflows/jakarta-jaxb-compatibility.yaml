@@ -5,7 +5,7 @@
 #
 # Triggered only on pull requests that touch jakarta-jaxb/** or this workflow.
 # To run a specific combination locally:
-#   ./gradlew :jakarta-jaxb:test \
+#   ./gradlew :serialization:jakarta-jaxb:test \
 #     -PjakartaJsonbVersion=2.0.0 -PyassonVersion=2.0.4 \
 #     -PjakartaJaxbVersion=3.0.1  -PjaxbImplVersion=3.0.2 \
 #     -PjakartaJsonApiVersion=2.0.2 -PparssonVersion=1.1.7
@@ -14,7 +14,7 @@ name: Jakarta JSON-B + JAXB compatibility
 on:
   pull_request:
     paths:
-      - 'jakarta-jaxb/**'
+      - 'serialization/jakarta-jaxb/**'
       - '.github/workflows/jakarta-jaxb-compatibility.yaml'
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
           distribution: 'temurin'
       - uses: gradle/actions/setup-gradle@v6
       - run: >
-          ./gradlew :jakarta-jaxb:test
+          ./gradlew :serialization:jakarta-jaxb:test
           -PjakartaJsonbVersion=${{ matrix.jsonb-version }}
           -PyassonVersion=${{ matrix.yasson-version }}
           -PjakartaJaxbVersion=${{ matrix.jaxb-version }}
