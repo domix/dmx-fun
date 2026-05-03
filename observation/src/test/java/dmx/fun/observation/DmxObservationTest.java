@@ -215,4 +215,27 @@ class DmxObservationTest {
             .assertThat(registry)
             .hasNumberOfObservationsEqualTo(2);
     }
+
+    // ── custom exception classifier ────────────────────────────────────────────
+
+    @Test
+    void of_withCustomClassifier_usesClassifierForExceptionKey() {
+        var customDmx = DmxObservation.of(registry, cause ->
+            cause instanceof IOException ? "io" : "other"
+        );
+        customDmx.observeTry("op", () -> { throw new IOException("boom"); });
+
+        TestObservationRegistryAssert
+            .assertThat(registry)
+            .hasObservationWithNameEqualTo("op")
+            .that()
+            .hasLowCardinalityKeyValue("exception", "io");
+    }
+
+    @Test
+    void of_withCustomClassifier_nullClassifier_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxObservation.of(registry, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionClassifier");
+    }
 }

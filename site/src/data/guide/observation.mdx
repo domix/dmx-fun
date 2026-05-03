@@ -50,11 +50,42 @@ registered `ObservationHandler`s:
 | Timer `{name}_seconds` | Always — tagged `outcome=success\|failure` |
 | Span named `{name}` | When a tracing bridge (`micrometer-tracing-bridge-otel` or `-brave`) is configured |
 | `outcome=success\|failure` | Always — low-cardinality key on both metric and span |
-| `exception=<SimpleClassName>` | On failure — low-cardinality key on both metric and span |
+| `exception=<label>` | On failure — low-cardinality key on both metric and span |
 | Observation marked as error | On failure — recorded via `observation.error(cause)` |
 
 The observation is always stopped before the method returns, even when the
 supplier throws.
+
+## Exception key cardinality
+
+> **Warning:** The default `exception` key uses `getClass().getSimpleName()`. When
+> arbitrary third-party exceptions can appear at runtime, this produces an unbounded
+> number of distinct values — a violation of Micrometer's `lowCardinalityKeyValue`
+> contract (≤ 100 distinct values per key). This causes excessive series growth in
+> Prometheus, Zipkin, and similar backends.
+
+**In production, always supply an explicit classifier** that maps every reachable exception
+type to one of a small, fixed set of labels:
+
+```java
+DmxObservation dmx = DmxObservation.of(observationRegistry, cause ->
+    switch (cause) {
+        case IOException _           -> "io";
+        case TimeoutException _      -> "timeout";
+        case IllegalStateException _ -> "state";
+        default                      -> "other";
+    }
+);
+```
+
+The same option is available on the `DmxObserved` builder:
+
+```java
+DmxObserved.of("payment.charge")
+    .registry(observationRegistry)
+    .exceptionClassifier(cause -> cause instanceof IOException ? "io" : "other")
+    .observeTry(() -> stripe.charge(amount));
+```
 
 ## Observation naming convention
 
@@ -138,7 +169,8 @@ type `DmxObservation` and the auto-configuration backs off:
 ```java
 @Bean
 DmxObservation dmxObservation(ObservationRegistry registry) {
-    return DmxObservation.of(registry);  // or any custom ObservationRegistry
+    // Supply an explicit classifier in production — see "Exception key cardinality" above.
+    return DmxObservation.of(registry);
 }
 ```
 
@@ -154,6 +186,7 @@ public class PaymentService {
     private final DmxObservation dmx;
 
     public PaymentService(ObservationRegistry registry) {
+        // Supply an explicit classifier in production — see "Exception key cardinality" above.
         this.dmx = DmxObservation.of(registry);
     }
 }

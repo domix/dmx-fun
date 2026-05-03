@@ -140,6 +140,24 @@ class DmxMicrometerTest {
         assertThat(counter.count()).isEqualTo(1.0);
     }
 
+    @Test
+    void of_withCustomClassifier_usesClassifierForExceptionTag() {
+        var customDmx = DmxMicrometer.of(registry, cause ->
+            cause instanceof IOException ? "io" : "other"
+        );
+        customDmx.recordTry("op", Tags.empty(), () -> { throw new IOException("boom"); });
+
+        var counter = registry.get("op.failure").tag("exception", "io").counter();
+        assertThat(counter.count()).isEqualTo(1.0);
+    }
+
+    @Test
+    void of_withCustomClassifier_nullClassifier_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxMicrometer.of(registry, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionClassifier");
+    }
+
     // ── custom tags ────────────────────────────────────────────────────────────
 
     @Test

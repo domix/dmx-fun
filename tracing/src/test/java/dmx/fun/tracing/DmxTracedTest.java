@@ -101,4 +101,24 @@ class DmxTracedTest {
             DmxTraced.of("op").traceResult(() -> "ok")
         ).isInstanceOf(IllegalStateException.class);
     }
+
+    // ── custom exception classifier ────────────────────────────────────────────
+
+    @Test
+    void exceptionClassifier_customClassifier_usedForExceptionTag() {
+        DmxTraced.of("op")
+            .tracer(tracer)
+            .exceptionClassifier(cause -> cause instanceof IOException ? "io" : "other")
+            .traceTry(() -> { throw new IOException("boom"); });
+
+        assertThat(tracer.getSpans().peekFirst().getTags())
+            .containsEntry("exception", "io");
+    }
+
+    @Test
+    void exceptionClassifier_nullClassifier_throwsNullPointerException() {
+        assertThatThrownBy(() -> DmxTraced.of("op").exceptionClassifier(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionClassifier");
+    }
 }

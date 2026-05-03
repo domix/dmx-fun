@@ -5,13 +5,14 @@ import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.tracing.Tracer;
 import java.util.Objects;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 
 /**
  * dmx-fun adapter for Micrometer Tracing.
  *
  * <p>Instruments {@link Try} and {@link Result} executions automatically, opening
- * a named span around each call and recording outcome without manual span management:
+ * a named span around each call and recording an outcome without manual span management:
  *
  * <pre>{@code
  * DmxTracing dmx = DmxTracing.of(tracer);  // io.micrometer.tracing.Tracer
@@ -25,41 +26,87 @@ import org.jspecify.annotations.NullMarked;
  * <ul>
  *   <li>Span named after the {@code name} argument.</li>
  *   <li>{@code outcome} tag — {@code "success"} or {@code "failure"}.</li>
- *   <li>{@code exception} tag — simple class name of the cause (failure only).</li>
+ *   <li>{@code exception} tag — classifier label of the cause (failure only).</li>
  *   <li>Span marked as error via {@link io.micrometer.tracing.Span#error} (failure only).</li>
  * </ul>
+ *
+ * <h2>Exception tag cardinality</h2>
+ * <p>By default, the {@code exception} tag uses {@code getClass().getSimpleName()}, which is
+ * unbounded when arbitrary third-party exceptions can appear at runtime. <strong>In
+ * production, supply an explicit {@code exceptionClassifier}</strong> via
+ * {@link #of(Tracer, Function)} that maps every reachable exception type to one of a small,
+ * fixed set of labels:
+ *
+ * <pre>{@code
+ * DmxTracing dmx = DmxTracing.of(tracer, cause ->
+ *     switch (cause) {
+ *         case IOException _          -> "io";
+ *         case TimeoutException _     -> "timeout";
+ *         default                     -> "other";
+ *     }
+ * );
+ * }</pre>
  *
  * <p>For a fluent builder alternative see {@link DmxTraced}.
  *
  * <p>Requires {@code micrometer-tracing} on the classpath at runtime, plus a backend
  * bridge ({@code micrometer-tracing-bridge-otel} or {@code micrometer-tracing-bridge-brave}).
- * Spring Boot auto-configures a {@link Tracer} bean when either bridge is present.
+ * Spring Boot autoconfigures a {@link Tracer} bean when either bridge is present.
  */
 @NullMarked
 public final class DmxTracing {
 
-    private final Tracer tracer;
+    private static final Function<Throwable, String> DEFAULT_CLASSIFIER =
+        t -> t.getClass().getSimpleName();
 
-    private DmxTracing(Tracer tracer) {
+    private final Tracer tracer;
+    private final Function<Throwable, String> exceptionClassifier;
+
+    private DmxTracing(Tracer tracer, Function<Throwable, String> exceptionClassifier) {
         this.tracer = tracer;
+        this.exceptionClassifier = exceptionClassifier;
     }
 
     /**
      * Creates an instance bound to the given {@link Tracer}.
      *
+     * <p><strong>Warning:</strong> uses {@code getClass().getSimpleName()} as the
+     * {@code exception} tag — an unsafe default in production where arbitrary exceptions
+     * may appear. Prefer {@link #of(Tracer, Function)} with an explicit classifier.
+     *
      * @param tracer the tracer to open spans with; must not be {@code null}
      * @return a new {@code DmxTracing} bound to the given tracer
      */
     public static DmxTracing of(Tracer tracer) {
-        return new DmxTracing(Objects.requireNonNull(tracer, "tracer"));
+        return new DmxTracing(Objects.requireNonNull(tracer, "tracer"), DEFAULT_CLASSIFIER);
+    }
+
+    /**
+     * Creates an instance bound to the given {@link Tracer} and exception classifier.
+     *
+     * <p>The {@code exceptionClassifier} maps each failure {@link Throwable} to the value
+     * written to the {@code exception} span tag. It should return a value from a small,
+     * bounded set to keep tag cardinality predictable in tracing backends.
+     *
+     * @param tracer              the tracer to open spans with; must not be {@code null}
+     * @param exceptionClassifier maps a failure cause to its {@code exception} tag value;
+     *                            must not be null, should return bounded values
+     * @return a new {@code DmxTracing} bound to the given tracer and classifier
+     */
+    public static DmxTracing of(Tracer tracer, Function<Throwable, String> exceptionClassifier) {
+        return new DmxTracing(
+            Objects.requireNonNull(tracer, "tracer"),
+            Objects.requireNonNull(exceptionClassifier, "exceptionClassifier")
+        );
     }
 
     /**
      * Executes {@code supplier} inside a new span named {@code name}.
      *
      * <p>The span is tagged with {@code outcome=success} on success, or
-     * {@code outcome=failure} plus {@code exception=<SimpleClassName>} and marked as
-     * error on failure. The span is always ended before this method returns.
+     * {@code outcome=failure} plus {@code exception=<classifier result>} (the value
+     * returned by {@code exceptionClassifier.apply(cause)}) and marked as error on failure.
+     * The span is always ended before this method returns.
      *
      * @param <V>      the value type returned on success
      * @param name     the span name; must not be {@code null}
@@ -80,7 +127,7 @@ public final class DmxTracing {
                 .onSuccess(_ -> span.tag("outcome", "success"))
                 .onFailure(cause -> {
                     span.tag("outcome", "failure");
-                    span.tag("exception", cause.getClass().getSimpleName());
+                    span.tag("exception", exceptionClassifier.apply(cause));
                     span.error(cause);
                 });
         } finally {
