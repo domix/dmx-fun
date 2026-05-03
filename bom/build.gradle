@@ -23,6 +23,7 @@ dependencies {
         api project(':serialization:jakarta-validation')
         api project(':observability:micrometer')
         api project(':observability:observation')
+        api project(':observability:tracing')
         api project(':spring')
         api project(':spring-boot')
         api project(':resilience4j')

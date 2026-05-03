@@ -19,10 +19,10 @@ def moduleMap = [
     ':serialization:jakarta-validation' : 'dmx.fun.jakarta.validation',
     ':observability:micrometer'         : 'dmx.fun.micrometer',
     ':observability:observation'        : 'dmx.fun.observation',
+    ':observability:tracing'            : 'dmx.fun.tracing',
     ':spring'                           : 'dmx.fun.spring',
     ':spring-boot'                      : 'dmx.fun.spring.boot',
     ':resilience4j'                     : 'dmx.fun.resilience4j',
-    ':tracing'                          : 'dmx.fun.tracing',
     ':http'                             : 'dmx.fun.http'
 ]
 

@@ -24,7 +24,7 @@ dependencies {
     compileOnly libs.jackson.databind      // ObjectMapper (for @ConditionalOnClass guard)
     compileOnly libs.spring.webmvc          // HandlerMethodReturnValueHandler, RequestMappingHandlerAdapter
     compileOnly libs.jakarta.servlet.api    // HttpServletResponse (provided by servlet container at runtime)
-    compileOnly project(':tracing')                                            // DmxTracing (for @ConditionalOnClass guard)
+    compileOnly project(':observability:tracing')                                            // DmxTracing (for @ConditionalOnClass guard)
     compileOnly "io.micrometer:micrometer-tracing:${micrometerTracingVersion}" // Tracer (for @ConditionalOnClass guard)
     compileOnly project(':observability:observation')                                        // DmxObservation (for @ConditionalOnClass guard)
     compileOnly "io.micrometer:micrometer-core:${micrometerVersion}"           // ObservationRegistry (for @ConditionalOnClass guard)
@@ -40,7 +40,7 @@ dependencies {
     testImplementation libs.jackson.databind
     testImplementation libs.spring.webmvc
     testImplementation libs.jakarta.servlet.api
-    testImplementation project(':tracing')
+    testImplementation project(':observability:tracing')
     testImplementation "io.micrometer:micrometer-tracing:${micrometerTracingVersion}"
     testImplementation "io.micrometer:micrometer-tracing-test:${micrometerTracingVersion}"
     testImplementation project(':observability:observation')
