@@ -33,17 +33,23 @@ public final class Tries {
      * Transparent alias for {@link Try.Partition} so callers can use {@code Tries.Partition}
      * without importing {@link Try} directly.
      *
-     * @param <V> the value type of the {@code Success} elements
+     * @param <V>       the value type of the {@code Success} elements
+     * @param successes the list of successful values; must not be {@code null}
+     * @param failures  the list of failure causes; must not be {@code null}
      */
     public record Partition<V>(List<V> successes, List<Throwable> failures) {
-        /** Delegates to {@link Try.Partition} for consistent null/copy semantics. */
+        /** Validates non-null inputs and defensively copies both lists. */
         public Partition {
             var delegate = new Try.Partition<>(successes, failures);
             successes = delegate.successes();
             failures  = delegate.failures();
         }
 
-        /** Converts to the underlying {@link Try.Partition}. */
+        /**
+         * Converts this partition to the underlying {@link Try.Partition}.
+         *
+         * @return a {@link Try.Partition} with the same {@code successes} and {@code failures} lists
+         */
         public Try.Partition<V> toTryPartition() {
             return new Try.Partition<>(successes, failures);
         }

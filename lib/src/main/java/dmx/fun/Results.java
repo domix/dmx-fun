@@ -35,11 +35,13 @@ public final class Results {
      * Transparent alias for {@link Result.Partition} so callers can use {@code Results.Partition}
      * without importing {@link Result} directly.
      *
-     * @param <V> the value type of the {@code Ok} elements
-     * @param <E> the error type of the {@code Err} elements
+     * @param <V>    the value type of the {@code Ok} elements
+     * @param <E>    the error type of the {@code Err} elements
+     * @param oks    the list of successful values; must not be {@code null}
+     * @param errors the list of error values; must not be {@code null}
      */
     public record Partition<V, E>(List<V> oks, List<E> errors) {
-        /** Null-checks and defensively copies both lists. */
+        /** Validates non-null inputs and defensively copies both lists. */
         public Partition {
             Objects.requireNonNull(oks,    "oks");
             Objects.requireNonNull(errors, "errors");
@@ -47,7 +49,11 @@ public final class Results {
             errors = List.copyOf(errors);
         }
 
-        /** Converts to the underlying {@link Result.Partition}. */
+        /**
+         * Converts this partition to the underlying {@link Result.Partition}.
+         *
+         * @return a {@link Result.Partition} with the same {@code oks} and {@code errors} lists
+         */
         public Result.Partition<V, E> toResultPartition() {
             return new Result.Partition<>(oks, errors);
         }
