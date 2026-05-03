@@ -60,7 +60,3 @@ yasson = { module = "org.eclipse:yasson", version.ref = "yasson" }
 jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version.ref = "jaxbImpl" }
 jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version.ref = "jakartaJsonApi" }
 parsson = { module = "org.eclipse.parsson:parsson", version.ref = "parsson" }
-quarkus-arc = { module = "io.quarkus:quarkus-arc", version.ref = "quarkus" }
-quarkus-narayana-jta = { module = "io.quarkus:quarkus-narayana-jta", version.ref = "quarkus" }
-quarkus-core-deployment = { module = "io.quarkus:quarkus-core-deployment", version.ref = "quarkus" }
-quarkus-arc-deployment = { module = "io.quarkus:quarkus-arc-deployment", version.ref = "quarkus" }

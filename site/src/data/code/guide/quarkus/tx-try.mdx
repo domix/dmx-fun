@@ -15,8 +15,7 @@ public class ReportService {
 
     public Try<Report> generate(ReportRequest req) {
         return tx.execute(() ->
-            Try.of(() -> repo.save(build(req)))   // Try<Report>
-               .map(r -> { auditLog.record(r); return r; })
+            Try.of(() -> repo.save(build(req)))  // Try<Report>
         );
         // • Success(report) → transaction commits
         // • Failure(cause)  → transaction rolls back; partial writes undone

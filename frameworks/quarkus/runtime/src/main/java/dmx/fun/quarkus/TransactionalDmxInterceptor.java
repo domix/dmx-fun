@@ -54,6 +54,8 @@ public class TransactionalDmxInterceptor {
      */
     @AroundInvoke
     public Object intercept(InvocationContext ctx) throws Exception {
+        // getTarget().getClass() returns Arc's intercepted subclass; class-level detection
+        // relies on @Inherited being present on @TransactionalResult / @TransactionalTry.
         boolean isResult = ctx.getMethod().isAnnotationPresent(TransactionalResult.class)
             || ctx.getTarget().getClass().isAnnotationPresent(TransactionalResult.class);
         boolean isTry = ctx.getMethod().isAnnotationPresent(TransactionalTry.class)

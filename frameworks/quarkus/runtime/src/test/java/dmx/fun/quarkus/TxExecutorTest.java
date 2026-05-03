@@ -155,4 +155,14 @@ class TxExecutorTest {
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(HeuristicRollbackException.class);
     }
+
+    @Test
+    void execute_commitThrowsSystemException_wrapsInRuntimeException() {
+        tx.throwOnCommit = new SystemException("tx system error on commit");
+
+        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("JTA transaction management failed")
+            .hasCauseInstanceOf(SystemException.class);
+    }
 }

@@ -8,7 +8,7 @@
  * JTA-managed transactions via Narayana.
  *
  * <p>Quarkus is declared as {@code compileOnly} — consumers bring their own Quarkus
- * dependency. Supported Quarkus release lines: 3.8.x (LTS), 3.15.x (LTS), 3.21.x.
+ * dependency. Tested against: 3.11.x, 3.21.x, 3.31.x, 3.35.x.
  */
 module dmx.fun.quarkus {
     requires dmx.fun;

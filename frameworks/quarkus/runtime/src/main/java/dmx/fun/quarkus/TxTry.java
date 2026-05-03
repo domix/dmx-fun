@@ -7,6 +7,7 @@ import jakarta.transaction.UserTransaction;
 import java.util.Objects;
 import java.util.function.Supplier;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * CDI bean that executes a {@link Try}-returning action inside a JTA-managed
@@ -40,7 +41,7 @@ import org.jspecify.annotations.NullMarked;
 @ApplicationScoped
 public class TxTry {
 
-    private TxExecutor executor;
+    private final @Nullable TxExecutor executor;
 
     @Inject
     TxTry(UserTransaction userTransaction) {

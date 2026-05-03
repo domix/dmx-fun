@@ -29,23 +29,14 @@ outcome marks the transaction for rollback before Narayana commits.
 
 ## Adding the dependency
 
-Two artifacts are available:
-
-| Artifact | Purpose |
-|---|---|
-| `fun-quarkus` | Runtime CDI beans (`TxResult`, `TxTry`) and interceptor (`@TransactionalResult`, `@TransactionalTry`) |
-| `fun-quarkus-deployment` | Quarkus build-time processor — prevents Arc from removing the interceptor during bean removal optimisation |
-
 `fun-quarkus` declares `quarkus-arc` and `quarkus-narayana-jta` as `compileOnly` — your
 own Quarkus version is not forced.
 
 <Dependency/>
 
-The **deployment artifact is only needed when using the declarative annotations**
-(`@TransactionalResult` / `@TransactionalTry`). Arc's bean removal optimisation can
-eliminate the interceptor bean when no direct injection point references it; the
-`DmxFunQuarkusProcessor` build step marks it as unremovable. If you only use `TxResult` and
-`TxTry` programmatically (injecting them directly), the runtime artifact alone is sufficient.
+The runtime JAR ships `META-INF/quarkus-extension.properties`, so Quarkus build tools
+automatically add `fun-quarkus-deployment` to the augmentation classpath. No explicit
+`fun-quarkus-deployment` dependency is needed in your project.
 
 ## `TxResult`
 
@@ -151,12 +142,10 @@ public class OrderService {
 Choose **programmatic** (`TxResult` / `TxTry`) when:
 - You want an explicit, testable object — straightforward to unit-test by passing a stub `UserTransaction`.
 - The service class already has `@Inject` dependencies and adding one more is natural.
-- You prefer not to add the deployment artifact (`fun-quarkus-deployment`) to your build.
 
 Choose **declarative** (`@TransactionalResult` / `@TransactionalTry`) when:
 - You prefer the familiar `@Transactional` annotation style and want no extra field in the bean.
 - The method is already a CDI bean and Arc proxy overhead is acceptable.
-- You are willing to add `fun-quarkus-deployment` to protect the interceptor from Arc's removal optimisation.
 
 ---
 

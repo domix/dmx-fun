@@ -3,26 +3,15 @@ fileName: 'pom.xml / build.gradle'
 ---
 
 ```xml
-<!-- Maven — runtime (CDI beans + interceptor) -->
+<!-- Maven -->
 <dependency>
     <groupId>codes.domix</groupId>
     <artifactId>fun-quarkus</artifactId>
     <version>LATEST_VERSION</version>
 </dependency>
-
-<!-- Maven — deployment (prevents Arc from removing interceptor during build optimization) -->
-<dependency>
-    <groupId>codes.domix</groupId>
-    <artifactId>fun-quarkus-deployment</artifactId>
-    <version>LATEST_VERSION</version>
-    <scope>provided</scope>
-</dependency>
 ```
 
 ```groovy
-// Gradle — runtime
+// Gradle
 implementation("codes.domix:fun-quarkus:LATEST_VERSION")
-
-// Gradle — deployment (compileOnly — only needed at Quarkus build time)
-compileOnly("codes.domix:fun-quarkus-deployment:LATEST_VERSION")
 ```

@@ -41,6 +41,16 @@ tasks.named('compileTestJava') {
     options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
 }
 
+// Stamp the runtime JAR with the extension coordinates so Quarkus build tools
+// automatically add fun-quarkus-deployment to the augmentation classpath.
+// Capture at configuration time so the closure is compatible with configuration cache.
+def extensionVersion = project.version.toString()
+processResources {
+    filesMatching('META-INF/quarkus-extension.properties') {
+        expand(version: extensionVersion)
+    }
+}
+
 mavenPublishing {
     coordinates("codes.domix", "fun-quarkus", "${project.version}")
     pom {

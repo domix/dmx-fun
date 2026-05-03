@@ -8,12 +8,16 @@ fileName: 'OrderService.java'
 @ApplicationScoped
 public class OrderService {
     private final TxResult tx;   // explicit dependency, easy to test without CDI
+    private final OrderRepository repo;
+    private final OrderValidator validator;
 
     @Inject
-    public OrderService(TxResult tx, ...) { this.tx = tx; }
+    public OrderService(TxResult tx, OrderRepository repo, OrderValidator validator) {
+        this.tx = tx; this.repo = repo; this.validator = validator;
+    }
 
     public Result<Order, OrderError> createOrder(OrderRequest req) {
-        return tx.execute(() -> validate(req).flatMap(repo::save));
+        return tx.execute(() -> validator.validate(req).flatMap(repo::save));
     }
 }
 
@@ -22,10 +26,17 @@ public class OrderService {
 @ApplicationScoped
 public class OrderService {
     // no TxResult field — the interceptor wraps the method transparently
+    private final OrderRepository repo;
+    private final OrderValidator validator;
+
+    @Inject
+    public OrderService(OrderRepository repo, OrderValidator validator) {
+        this.repo = repo; this.validator = validator;
+    }
 
     @TransactionalResult
     public Result<Order, OrderError> createOrder(OrderRequest req) {
-        return validate(req).flatMap(repo::save);
+        return validator.validate(req).flatMap(repo::save);
     }
 }
 ```

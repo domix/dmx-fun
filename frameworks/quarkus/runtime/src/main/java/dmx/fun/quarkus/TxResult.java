@@ -7,6 +7,7 @@ import jakarta.transaction.UserTransaction;
 import java.util.Objects;
 import java.util.function.Supplier;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * CDI bean that executes a {@link Result}-returning action inside a JTA-managed
@@ -42,7 +43,7 @@ import org.jspecify.annotations.NullMarked;
 @ApplicationScoped
 public class TxResult {
 
-    private TxExecutor executor;
+    private final @Nullable TxExecutor executor;
 
     @Inject
     TxResult(UserTransaction userTransaction) {
