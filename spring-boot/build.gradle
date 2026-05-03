@@ -12,7 +12,7 @@ def micrometerVersion        = findProperty('micrometerVersion')        ?: libs.
 
 dependencies {
     // Exposes fun-spring types transitively; callers only need one dependency.
-    api project(':spring')
+    api project(':frameworks:spring')
 
     // Spring Boot autoconfigure: compileOnly so it is not pulled in transitively.
     // Users bring their own Spring Boot version (or skip Boot entirely).
