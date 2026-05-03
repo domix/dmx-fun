@@ -27,7 +27,7 @@ dependencies {
         api project(':resilience:resilience4j')
         api project(':protocols:http')
         api project(':frameworks:spring')
-        api project(':spring-boot')
+        api project(':frameworks:spring-boot')
     }
 }
 
