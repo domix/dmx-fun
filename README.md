@@ -20,6 +20,7 @@ All modules are published to Maven Central. Add only what you need.
 | `fun-assertj`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)           | Fluent AssertJ assertions for all dmx-fun types. Use in `test` scope.                         |
 | `fun-spring`       | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)             | `@Transactional` support for `Result`, `Try`, `Option`, and `Validated`.                      |
 | `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   | Spring Boot auto-configuration for dmx-fun. Registers `TxResult`/`TxTry`/`TxValidated`, `DmxFunModule` (Jackson), `DmxTracing`, `DmxObservation`, and MVC handlers automatically when the corresponding dependencies are on the classpath. |
+| `fun-quarkus`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-quarkus)](https://central.sonatype.com/artifact/codes.domix/fun-quarkus)           | Quarkus CDI transaction support for `Result` and `Try` — programmatic (`TxResult`, `TxTry`) and declarative (`@TransactionalResult`, `@TransactionalTry`). Rolls back on error/failure without relying on exceptions. |
 | `fun-resilience4j` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j) | Resilience4J adapters (Retry, CircuitBreaker, RateLimiter, Bulkhead) that return `Try`/`Result` instead of throwing. |
 | `fun-micrometer`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)     | Counters, timers, and failure metrics for `Try` and `Result` via Micrometer.                  |
 | `fun-tracing`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-tracing)](https://central.sonatype.com/artifact/codes.domix/fun-tracing)           | Distributed tracing spans for `Try` and `Result` via Micrometer Tracing. Auto-configured by `fun-spring-boot`. |
@@ -120,6 +121,24 @@ Transaction support for `Result`, `Try`, `Option`, and `Validated` — use dmx-f
 **Gradle**
 ```groovy
 implementation("codes.domix:fun-spring:LATEST_VERSION")
+```
+
+### Quarkus integration (optional)
+
+CDI-based transaction support for `Result` and `Try` — programmatic (`TxResult`, `TxTry`) and declarative (`@TransactionalResult`, `@TransactionalTry`). Quarkus is declared as `compileOnly`; bring your own version (tested: 3.11.x – 3.35.x). The runtime JAR ships `META-INF/quarkus-extension.properties` so Quarkus build tools add the deployment artifact automatically.
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-quarkus</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-quarkus:LATEST_VERSION")
 ```
 
 ### AssertJ integration (optional, test scope)

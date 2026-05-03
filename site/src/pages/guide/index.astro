@@ -178,6 +178,14 @@ const modules = [
         tag: 'Spring',
     },
     {
+        name: 'Quarkus integration',
+        href: `${base}guide/quarkus`,
+        summary: 'TxResult and TxTry: programmatic CDI transaction support that rolls back when Result.isError() or Try.isFailure(), without relying on exceptions. Declarative @TransactionalResult and @TransactionalTry via a CDI interceptor.',
+        whenToUse: 'You use Result or Try in Quarkus CDI beans and need reliable rollback on domain errors, not just on unchecked exceptions.',
+        avoidWhen: 'Your methods return void or plain values — @Transactional is simpler and sufficient when rollback on unchecked exception is all you need.',
+        tag: 'Quarkus',
+    },
+    {
         name: 'Resilience4J integration',
         href: `${base}guide/resilience4j`,
         summary: 'Adapters for Retry, CircuitBreaker, RateLimiter, and Bulkhead that return Try or Result instead of throwing exceptions.',

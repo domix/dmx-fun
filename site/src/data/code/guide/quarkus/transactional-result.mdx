@@ -1,0 +1,20 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+@ApplicationScoped
+public class OrderService {
+    private final OrderRepository repo;
+    private final InventoryClient inventory;
+
+    @TransactionalResult
+    public Result<Order, OrderError> createOrder(OrderRequest req) {
+        return validate(req)             // Result<ValidOrder, OrderError>
+            .flatMap(repo::save)         // Result<Order, OrderError>
+            .flatMap(inventory::reserve);// Result<Order, OrderError>
+        // • Ok(order)       → transaction commits
+        // • Err(orderError) → transaction rolls back; partial writes undone
+    }
+}
+```
