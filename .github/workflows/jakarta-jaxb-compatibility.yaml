@@ -36,7 +36,7 @@ jobs:
             jsonb-version: '3.0.0'
             yasson-version: '3.0.3'
             jaxb-version: '4.0.0'
-            jaxb-impl-version: '4.0.5'
+            jaxb-impl-version: '4.0.7'
             json-api-version: '2.1.3'
             parsson-version: '1.1.7'
           # Latest stable (catalog defaults)
@@ -44,7 +44,7 @@ jobs:
             jsonb-version: '3.0.1'
             yasson-version: '3.0.4'
             jaxb-version: '4.0.2'
-            jaxb-impl-version: '4.0.5'
+            jaxb-impl-version: '4.0.7'
             json-api-version: '2.1.3'
             parsson-version: '1.1.7'
     name: ${{ matrix.label }}
