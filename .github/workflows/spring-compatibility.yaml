@@ -5,7 +5,7 @@
 #
 # Triggered only on pull requests that touch spring/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :spring:test -PspringVersion=6.1.14
+#   ./gradlew :frameworks:spring:test -PspringVersion=6.1.14
 #
 # Integration tests use Testcontainers + PostgreSQL to validate real rollback/commit
 # behaviour across isolation levels and connection pool semantics that in-memory
@@ -16,7 +16,7 @@ on:
   pull_request:
     # Run when the spring module or this workflow file is modified.
     paths:
-      - 'spring/**'
+      - 'frameworks:spring/**'
       - 'gradle/libs.versions.toml'
       - '.github/workflows/spring-compatibility.yaml'
 
@@ -40,4 +40,4 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       # Pass the matrix version as a Gradle property; the build falls back to
       # the catalog version when the property is absent (local development).
-      - run: ./gradlew :spring:test -PspringVersion=${{ matrix.spring-version }}
+      - run: ./gradlew :frameworks:spring:test -PspringVersion=${{ matrix.spring-version }}

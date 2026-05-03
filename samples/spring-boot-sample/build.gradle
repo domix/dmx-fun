@@ -18,8 +18,8 @@ dependencies {
     testImplementation platform("org.springframework.boot:spring-boot-dependencies:${sbVersion}")
 
     // dmx-fun modules
-    implementation project(':spring-boot')  // TxResult, TxTry, TxValidated, @TransactionalResult, auto-config
-    implementation project(':jackson')      // DmxFunModule: serializes Result, Option, Try, Either, Tuples …
+    implementation project(':frameworks:spring-boot')  // TxResult, TxTry, TxValidated, @TransactionalResult, auto-config
+    implementation project(':serialization:jackson')      // DmxFunModule: serializes Result, Option, Try, Either, Tuples …
 
     // fun-jackson is compiled against Jackson 2.x; pin it explicitly so the BOM cannot
     // substitute it with the Jackson 3.x repackaging (tools.jackson.*) used in Boot 4.x.
@@ -41,7 +41,7 @@ dependencies {
     runtimeOnly libs.postgresql
 
     // ── Test ────────────────────────────────────────────────────────────────
-    testImplementation project(':assertj')                        // DmxFunAssertions.assertThat(result).isOk()…
+    testImplementation project(':core:assertj')                        // DmxFunAssertions.assertThat(result).isOk()…
     testImplementation "org.springframework.boot:spring-boot-starter-test:${sbVersion}"
     testImplementation libs.testcontainers.junit5
     testImplementation libs.testcontainers.postgresql

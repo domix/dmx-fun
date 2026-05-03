@@ -5,14 +5,14 @@
 #
 # Triggered only on pull requests that touch observation/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :observation:test -PmicrometerVersion=1.12.0
+#   ./gradlew :observability:observation:test -PmicrometerVersion=1.12.0
 name: Micrometer Observation compatibility
 
 on:
   pull_request:
     # Run when the observation module, this workflow file, or the version catalog is modified.
     paths:
-      - 'observation/**'
+      - 'observability/observation/**'
       - '.github/workflows/micrometer-observation-compatibility.yaml'
       - 'gradle/libs.versions.toml'
 
@@ -42,4 +42,4 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       # Pass the matrix version as a Gradle property; the build falls back to
       # the catalog version when the property is absent (local development).
-      - run: ./gradlew :observation:test -PmicrometerVersion=${{ matrix.micrometer-version }}
+      - run: ./gradlew :observability:observation:test -PmicrometerVersion=${{ matrix.micrometer-version }}

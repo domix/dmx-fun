@@ -17,7 +17,7 @@ def jakartaJsonApiVersion = findProperty('jakartaJsonApiVersion') ?: libs.versio
 def parssonVersion      = findProperty('parssonVersion')      ?: libs.versions.parsson.get()
 
 dependencies {
-    api project(':lib')
+    api project(':core:lib')
 
     // Jakarta JSON-B and JAXB APIs: compileOnly — not pulled in transitively.
     // Users bring their own Jakarta EE or MicroProfile runtime.
@@ -33,8 +33,8 @@ dependencies {
     // JSON-P implementation required by Yasson at runtime
     testRuntimeOnly    "org.eclipse.parsson:parsson:${parssonVersion}"
 
-    compileOnly        project(':assertj')
-    testImplementation project(':assertj')
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
 }
 
 mavenPublishing {

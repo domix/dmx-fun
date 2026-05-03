@@ -4,14 +4,14 @@
 #
 # Triggered only on pull requests that touch resilience4j/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :resilience4j:test -Presilience4jVersion=2.2.0
+#   ./gradlew :resilience:resilience4j:test -Presilience4jVersion=2.2.0
 name: Resilience4J compatibility
 
 on:
   pull_request:
     # Run when the resilience4j module or this workflow file is modified.
     paths:
-      - 'resilience4j/**'
+      - 'resilience/resilience4j/**'
       - '.github/workflows/resilience4j-compatibility.yaml'
 
 jobs:
@@ -32,4 +32,4 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       # Pass the matrix version as a Gradle property; the build falls back to
       # the catalog version when the property is absent (local development).
-      - run: ./gradlew :resilience4j:test -Presilience4jVersion=${{ matrix.resilience4j-version }}
+      - run: ./gradlew :resilience:resilience4j:test -Presilience4jVersion=${{ matrix.resilience4j-version }}

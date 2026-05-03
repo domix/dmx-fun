@@ -16,15 +16,18 @@ plugins {
 
 dependencies {
     constraints {
-        api project(':lib')
-        api project(':assertj')
-        api project(':jackson')
-        api project(':spring')
-        api project(':spring-boot')
-        api project(':resilience4j')
-        api project(':micrometer')
-        api project(':jakarta-validation')
-        api project(':jakarta-jaxb')
+        api project(':core:lib')
+        api project(':core:assertj')
+        api project(':serialization:jackson')
+        api project(':serialization:jakarta-jaxb')
+        api project(':serialization:jakarta-validation')
+        api project(':observability:micrometer')
+        api project(':observability:observation')
+        api project(':observability:tracing')
+        api project(':resilience:resilience4j')
+        api project(':protocols:http')
+        api project(':frameworks:spring')
+        api project(':frameworks:spring-boot')
     }
 }
 

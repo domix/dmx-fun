@@ -10,15 +10,15 @@ plugins {
 def micrometerTracingVersion = findProperty('micrometerTracingVersion') ?: libs.versions.micrometerTracing.get()
 
 dependencies {
-    api project(':lib')
+    api project(':core:lib')
 
     compileOnly "io.micrometer:micrometer-tracing:${micrometerTracingVersion}"
 
     testImplementation "io.micrometer:micrometer-tracing:${micrometerTracingVersion}"
     testImplementation "io.micrometer:micrometer-tracing-test:${micrometerTracingVersion}"
 
-    compileOnly        project(':assertj')
-    testImplementation project(':assertj')
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
 }
 
 jpmsTest {
