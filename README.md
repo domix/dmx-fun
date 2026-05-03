@@ -73,6 +73,8 @@ dependencies {
 
 ### Core library
 
+[![Coverage Status](https://coveralls.io/repos/github/domix/dmx-fun/badge.svg?branch=main)](https://coveralls.io/github/domix/dmx-fun?branch=main)
+
 **Maven**
 ```xml
 <dependency>
