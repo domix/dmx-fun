@@ -20,11 +20,11 @@ dependencies {
         api project(':core:assertj')
         api project(':serialization:jackson')
         api project(':serialization:jakarta-jaxb')
+        api project(':serialization:jakarta-validation')
         api project(':spring')
         api project(':spring-boot')
         api project(':resilience4j')
         api project(':micrometer')
-        api project(':jakarta-validation')
     }
 }
 
