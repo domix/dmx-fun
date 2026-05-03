@@ -5,13 +5,13 @@
 # Triggered on pull requests that touch spring-boot-sample/**, spring-boot/**, spring/**,
 # the version catalog, or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :frameworks:spring-boot-sample:test -PspringBootVersion=3.4.13
+#   ./gradlew :samples:spring-boot-sample:test -PspringBootVersion=3.4.13
 name: Spring Boot sample compatibility
 
 on:
   pull_request:
     paths:
-      - 'frameworks/spring-boot-sample/**'
+      - 'samples/spring-boot-sample/**'
       - 'frameworks/spring-boot/**'
       - 'frameworks/spring/**'
       - 'gradle/libs.versions.toml'
@@ -32,4 +32,4 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
       - uses: gradle/actions/setup-gradle@v6
-      - run: ./gradlew :frameworks:spring-boot-sample:test -PspringBootVersion=${{ matrix.spring-boot-version }}
+      - run: ./gradlew :samples:spring-boot-sample:test -PspringBootVersion=${{ matrix.spring-boot-version }}
