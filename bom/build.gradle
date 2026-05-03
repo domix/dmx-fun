@@ -28,6 +28,7 @@ dependencies {
         api project(':protocols:http')
         api project(':frameworks:spring')
         api project(':frameworks:spring-boot')
+        api project(':frameworks:quarkus:runtime')
     }
 }
 

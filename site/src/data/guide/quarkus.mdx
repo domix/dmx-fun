@@ -1,0 +1,178 @@
+---
+title: "Quarkus Integration — Developer Guide"
+description: "How to use TxResult and TxTry for programmatic transaction management, and @TransactionalResult and @TransactionalTry for declarative CDI-interceptor-based transaction management in Quarkus: rollback on error without relying on exceptions."
+order: 17
+h1: "Quarkus Integration"
+---
+
+import {Content as Dependency}             from '../code/guide/quarkus/dependency.mdx';
+import {Content as TxResultSnippet}        from '../code/guide/quarkus/tx-result.mdx';
+import {Content as TxTrySnippet}           from '../code/guide/quarkus/tx-try.mdx';
+import {Content as VsTransactional}        from '../code/guide/quarkus/vs-transactional.mdx';
+import {Content as TransactionalResult}    from '../code/guide/quarkus/transactional-result.mdx';
+import {Content as TransactionalTry}       from '../code/guide/quarkus/transactional-try.mdx';
+import {Content as ProgrammaticVsDeclarative} from '../code/guide/quarkus/programmatic-vs-declarative.mdx';
+
+The `fun-quarkus` module adds first-class Quarkus transaction support for `Result<V,E>` and
+`Try<V>`. It is an **optional** dependency — the core `fun` library has no runtime dependency
+on Quarkus.
+
+## The problem
+
+Quarkus's `@Transactional` (backed by Narayana JTA) rolls back only when an unchecked
+exception escapes the annotated method. `Result` and `Try` capture failure as return values,
+so no exception escapes — and the transaction commits even when the operation failed,
+silently persisting partial writes.
+
+`TxResult` and `TxTry` solve this by inspecting the return value: an error or failure
+outcome marks the transaction for rollback before Narayana commits.
+
+## Adding the dependency
+
+Two artifacts are available:
+
+| Artifact | Purpose |
+|---|---|
+| `fun-quarkus` | Runtime CDI beans (`TxResult`, `TxTry`) and interceptor (`@TransactionalResult`, `@TransactionalTry`) |
+| `fun-quarkus-deployment` | Quarkus build-time processor — prevents Arc from removing the interceptor during bean removal optimisation |
+
+`fun-quarkus` declares `quarkus-arc` and `quarkus-narayana-jta` as `compileOnly` — your
+own Quarkus version is not forced.
+
+<Dependency/>
+
+The **deployment artifact is only needed when using the declarative annotations**
+(`@TransactionalResult` / `@TransactionalTry`). Arc's bean removal optimisation can
+eliminate the interceptor bean when no direct injection point references it; the
+`DmxFunQuarkusProcessor` build step marks it as unremovable. If you only use `TxResult` and
+`TxTry` programmatically (injecting them directly), the runtime artifact alone is sufficient.
+
+## `TxResult`
+
+Wraps a `Result<V,E>`-returning action in a JTA-managed transaction. Rolls back when the
+result is `isError()`.
+
+<TxResultSnippet/>
+
+**Rollback contract:**
+
+| Outcome | Transaction |
+|---|---|
+| Action returns `Result.isOk()` | Commits |
+| Action returns `Result.isError()` | Rolls back |
+| Action throws an unchecked exception | Rolls back, rethrows |
+
+## `TxTry`
+
+Wraps a `Try<V>`-returning action in a JTA-managed transaction. Rolls back when the result
+is `isFailure()`.
+
+<TxTrySnippet/>
+
+**Rollback contract:**
+
+| Outcome | Transaction |
+|---|---|
+| Action returns `Try.isSuccess()` | Commits |
+| Action returns `Try.isFailure()` | Rolls back |
+| Action throws an unchecked exception | Rolls back, rethrows |
+
+## `TxResult` vs `TxTry` vs `@Transactional`
+
+<VsTransactional/>
+
+**Rule of thumb:**
+
+- Prefer `TxResult` / `@TransactionalResult` when your pipeline returns `Result<V,E>` for typed domain errors.
+- Choose `TxTry` / `@TransactionalTry` when your pipeline uses `Try<V>` to wrap exception-throwing code.
+- Fall back to `@Transactional` when the method has no dmx-fun return type and rollback on
+  unchecked exception is sufficient (void methods, simple queries).
+
+---
+
+## Declarative style with `@TransactionalResult` and `@TransactionalTry`
+
+If you prefer annotation-driven transaction demarcation — the same style as Quarkus's own
+`@Transactional` — `fun-quarkus` ships two CDI interceptor binding annotations backed by
+`TransactionalDmxInterceptor`. They carry the same rollback contract as their programmatic
+counterparts.
+
+### How the interceptor routing works
+
+Both `@TransactionalResult` and `@TransactionalTry` carry the package-private
+`@DmxTransactionalBinding` meta-annotation. Per CDI §2.7.1.1, an interceptor binding may
+transitively declare another interceptor binding, so `TransactionalDmxInterceptor` — which
+is bound to `@DmxTransactionalBinding` — activates for methods annotated with either one,
+without needing two separate interceptor classes.
+
+At runtime the interceptor inspects the method's return value: if `@TransactionalResult` is
+present it checks `Result#isError()`; if `@TransactionalTry` is present it checks
+`Try#isFailure()`. Either way, a truthy result triggers a rollback via
+`UserTransaction.rollback()`.
+
+### `@TransactionalResult`
+
+<TransactionalResult/>
+
+| Outcome | Transaction |
+|---|---|
+| Returns `Result.isOk()` | Commits |
+| Returns `Result.isError()` | Rolls back |
+| Throws unchecked exception | Rolls back, rethrows |
+
+### `@TransactionalTry`
+
+<TransactionalTry/>
+
+| Outcome | Transaction |
+|---|---|
+| Returns `Try.isSuccess()` | Commits |
+| Returns `Try.isFailure()` | Rolls back |
+| Throws unchecked exception | Rolls back, rethrows |
+
+### Annotation placement
+
+Both annotations can be placed on a **method** or on a **class**. Class-level placement
+applies the binding to every method on that class:
+
+```java
+@TransactionalResult          // all Result-returning methods on the class are transactional
+@ApplicationScoped
+public class OrderService {
+    public Result<Order, OrderError> createOrder(OrderRequest req) { ... }
+    public Result<Void, OrderError>  cancelOrder(String id)        { ... }
+}
+```
+
+### Programmatic vs declarative
+
+<ProgrammaticVsDeclarative/>
+
+Choose **programmatic** (`TxResult` / `TxTry`) when:
+- You want an explicit, testable object — straightforward to unit-test by passing a stub `UserTransaction`.
+- The service class already has `@Inject` dependencies and adding one more is natural.
+- You prefer not to add the deployment artifact (`fun-quarkus-deployment`) to your build.
+
+Choose **declarative** (`@TransactionalResult` / `@TransactionalTry`) when:
+- You prefer the familiar `@Transactional` annotation style and want no extra field in the bean.
+- The method is already a CDI bean and Arc proxy overhead is acceptable.
+- You are willing to add `fun-quarkus-deployment` to protect the interceptor from Arc's removal optimisation.
+
+---
+
+## Version compatibility
+
+Tested in CI against the following Quarkus versions on every pull request that touches
+the `frameworks/quarkus/` module:
+
+| Quarkus version | Status |
+|---|---|
+| 3.8.x (LTS) | tested |
+| 3.15.x (LTS) | tested |
+| 3.21.x | tested |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :frameworks:quarkus:runtime:test -PquarkusVersion=3.15.4
+```

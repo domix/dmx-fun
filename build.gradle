@@ -23,7 +23,8 @@ def moduleMap = [
     ':resilience:resilience4j'          : 'dmx.fun.resilience4j',
     ':protocols:http'                   : 'dmx.fun.http',
     ':frameworks:spring'                : 'dmx.fun.spring',
-    ':frameworks:spring-boot'           : 'dmx.fun.spring.boot'
+    ':frameworks:spring-boot'           : 'dmx.fun.spring.boot',
+    ':frameworks:quarkus:runtime'       : 'dmx.fun.quarkus'
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────

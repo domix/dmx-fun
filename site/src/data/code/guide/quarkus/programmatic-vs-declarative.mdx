@@ -1,0 +1,31 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+// ── Programmatic (TxResult) ──────────────────────────────────────────────────
+
+@ApplicationScoped
+public class OrderService {
+    private final TxResult tx;   // explicit dependency, easy to test without CDI
+
+    @Inject
+    public OrderService(TxResult tx, ...) { this.tx = tx; }
+
+    public Result<Order, OrderError> createOrder(OrderRequest req) {
+        return tx.execute(() -> validate(req).flatMap(repo::save));
+    }
+}
+
+// ── Declarative (@TransactionalResult) ──────────────────────────────────────
+
+@ApplicationScoped
+public class OrderService {
+    // no TxResult field — the interceptor wraps the method transparently
+
+    @TransactionalResult
+    public Result<Order, OrderError> createOrder(OrderRequest req) {
+        return validate(req).flatMap(repo::save);
+    }
+}
+```

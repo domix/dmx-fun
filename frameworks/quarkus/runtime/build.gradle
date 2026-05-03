@@ -1,0 +1,51 @@
+// ── Quarkus runtime module ────────────────────────────────────────────────────
+// Provides CDI-based programmatic and declarative transaction support for dmx-fun
+// types in Quarkus applications. quarkus-arc and quarkus-narayana-jta are declared
+// compileOnly — users bring their own Quarkus version.
+//
+// Quarkus version: overridable for CI compatibility matrix.
+//   ./gradlew :frameworks:quarkus:runtime:build -PquarkusVersion=3.15.4
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+def quarkusVersion = findProperty('quarkusVersion') ?: libs.versions.quarkus.get()
+
+dependencies {
+    api project(':core:lib')
+
+    // Quarkus CDI and JTA APIs: declared compileOnly — users bring their own Quarkus.
+    compileOnly "io.quarkus:quarkus-arc:${quarkusVersion}"
+    compileOnly "io.quarkus:quarkus-narayana-jta:${quarkusVersion}"
+
+    // Same APIs are needed at test runtime to implement stubs and run tests.
+    testImplementation "io.quarkus:quarkus-arc:${quarkusVersion}"
+    testImplementation "io.quarkus:quarkus-narayana-jta:${quarkusVersion}"
+
+    // Fluent assertions for dmx-fun types.
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+// Tests are patched into the named module so they can access package-private
+// types (TxExecutor, DmxTransactionalBinding). The Jakarta API modules are
+// added explicitly because they are declared `requires static` in module-info.java.
+jpmsTest {
+    moduleName   = 'dmx.fun.quarkus'
+    extraModules = ['jakarta.transaction', 'jakarta.interceptor', 'jakarta.cdi',
+                    'dmx.fun.assertj']
+    extraReads   = ['dmx.fun.assertj']
+}
+
+tasks.named('compileTestJava') {
+    options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-quarkus", "${project.version}")
+    pom {
+        name = 'dmx-fun Quarkus integration'
+        description = 'Quarkus module for dmx-fun: CDI-based transaction support for Result and Try ' +
+            'without giving up declarative transaction management.'
+    }
+}

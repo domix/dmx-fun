@@ -1,0 +1,27 @@
+// ── Quarkus deployment module ─────────────────────────────────────────────────
+// Build-time processor for the fun-quarkus Quarkus extension. Registers CDI beans
+// and the interceptor at build time, enabling GraalVM native image compatibility.
+// quarkus-core-deployment and quarkus-arc-deployment are compileOnly — only needed
+// during the Quarkus augmentation phase, not at application runtime.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+def quarkusVersion = findProperty('quarkusVersion') ?: libs.versions.quarkus.get()
+
+dependencies {
+    implementation project(':frameworks:quarkus:runtime')
+
+    compileOnly "io.quarkus:quarkus-core-deployment:${quarkusVersion}"
+    compileOnly "io.quarkus:quarkus-arc-deployment:${quarkusVersion}"
+}
+
+// The deployment module is not published to Maven Central independently;
+// it is consumed exclusively by the Quarkus build system during augmentation.
+mavenPublishing {
+    coordinates("codes.domix", "fun-quarkus-deployment", "${project.version}")
+    pom {
+        name = 'dmx-fun Quarkus deployment'
+        description = 'Quarkus build-time deployment module for the fun-quarkus extension.'
+    }
+}

@@ -1,0 +1,25 @@
+---
+fileName: 'ReportService.java'
+---
+
+```java
+@ApplicationScoped
+public class ReportService {
+    private final TxTry tx;
+    private final ReportRepository repo;
+
+    @Inject
+    public ReportService(TxTry tx, ReportRepository repo) {
+        this.tx = tx; this.repo = repo;
+    }
+
+    public Try<Report> generate(ReportRequest req) {
+        return tx.execute(() ->
+            Try.of(() -> repo.save(build(req)))   // Try<Report>
+               .map(r -> { auditLog.record(r); return r; })
+        );
+        // • Success(report) → transaction commits
+        // • Failure(cause)  → transaction rolls back; partial writes undone
+    }
+}
+```
