@@ -16,7 +16,7 @@ plugins {
 
 dependencies {
     constraints {
-        api project(':lib')
+        api project(':core:lib')
         api project(':assertj')
         api project(':jackson')
         api project(':spring')

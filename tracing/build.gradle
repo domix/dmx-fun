@@ -10,7 +10,7 @@ plugins {
 def micrometerTracingVersion = findProperty('micrometerTracingVersion') ?: libs.versions.micrometerTracing.get()
 
 dependencies {
-    api project(':lib')
+    api project(':core:lib')
 
     compileOnly "io.micrometer:micrometer-tracing:${micrometerTracingVersion}"
 

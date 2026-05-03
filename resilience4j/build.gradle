@@ -11,7 +11,7 @@ plugins {
 def r4jVersion = findProperty('resilience4jVersion') ?: libs.versions.resilience4j.get()
 
 dependencies {
-    api project(':lib')
+    api project(':core:lib')
 
     compileOnly     platform("io.github.resilience4j:resilience4j-bom:${r4jVersion}")
     testImplementation platform("io.github.resilience4j:resilience4j-bom:${r4jVersion}")

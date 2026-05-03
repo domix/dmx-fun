@@ -16,7 +16,7 @@ def jakartaValidationVersion = findProperty('jakartaValidationVersion') ?: libs.
 def hibernateValidatorVersion = findProperty('hibernateValidatorVersion') ?: libs.versions.hibernateValidator.get()
 
 dependencies {
-    api project(':lib')
+    api project(':core:lib')
 
     // Jakarta Validation is a peer dependency: declared compileOnly so it is not
     // pulled in transitively. Users bring their own version.

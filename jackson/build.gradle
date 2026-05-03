@@ -7,7 +7,7 @@ plugins {
 
 dependencies {
     // Exposes dmx-fun types to callers; they only need one dependency declaration.
-    api project(':lib')
+    api project(':core:lib')
 
     // Jackson is an optional peer dependency: declared compileOnly so it is not
     // pulled in transitively. Users bring their own version.

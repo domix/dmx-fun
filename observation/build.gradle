@@ -12,7 +12,7 @@ plugins {
 def micrometerVersion = findProperty('micrometerVersion') ?: libs.versions.micrometer.get()
 
 dependencies {
-    api project(':lib')
+    api project(':core:lib')
 
     compileOnly "io.micrometer:micrometer-core:${micrometerVersion}"
 

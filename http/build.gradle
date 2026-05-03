@@ -6,7 +6,7 @@ plugins {
 }
 
 dependencies {
-    api project(':lib')
+    api project(':core:lib')
 
     compileOnly        project(':assertj')
     testImplementation project(':assertj')

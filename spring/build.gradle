@@ -9,7 +9,7 @@ plugins {
 
 dependencies {
     // Exposes dmx-fun types to callers; they only need one dependency declaration.
-    api project(':lib')
+    api project(':core:lib')
 
     // Spring is an optional peer dependency: declared compileOnly so it is not
     // pulled in transitively. Users bring their own Spring version.
