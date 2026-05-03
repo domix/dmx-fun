@@ -21,10 +21,10 @@ dependencies {
         api project(':serialization:jackson')
         api project(':serialization:jakarta-jaxb')
         api project(':serialization:jakarta-validation')
+        api project(':observability:micrometer')
         api project(':spring')
         api project(':spring-boot')
         api project(':resilience4j')
-        api project(':micrometer')
     }
 }
 
