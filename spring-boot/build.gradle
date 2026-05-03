@@ -20,7 +20,7 @@ dependencies {
     compileOnly libs.spring.context  // BeanFactory, @Configuration, @EnableAspectJAutoProxy
     compileOnly libs.spring.tx       // PlatformTransactionManager
     compileOnly libs.aspectj.weaver  // Aspect (for @ConditionalOnClass guard)
-    compileOnly project(':jackson')        // DmxFunModule (for @ConditionalOnClass guard)
+    compileOnly project(':serialization:jackson')        // DmxFunModule (for @ConditionalOnClass guard)
     compileOnly libs.jackson.databind      // ObjectMapper (for @ConditionalOnClass guard)
     compileOnly libs.spring.webmvc          // HandlerMethodReturnValueHandler, RequestMappingHandlerAdapter
     compileOnly libs.jakarta.servlet.api    // HttpServletResponse (provided by servlet container at runtime)
@@ -36,7 +36,7 @@ dependencies {
     testImplementation libs.spring.context
     testImplementation libs.spring.tx
     testImplementation libs.aspectj.weaver
-    testImplementation project(':jackson')
+    testImplementation project(':serialization:jackson')
     testImplementation libs.jackson.databind
     testImplementation libs.spring.webmvc
     testImplementation libs.jakarta.servlet.api

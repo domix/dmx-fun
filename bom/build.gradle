@@ -18,7 +18,7 @@ dependencies {
     constraints {
         api project(':core:lib')
         api project(':core:assertj')
-        api project(':jackson')
+        api project(':serialization:jackson')
         api project(':spring')
         api project(':spring-boot')
         api project(':resilience4j')
