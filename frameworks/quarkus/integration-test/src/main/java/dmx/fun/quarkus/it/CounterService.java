@@ -8,6 +8,7 @@ import dmx.fun.quarkus.TxResult;
 import dmx.fun.quarkus.TxTry;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 
@@ -22,6 +23,10 @@ public class CounterService {
 
     @Inject
     TxTry txTry;
+
+    /** Self-reference through the CDI proxy so interceptors fire on internal calls. */
+    @Inject
+    CounterService self;
 
     public void createTable() throws SQLException {
         try (var conn = dataSource.getConnection();
@@ -81,6 +86,8 @@ public class CounterService {
         }
     }
 
+    // ── Programmatic API ──────────────────────────────────────────────────────
+
     public Result<Long, String> incrementExecuteOk(long id) {
         return txResult.execute(() -> increment(id));
     }
@@ -103,6 +110,8 @@ public class CounterService {
         );
     }
 
+    // ── @TransactionalResult — REQUIRED (default) ─────────────────────────────
+
     @TransactionalResult
     public Result<Long, String> incrementDeclarativeResultOk(long id) {
         return increment(id);
@@ -112,6 +121,8 @@ public class CounterService {
     public Result<Long, String> incrementDeclarativeResultErr(long id) {
         return increment(id).flatMap(_ -> Result.err("declarative error"));
     }
+
+    // ── @TransactionalTry — REQUIRED (default) ────────────────────────────────
 
     @TransactionalTry
     public Try<Long> incrementDeclarativeTryOk(long id) {
@@ -124,10 +135,108 @@ public class CounterService {
                   .flatMap(_ -> Try.failure(new RuntimeException("declarative failure")));
     }
 
+    // ── TxResult.executeNew() — REQUIRES_NEW (programmatic) ───────────────────
+
     public Result<Long, String> outerErrInnerNewOk(long id) {
         return txResult.execute(() -> {
             txResult.executeNew(() -> increment(id));
             return Result.err("outer forced error");
+        });
+    }
+
+    // ── @TransactionalResult(REQUIRES_NEW) ────────────────────────────────────
+
+    /**
+     * Increments and returns ok — annotated with REQUIRES_NEW so the outer tx is
+     * always suspended and a fresh tx is started.
+     */
+    @TransactionalResult(Transactional.TxType.REQUIRES_NEW)
+    public Result<Long, String> incrementDeclarativeResultRequiresNewOk(long id) {
+        return increment(id);
+    }
+
+    /**
+     * Outer tx (from txResult.execute) wraps an inner REQUIRES_NEW call.
+     * Even though the outer returns Err (rollback), the inner tx already committed.
+     */
+    public Result<Long, String> outerErrInnerRequiresNewOk(long id) {
+        return txResult.execute(() -> {
+            self.incrementDeclarativeResultRequiresNewOk(id);
+            return Result.err("outer forced error");
+        });
+    }
+
+    // ── @TransactionalResult — REQUIRED join (via self-call) ──────────────────
+
+    /**
+     * Outer tx (from txResult.execute) wraps an inner REQUIRED call that returns Ok.
+     * The inner REQUIRED method joins the outer tx. When the outer tx rolls back,
+     * the joined inner changes are rolled back too.
+     */
+    public Result<Long, String> outerErrInnerRequiredOk(long id) {
+        return txResult.execute(() -> {
+            self.incrementDeclarativeResultOk(id); // REQUIRED join — same tx as outer
+            return Result.err("outer forced error");
+        });
+    }
+
+    // ── @TransactionalResult(MANDATORY) ──────────────────────────────────────
+
+    /** Requires an existing transaction; throws TransactionalException if none. */
+    @TransactionalResult(Transactional.TxType.MANDATORY)
+    public Result<Long, String> incrementDeclarativeResultMandatory(long id) {
+        return increment(id);
+    }
+
+    /**
+     * Outer tx (from txResult.execute) wraps a MANDATORY inner call.
+     * The inner MANDATORY method joins the outer tx; when the outer commits, the increment
+     * is persisted.
+     */
+    public Result<Long, String> outerOkInnerMandatory(long id) {
+        return txResult.execute(() -> self.incrementDeclarativeResultMandatory(id));
+    }
+
+    // ── @TransactionalResult(NOT_SUPPORTED) ──────────────────────────────────
+
+    /**
+     * Suspends any active transaction and runs without one (auto-commit semantics).
+     * Changes are visible immediately after the method returns, regardless of any outer tx.
+     */
+    @TransactionalResult(Transactional.TxType.NOT_SUPPORTED)
+    public Result<Long, String> incrementDeclarativeResultNotSupported(long id) {
+        return increment(id);
+    }
+
+    /**
+     * Outer tx (from txResult.execute) wraps a NOT_SUPPORTED inner call.
+     * The inner call suspends the outer tx, increments (auto-commits), then resumes the outer.
+     * Even when the outer rolls back, the inner increment persists.
+     */
+    public Result<Long, String> outerErrInnerNotSupported(long id) {
+        return txResult.execute(() -> {
+            self.incrementDeclarativeResultNotSupported(id);
+            return Result.err("outer forced error");
+        });
+    }
+
+    // ── @TransactionalResult(NEVER) ──────────────────────────────────────────
+
+    /** Throws TransactionalException if called with an active transaction. */
+    @TransactionalResult(Transactional.TxType.NEVER)
+    public Result<Long, String> incrementDeclarativeResultNever(long id) {
+        return increment(id);
+    }
+
+    /**
+     * Outer tx (from txResult.execute) wraps a NEVER inner call.
+     * The inner NEVER method throws TransactionalException because an active tx is present;
+     * the outer tx rolls back and the exception propagates to the caller.
+     */
+    public Result<Long, String> outerWithInnerNever(long id) {
+        return txResult.execute(() -> {
+            self.incrementDeclarativeResultNever(id); // throws TransactionalException
+            return Result.ok(0L);
         });
     }
 }

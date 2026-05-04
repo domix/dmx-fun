@@ -2,11 +2,13 @@ package dmx.fun.quarkus.it;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.transaction.TransactionalException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @QuarkusTest
 class TransactionIntegrationTest {
@@ -50,7 +52,7 @@ class TransactionIntegrationTest {
         assertThat(service.getValue(ID)).isEqualTo(0L);
     }
 
-    // ── @TransactionalResult declarative ─────────────────────────────────────
+    // ── @TransactionalResult — REQUIRED ──────────────────────────────────────
 
     @Test
     void transactionalResult_okResult_commitsToDb() throws Exception {
@@ -64,7 +66,7 @@ class TransactionIntegrationTest {
         assertThat(service.getValue(ID)).isEqualTo(0L);
     }
 
-    // ── @TransactionalTry declarative ────────────────────────────────────────
+    // ── @TransactionalTry — REQUIRED ─────────────────────────────────────────
 
     @Test
     void transactionalTry_successTry_commitsToDb() throws Exception {
@@ -78,13 +80,86 @@ class TransactionIntegrationTest {
         assertThat(service.getValue(ID)).isEqualTo(0L);
     }
 
-    // ── TxResult.executeNew() — REQUIRES_NEW semantics ────────────────────────
+    // ── TxResult.executeNew() — REQUIRES_NEW (programmatic) ──────────────────
 
     @Test
     void executeNew_innerTxCommits_evenWhenOuterRollsBack() throws Exception {
-        // outer tx returns Err (rolls back) but the inner executeNew already committed
         var result = service.outerErrInnerNewOk(ID);
         assertThat(result).isErr();
         assertThat(service.getValue(ID)).isEqualTo(1L);
+    }
+
+    // ── @TransactionalResult(REQUIRES_NEW) ────────────────────────────────────
+
+    @Test
+    void requiresNew_innerTxCommits_evenWhenOuterRollsBack() throws Exception {
+        // inner @TransactionalResult(REQUIRES_NEW) suspends the outer tx and commits
+        // independently; the outer rolls back but cannot undo the inner commit
+        var result = service.outerErrInnerRequiresNewOk(ID);
+        assertThat(result).isErr();
+        assertThat(service.getValue(ID)).isEqualTo(1L);
+    }
+
+    // ── @TransactionalResult — REQUIRED join ─────────────────────────────────
+
+    @Test
+    void required_innerJoinsOuterTx_rollsBackWithOuter() throws Exception {
+        // inner @TransactionalResult(REQUIRED) joins the outer txResult.execute tx;
+        // when the outer rolls back, the inner's increment is rolled back too
+        var result = service.outerErrInnerRequiredOk(ID);
+        assertThat(result).isErr();
+        assertThat(service.getValue(ID)).isEqualTo(0L);
+    }
+
+    // ── @TransactionalResult(MANDATORY) ──────────────────────────────────────
+
+    @Test
+    void mandatory_withoutActiveTx_throwsTransactionalException() throws Exception {
+        // No outer transaction → MANDATORY must throw
+        assertThatThrownBy(() -> service.incrementDeclarativeResultMandatory(ID))
+            .isInstanceOf(TransactionalException.class);
+        // DB must be unchanged
+        assertThat(service.getValue(ID)).isEqualTo(0L);
+    }
+
+    // ── @TransactionalResult(NOT_SUPPORTED) ──────────────────────────────────
+
+    @Test
+    void notSupported_innerRunsWithoutTx_committedEvenWhenOuterRollsBack() throws Exception {
+        // inner @TransactionalResult(NOT_SUPPORTED) suspends the outer tx and runs
+        // without one (auto-commit); the outer tx rolls back but cannot touch the
+        // already-committed inner increment
+        var result = service.outerErrInnerNotSupported(ID);
+        assertThat(result).isErr();
+        assertThat(service.getValue(ID)).isEqualTo(1L);
+    }
+
+    // ── @TransactionalResult(MANDATORY) with active tx ────────────────────────
+
+    @Test
+    void mandatory_withActiveTx_joinsAndCommits() throws Exception {
+        // Outer tx (txResult.execute) is active → MANDATORY joins it and commits
+        var result = service.outerOkInnerMandatory(ID);
+        assertThat(result).isOk();
+        assertThat(service.getValue(ID)).isEqualTo(1L);
+    }
+
+    // ── @TransactionalResult(NEVER) ──────────────────────────────────────────
+
+    @Test
+    void never_withoutActiveTx_executesNormally() throws Exception {
+        // No outer transaction → NEVER proceeds normally
+        var result = service.incrementDeclarativeResultNever(ID);
+        assertThat(result).isOk();
+        assertThat(service.getValue(ID)).isEqualTo(1L);
+    }
+
+    @Test
+    void never_withActiveTx_throwsTransactionalException() throws Exception {
+        // Outer tx (txResult.execute) is active → NEVER must throw
+        assertThatThrownBy(() -> service.outerWithInnerNever(ID))
+            .isInstanceOf(TransactionalException.class);
+        // DB must be unchanged — outer tx rolled back
+        assertThat(service.getValue(ID)).isEqualTo(0L);
     }
 }

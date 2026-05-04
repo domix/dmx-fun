@@ -2,6 +2,9 @@ package dmx.fun.quarkus;
 
 import dmx.fun.Result;
 import dmx.fun.Try;
+import jakarta.transaction.Status;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.TransactionalException;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,24 @@ class TransactionalDmxInterceptorTest {
         Object doWork() { return null; }
     }
 
+    /** REQUIRES_NEW explicit */
+    static class RequiresNewTarget {
+        @TransactionalResult(Transactional.TxType.REQUIRES_NEW)
+        Object doWork() { return null; }
+    }
+
+    /** MANDATORY explicit */
+    static class MandatoryTarget {
+        @TransactionalResult(Transactional.TxType.MANDATORY)
+        Object doWork() { return null; }
+    }
+
+    /** NEVER explicit */
+    static class NeverTarget {
+        @TransactionalResult(Transactional.TxType.NEVER)
+        Object doWork() { return null; }
+    }
+
     private static Method doWork(Class<?> clazz) {
         try {
             return clazz.getDeclaredMethod("doWork");
@@ -58,6 +79,8 @@ class TransactionalDmxInterceptorTest {
     @BeforeEach
     void setUp() {
         tx = new StubTransactionManager();
+        // Default: no outer transaction so REQUIRED starts a new one (matches pre-TxType behaviour).
+        tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
         interceptor = new TransactionalDmxInterceptor(tx);
     }
 
@@ -241,5 +264,68 @@ class TransactionalDmxInterceptorTest {
 
         assertThat(tx.rollbackCount).isEqualTo(1);
         assertThat(tx.commitCount).isEqualTo(0);
+    }
+
+    // ── TxType resolution ─────────────────────────────────────────────────────
+
+    @Test
+    void requiresNew_alwaysSuspendsAndStartsFreshTx() throws Exception {
+        var outer = new StubTransaction();
+        tx.transactionToReturn = outer;
+        tx.statusToReturn = Status.STATUS_ACTIVE; // outer tx is active
+
+        var ctx = new StubInvocationContext(
+            new RequiresNewTarget(), doWork(RequiresNewTarget.class),
+            () -> Result.ok("v"));
+
+        interceptor.intercept(ctx);
+
+        assertThat(tx.suspendCount).isEqualTo(1);
+        assertThat(tx.beginCount).isEqualTo(1);
+        assertThat(tx.commitCount).isEqualTo(1);
+        assertThat(tx.resumeCount).isEqualTo(1);
+        assertThat(tx.lastResumedTx).isSameAs(outer);
+    }
+
+    @Test
+    void mandatory_withoutActiveTx_throwsTransactionalException() {
+        // statusToReturn is NO_TRANSACTION (set in setUp)
+        var ctx = new StubInvocationContext(
+            new MandatoryTarget(), doWork(MandatoryTarget.class),
+            () -> Result.ok("v"));
+
+        assertThatThrownBy(() -> interceptor.intercept(ctx))
+            .isInstanceOf(TransactionalException.class)
+            .hasMessageContaining("MANDATORY");
+
+        assertThat(tx.beginCount).isEqualTo(0);
+    }
+
+    @Test
+    void never_withActiveTx_throwsTransactionalException() {
+        tx.statusToReturn = Status.STATUS_ACTIVE;
+        var ctx = new StubInvocationContext(
+            new NeverTarget(), doWork(NeverTarget.class),
+            () -> Result.ok("v"));
+
+        assertThatThrownBy(() -> interceptor.intercept(ctx))
+            .isInstanceOf(TransactionalException.class)
+            .hasMessageContaining("NEVER");
+
+        assertThat(tx.beginCount).isEqualTo(0);
+    }
+
+    @Test
+    void required_withActiveTx_joinsAndSetsRollbackOnlyOnErr() throws Exception {
+        tx.statusToReturn = Status.STATUS_ACTIVE;
+        var ctx = new StubInvocationContext(
+            new ResultMethodTarget(), doWork(ResultMethodTarget.class),
+            () -> Result.err("e"));
+
+        interceptor.intercept(ctx);
+
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.commitCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
     }
 }

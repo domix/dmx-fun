@@ -1,0 +1,39 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+@ApplicationScoped
+public class OrderService {
+
+    // REQUIRED (default) — join an existing tx or start a new one.
+    // Most methods should use this.
+    @TransactionalResult
+    public Result<Order, OrderError> createOrder(OrderRequest req) { ... }
+
+    // REQUIRES_NEW — always suspend any active tx and start a fresh one.
+    // Use when the operation must commit/rollback independently of the caller.
+    @TransactionalResult(Transactional.TxType.REQUIRES_NEW)
+    public Result<AuditEntry, String> recordAudit(AuditEvent event) { ... }
+
+    // MANDATORY — require an active transaction; throw if none is present.
+    // Use for internal helpers that must only be called from within a tx.
+    @TransactionalResult(Transactional.TxType.MANDATORY)
+    public Result<Void, String> validateInTx(Order order) { ... }
+
+    // SUPPORTS — join if a tx is active; otherwise run without one.
+    // Use for read-only operations that are safe either way.
+    @TransactionalResult(Transactional.TxType.SUPPORTS)
+    public Result<Order, String> findOrder(String id) { ... }
+
+    // NOT_SUPPORTED — suspend any active tx and run without one (auto-commit).
+    // Use when the operation must not run inside a transaction at all.
+    @TransactionalResult(Transactional.TxType.NOT_SUPPORTED)
+    public Result<Report, String> generateReport(String id) { ... }
+
+    // NEVER — throw if a transaction is active.
+    // Use to assert that no caller holds an open transaction.
+    @TransactionalResult(Transactional.TxType.NEVER)
+    public Result<Stats, String> computeStats() { ... }
+}
+```
