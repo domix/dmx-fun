@@ -8,9 +8,11 @@ h1: "Quarkus Integration"
 import {Content as Dependency}             from '../code/guide/quarkus/dependency.mdx';
 import {Content as TxResultSnippet}        from '../code/guide/quarkus/tx-result.mdx';
 import {Content as TxTrySnippet}           from '../code/guide/quarkus/tx-try.mdx';
+import {Content as ExecuteNew}             from '../code/guide/quarkus/execute-new.mdx';
 import {Content as VsTransactional}        from '../code/guide/quarkus/vs-transactional.mdx';
 import {Content as TransactionalResult}    from '../code/guide/quarkus/transactional-result.mdx';
 import {Content as TransactionalTry}       from '../code/guide/quarkus/transactional-try.mdx';
+import {Content as TxTypePropagation}      from '../code/guide/quarkus/tx-type-propagation.mdx';
 import {Content as ProgrammaticVsDeclarative} from '../code/guide/quarkus/programmatic-vs-declarative.mdx';
 
 The `fun-quarkus` module adds first-class Quarkus transaction support for `Result<V,E>` and
@@ -53,6 +55,17 @@ result is `isError()`.
 | Action returns `Result.isError()` | Rolls back |
 | Action throws an unchecked exception | Rolls back, rethrows |
 
+### `TxResult.executeNew()` — REQUIRES_NEW semantics
+
+`executeNew()` suspends any currently active transaction, starts a brand-new independent
+one, and resumes the original transaction after the action finishes — regardless of whether
+the inner transaction committed or rolled back.
+
+<ExecuteNew/>
+
+Use `executeNew()` when the inner operation must commit independently of the outer
+transaction (audit logs, billing events, notifications).
+
 ## `TxTry`
 
 Wraps a `Try<V>`-returning action in a JTA-managed transaction. Rolls back when the result
@@ -67,6 +80,8 @@ is `isFailure()`.
 | Action returns `Try.isSuccess()` | Commits |
 | Action returns `Try.isFailure()` | Rolls back |
 | Action throws an unchecked exception | Rolls back, rethrows |
+
+`TxTry` also provides `executeNew()` with the same REQUIRES_NEW semantics described above.
 
 ## `TxResult` vs `TxTry` vs `@Transactional`
 
@@ -98,8 +113,8 @@ without needing two separate interceptor classes.
 
 At runtime the interceptor inspects the method's return value: if `@TransactionalResult` is
 present it checks `Result#isError()`; if `@TransactionalTry` is present it checks
-`Try#isFailure()`. Either way, a truthy result triggers a rollback via
-`UserTransaction.rollback()`.
+`Try#isFailure()`. Either way, a truthy result triggers a rollback (or marks the joined
+transaction rollback-only when the method joined an existing transaction).
 
 ### `@TransactionalResult`
 
@@ -121,6 +136,28 @@ present it checks `Result#isError()`; if `@TransactionalTry` is present it check
 | Returns `Try.isFailure()` | Rolls back |
 | Throws unchecked exception | Rolls back, rethrows |
 
+### Propagation semantics (`TxType`)
+
+Both annotations accept an optional `value()` attribute of type `Transactional.TxType`
+(default `REQUIRED`). The interceptor reads this value at runtime and applies the
+corresponding JTA propagation behaviour.
+
+| `TxType` | Existing tx present | No active tx |
+|---|---|---|
+| `REQUIRED` *(default)* | Joins the existing tx; marks rollback-only on error | Begins a new tx; commits or rolls back |
+| `REQUIRES_NEW` | Suspends outer tx, starts fresh tx, resumes outer after | Starts a fresh tx |
+| `MANDATORY` | Joins the existing tx | Throws `TransactionalException` |
+| `SUPPORTS` | Joins the existing tx; marks rollback-only on error | Runs without a tx (no begin/commit) |
+| `NOT_SUPPORTED` | Suspends outer tx, runs without one, resumes outer after | Runs without a tx |
+| `NEVER` | Throws `TransactionalException` | Runs without a tx |
+
+**Join semantics note:** When a method joins an existing transaction (`REQUIRED`,
+`MANDATORY`, `SUPPORTS`), it does not call `commit()` or `rollback()` — the caller owns
+the boundary. On error or exception the interceptor calls `setRollbackOnly()` so the outer
+transaction is guaranteed to roll back when it eventually closes.
+
+<TxTypePropagation/>
+
 ### Annotation placement
 
 Both annotations can be placed on a **method** or on a **class**. Class-level placement
@@ -140,7 +177,7 @@ public class OrderService {
 <ProgrammaticVsDeclarative/>
 
 Choose **programmatic** (`TxResult` / `TxTry`) when:
-- You want an explicit, testable object — straightforward to unit-test by passing a stub `UserTransaction`.
+- You want an explicit, testable object — straightforward to unit-test by passing a stub `TransactionManager`.
 - The service class already has `@Inject` dependencies and adding one more is natural.
 
 Choose **declarative** (`@TransactionalResult` / `@TransactionalTry`) when:
