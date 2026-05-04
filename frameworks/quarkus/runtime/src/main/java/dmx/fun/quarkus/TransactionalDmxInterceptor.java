@@ -63,8 +63,12 @@ public class TransactionalDmxInterceptor {
                 throw new RuntimeException(e);
             }
         }, returnValue -> {
-            if (returnValue instanceof Result<?, ?> r) return r.isError();
-            if (returnValue instanceof Try<?> t) return t.isFailure();
+            if (returnValue instanceof Result<?, ?> r) {
+                return r.isError();
+            }
+            if (returnValue instanceof Try<?> t) {
+                return t.isFailure();
+            }
             return false;
         });
     }

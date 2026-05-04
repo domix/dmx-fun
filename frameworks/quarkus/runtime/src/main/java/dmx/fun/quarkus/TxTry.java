@@ -71,6 +71,7 @@ public class TxTry {
      */
     public <V> Try<V> execute(Supplier<Try<V>> action) {
         Objects.requireNonNull(action, "action");
+        Objects.requireNonNull(executor, "executor");
         return executor.execute(action, Try::isFailure);
     }
 
@@ -86,6 +87,7 @@ public class TxTry {
      */
     public <V> Try<V> executeNew(Supplier<Try<V>> action) {
         Objects.requireNonNull(action, "action");
+        Objects.requireNonNull(executor, "executor");
         return executor.executeNew(action, Try::isFailure);
     }
 }

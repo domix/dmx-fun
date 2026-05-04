@@ -74,6 +74,7 @@ public class TxResult {
      */
     public <V, E> Result<V, E> execute(Supplier<Result<V, E>> action) {
         Objects.requireNonNull(action, "action");
+        Objects.requireNonNull(executor, "executor");
         return executor.execute(action, Result::isError);
     }
 
@@ -90,6 +91,7 @@ public class TxResult {
      */
     public <V, E> Result<V, E> executeNew(Supplier<Result<V, E>> action) {
         Objects.requireNonNull(action, "action");
+        Objects.requireNonNull(executor, "executor");
         return executor.executeNew(action, Result::isError);
     }
 }
