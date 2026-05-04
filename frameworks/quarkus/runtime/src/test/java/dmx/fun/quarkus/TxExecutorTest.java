@@ -39,7 +39,7 @@ class TxExecutorTest {
 
     @Test
     void execute_predicateFalse_commits() {
-        var result = executor.execute(() -> "ok", v -> false);
+        var result = executor.execute(() -> "ok", _ -> false);
 
         assertThat(result).isEqualTo("ok");
         assertThat(tx.beginCount).isEqualTo(1);
@@ -49,7 +49,7 @@ class TxExecutorTest {
 
     @Test
     void execute_predicateTrue_rollsBack() {
-        var result = executor.execute(() -> "fail", v -> true);
+        var result = executor.execute(() -> "fail", _ -> true);
 
         assertThat(result).isEqualTo("fail");
         assertThat(tx.beginCount).isEqualTo(1);
@@ -63,7 +63,7 @@ class TxExecutorTest {
     void execute_actionThrows_rollsBackAndRethrows() {
         var boom = new RuntimeException("boom");
 
-        assertThatThrownBy(() -> executor.execute(() -> { throw boom; }, v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> { throw boom; }, _ -> false))
             .isSameAs(boom);
 
         assertThat(tx.beginCount).isEqualTo(1);
@@ -75,7 +75,7 @@ class TxExecutorTest {
     void execute_actionThrows_rollbackSwallowsSystemException() throws SystemException {
         tx.throwOnRollback = new SystemException("rollback failed");
 
-        assertThatThrownBy(() -> executor.execute(() -> { throw new RuntimeException("boom"); }, v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> { throw new RuntimeException("boom"); }, _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("boom");
 
@@ -84,7 +84,7 @@ class TxExecutorTest {
 
     @Test
     void execute_actionReturnsNull_rollsBackAndThrowsNPE() {
-        assertThatThrownBy(() -> executor.execute(() -> null, v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> null, _ -> false))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("null");
 
@@ -96,7 +96,7 @@ class TxExecutorTest {
 
     @Test
     void execute_nullAction_throwsNPE() {
-        assertThatThrownBy(() -> executor.execute(null, v -> false))
+        assertThatThrownBy(() -> executor.execute(null, _ -> false))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("action");
     }
@@ -114,7 +114,7 @@ class TxExecutorTest {
     void execute_beginThrowsNotSupportedException_wrapsInRuntimeException() {
         tx.throwOnBegin = new NotSupportedException("nested tx not supported");
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(NotSupportedException.class);
@@ -124,7 +124,7 @@ class TxExecutorTest {
     void execute_beginThrowsSystemException_wrapsInRuntimeException() {
         tx.throwOnBegin = new SystemException("tx system error");
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(SystemException.class);
@@ -134,7 +134,7 @@ class TxExecutorTest {
     void execute_commitThrowsRollbackException_wrapsInRuntimeException() {
         tx.throwOnCommit = new RollbackException("tx rolled back");
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(RollbackException.class);
@@ -144,7 +144,7 @@ class TxExecutorTest {
     void execute_commitThrowsHeuristicMixedException_wrapsInRuntimeException() {
         tx.throwOnCommit = new HeuristicMixedException("heuristic mixed");
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(HeuristicMixedException.class);
@@ -154,7 +154,7 @@ class TxExecutorTest {
     void execute_commitThrowsHeuristicRollbackException_wrapsInRuntimeException() {
         tx.throwOnCommit = new HeuristicRollbackException("heuristic rollback");
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(HeuristicRollbackException.class);
@@ -164,7 +164,7 @@ class TxExecutorTest {
     void execute_commitThrowsSystemException_wrapsInRuntimeException() {
         tx.throwOnCommit = new SystemException("tx system error on commit");
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(SystemException.class);
@@ -174,7 +174,7 @@ class TxExecutorTest {
 
     @Test
     void executeNew_nullAction_throwsNPE() {
-        assertThatThrownBy(() -> executor.executeNew(null, v -> false))
+        assertThatThrownBy(() -> executor.executeNew(null, _ -> false))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("action");
     }
@@ -193,7 +193,7 @@ class TxExecutorTest {
         // suspend() returns null → no outer tx to resume
         tx.transactionToReturn = null;
 
-        var result = executor.executeNew(() -> "value", v -> false);
+        var result = executor.executeNew(() -> "value", _ -> false);
 
         assertThat(result).isEqualTo("value");
         assertThat(tx.suspendCount).isEqualTo(1);
@@ -210,7 +210,7 @@ class TxExecutorTest {
         var outer = new StubTransaction();
         tx.transactionToReturn = outer;
 
-        var result = executor.executeNew(() -> "value", v -> false);
+        var result = executor.executeNew(() -> "value", _ -> false);
 
         assertThat(result).isEqualTo("value");
         assertThat(tx.suspendCount).isEqualTo(1);
@@ -226,7 +226,7 @@ class TxExecutorTest {
         var outer = new StubTransaction();
         tx.transactionToReturn = outer;
 
-        var result = executor.executeNew(() -> "fail", v -> true);
+        var result = executor.executeNew(() -> "fail", _ -> true);
 
         assertThat(result).isEqualTo("fail");
         assertThat(tx.suspendCount).isEqualTo(1);
@@ -242,7 +242,7 @@ class TxExecutorTest {
         tx.transactionToReturn = outer;
         var boom = new RuntimeException("boom");
 
-        assertThatThrownBy(() -> executor.executeNew(() -> { throw boom; }, v -> false))
+        assertThatThrownBy(() -> executor.executeNew(() -> { throw boom; }, _ -> false))
             .isSameAs(boom);
 
         assertThat(tx.suspendCount).isEqualTo(1);
@@ -258,7 +258,7 @@ class TxExecutorTest {
     void executeNew_suspendThrowsSystemException_wrapsInRuntimeException() {
         tx.throwOnSuspend = new SystemException("suspend failed");
 
-        assertThatThrownBy(() -> executor.executeNew(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.executeNew(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("JTA transaction management failed")
             .hasCauseInstanceOf(SystemException.class);
@@ -273,7 +273,7 @@ class TxExecutorTest {
         tx.transactionToReturn = outer;
         tx.throwOnResume = new InvalidTransactionException("invalid tx");
 
-        assertThatThrownBy(() -> executor.executeNew(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.executeNew(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("Failed to resume suspended transaction")
             .hasCauseInstanceOf(InvalidTransactionException.class);
@@ -289,7 +289,7 @@ class TxExecutorTest {
         tx.transactionToReturn = outer;
         tx.throwOnResume = new SystemException("resume failed");
 
-        assertThatThrownBy(() -> executor.executeNew(() -> "x", v -> false))
+        assertThatThrownBy(() -> executor.executeNew(() -> "x", _ -> false))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("Failed to resume suspended transaction")
             .hasCauseInstanceOf(SystemException.class);
@@ -304,7 +304,7 @@ class TxExecutorTest {
     void execute_required_noOuterTx_beginsAndCommits() {
         tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
 
-        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.REQUIRED);
+        var result = executor.execute(() -> "ok", _ -> false, Transactional.TxType.REQUIRED);
 
         assertThat(result).isEqualTo("ok");
         assertThat(tx.beginCount).isEqualTo(1);
@@ -316,7 +316,7 @@ class TxExecutorTest {
     void execute_required_noOuterTx_rollsBackOnErr() {
         tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
 
-        executor.execute(() -> "err", v -> true, Transactional.TxType.REQUIRED);
+        executor.execute(() -> "err", _ -> true, Transactional.TxType.REQUIRED);
 
         assertThat(tx.beginCount).isEqualTo(1);
         assertThat(tx.rollbackCount).isEqualTo(1);
@@ -327,7 +327,7 @@ class TxExecutorTest {
     void execute_required_withOuterTx_joinsAndCommitsViaOuter() {
         // status is ACTIVE by default — should join, not begin
 
-        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.REQUIRED);
+        var result = executor.execute(() -> "ok", _ -> false, Transactional.TxType.REQUIRED);
 
         assertThat(result).isEqualTo("ok");
         assertThat(tx.beginCount).isEqualTo(0);
@@ -337,7 +337,7 @@ class TxExecutorTest {
 
     @Test
     void execute_required_withOuterTx_setsRollbackOnlyOnErr() {
-        executor.execute(() -> "err", v -> true, Transactional.TxType.REQUIRED);
+        executor.execute(() -> "err", _ -> true, Transactional.TxType.REQUIRED);
 
         assertThat(tx.beginCount).isEqualTo(0);
         assertThat(tx.rollbackCount).isEqualTo(0);
@@ -349,7 +349,7 @@ class TxExecutorTest {
         assertThatThrownBy(() ->
             executor.execute(
                 () -> { throw new RuntimeException("boom"); },
-                v -> false,
+                _ -> false,
                 Transactional.TxType.REQUIRED))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("boom");
@@ -364,7 +364,7 @@ class TxExecutorTest {
     void execute_mandatory_withoutTx_throwsTransactionalException() {
         tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, Transactional.TxType.MANDATORY))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _-> false, Transactional.TxType.MANDATORY))
             .isInstanceOf(TransactionalException.class)
             .hasMessageContaining("MANDATORY");
 
@@ -373,7 +373,7 @@ class TxExecutorTest {
 
     @Test
     void execute_mandatory_withTx_joinsAndSetsRollbackOnlyOnErr() {
-        executor.execute(() -> "err", v -> true, Transactional.TxType.MANDATORY);
+        executor.execute(() -> "err", _ -> true, Transactional.TxType.MANDATORY);
 
         assertThat(tx.beginCount).isEqualTo(0);
         assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
@@ -383,7 +383,7 @@ class TxExecutorTest {
 
     @Test
     void execute_supports_withTx_joinsAndSetsRollbackOnlyOnErr() {
-        executor.execute(() -> "err", v -> true, Transactional.TxType.SUPPORTS);
+        executor.execute(() -> "err", _ -> true, Transactional.TxType.SUPPORTS);
 
         assertThat(tx.beginCount).isEqualTo(0);
         assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
@@ -393,7 +393,7 @@ class TxExecutorTest {
     void execute_supports_withoutTx_runsWithoutBeginOrCommit() {
         tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
 
-        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.SUPPORTS);
+        var result = executor.execute(() -> "ok", _ -> false, Transactional.TxType.SUPPORTS);
 
         assertThat(result).isEqualTo("ok");
         assertThat(tx.beginCount).isEqualTo(0);
@@ -408,7 +408,7 @@ class TxExecutorTest {
         var outer = new StubTransaction();
         tx.transactionToReturn = outer;
 
-        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.NOT_SUPPORTED);
+        var result = executor.execute(() -> "ok", _ -> false, Transactional.TxType.NOT_SUPPORTED);
 
         assertThat(result).isEqualTo("ok");
         assertThat(tx.suspendCount).isEqualTo(1);
@@ -421,7 +421,7 @@ class TxExecutorTest {
     void execute_notSupported_withoutTx_doesNotSuspend() {
         tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
 
-        executor.execute(() -> "ok", v -> false, Transactional.TxType.NOT_SUPPORTED);
+        executor.execute(() -> "ok", _ -> false, Transactional.TxType.NOT_SUPPORTED);
 
         assertThat(tx.suspendCount).isEqualTo(0);
         assertThat(tx.resumeCount).isEqualTo(0);
@@ -431,7 +431,7 @@ class TxExecutorTest {
 
     @Test
     void execute_never_withTx_throwsTransactionalException() {
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, Transactional.TxType.NEVER))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false, Transactional.TxType.NEVER))
             .isInstanceOf(TransactionalException.class)
             .hasMessageContaining("NEVER");
 
@@ -442,11 +442,52 @@ class TxExecutorTest {
     void execute_never_withoutTx_runsWithoutBeginOrCommit() {
         tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
 
-        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.NEVER);
+        var result = executor.execute(() -> "ok", _ -> false, Transactional.TxType.NEVER);
 
         assertThat(result).isEqualTo("ok");
         assertThat(tx.beginCount).isEqualTo(0);
         assertThat(tx.commitCount).isEqualTo(0);
+    }
+
+    // ── hasActiveTransaction — SystemException ────────────────────────────────
+
+    @Test
+    void execute_required_getStatusThrowsSystemException_wrapsInRuntimeException() {
+        tx.throwOnGetStatus = new SystemException("getStatus failed");
+
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false, Transactional.TxType.REQUIRED))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("JTA transaction management failed")
+            .hasCauseInstanceOf(SystemException.class);
+    }
+
+    // ── executeNotSupported — suspend SystemException ─────────────────────────
+
+    @Test
+    void execute_notSupported_suspendThrowsSystemException_wrapsInRuntimeException() {
+        // STATUS_ACTIVE by default → hasActiveTransaction() returns true → suspend() is called
+        tx.throwOnSuspend = new SystemException("suspend failed");
+
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false, Transactional.TxType.NOT_SUPPORTED))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("JTA transaction management failed")
+            .hasCauseInstanceOf(SystemException.class);
+
+        assertThat(tx.beginCount).isEqualTo(0);
+    }
+
+    // ── setRollbackOnlyQuietly — SystemException swallowed ───────────────────
+
+    @Test
+    void execute_required_setRollbackOnlyThrowsSystemException_isSwallowed() {
+        // STATUS_ACTIVE by default → executeJoined → setRollbackOnlyQuietly(); exception is swallowed
+        tx.throwOnSetRollbackOnly = new SystemException("setRollbackOnly failed");
+
+        var result = executor.execute(() -> "err", _ -> true, Transactional.TxType.REQUIRED);
+
+        assertThat(result).isEqualTo("err");
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(0);
     }
 
     // ── execute(TxType) — STATUS_MARKED_ROLLBACK regression ──────────────────
@@ -457,7 +498,7 @@ class TxExecutorTest {
     void execute_required_markedRollback_joinsInsteadOfBeginningNew() {
         tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
 
-        executor.execute(() -> "ok", v -> false, Transactional.TxType.REQUIRED);
+        executor.execute(() -> "ok", _ -> false, Transactional.TxType.REQUIRED);
 
         assertThat(tx.beginCount).isEqualTo(0);  // joined, not started
         assertThat(tx.commitCount).isEqualTo(0);
@@ -467,7 +508,7 @@ class TxExecutorTest {
     void execute_mandatory_markedRollback_joinsInsteadOfThrowing() {
         tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
 
-        executor.execute(() -> "ok", v -> false, Transactional.TxType.MANDATORY);
+        executor.execute(() -> "ok", _ -> false, Transactional.TxType.MANDATORY);
 
         assertThat(tx.beginCount).isEqualTo(0);  // joined, not thrown
     }
@@ -476,7 +517,7 @@ class TxExecutorTest {
     void execute_supports_markedRollback_joinsInsteadOfRunningWithoutTx() {
         tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
 
-        executor.execute(() -> "ok", v -> false, Transactional.TxType.SUPPORTS);
+        executor.execute(() -> "ok", _ -> false, Transactional.TxType.SUPPORTS);
 
         assertThat(tx.beginCount).isEqualTo(0);
         assertThat(tx.commitCount).isEqualTo(0);
@@ -488,7 +529,7 @@ class TxExecutorTest {
         tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
         tx.transactionToReturn = new StubTransaction();
 
-        executor.execute(() -> "ok", v -> false, Transactional.TxType.NOT_SUPPORTED);
+        executor.execute(() -> "ok", _ -> false, Transactional.TxType.NOT_SUPPORTED);
 
         assertThat(tx.suspendCount).isEqualTo(1);
         assertThat(tx.resumeCount).isEqualTo(1);
@@ -498,7 +539,7 @@ class TxExecutorTest {
     void execute_never_markedRollback_throwsLikeActiveTx() {
         tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
 
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, Transactional.TxType.NEVER))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false, Transactional.TxType.NEVER))
             .isInstanceOf(TransactionalException.class)
             .hasMessageContaining("NEVER");
     }
@@ -507,7 +548,7 @@ class TxExecutorTest {
 
     @Test
     void execute_txType_nullAction_throwsNPE() {
-        assertThatThrownBy(() -> executor.execute(null, v -> false, Transactional.TxType.REQUIRED))
+        assertThatThrownBy(() -> executor.execute(null, _ -> false, Transactional.TxType.REQUIRED))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("action");
     }
@@ -521,7 +562,7 @@ class TxExecutorTest {
 
     @Test
     void execute_txType_nullTxType_throwsNPE() {
-        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, null))
+        assertThatThrownBy(() -> executor.execute(() -> "x", _ -> false, null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("txType");
     }

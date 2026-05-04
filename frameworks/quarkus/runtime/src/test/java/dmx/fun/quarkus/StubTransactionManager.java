@@ -31,6 +31,8 @@ class StubTransactionManager implements TransactionManager {
     @Nullable Exception throwOnRollback;
     @Nullable Exception throwOnSuspend;
     @Nullable Exception throwOnResume;
+    @Nullable SystemException throwOnGetStatus;
+    @Nullable SystemException throwOnSetRollbackOnly;
 
     @Override
     public void begin() throws NotSupportedException, SystemException {
@@ -73,10 +75,18 @@ class StubTransactionManager implements TransactionManager {
     @Override
     public void setRollbackOnly() throws IllegalStateException, SystemException {
         setRollbackOnlyCount++;
+        if (throwOnSetRollbackOnly != null) {
+            throw throwOnSetRollbackOnly;
+        }
     }
 
     @Override
-    public int getStatus() throws SystemException { return statusToReturn; }
+    public int getStatus() throws SystemException {
+        if (throwOnGetStatus != null) {
+            throw throwOnGetStatus;
+        }
+        return statusToReturn;
+    }
 
     @Override
     public Transaction getTransaction() throws SystemException { return null; }
