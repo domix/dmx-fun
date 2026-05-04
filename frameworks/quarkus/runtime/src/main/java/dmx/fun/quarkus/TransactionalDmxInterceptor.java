@@ -7,7 +7,7 @@ import jakarta.inject.Inject;
 import jakarta.interceptor.Interceptor;
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.InvocationContext;
-import jakarta.transaction.UserTransaction;
+import jakarta.transaction.TransactionManager;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -40,8 +40,8 @@ public class TransactionalDmxInterceptor {
     private final TxExecutor executor;
 
     @Inject
-    TransactionalDmxInterceptor(UserTransaction userTransaction) {
-        this.executor = new TxExecutor(userTransaction);
+    TransactionalDmxInterceptor(TransactionManager transactionManager) {
+        this.executor = new TxExecutor(transactionManager);
     }
 
     /**
@@ -54,13 +54,6 @@ public class TransactionalDmxInterceptor {
      */
     @AroundInvoke
     public Object intercept(InvocationContext ctx) throws Exception {
-        // getTarget().getClass() returns Arc's intercepted subclass; class-level detection
-        // relies on @Inherited being present on @TransactionalResult / @TransactionalTry.
-        boolean isResult = ctx.getMethod().isAnnotationPresent(TransactionalResult.class)
-            || ctx.getTarget().getClass().isAnnotationPresent(TransactionalResult.class);
-        boolean isTry = ctx.getMethod().isAnnotationPresent(TransactionalTry.class)
-            || ctx.getTarget().getClass().isAnnotationPresent(TransactionalTry.class);
-
         return executor.execute(() -> {
             try {
                 return ctx.proceed();
@@ -70,12 +63,8 @@ public class TransactionalDmxInterceptor {
                 throw new RuntimeException(e);
             }
         }, returnValue -> {
-            if (isResult && returnValue instanceof Result<?, ?> r) {
-                return r.isError();
-            }
-            if (isTry && returnValue instanceof Try<?> t) {
-                return t.isFailure();
-            }
+            if (returnValue instanceof Result<?, ?> r) return r.isError();
+            if (returnValue instanceof Try<?> t) return t.isFailure();
             return false;
         });
     }

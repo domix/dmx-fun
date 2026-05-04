@@ -10,22 +10,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TxResultTest {
 
-    StubUserTransaction tx;
+    StubTransactionManager tx;
     TxResult txResult;
 
     @BeforeEach
     void setUp() {
-        tx = new StubUserTransaction();
+        tx = new StubTransactionManager();
         txResult = new TxResult(tx);
     }
 
     // ── construction ──────────────────────────────────────────────────────────
 
     @Test
-    void constructor_nullUserTransaction_throwsNPE() {
+    void constructor_nullTransactionManager_throwsNPE() {
         assertThatThrownBy(() -> new TxResult(null))
             .isInstanceOf(NullPointerException.class)
-            .hasMessageContaining("userTransaction");
+            .hasMessageContaining("transactionManager");
     }
 
     // ── execute — commit path ─────────────────────────────────────────────────
@@ -64,7 +64,7 @@ class TxResultTest {
         assertThat(tx.rollbackCount).isEqualTo(1);
     }
 
-    // ── null-argument guards ──────────────────────────────────────────────────
+    // ── execute — null-argument guards ────────────────────────────────────────
 
     @Test
     void execute_nullAction_throwsNPE() {
@@ -86,8 +86,6 @@ class TxResultTest {
 
     @Test
     void noArgConstructor_executeWithValidAction_throwsNPEFromNullExecutor() {
-        // The protected no-arg ctor is for CDI proxy subclasses only;
-        // executor is left null, so any real call fails immediately.
         var proxy = new TxResult();
         assertThatThrownBy(() -> proxy.execute(() -> Result.ok("x")))
             .isInstanceOf(NullPointerException.class);
@@ -104,5 +102,56 @@ class TxResultTest {
         assertThat(tx.beginCount).isEqualTo(3);
         assertThat(tx.commitCount).isEqualTo(2);
         assertThat(tx.rollbackCount).isEqualTo(1);
+    }
+
+    // ── executeNew — REQUIRES_NEW semantics ───────────────────────────────────
+
+    @Test
+    void executeNew_okResult_commitsInner_noOuterToResume() {
+        tx.transactionToReturn = null;
+
+        var result = txResult.executeNew(() -> Result.ok("inner"));
+
+        assertThat(result).isOk().containsValue("inner");
+        assertThat(tx.suspendCount).isEqualTo(1);
+        assertThat(tx.beginCount).isEqualTo(1);
+        assertThat(tx.commitCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(0);
+        assertThat(tx.resumeCount).isEqualTo(0);
+    }
+
+    @Test
+    void executeNew_errResult_rollsBackInner_resumesOuter() {
+        var outer = new StubTransaction();
+        tx.transactionToReturn = outer;
+
+        var result = txResult.executeNew(() -> Result.err("inner error"));
+
+        assertThat(result).isErr().containsError("inner error");
+        assertThat(tx.suspendCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(1);
+        assertThat(tx.commitCount).isEqualTo(0);
+        assertThat(tx.resumeCount).isEqualTo(1);
+        assertThat(tx.lastResumedTx).isSameAs(outer);
+    }
+
+    @Test
+    void executeNew_okResult_commitsInner_resumesOuter() {
+        var outer = new StubTransaction();
+        tx.transactionToReturn = outer;
+
+        txResult.executeNew(() -> Result.ok("inner"));
+
+        assertThat(tx.commitCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(0);
+        assertThat(tx.resumeCount).isEqualTo(1);
+        assertThat(tx.lastResumedTx).isSameAs(outer);
+    }
+
+    @Test
+    void executeNew_nullAction_throwsNPE() {
+        assertThatThrownBy(() -> txResult.executeNew(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
     }
 }

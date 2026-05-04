@@ -52,12 +52,12 @@ class TransactionalDmxInterceptorTest {
 
     // ── Fixture ───────────────────────────────────────────────────────────────
 
-    StubUserTransaction tx;
+    StubTransactionManager tx;
     TransactionalDmxInterceptor interceptor;
 
     @BeforeEach
     void setUp() {
-        tx = new StubUserTransaction();
+        tx = new StubTransactionManager();
         interceptor = new TransactionalDmxInterceptor(tx);
     }
 

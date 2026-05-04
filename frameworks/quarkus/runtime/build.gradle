@@ -43,11 +43,35 @@ tasks.named('compileTestJava') {
 
 // Stamp the runtime JAR with the extension coordinates so Quarkus build tools
 // automatically add fun-quarkus-deployment to the augmentation classpath.
-// Capture at configuration time so the closure is compatible with configuration cache.
-def extensionVersion = project.version.toString()
+//
+// The Quarkus Gradle plugin reads quarkus-extension.properties from
+// sourceSets.main.resources.getSrcDirs() at Gradle configuration phase (before
+// any task runs). The source template uses ${version} which is only expanded by
+// processResources (execution phase), so the plugin would see the literal
+// "${version}" and fail to find the deployment project.
+//
+// Fix: eagerly write the expanded file to a generated directory at configuration
+// time and prepend it to the resource source dirs so the plugin finds the correct
+// version before it reaches the template file in src/main/resources.
+def generatedQuarkusMeta = layout.buildDirectory.dir("generated-quarkus-meta").get().asFile
+def generatedPropsFile = new File(generatedQuarkusMeta, "META-INF/quarkus-extension.properties")
+generatedPropsFile.parentFile.mkdirs()
+generatedPropsFile.text = "deployment-artifact=codes.domix:fun-quarkus-deployment:${project.version}\n"
+
+def existingSrcDirs = sourceSets.main.resources.srcDirs.toList()
+sourceSets.main.resources.setSrcDirs([generatedQuarkusMeta] + existingSrcDirs)
+
 processResources {
-    filesMatching('META-INF/quarkus-extension.properties') {
-        expand(version: extensionVersion)
+    // Exclude the template; the pre-expanded generated file is used instead.
+    exclude('META-INF/quarkus-extension.properties')
+    from(generatedQuarkusMeta) {
+        include('META-INF/quarkus-extension.properties')
+    }
+}
+
+afterEvaluate {
+    tasks.named('sourcesJar') {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
 
