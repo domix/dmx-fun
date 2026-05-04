@@ -41,7 +41,7 @@ Edit `gradle.properties` — remove the `-SNAPSHOT` suffix:
 
 Commit with:
 ```bash
-git commit -m "chore(release): bump version to 0.0.14" gradle.properties
+git commit -m "chore(release): bump version to 0.0.15" gradle.properties
 git push origin main
 ```
 
@@ -49,11 +49,11 @@ git push origin main
 
 Pushing a stable version to `main` triggers `publish.yml`, which:
 
-1. Detects that `version=0.0.14` is **not** a SNAPSHOT
-2. Checks that the git tag `v0.0.14` does not already exist
+1. Detects that `version=0.0.15` is **not** a SNAPSHOT
+2. Checks that the git tag `v0.0.15` does not already exist
 3. Runs `./gradlew test` — all modules
 4. Runs `./gradlew publishToMavenCentral --no-configuration-cache`
-5. Creates and pushes the annotated tag `v0.0.14`
+5. Creates and pushes the annotated tag `v0.0.15`
 6. Opens a GitHub Release with auto-generated release notes
 
 Monitor progress at **Actions → Publish to Maven Central**.
@@ -88,7 +88,7 @@ If you hardcode version numbers anywhere else, update them now.
 
 ## Tag format
 
-Tags follow the pattern `v{version}` — e.g. `v0.0.14`.
+Tags follow the pattern `v{version}` — e.g. `v0.0.15`.
 Tags are annotated (created with `-a`) and pushed by the CI workflow automatically.
 **Never create release tags manually** — let `publish.yml` manage them to avoid
 triggering a duplicate publish.
@@ -104,4 +104,4 @@ If `publish.yml` fails after the tests but before the tag is pushed:
 3. The workflow re-runs. The tag-check step will find no existing tag and proceed.
 
 If the workflow fails *after* the tag was pushed but before the GitHub Release was created,
-create the release manually via `gh release create v0.0.14 --generate-notes`.
+create the release manually via `gh release create v0.0.15 --generate-notes`.

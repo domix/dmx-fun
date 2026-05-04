@@ -130,7 +130,7 @@ ideas for what should come in 0.0.16 and beyond — issues and pull requests are
 
 ```kotlin
 // Gradle (Kotlin DSL)
-implementation("codes.domix:fun:0.0.14")
+implementation("codes.domix:fun:0.0.15")
 ```
 
 ```xml
@@ -138,6 +138,6 @@ implementation("codes.domix:fun:0.0.14")
 <dependency>
   <groupId>codes.domix</groupId>
   <artifactId>fun</artifactId>
-  <version>0.0.14</version>
+  <version>0.0.15</version>
 </dependency>
 ```
