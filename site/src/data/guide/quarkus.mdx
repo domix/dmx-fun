@@ -15,6 +15,11 @@ import {Content as TransactionalTry}       from '../code/guide/quarkus/transacti
 import {Content as TxTypePropagation}      from '../code/guide/quarkus/tx-type-propagation.mdx';
 import {Content as ProgrammaticVsDeclarative} from '../code/guide/quarkus/programmatic-vs-declarative.mdx';
 
+> **Early-stage support:** The `fun-quarkus` module is in its early stages. The API is
+> functional and tested, but you may encounter rough edges in real-world usage. Please
+> proceed with care and [report any issues](https://github.com/domix/dmx-fun/issues) you
+> find — feedback is very welcome and helps drive the module forward.
+
 The `fun-quarkus` module adds first-class Quarkus transaction support for `Result<V,E>` and
 `Try<V>`. It is an **optional** dependency — the core `fun` library has no runtime dependency
 on Quarkus.
