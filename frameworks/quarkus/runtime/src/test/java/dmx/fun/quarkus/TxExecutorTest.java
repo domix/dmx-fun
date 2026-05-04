@@ -449,6 +449,60 @@ class TxExecutorTest {
         assertThat(tx.commitCount).isEqualTo(0);
     }
 
+    // ── execute(TxType) — STATUS_MARKED_ROLLBACK regression ──────────────────
+    // After setRollbackOnly() the status is MARKED_ROLLBACK, not ACTIVE.
+    // All propagation decisions must treat MARKED_ROLLBACK as "has active tx".
+
+    @Test
+    void execute_required_markedRollback_joinsInsteadOfBeginningNew() {
+        tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
+
+        executor.execute(() -> "ok", v -> false, Transactional.TxType.REQUIRED);
+
+        assertThat(tx.beginCount).isEqualTo(0);  // joined, not started
+        assertThat(tx.commitCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_mandatory_markedRollback_joinsInsteadOfThrowing() {
+        tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
+
+        executor.execute(() -> "ok", v -> false, Transactional.TxType.MANDATORY);
+
+        assertThat(tx.beginCount).isEqualTo(0);  // joined, not thrown
+    }
+
+    @Test
+    void execute_supports_markedRollback_joinsInsteadOfRunningWithoutTx() {
+        tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
+
+        executor.execute(() -> "ok", v -> false, Transactional.TxType.SUPPORTS);
+
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.commitCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_notSupported_markedRollback_suspendsLikeActiveTx() {
+        tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
+        tx.transactionToReturn = new StubTransaction();
+
+        executor.execute(() -> "ok", v -> false, Transactional.TxType.NOT_SUPPORTED);
+
+        assertThat(tx.suspendCount).isEqualTo(1);
+        assertThat(tx.resumeCount).isEqualTo(1);
+    }
+
+    @Test
+    void execute_never_markedRollback_throwsLikeActiveTx() {
+        tx.statusToReturn = Status.STATUS_MARKED_ROLLBACK;
+
+        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, Transactional.TxType.NEVER))
+            .isInstanceOf(TransactionalException.class)
+            .hasMessageContaining("NEVER");
+    }
+
     // ── execute(TxType) — null checks ─────────────────────────────────────────
 
     @Test

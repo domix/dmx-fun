@@ -134,6 +134,16 @@ class TransactionIntegrationTest {
         assertThat(service.getValue(ID)).isEqualTo(1L);
     }
 
+    // ── @TransactionalResult(MANDATORY) with active tx ────────────────────────
+
+    @Test
+    void mandatory_withActiveTx_joinsAndCommits() throws Exception {
+        // Outer tx (txResult.execute) is active → MANDATORY joins it and commits
+        var result = service.outerOkInnerMandatory(ID);
+        assertThat(result).isOk();
+        assertThat(service.getValue(ID)).isEqualTo(1L);
+    }
+
     // ── @TransactionalResult(NEVER) ──────────────────────────────────────────
 
     @Test
@@ -142,5 +152,14 @@ class TransactionIntegrationTest {
         var result = service.incrementDeclarativeResultNever(ID);
         assertThat(result).isOk();
         assertThat(service.getValue(ID)).isEqualTo(1L);
+    }
+
+    @Test
+    void never_withActiveTx_throwsTransactionalException() throws Exception {
+        // Outer tx (txResult.execute) is active → NEVER must throw
+        assertThatThrownBy(() -> service.outerWithInnerNever(ID))
+            .isInstanceOf(TransactionalException.class);
+        // DB must be unchanged — outer tx rolled back
+        assertThat(service.getValue(ID)).isEqualTo(0L);
     }
 }

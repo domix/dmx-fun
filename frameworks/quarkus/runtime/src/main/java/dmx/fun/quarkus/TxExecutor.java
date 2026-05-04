@@ -216,7 +216,12 @@ final class TxExecutor {
 
     private boolean hasActiveTransaction() {
         try {
-            return transactionManager.getStatus() == Status.STATUS_ACTIVE;
+            int status = transactionManager.getStatus();
+            // STATUS_MARKED_ROLLBACK is still a joinable/suspendable transaction —
+            // treat it as active so propagation decisions (REQUIRED join, MANDATORY
+            // join, NOT_SUPPORTED suspend, NEVER throw) remain correct even after
+            // setRollbackOnly() has been called on an enclosing transaction.
+            return status == Status.STATUS_ACTIVE || status == Status.STATUS_MARKED_ROLLBACK;
         } catch (SystemException e) {
             throw new RuntimeException("JTA transaction management failed", e);
         }

@@ -188,6 +188,15 @@ public class CounterService {
         return increment(id);
     }
 
+    /**
+     * Outer tx (from txResult.execute) wraps a MANDATORY inner call.
+     * The inner MANDATORY method joins the outer tx; when the outer commits, the increment
+     * is persisted.
+     */
+    public Result<Long, String> outerOkInnerMandatory(long id) {
+        return txResult.execute(() -> self.incrementDeclarativeResultMandatory(id));
+    }
+
     // ── @TransactionalResult(NOT_SUPPORTED) ──────────────────────────────────
 
     /**
@@ -217,5 +226,17 @@ public class CounterService {
     @TransactionalResult(Transactional.TxType.NEVER)
     public Result<Long, String> incrementDeclarativeResultNever(long id) {
         return increment(id);
+    }
+
+    /**
+     * Outer tx (from txResult.execute) wraps a NEVER inner call.
+     * The inner NEVER method throws TransactionalException because an active tx is present;
+     * the outer tx rolls back and the exception propagates to the caller.
+     */
+    public Result<Long, String> outerWithInnerNever(long id) {
+        return txResult.execute(() -> {
+            self.incrementDeclarativeResultNever(id); // throws TransactionalException
+            return Result.ok(0L);
+        });
     }
 }
