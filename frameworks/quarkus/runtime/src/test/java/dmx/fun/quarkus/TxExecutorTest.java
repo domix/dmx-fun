@@ -5,7 +5,10 @@ import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.InvalidTransactionException;
 import jakarta.transaction.NotSupportedException;
 import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
 import jakarta.transaction.SystemException;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.TransactionalException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -293,5 +296,179 @@ class TxExecutorTest {
 
         assertThat(tx.commitCount).isEqualTo(1);
         assertThat(tx.resumeCount).isEqualTo(1);
+    }
+
+    // ── execute(TxType) — REQUIRED ────────────────────────────────────────────
+
+    @Test
+    void execute_required_noOuterTx_beginsAndCommits() {
+        tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
+
+        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.REQUIRED);
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(tx.beginCount).isEqualTo(1);
+        assertThat(tx.commitCount).isEqualTo(1);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_required_noOuterTx_rollsBackOnErr() {
+        tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
+
+        executor.execute(() -> "err", v -> true, Transactional.TxType.REQUIRED);
+
+        assertThat(tx.beginCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(1);
+        assertThat(tx.commitCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_required_withOuterTx_joinsAndCommitsViaOuter() {
+        // status is ACTIVE by default — should join, not begin
+
+        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.REQUIRED);
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.commitCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_required_withOuterTx_setsRollbackOnlyOnErr() {
+        executor.execute(() -> "err", v -> true, Transactional.TxType.REQUIRED);
+
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.rollbackCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+    }
+
+    @Test
+    void execute_required_withOuterTx_setsRollbackOnlyOnException() {
+        assertThatThrownBy(() ->
+            executor.execute(
+                () -> { throw new RuntimeException("boom"); },
+                v -> false,
+                Transactional.TxType.REQUIRED))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("boom");
+
+        assertThat(tx.rollbackCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+    }
+
+    // ── execute(TxType) — MANDATORY ───────────────────────────────────────────
+
+    @Test
+    void execute_mandatory_withoutTx_throwsTransactionalException() {
+        tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
+
+        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, Transactional.TxType.MANDATORY))
+            .isInstanceOf(TransactionalException.class)
+            .hasMessageContaining("MANDATORY");
+
+        assertThat(tx.beginCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_mandatory_withTx_joinsAndSetsRollbackOnlyOnErr() {
+        executor.execute(() -> "err", v -> true, Transactional.TxType.MANDATORY);
+
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+    }
+
+    // ── execute(TxType) — SUPPORTS ────────────────────────────────────────────
+
+    @Test
+    void execute_supports_withTx_joinsAndSetsRollbackOnlyOnErr() {
+        executor.execute(() -> "err", v -> true, Transactional.TxType.SUPPORTS);
+
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+    }
+
+    @Test
+    void execute_supports_withoutTx_runsWithoutBeginOrCommit() {
+        tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
+
+        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.SUPPORTS);
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.commitCount).isEqualTo(0);
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(0);
+    }
+
+    // ── execute(TxType) — NOT_SUPPORTED ──────────────────────────────────────
+
+    @Test
+    void execute_notSupported_withTx_suspendsAndResumes() {
+        var outer = new StubTransaction();
+        tx.transactionToReturn = outer;
+
+        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.NOT_SUPPORTED);
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(tx.suspendCount).isEqualTo(1);
+        assertThat(tx.resumeCount).isEqualTo(1);
+        assertThat(tx.lastResumedTx).isSameAs(outer);
+        assertThat(tx.beginCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_notSupported_withoutTx_doesNotSuspend() {
+        tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
+
+        executor.execute(() -> "ok", v -> false, Transactional.TxType.NOT_SUPPORTED);
+
+        assertThat(tx.suspendCount).isEqualTo(0);
+        assertThat(tx.resumeCount).isEqualTo(0);
+    }
+
+    // ── execute(TxType) — NEVER ───────────────────────────────────────────────
+
+    @Test
+    void execute_never_withTx_throwsTransactionalException() {
+        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, Transactional.TxType.NEVER))
+            .isInstanceOf(TransactionalException.class)
+            .hasMessageContaining("NEVER");
+
+        assertThat(tx.beginCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_never_withoutTx_runsWithoutBeginOrCommit() {
+        tx.statusToReturn = Status.STATUS_NO_TRANSACTION;
+
+        var result = executor.execute(() -> "ok", v -> false, Transactional.TxType.NEVER);
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(tx.beginCount).isEqualTo(0);
+        assertThat(tx.commitCount).isEqualTo(0);
+    }
+
+    // ── execute(TxType) — null checks ─────────────────────────────────────────
+
+    @Test
+    void execute_txType_nullAction_throwsNPE() {
+        assertThatThrownBy(() -> executor.execute(null, v -> false, Transactional.TxType.REQUIRED))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
+    @Test
+    void execute_txType_nullPredicate_throwsNPE() {
+        assertThatThrownBy(() -> executor.execute(() -> "x", null, Transactional.TxType.REQUIRED))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("shouldRollback");
+    }
+
+    @Test
+    void execute_txType_nullTxType_throwsNPE() {
+        assertThatThrownBy(() -> executor.execute(() -> "x", v -> false, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("txType");
     }
 }

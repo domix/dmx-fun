@@ -8,6 +8,7 @@ import jakarta.interceptor.Interceptor;
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.InvocationContext;
 import jakarta.transaction.TransactionManager;
+import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -18,9 +19,10 @@ import org.jspecify.annotations.NullMarked;
  * meta-interceptor-binding, per CDI §2.7.1.1). For each intercepted method the
  * interceptor:
  * <ol>
- *   <li>Begins a new JTA transaction.</li>
- *   <li>Proceeds with the method invocation.</li>
- *   <li>Rolls back if the returned {@code Result} is error or {@code Try} is failure.</li>
+ *   <li>Resolves the {@link Transactional.TxType} from the annotation (default REQUIRED).</li>
+ *   <li>Applies the corresponding JTA propagation semantics via {@link TxExecutor}.</li>
+ *   <li>Rolls back (or marks rollback-only) if the returned {@code Result} is error or
+ *       {@code Try} is failure.</li>
  *   <li>Commits on success; rolls back and re-throws on any unchecked exception.</li>
  * </ol>
  *
@@ -45,15 +47,19 @@ public class TransactionalDmxInterceptor {
     }
 
     /**
-     * Wraps the intercepted method invocation in a JTA transaction, rolling back when
-     * the returned {@link Result} is error or {@link Try} is failure.
+     * Wraps the intercepted method invocation in a JTA transaction, rolling back (or marking
+     * rollback-only when joining an existing transaction) when the returned {@link Result} is
+     * error or {@link Try} is failure.
      *
      * @param ctx the invocation context; must not be {@code null}
      * @return the value returned by the intercepted method
+     * @throws IllegalStateException if the annotated method does not return {@link Result}
+     *                               or {@link Try}
      * @throws Exception if the intercepted method throws, after rolling back the transaction
      */
     @AroundInvoke
     public Object intercept(InvocationContext ctx) throws Exception {
+        var txType = resolveTxType(ctx);
         return executor.execute(() -> {
             try {
                 return ctx.proceed();
@@ -70,6 +76,33 @@ public class TransactionalDmxInterceptor {
                 return t.isFailure();
             }
             return false;
-        });
+        }, txType);
+    }
+
+    private static Transactional.TxType resolveTxType(InvocationContext ctx) {
+        // Method-level annotations take precedence over class-level.
+        var resultAnn = ctx.getMethod().getAnnotation(TransactionalResult.class);
+        if (resultAnn != null) {
+            return resultAnn.value();
+        }
+
+        var tryAnn = ctx.getMethod().getAnnotation(TransactionalTry.class);
+        if (tryAnn != null) {
+            return tryAnn.value();
+        }
+
+        // Fall back to the declaring class (supports class-level @TransactionalResult/Try).
+        var declaring = ctx.getMethod().getDeclaringClass();
+        resultAnn = declaring.getAnnotation(TransactionalResult.class);
+        if (resultAnn != null) {
+            return resultAnn.value();
+        }
+
+        tryAnn = declaring.getAnnotation(TransactionalTry.class);
+        if (tryAnn != null) {
+            return tryAnn.value();
+        }
+
+        return Transactional.TxType.REQUIRED;
     }
 }
