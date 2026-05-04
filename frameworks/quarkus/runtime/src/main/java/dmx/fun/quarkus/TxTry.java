@@ -3,7 +3,7 @@ package dmx.fun.quarkus;
 import dmx.fun.Try;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.UserTransaction;
+import jakarta.transaction.TransactionManager;
 import java.util.Objects;
 import java.util.function.Supplier;
 import org.jspecify.annotations.NullMarked;
@@ -44,8 +44,8 @@ public class TxTry {
     private final @Nullable TxExecutor executor;
 
     @Inject
-    TxTry(UserTransaction userTransaction) {
-        this.executor = new TxExecutor(userTransaction);
+    TxTry(TransactionManager transactionManager) {
+        this.executor = new TxExecutor(transactionManager);
     }
 
     protected TxTry() {
@@ -71,6 +71,23 @@ public class TxTry {
      */
     public <V> Try<V> execute(Supplier<Try<V>> action) {
         Objects.requireNonNull(action, "action");
+        Objects.requireNonNull(executor, "executor");
         return executor.execute(action, Try::isFailure);
+    }
+
+    /**
+     * Executes {@code action} in a brand-new JTA transaction (REQUIRES_NEW semantics),
+     * suspending any currently active transaction first and resuming it afterwards.
+     *
+     * @param <V>    the success value type
+     * @param action the transactional action; must not be {@code null} and must not return
+     *               {@code null}
+     * @return the {@link Try} returned by {@code action}
+     * @throws NullPointerException if {@code action} is {@code null} or returns {@code null}
+     */
+    public <V> Try<V> executeNew(Supplier<Try<V>> action) {
+        Objects.requireNonNull(action, "action");
+        Objects.requireNonNull(executor, "executor");
+        return executor.executeNew(action, Try::isFailure);
     }
 }

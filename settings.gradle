@@ -20,5 +20,9 @@ include('frameworks:spring')
 include('frameworks:spring-boot')
 include('frameworks:quarkus:runtime')
 include('frameworks:quarkus:deployment')
+// Rename so project.name matches the Maven artifact ID used in quarkus-extension.properties.
+// The Quarkus Gradle plugin matches deployment-artifact by project.name (not Maven artifact ID).
+project(':frameworks:quarkus:deployment').name = 'fun-quarkus-deployment'
+include('frameworks:quarkus:integration-test')
 include('samples:samples')
 include('samples:spring-boot-sample')

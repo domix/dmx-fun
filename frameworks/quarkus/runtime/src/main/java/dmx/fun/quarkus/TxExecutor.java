@@ -2,10 +2,12 @@ package dmx.fun.quarkus;
 
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.InvalidTransactionException;
 import jakarta.transaction.NotSupportedException;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.SystemException;
-import jakarta.transaction.UserTransaction;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -21,10 +23,10 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 final class TxExecutor {
 
-    private final UserTransaction userTransaction;
+    private final TransactionManager transactionManager;
 
-    TxExecutor(UserTransaction userTransaction) {
-        this.userTransaction = Objects.requireNonNull(userTransaction, "userTransaction");
+    TxExecutor(TransactionManager transactionManager) {
+        this.transactionManager = Objects.requireNonNull(transactionManager, "transactionManager");
     }
 
     /**
@@ -47,7 +49,7 @@ final class TxExecutor {
         Objects.requireNonNull(action, "action");
         Objects.requireNonNull(shouldRollback, "shouldRollback");
         try {
-            userTransaction.begin();
+            transactionManager.begin();
             T result;
             try {
                 result = action.get();
@@ -57,9 +59,9 @@ final class TxExecutor {
                 throw e;
             }
             if (shouldRollback.test(result)) {
-                userTransaction.rollback();
+                transactionManager.rollback();
             } else {
-                userTransaction.commit();
+                transactionManager.commit();
             }
             return result;
         } catch (NotSupportedException | SystemException | RollbackException
@@ -68,9 +70,42 @@ final class TxExecutor {
         }
     }
 
+    /**
+     * Runs {@code action} in a brand-new JTA transaction, suspending any active transaction
+     * first and resuming it afterwards (REQUIRES_NEW semantics).
+     *
+     * @param <T>            the return type of the action
+     * @param action         the transactional action; must not be {@code null} and must not
+     *                       return {@code null}
+     * @param shouldRollback predicate that returns {@code true} when the result represents
+     *                       a failure; must not be {@code null}
+     * @return the value returned by {@code action}
+     */
+    <T> T executeNew(Supplier<T> action, Predicate<T> shouldRollback) {
+        Objects.requireNonNull(action, "action");
+        Objects.requireNonNull(shouldRollback, "shouldRollback");
+        Transaction suspended;
+        try {
+            suspended = transactionManager.suspend();
+        } catch (SystemException e) {
+            throw new RuntimeException("JTA transaction management failed", e);
+        }
+        try {
+            return execute(action, shouldRollback);
+        } finally {
+            if (suspended != null) {
+                try {
+                    transactionManager.resume(suspended);
+                } catch (InvalidTransactionException | SystemException e) {
+                    throw new RuntimeException("Failed to resume suspended transaction", e);
+                }
+            }
+        }
+    }
+
     private void rollbackQuietly() {
         try {
-            userTransaction.rollback();
+            transactionManager.rollback();
         } catch (SystemException ignored) {
         }
     }

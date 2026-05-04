@@ -107,7 +107,7 @@ class AnnotationsTest {
     @Test
     void interceptor_constructor_hasInject() throws NoSuchMethodException {
         var ctor = TransactionalDmxInterceptor.class
-            .getDeclaredConstructor(jakarta.transaction.UserTransaction.class);
+            .getDeclaredConstructor(jakarta.transaction.TransactionManager.class);
         assertThat(ctor.isAnnotationPresent(Inject.class)).isTrue();
     }
 
@@ -120,7 +120,7 @@ class AnnotationsTest {
 
     @Test
     void txResult_injectConstructor_hasInject() throws NoSuchMethodException {
-        var ctor = TxResult.class.getDeclaredConstructor(jakarta.transaction.UserTransaction.class);
+        var ctor = TxResult.class.getDeclaredConstructor(jakarta.transaction.TransactionManager.class);
         assertThat(ctor.isAnnotationPresent(Inject.class)).isTrue();
     }
 
@@ -131,7 +131,7 @@ class AnnotationsTest {
 
     @Test
     void txTry_injectConstructor_hasInject() throws NoSuchMethodException {
-        var ctor = TxTry.class.getDeclaredConstructor(jakarta.transaction.UserTransaction.class);
+        var ctor = TxTry.class.getDeclaredConstructor(jakarta.transaction.TransactionManager.class);
         assertThat(ctor.isAnnotationPresent(Inject.class)).isTrue();
     }
 }

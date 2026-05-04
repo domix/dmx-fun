@@ -10,22 +10,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TxTryTest {
 
-    StubUserTransaction tx;
+    StubTransactionManager tx;
     TxTry txTry;
 
     @BeforeEach
     void setUp() {
-        tx = new StubUserTransaction();
+        tx = new StubTransactionManager();
         txTry = new TxTry(tx);
     }
 
     // ── construction ──────────────────────────────────────────────────────────
 
     @Test
-    void constructor_nullUserTransaction_throwsNPE() {
+    void constructor_nullTransactionManager_throwsNPE() {
         assertThatThrownBy(() -> new TxTry(null))
             .isInstanceOf(NullPointerException.class)
-            .hasMessageContaining("userTransaction");
+            .hasMessageContaining("transactionManager");
     }
 
     // ── execute — commit path ─────────────────────────────────────────────────
@@ -65,7 +65,7 @@ class TxTryTest {
         assertThat(tx.rollbackCount).isEqualTo(1);
     }
 
-    // ── null-argument guards ──────────────────────────────────────────────────
+    // ── execute — null-argument guards ────────────────────────────────────────
 
     @Test
     void execute_nullAction_throwsNPE() {
@@ -103,5 +103,56 @@ class TxTryTest {
         assertThat(tx.beginCount).isEqualTo(3);
         assertThat(tx.commitCount).isEqualTo(2);
         assertThat(tx.rollbackCount).isEqualTo(1);
+    }
+
+    // ── executeNew — REQUIRES_NEW semantics ───────────────────────────────────
+
+    @Test
+    void executeNew_successTry_commitsInner_noOuterToResume() {
+        tx.transactionToReturn = null;
+
+        var result = txTry.executeNew(() -> Try.success("inner"));
+
+        assertThat(result).isSuccess().containsValue("inner");
+        assertThat(tx.suspendCount).isEqualTo(1);
+        assertThat(tx.beginCount).isEqualTo(1);
+        assertThat(tx.commitCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(0);
+        assertThat(tx.resumeCount).isEqualTo(0);
+    }
+
+    @Test
+    void executeNew_failureTry_rollsBackInner_resumesOuter() {
+        var outer = new StubTransaction();
+        tx.transactionToReturn = outer;
+
+        var result = txTry.executeNew(() -> Try.failure(new RuntimeException("inner")));
+
+        assertThat(result).isFailure();
+        assertThat(tx.suspendCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(1);
+        assertThat(tx.commitCount).isEqualTo(0);
+        assertThat(tx.resumeCount).isEqualTo(1);
+        assertThat(tx.lastResumedTx).isSameAs(outer);
+    }
+
+    @Test
+    void executeNew_successTry_commitsInner_resumesOuter() {
+        var outer = new StubTransaction();
+        tx.transactionToReturn = outer;
+
+        txTry.executeNew(() -> Try.success("inner"));
+
+        assertThat(tx.commitCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(0);
+        assertThat(tx.resumeCount).isEqualTo(1);
+        assertThat(tx.lastResumedTx).isSameAs(outer);
+    }
+
+    @Test
+    void executeNew_nullAction_throwsNPE() {
+        assertThatThrownBy(() -> txTry.executeNew(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
     }
 }
