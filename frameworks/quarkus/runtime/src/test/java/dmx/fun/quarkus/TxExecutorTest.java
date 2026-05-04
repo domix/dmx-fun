@@ -476,18 +476,82 @@ class TxExecutorTest {
         assertThat(tx.beginCount).isEqualTo(0);
     }
 
-    // ── setRollbackOnlyQuietly — SystemException swallowed ───────────────────
+    // ── executeJoined — Error handling (Finding 1) ───────────────────────────
 
     @Test
-    void execute_required_setRollbackOnlyThrowsSystemException_isSwallowed() {
-        // STATUS_ACTIVE by default → executeJoined → setRollbackOnlyQuietly(); exception is swallowed
-        tx.throwOnSetRollbackOnly = new SystemException("setRollbackOnly failed");
+    void execute_required_actionThrowsError_setsRollbackOnlyAndRethrows() {
+        // Error must be caught the same as RuntimeException — marks rollback-only then rethrows
+        var oom = new OutOfMemoryError("simulated OOM");
 
-        var result = executor.execute(() -> "err", _ -> true, Transactional.TxType.REQUIRED);
+        assertThatThrownBy(() -> executor.execute(() -> { throw oom; }, _ -> false, Transactional.TxType.REQUIRED))
+            .isSameAs(oom);
 
-        assertThat(result).isEqualTo("err");
         assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
         assertThat(tx.rollbackCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_required_predicateThrowsError_setsRollbackOnlyAndRethrows() {
+        // Error thrown by the predicate must also mark rollback-only
+        var assertionError = new AssertionError("predicate bug");
+
+        assertThatThrownBy(() -> executor.execute(() -> "ok", _ -> { throw assertionError; }, Transactional.TxType.REQUIRED))
+            .isSameAs(assertionError);
+
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(0);
+    }
+
+    // ── setRollbackOnlyQuietly — SystemException propagated (Finding 2) ──────
+
+    @Test
+    void execute_required_setRollbackOnlyThrowsSystemException_propagatesWhenPredicateTrue() {
+        // Predicate returns true → setRollbackOnlyQuietly(); no original exception to suppress
+        tx.throwOnSetRollbackOnly = new SystemException("setRollbackOnly failed");
+
+        assertThatThrownBy(() -> executor.execute(() -> "err", _ -> true, Transactional.TxType.REQUIRED))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("JTA transaction management failed")
+            .hasCauseInstanceOf(SystemException.class);
+
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+        assertThat(tx.rollbackCount).isEqualTo(0);
+    }
+
+    @Test
+    void execute_required_actionThrows_setRollbackOnlyFails_infraExceptionSuppressed() {
+        // Action throws + setRollbackOnly fails → infra exception is suppressed into the app exception
+        tx.throwOnSetRollbackOnly = new SystemException("setRollbackOnly failed");
+        var appEx = new RuntimeException("app error");
+
+        assertThatThrownBy(() -> executor.execute(() -> { throw appEx; }, _ -> false, Transactional.TxType.REQUIRED))
+            .isSameAs(appEx)
+            .satisfies(e -> {
+                assertThat(e.getSuppressed()).hasSize(1);
+                assertThat(e.getSuppressed()[0])
+                    .isInstanceOf(RuntimeException.class)
+                    .hasCauseInstanceOf(SystemException.class);
+            });
+
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
+    }
+
+    @Test
+    void execute_required_predicateThrows_setRollbackOnlyFails_infraExceptionSuppressed() {
+        // Predicate throws + setRollbackOnly fails → infra exception is suppressed into predicate exception
+        tx.throwOnSetRollbackOnly = new SystemException("setRollbackOnly failed");
+        var predicateEx = new RuntimeException("predicate error");
+
+        assertThatThrownBy(() -> executor.execute(() -> "ok", _ -> { throw predicateEx; }, Transactional.TxType.REQUIRED))
+            .isSameAs(predicateEx)
+            .satisfies(e -> {
+                assertThat(e.getSuppressed()).hasSize(1);
+                assertThat(e.getSuppressed()[0])
+                    .isInstanceOf(RuntimeException.class)
+                    .hasCauseInstanceOf(SystemException.class);
+            });
+
+        assertThat(tx.setRollbackOnlyCount).isEqualTo(1);
     }
 
     // ── execute(TxType) — STATUS_MARKED_ROLLBACK regression ──────────────────

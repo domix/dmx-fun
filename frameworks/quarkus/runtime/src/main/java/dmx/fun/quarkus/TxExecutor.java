@@ -188,19 +188,37 @@ final class TxExecutor {
      *
      * <p>Does NOT begin, commit, or rollback — the caller owns the transaction boundary.
      * Marks the transaction rollback-only when {@code shouldRollback} returns {@code true}
-     * or when the action throws an unchecked exception.
+     * or when the action or predicate throws any throwable, including {@link Error}.
+     * If {@link #setRollbackOnlyQuietly()} itself fails with an infrastructure exception,
+     * that exception is attached as a suppressed exception to the original throwable so
+     * neither failure is silently lost.
      */
     private <T> T executeJoined(Supplier<T> action, Predicate<T> shouldRollback) {
         T result;
         try {
             result = action.get();
             Objects.requireNonNull(result, "action must not return null");
-        } catch (RuntimeException e) {
-            setRollbackOnlyQuietly();
-            throw e;
+        } catch (RuntimeException | Error appEx) {
+            try {
+                setRollbackOnlyQuietly();
+            } catch (RuntimeException infraEx) {
+                appEx.addSuppressed(infraEx);
+            }
+            throw appEx;
         }
-        if (shouldRollback.test(result)) {
-            setRollbackOnlyQuietly();
+        boolean rollback;
+        try {
+            rollback = shouldRollback.test(result);
+        } catch (RuntimeException | Error predicateEx) {
+            try {
+                setRollbackOnlyQuietly();
+            } catch (RuntimeException infraEx) {
+                predicateEx.addSuppressed(infraEx);
+            }
+            throw predicateEx;
+        }
+        if (rollback) {
+            setRollbackOnlyQuietly(); // no original exception — infra failure propagates directly
         }
         return result;
     }
@@ -247,7 +265,8 @@ final class TxExecutor {
     private void setRollbackOnlyQuietly() {
         try {
             transactionManager.setRollbackOnly();
-        } catch (SystemException _) {
+        } catch (SystemException e) {
+            throw new RuntimeException("JTA transaction management failed", e);
         }
     }
 }
