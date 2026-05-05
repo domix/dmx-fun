@@ -1,0 +1,251 @@
+---
+title: "HTTP Client Integration — Developer Guide"
+description: "How to use fun-http: a java.net.http.HttpClient wrapper that returns Result<T, HttpError> instead of throwing exceptions, with typed error categories for 4xx, 5xx, timeouts, and network failures."
+order: 22
+h1: "HTTP Client Integration"
+---
+
+The `fun-http` module wraps the JDK's built-in `java.net.http.HttpClient` so that
+every HTTP call returns `Result<T, HttpError>` instead of throwing. Both failure
+modes that the standard API forces you to handle separately — network exceptions
+and HTTP error status codes — collapse into a single typed result:
+
+```java
+// Before — two separate failure paths
+try {
+    HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+    if (response.statusCode() >= 400) { /* handle HTTP error */ }
+} catch (IOException | InterruptedException e) { /* handle network error */ }
+
+// After — one failure path, categorised
+Result<String, HttpError> result = dmxClient.send(request, BodyHandlers.ofString());
+result
+    .peek(body  -> process(body))
+    .peekError(err -> log.warn("HTTP call failed: {}", err));
+```
+
+The module has **no external dependencies** — it depends only on `:lib` and the
+JDK's `java.net.http` module (available since Java 11).
+
+## Adding the dependency
+
+**Gradle:**
+```groovy
+implementation 'codes.domix:fun-http:VERSION'
+```
+
+**Maven:**
+```xml
+<dependency>
+  <groupId>codes.domix</groupId>
+  <artifactId>fun-http</artifactId>
+  <version>VERSION</version>
+</dependency>
+```
+
+## `HttpError` hierarchy
+
+All failure cases are represented as a sealed interface with four record variants,
+enabling exhaustive pattern matching:
+
+```java
+public sealed interface HttpError
+    permits HttpError.ClientError,
+            HttpError.ServerError,
+            HttpError.Timeout,
+            HttpError.NetworkFailure {
+
+    record ClientError(int statusCode, HttpResponse<?> response) implements HttpError {}
+    record ServerError(int statusCode, HttpResponse<?> response) implements HttpError {}
+    record Timeout(HttpTimeoutException cause)                   implements HttpError {}
+    record NetworkFailure(Throwable cause)                       implements HttpError {}
+}
+```
+
+| Variant | Triggered when |
+|---|---|
+| `ClientError` | Response status 400–499 |
+| `ServerError` | Response status 500–599 |
+| `Timeout` | `HttpTimeoutException` thrown by `HttpClient` |
+| `NetworkFailure` | `IOException` or `InterruptedException` |
+
+> **Status mapping note** — 2xx and 3xx responses become `Result.ok(body)`. The
+> `HttpClient` follows redirects by default; if you configure
+> `HttpClient.Redirect.NEVER`, 3xx responses will also land here as `ClientError`.
+
+## Creating a client
+
+Wrap any existing `HttpClient` with `DmxHttpClient.of`:
+
+```java
+DmxHttpClient client = DmxHttpClient.of(HttpClient.newHttpClient());
+
+// Or with a custom configuration
+DmxHttpClient client = DmxHttpClient.of(
+    HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(5))
+        .followRedirects(HttpClient.Redirect.NORMAL)
+        .build());
+```
+
+`DmxHttpClient` is a thin wrapper — all connection pooling, TLS configuration,
+and authentication settings remain on the underlying `HttpClient`.
+
+## Synchronous requests
+
+### Basic — `send(request, bodyHandler)`
+
+```java
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.example.com/orders/42"))
+    .GET()
+    .build();
+
+Result<String, HttpError> result = client.send(request, BodyHandlers.ofString());
+```
+
+### With deserializer — `send(request, bodyHandler, deserializer)`
+
+Apply a `CheckedFunction<T, R>` to the response body when the call succeeds.
+Deserialization exceptions are automatically wrapped in `NetworkFailure`:
+
+```java
+Result<Order, HttpError> result = client.send(
+    request,
+    BodyHandlers.ofString(),
+    body -> objectMapper.readValue(body, Order.class)   // checked exception allowed
+);
+```
+
+This is equivalent to:
+
+```java
+client.send(request, BodyHandlers.ofString())
+    .flatMap(body -> {
+        try {
+            return Result.ok(objectMapper.readValue(body, Order.class));
+        } catch (Exception e) {
+            return Result.err(new HttpError.NetworkFailure(e));
+        }
+    });
+```
+
+## Asynchronous requests — `sendAsync`
+
+Returns a `CompletableFuture<Result<T, HttpError>>` that **never completes
+exceptionally** — transport failures are captured inside the `Result` instead:
+
+```java
+CompletableFuture<Result<String, HttpError>> future =
+    client.sendAsync(request, BodyHandlers.ofString());
+
+future.thenAccept(result ->
+    result
+        .peek(body  -> process(body))
+        .peekError(err -> log.warn("async HTTP call failed: {}", err))
+);
+```
+
+## Error handling patterns
+
+### Exhaustive switch (recommended)
+
+```java
+Result<String, HttpError> result = client.send(request, BodyHandlers.ofString());
+
+switch (result) {
+    case Result.Ok<String, HttpError> ok ->
+        process(ok.value());
+    case Result.Err<String, HttpError> err ->
+        switch (err.error()) {
+            case HttpError.ClientError  e -> log.warn("4xx {}: {}", e.statusCode(), e.response().body());
+            case HttpError.ServerError  e -> log.error("5xx {}", e.statusCode());
+            case HttpError.Timeout      e -> log.warn("timed out", e.cause());
+            case HttpError.NetworkFailure e -> log.error("transport failure", e.cause());
+        };
+}
+```
+
+### Recovery by error category
+
+```java
+String body = client.send(request, BodyHandlers.ofString())
+    .recover(err -> switch (err) {
+        case HttpError.ClientError  e when e.statusCode() == 404 -> "{}";
+        case HttpError.Timeout      e                             -> cachedResponse();
+        default                                                    -> throw new RuntimeException("unrecoverable: " + err);
+    });
+```
+
+### Pipeline composition
+
+```java
+client.send(request, BodyHandlers.ofString(), body -> objectMapper.readValue(body, Order.class))
+    .filter(order -> order.status() != OrderStatus.CANCELLED,
+            order -> new HttpError.ClientError(422, null))
+    .flatMap(order -> inventoryClient.reserve(order))
+    .peek(reservation -> audit.log(reservation))
+    .peekError(err -> metrics.increment("order.pipeline.failure", err.getClass().getSimpleName()));
+```
+
+## Real-world example
+
+An order service that chains an HTTP call, deserialization, and a downstream
+inventory reservation — all failures represented as a single typed `Result`:
+
+```java
+@Service
+public class OrderService {
+
+    private final DmxHttpClient http;
+    private final ObjectMapper mapper;
+
+    public OrderService(HttpClient httpClient, ObjectMapper mapper) {
+        this.http   = DmxHttpClient.of(httpClient);
+        this.mapper = mapper;
+    }
+
+    public Result<Reservation, HttpError> placeOrder(String orderId) {
+        var request = HttpRequest.newBuilder()
+            .uri(URI.create("https://orders.internal/v1/orders/" + orderId))
+            .header("Accept", "application/json")
+            .GET()
+            .build();
+
+        return http.send(request, BodyHandlers.ofString(),
+                         body -> mapper.readValue(body, Order.class))
+            .flatMap(order -> reserveInventory(order));
+    }
+
+    private Result<Reservation, HttpError> reserveInventory(Order order) {
+        // ...
+    }
+}
+```
+
+## Design notes
+
+### Why not use `Try` internally?
+
+`Try` is the right type when the error channel *is* a `Throwable` — for example,
+when wrapping an arbitrary checked-exception boundary and preserving it as-is.
+`DmxHttpClient` does not fit that mould for two reasons:
+
+1. **The error type is `HttpError`, not `Throwable`.** Routing through `Try`
+   would require an internal `Try → Result` conversion with a `mapError` step to
+   classify the throwable into the sealed hierarchy. That adds a layer without
+   adding clarity.
+
+2. **`InterruptedException` requires immediate flag restoration.**
+   `Thread.currentThread().interrupt()` must be called in the `catch` block —
+   before any other code runs — to preserve the thread's interrupted status.
+   Inside a `Try.of()` lambda, the exception is captured and the interrupted flag
+   is consumed silently; the restore call would have to live inside a `mapError`,
+   making it easy to overlook and trivial to miss in a code review.
+
+   The explicit `catch (InterruptedException e)` block in `DmxHttpClient.send`
+   keeps that contract co-located with the exception that requires it.
+
+The rule of thumb: use `Try` to *capture* throwables as values; use `Result` (with
+a typed error) to *categorise* them. `DmxHttpClient` is in the categorisation
+business.

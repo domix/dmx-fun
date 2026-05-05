@@ -41,5 +41,15 @@ const guide = defineCollection({
     }),
 });
 
+const adr = defineCollection({
+    loader: glob({pattern: "**/*.md", base: "../docs/adr"}),
+    schema: z.object({
+        number: z.number().int().positive(),
+        title: z.string(),
+        status: z.enum(['Proposed', 'Accepted', 'Superseded']),
+        date: z.date(),
+    }),
+});
+
 // Export a single `collections` object to register your collection(s)
-export const collections = {code, blog, guide};
+export const collections = {code, blog, guide, adr};

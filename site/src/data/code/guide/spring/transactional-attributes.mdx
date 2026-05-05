@@ -8,11 +8,15 @@ public class PaymentService {
 
     // Custom propagation, isolation, and timeout
     @TransactionalResult(
-        propagation        = Propagation.REQUIRES_NEW,
-        isolation          = Isolation.SERIALIZABLE,
-        timeout            = 10
+        propagation = Propagation.REQUIRES_NEW,
+        isolation   = Isolation.SERIALIZABLE,
+        timeout     = 10
     )
     public Result<Receipt, PaymentError> charge(PaymentRequest req) { ... }
+
+    // Read-only hint — lets the driver/ORM skip dirty checks or route to a replica
+    @TransactionalResult(readOnly = true)
+    public Result<List<Receipt>, String> listReceipts(CustomerId id) { ... }
 
     // Named transaction manager (multiple DataSources)
     @TransactionalResult(transactionManager = "ledgerTxManager")

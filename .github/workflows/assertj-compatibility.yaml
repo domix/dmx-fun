@@ -4,14 +4,14 @@
 #
 # Triggered only on pull requests that touch assertj/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :assertj:test -PassertjVersion=3.25.3
+#   ./gradlew :core:assertj:test -PassertjVersion=3.25.3
 name: AssertJ compatibility
 
 on:
   pull_request:
     # Run when the assertj module or this workflow file is modified.
     paths:
-      - 'assertj/**'
+      - 'core/assertj/**'
       - '.github/workflows/assertj-compatibility.yaml'
 
 jobs:
@@ -32,4 +32,4 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       # Pass the matrix version as a Gradle property; the build falls back to
       # the catalog version when the property is absent (local development).
-      - run: ./gradlew :assertj:test -PassertjVersion=${{ matrix.assertj-version }}
+      - run: ./gradlew :core:assertj:test -PassertjVersion=${{ matrix.assertj-version }}

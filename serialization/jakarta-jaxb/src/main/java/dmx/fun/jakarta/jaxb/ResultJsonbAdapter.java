@@ -1,0 +1,50 @@
+package dmx.fun.jakarta.jaxb;
+
+import dmx.fun.Result;
+import jakarta.json.bind.adapter.JsonbAdapter;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.jspecify.annotations.NullMarked;
+
+/**
+ * Jakarta JSON-B adapter for {@link Result}.
+ *
+ * <p>JSON shapes:
+ * <ul>
+ *   <li>{@code Result.ok(v)} ↔ {@code {"ok": v}}</li>
+ *   <li>{@code Result.err(e)} ↔ {@code {"err": e}}</li>
+ * </ul>
+ */
+@NullMarked
+public final class ResultJsonbAdapter implements JsonbAdapter<Result<?, ?>, Map<String, Object>> {
+
+    /**
+     * Creates a new instance.
+     */
+    public ResultJsonbAdapter() {
+    }
+
+    @Override
+    public Map<String, Object> adaptToJson(Result<?, ?> obj) throws Exception {
+        var map = new LinkedHashMap<String, Object>();
+
+        obj.peek(value -> map.put("ok", value))
+            .peekError(error -> map.put("err", error));
+
+        return map;
+    }
+
+    @Override
+    public Result<?, ?> adaptFromJson(Map<String, Object> obj) throws Exception {
+        if (obj.size() != 1) {
+            throw new IllegalArgumentException("Malformed Result JSON: expected exactly one key ('ok' or 'err'), got: " + obj.keySet());
+        }
+        if (obj.containsKey("ok")) {
+            return Result.ok(obj.get("ok"));
+        }
+        if (obj.containsKey("err")) {
+            return Result.err(obj.get("err"));
+        }
+        throw new IllegalArgumentException("Malformed Result JSON: expected key 'ok' or 'err', got: " + obj.keySet());
+    }
+}

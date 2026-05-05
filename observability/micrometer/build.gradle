@@ -1,0 +1,34 @@
+// ── Micrometer adapter module ──────────────────────────────────────────────────
+// Instruments Try and Result executions with Micrometer counters, timers, and
+// failure metrics. micrometer-core is declared compileOnly — users bring their
+// own version and backend (Prometheus, Datadog, CloudWatch, etc.).
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+// Micrometer version: overridable for CI compatibility matrix.
+//   ./gradlew :micrometer:test -PmicrometerVersion=1.12.0
+def micrometerVersion = findProperty('micrometerVersion') ?: libs.versions.micrometer.get()
+
+dependencies {
+    api project(':core:lib')
+
+    compileOnly "io.micrometer:micrometer-core:${micrometerVersion}"
+
+    testImplementation "io.micrometer:micrometer-core:${micrometerVersion}"
+
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+jpmsTest {
+    moduleName = 'dmx.fun.micrometer'
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-micrometer", "${project.version}")
+    pom {
+        name = 'dmx-fun Micrometer integration'
+        description = 'Micrometer adapter for dmx-fun: instruments Try and Result executions with counters, timers, and failure metrics.'
+    }
+}

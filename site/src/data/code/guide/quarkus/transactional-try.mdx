@@ -1,0 +1,17 @@
+---
+fileName: 'ReportService.java'
+---
+
+```java
+@ApplicationScoped
+public class ReportService {
+    private final ReportRepository repo;
+
+    @TransactionalTry
+    public Try<Report> generate(ReportRequest req) {
+        return Try.of(() -> repo.save(build(req)));
+        // • Success(report) → transaction commits
+        // • Failure(cause)  → transaction rolls back; partial writes undone
+    }
+}
+```

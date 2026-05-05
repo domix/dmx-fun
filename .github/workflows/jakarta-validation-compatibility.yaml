@@ -4,13 +4,13 @@
 #
 # Triggered only on pull requests that touch jakarta-validation/** or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :jakarta-validation:test -PjakartaValidationVersion=3.0.2 -PhibernateValidatorVersion=9.0.1.Final
+#   ./gradlew :serialization:jakarta-validation:test -PjakartaValidationVersion=3.0.2 -PhibernateValidatorVersion=9.0.1.Final
 name: Jakarta Validation compatibility
 
 on:
   pull_request:
     paths:
-      - 'jakarta-validation/**'
+      - 'serialization/jakarta-validation/**'
       - 'gradle/libs.versions.toml'
       - '.github/workflows/jakarta-validation-compatibility.yaml'
 
@@ -38,6 +38,6 @@ jobs:
           distribution: 'temurin'
       - uses: gradle/actions/setup-gradle@v6
       - run: >
-          ./gradlew :jakarta-validation:test
+          ./gradlew :serialization:jakarta-validation:test
           -PjakartaValidationVersion=${{ matrix.jakarta-validation-version }}
           -PhibernateValidatorVersion=${{ matrix.hibernate-validator-version }}

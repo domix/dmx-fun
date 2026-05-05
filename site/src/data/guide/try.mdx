@@ -161,15 +161,21 @@ so `null` elements in successful results are preserved.
 
 ## Interoperability
 
-| Conversion                     | Method                            |
-|--------------------------------|-----------------------------------|
-| `Try` → `Option`               | `tryVal.toOption()`               |
-| `Try` → `Result<V, Throwable>` | `tryVal.toResult()`               |
-| `Try` → `Result<V, E>`         | `tryVal.toResult(errorMapper)`    |
-| `Try` → `Either<Throwable, V>` | `tryVal.toEither()`               |
-| `Try` → `Stream<V>`            | `tryVal.stream()`                 |
-| `Option` → `Try`               | `option.toTry(exceptionSupplier)` |
-| `Result` → `Try`               | `result.toTry(errorMapper)`       |
+| Conversion                              | Method                                          | Notes |
+|-----------------------------------------|-------------------------------------------------|-------|
+| `Try` → `Option<V>`                     | `tryVal.toOption()`                             | `Failure` and `Success(null)` both → `None` |
+| `Try` → `Result<V, Throwable>`          | `tryVal.toResult()`                             | Keeps the exception as a typed error |
+| `Try` → `Result<V, E>`                  | `tryVal.toResult(errorMapper)`                  | Maps exception to a domain error type |
+| `Try` → `Either<Throwable, V>`          | `tryVal.toEither()`                             | Throws `NullPointerException` on `Success(null)` |
+| `Try` → `Optional<V>`                   | `tryVal.toOptional()`                           | `Failure` and `Success(null)` both → `Optional.empty()` |
+| `Try` → `Stream<V>`                     | `tryVal.stream()`                               | Single-element on `Success`, empty on `Failure` |
+| `Try` → `CompletableFuture<V>`          | `tryVal.toFuture()`                             | Already-completed future |
+| `Option` → `Try`                        | `Try.fromOption(opt, exceptionSupplier)`        | `None` → `Failure(supplied exception)` |
+| `Optional` → `Try`                      | `Try.fromOptional(optional, exceptionSupplier)` | `empty` → `Failure(supplied exception)` |
+| `Either<L, R>` → `Try`                  | `Try.fromEither(either, leftMapper)`            | `left(l)` → `Failure(leftMapper(l))` |
+| `Result<V, Throwable>` → `Try`          | `Try.fromResult(result)`                        | Only for `Result<V, ? extends Throwable>` |
+| `Result<V, E>` → `Try`                  | `result.toTry(errorMapper)`                     | Maps error to a `Throwable` |
+| `CompletableFuture<V>` → `Try`          | `Try.fromFuture(future)`                        | Blocks; unwraps `CompletionException` |
 
 <InteropConversions/>
 

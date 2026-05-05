@@ -5,7 +5,7 @@
 # Triggered on pull requests that touch spring-boot/**, spring/**, the Gradle
 # version catalog, or this workflow file.
 # To run a specific version locally:
-#   ./gradlew :spring-boot:test -PspringBootVersion=4.0.0
+#   ./gradlew :frameworks:spring-boot:test -PspringBootVersion=4.0.0
 #
 # Spring Boot 4.x aligns with Spring Framework 7.x (used by this project).
 name: Spring Boot compatibility
@@ -13,8 +13,8 @@ name: Spring Boot compatibility
 on:
   pull_request:
     paths:
-      - 'spring-boot/**'
-      - 'spring/**'
+      - 'frameworks/spring-boot/**'
+      - 'frameworks/spring/**'
       - 'gradle/libs.versions.toml'
       - '.github/workflows/spring-boot-compatibility.yaml'
 
@@ -32,4 +32,4 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
       - uses: gradle/actions/setup-gradle@v6
-      - run: ./gradlew :spring-boot:test -PspringBootVersion=${{ matrix.spring-boot-version }}
+      - run: ./gradlew :frameworks:spring-boot:test -PspringBootVersion=${{ matrix.spring-boot-version }}

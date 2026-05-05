@@ -1,0 +1,24 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+@ApplicationScoped
+public class OrderService {
+    @Inject TxResult tx;
+    @Inject AuditLog auditLog;
+    @Inject OrderRepository repo;
+
+    public Result<Order, OrderError> createOrder(OrderRequest req) {
+        return tx.execute(() -> {
+            // Inner call starts a brand-new independent transaction.
+            // Even if the outer tx rolls back, the audit entry is already committed.
+            tx.executeNew(() -> auditLog.record("createOrder attempted", req));
+
+            return validate(req).flatMap(repo::save);
+            // • Ok(order)       → outer tx commits
+            // • Err(orderError) → outer tx rolls back, but audit entry persists
+        });
+    }
+}
+```

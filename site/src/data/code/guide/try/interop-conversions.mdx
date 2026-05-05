@@ -5,7 +5,7 @@ fileName: 'Demo.java'
 ```java
 Try<String> t = Try.of(() -> Files.readString(path));
 
-// Try → Option (discards the exception)
+// Try → Option (discards the exception; Success(null) also maps to None)
 Option<String> opt = t.toOption();
 
 // Try → Result<V, Throwable> (keeps the exception as a typed error)
@@ -14,13 +14,40 @@ Result<String, Throwable> raw = t.toResult();
 // Try → Result<V, E> with error mapping
 Result<String, AppError> typed = t.toResult(ex -> new AppError(ex.getMessage()));
 
-// Try → Either<Throwable, V>
+// Try → Either<Throwable, V>  (throws NPE on Success(null))
 Either<Throwable, String> either = t.toEither();
+
+// Try → Optional<V> (Failure and Success(null) → Optional.empty())
+Optional<String> javaOpt = t.toOptional();
 
 // Try → Stream<V> (empty on Failure, single element on Success)
 t.stream().forEach(System.out::println);
 
+// Try → CompletableFuture<V> (already-completed future)
+CompletableFuture<String> future = t.toFuture();
+
+// ── From other types ──────────────────────────────────────────────────────────
+
 // Option → Try
 Option<String> option = Option.some("hello");
-Try<String> fromOpt = option.toTry(() -> new NoSuchElementException("missing"));
+Try<String> fromOpt = Try.fromOption(option, () -> new NoSuchElementException("missing"));
+
+// Optional → Try
+Optional<String> optional = Optional.of("hello");
+Try<String> fromOptional = Try.fromOptional(optional, () -> new NoSuchElementException("missing"));
+
+// Either<L, R> → Try  (left value mapped to a Throwable)
+Either<String, Integer> left  = Either.left("not found");
+Either<String, Integer> right = Either.right(42);
+Try<Integer> fromLeft  = Try.fromEither(left,  IllegalArgumentException::new);
+// Try.failure(new IllegalArgumentException("not found"))
+Try<Integer> fromRight = Try.fromEither(right, IllegalArgumentException::new);
+// Try.success(42)
+
+// Result<V, Throwable> → Try
+Result<String, IOException> result = Result.err(new IOException("oops"));
+Try<String> fromResult = Try.fromResult(result);
+
+// CompletableFuture → Try (blocks until complete; unwraps CompletionException)
+Try<String> fromFuture = Try.fromFuture(CompletableFuture.completedFuture("done"));
 ```

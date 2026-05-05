@@ -7,6 +7,119 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.15] - 2026-05-04
+
+### Added
+
+- **`fun-quarkus` module — Quarkus transaction support (#127, #128, #129):**
+  - `TxResult` and `TxTry` — CDI beans that execute a `Result<V,E>`- or `Try<V>`-returning
+    supplier inside a JTA-managed transaction and roll back when the return value represents
+    a failure, avoiding the silent-commit problem of Quarkus's `@Transactional` with
+    functional return types.
+  - `TxResult.executeNew()` and `TxTry.executeNew()` — REQUIRES_NEW semantics: suspends any
+    active transaction, starts an independent one, and resumes the original after the action
+    finishes; commits or rolls back independently of the outer transaction.
+  - `@TransactionalResult` and `@TransactionalTry` — CDI interceptor binding annotations
+    backed by `TransactionalDmxInterceptor`; same rollback contract as the programmatic
+    variants, annotation-driven style comparable to Quarkus's own `@Transactional`.
+  - Both annotations accept a `Transactional.TxType value()` attribute (default `REQUIRED`)
+    covering all six JTA propagation types:
+    - `REQUIRED` — join an existing transaction or start a new one.
+    - `REQUIRES_NEW` — always suspend any active transaction and start a fresh one.
+    - `MANDATORY` — require an active transaction; throw `TransactionalException` if none.
+    - `SUPPORTS` — join if a transaction is active; otherwise run without one.
+    - `NOT_SUPPORTED` — suspend any active transaction and run without one; resume after.
+    - `NEVER` — throw `TransactionalException` if a transaction is active.
+  - Interceptor resolves `TxType` from method-level annotation first, then class-level,
+    defaulting to `REQUIRED`; both annotation types route to a single interceptor class
+    via the shared `@DmxTransactionalBinding` meta-binding (CDI §2.7.1.1).
+  - `quarkus-arc` and `quarkus-narayana-jta` declared `compileOnly`; ships
+    `META-INF/quarkus-extension.properties` so Quarkus build tools automatically add
+    the deployment artifact to the augmentation classpath — no explicit deployment
+    dependency needed.
+  - Tested against Quarkus 3.11.3, 3.21.4, 3.31.4, and 3.35.1 via CI compatibility
+    matrix; integration tests run against a real PostgreSQL instance via Quarkus Dev
+    Services (Testcontainers).
+- **`fun-http` module — `java.net.http.HttpClient` wrapper (#253):**
+  - `DmxHttpClient` — wraps the JDK `HttpClient` and returns `Result<T, HttpError>` instead
+    of throwing; all HTTP and network failures become typed `Err` values.
+  - `HttpError` sealed type with variants for network failures, non-2xx responses, and
+    deserialization errors.
+- **`fun-jakarta-jaxb` module — Jakarta/JAXB serialization (#233):**
+  - `JsonbAdapters` — Jakarta JSON-B adapters for `Option`, `Result`, `Try`, `Either`, and
+    `Validated`; register once with `JsonbConfig` for full round-trip support.
+  - Jakarta JSON-B 3.x declared `compileOnly`.
+- **`fun-jakarta-validation` module — Jakarta Validation integration (#262):**
+  - `DmxConstraintViolation` and supporting types integrate Jakarta Validation 3.x / 4.x
+    constraint violations with `Validated<E, A>` for accumulating validation errors.
+  - Jakarta Validation 3.x declared `compileOnly`.
+- **`fun-tracing` module — Micrometer Tracing integration (#307):**
+  - `DmxTracing` — wraps a Micrometer `Tracer` and creates spans around `Try`- and
+    `Result`-returning suppliers; failure outcomes are tagged on the active span.
+  - `fun-spring-boot` auto-registers a `DmxTracing` bean when Micrometer Tracing is on
+    the classpath, requiring zero configuration.
+  - Micrometer Tracing declared `compileOnly`.
+- **`fun-observation` module — Micrometer Observation API integration (#330):**
+  - `DmxObservation` — wraps a Micrometer `ObservationRegistry` and records observations
+    around `Try`- and `Result`-returning suppliers; failure outcomes are tagged on the
+    active observation.
+  - Micrometer Observation declared `compileOnly`.
+- **`fun-bom` — Bill of Materials (#306):**
+  - Published to Maven Central; import the BOM in `dependencyManagement` to align all
+    `dmx.fun` module versions without specifying each individually.
+- **CycloneDX SBOM published to Maven Central (#308):**
+  - Each published module ships a `*-cyclonedx.json` SBOM alongside the JAR and sources.
+
+### Changed
+
+- **Repository directory structure reorganized into logical groups (#341):**
+  - `core/` — `lib`, `assertj`
+  - `serialization/` — `jackson`, `jakarta-jaxb`, `jakarta-validation`
+  - `observability/` — `micrometer`, `tracing`, `observation`
+  - `frameworks/` — `spring`, `spring-boot`, `quarkus`
+  - `protocols/` — `http`
+  - `samples/` — `samples`, `spring-boot-sample`
+  - All Gradle project references, CI workflow paths, and documentation updated accordingly.
+- **`fun-resilience4j` — dependencies consolidated via `resilience4j-bom` (#321):**
+  - Per-artifact version strings replaced with a `platform("io.github.resilience4j:resilience4j-bom")
+    dependency; version is now managed in one place and guaranteed to be consistent across
+    all Resilience4J artifacts.
+- **`fun-spring` — `readOnly` attribute and propagation contract (#284, #285):**
+  - `TxResult`, `TxTry`, and `TxValidated` accept `TransactionDefinition.PROPAGATION_REQUIRES_NEW`
+    and `readOnly` flags; declarative annotations `@TransactionalResult` etc. honor Spring's
+    `@Transactional` propagation contract in all edge cases; test coverage strengthened.
+- **Spring Boot upgraded to 4.0.6 (#310).**
+- **Gradle wrapper upgraded to 9.5.0 (#339).**
+
+### Fixed
+
+- **`fun-micrometer` / `fun-tracing` / `fun-observation` — high-cardinality `exception` tag
+  eliminated (#316):**
+  - The default `exception` tag used `getClass().getSimpleName()`, producing an unbounded
+    number of tag values when arbitrary third-party exceptions appear at runtime — a
+    violation of Micrometer's low-cardinality contract. A configurable `exceptionClassifier`
+    function now maps each exception to a bounded label; the built-in default maps all
+    `Throwable` subclasses to `"exception"` unless overridden.
+- **`fun-quarkus` — `STATUS_MARKED_ROLLBACK` treated as active transaction:**
+  - `hasActiveTransaction()` previously only matched `STATUS_ACTIVE`; after `setRollbackOnly()`
+    the status transitions to `STATUS_MARKED_ROLLBACK`, causing REQUIRED to start a new
+    transaction instead of joining, MANDATORY to throw, and NEVER to silently succeed.
+    Both statuses are now recognized as an active, joinable transaction.
+- **`fun-quarkus` — `Error` and infrastructure failures in `executeJoined`:**
+  - `executeJoined` now catches `RuntimeException | Error` (previously only `RuntimeException`)
+    so JVM errors such as `OutOfMemoryError` also mark the joined transaction rollback-only
+    before rethrowing.
+  - `setRollbackOnlyQuietly()` now wraps and rethrows `SystemException` instead of silently
+    swallowing it; when a `setRollbackOnly()` failure coincides with an application
+    exception, the infrastructure exception is attached as a suppressed exception so neither
+    failure is lost.
+- **`fun-jackson` — null exception message and `Tuple2` null elements (#279):**
+  - `Failure` serialization now handles a `null` exception message without throwing NPE.
+  - `Tuple2` deserializer guards against null first/second elements.
+- **`fun-assertj` — angle brackets preserved in error messages (#278):**
+  - Generic type names such as `Result<V, E>` were stripped of angle brackets in assertion
+    failure messages; the formatter now escapes them correctly.
+
 ## [0.0.14] - 2026-04-22
 
 ### Added

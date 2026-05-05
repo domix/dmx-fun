@@ -3,16 +3,46 @@ fileName: 'Demo.java'
 ---
 
 ```java
-// Result -> Option (discards the error)
-Option<User> user = result.toOption();
+Result<String, String> ok  = Result.ok("hello");
+Result<String, String> err = Result.err("oops");
 
-// Result -> Try (maps error with a function)
-Try<User> tried = result.toTry(err -> new RuntimeException(err));
+// Result → Option (discards the error; Err → None)
+Option<String> opt = ok.toOption();
 
-// Result -> Either (Ok becomes right, Err becomes left)
-Either<String, User> either = result.toEither();
+// Result → Try (maps error to Throwable)
+Try<String> tried = ok.toTry(e -> new RuntimeException(e));
 
-// Option -> Result (supplies error when None)
-Result<User, String> result = Option.fromOptional(optional)
-    .toResult(() -> "not found");
+// Result → Either<E, V>  (Ok → right, Err → left)
+Either<String, String> either = ok.toEither();
+
+// Result → Optional<V>  (Err → Optional.empty())
+Optional<String> javaOpt = ok.toOptional();
+
+// Result → CompletableFuture<V>  (Err → failed future with NoSuchElementException)
+CompletableFuture<String> future = ok.toFuture();
+
+// Result → CompletableFuture<V>  with error mapper
+CompletableFuture<String> future2 = err.toFuture(e -> new IllegalStateException(e));
+
+// ── From other types ──────────────────────────────────────────────────────────
+
+// Option → Result
+Option<String> option = Option.some("hello");
+Result<String, String> fromOpt = option.toResult("not found");
+
+// Try → Result (keeps Throwable as typed error)
+Try<String> t = Try.of(() -> Files.readString(path));
+Result<String, Throwable> fromTry = t.toResult();
+
+// Optional → Result  (empty → Err(NoSuchElementException))
+Result<String, NoSuchElementException> fromOptional =
+    Result.fromOptional(Optional.of("hello"));
+
+// Either<E, V> → Result  (left → Err, right → Ok)
+Either<String, Integer> right = Either.right(42);
+Result<Integer, String> fromEither = Result.fromEither(right);
+
+// CompletableFuture → Result (blocks; unwraps CompletionException)
+Result<String, Throwable> fromFuture =
+    Result.fromFuture(CompletableFuture.completedFuture("done"));
 ```

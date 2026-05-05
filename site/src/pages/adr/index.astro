@@ -1,0 +1,192 @@
+---
+import { getCollection } from 'astro:content';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+
+const adrs = (await getCollection('adr')).sort((a, b) => a.data.number - b.data.number);
+
+const statusColor: Record<string, string> = {
+    Accepted: 'status-accepted',
+    Proposed: 'status-proposed',
+    Superseded: 'status-superseded',
+};
+---
+
+<DocsLayout
+    title="Architecture Decision Records"
+    description="A log of architectural decisions made in dmx-fun, with context, rationale, and consequences."
+>
+    <div class="adr-content">
+        <h1>Architecture Decision Records</h1>
+
+        <div class="intro">
+            <p>
+                ADRs document the significant design choices made in dmx-fun — the context that led to each
+                decision, the alternatives considered, and the consequences accepted. They are the authoritative
+                record of <em>why</em> the library is built the way it is.
+            </p>
+        </div>
+
+        <table class="adr-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {adrs.map(adr => (
+                    <tr>
+                        <td class="adr-number">{String(adr.data.number).padStart(3, '0')}</td>
+                        <td>
+                            <a href={`${base}adr/${adr.id}`}>{adr.data.title}</a>
+                        </td>
+                        <td>
+                            <span class={`status-badge ${statusColor[adr.data.status]}`}>
+                                {adr.data.status}
+                            </span>
+                        </td>
+                        <td class="adr-date">
+                            {adr.data.date.toISOString().slice(0, 10)}
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+</DocsLayout>
+
+<style>
+    .adr-content {
+        max-width: 900px;
+    }
+
+    .intro {
+        background-color: var(--color-surface);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--color-primary);
+        margin: 2rem 0;
+    }
+
+    .intro p {
+        margin: 0;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    h1 {
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    .adr-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 1.5rem 0;
+        font-size: 0.925rem;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .adr-table thead tr {
+        background-color: var(--color-surface);
+    }
+
+    .adr-table th {
+        padding: 0.75rem 1.25rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--color-text-secondary);
+        border-bottom: 2px solid var(--color-border);
+    }
+
+    .adr-table td {
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid var(--color-border);
+        vertical-align: middle;
+    }
+
+    .adr-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .adr-table tbody tr:hover {
+        background-color: var(--color-code-bg);
+        transition: background-color 0.15s ease;
+    }
+
+    .adr-table a {
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .adr-table a:hover {
+        text-decoration: underline;
+    }
+
+    .adr-number {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+    }
+
+    .adr-date {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+
+    .status-accepted {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    [data-theme="dark"] .status-accepted {
+        background-color: #064e3b;
+        color: #6ee7b7;
+    }
+
+    .status-proposed {
+        background-color: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    [data-theme="dark"] .status-proposed {
+        background-color: #1e3a8a;
+        color: #93c5fd;
+    }
+
+    .status-superseded {
+        background-color: var(--color-surface);
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border);
+    }
+
+    @media (max-width: 600px) {
+        .adr-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style>

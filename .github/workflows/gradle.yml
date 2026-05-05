@@ -11,13 +11,13 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'lib/**'
-      - 'assertj/**'
-      - 'jackson/**'
-      - 'spring/**'
-      - 'resilience4j/**'
-      - 'micrometer/**'
-      - 'jakarta-validation/**'
+      - 'core/**'
+      - 'serialization/**'
+      - 'observability/**'
+      - 'resilience/**'
+      - 'protocols/**'
+      - 'frameworks/**'
+      - 'samples/**'
       - 'settings.gradle'
       - 'gradle.properties'
       - 'gradle/**'
@@ -39,13 +39,13 @@ jobs:
         with:
           filters: |
             relevant:
-              - 'lib/**'
-              - 'assertj/**'
-              - 'jackson/**'
-              - 'spring/**'
-              - 'resilience4j/**'
-              - 'micrometer/**'
-              - 'jakarta-validation/**'
+              - 'core/**'
+              - 'serialization/**'
+              - 'observability/**'
+              - 'resilience/**'
+              - 'protocols/**'
+              - 'frameworks/**'
+              - 'samples/**'
               - 'settings.gradle'
               - 'gradle.properties'
               - 'gradle/**'
@@ -105,6 +105,13 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         min-coverage-overall: 40
         min-coverage-changed-files: 60
+
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ github.workspace }}/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
+        format: jacoco
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.

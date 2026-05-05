@@ -1,0 +1,32 @@
+// ── AssertJ integration module ────────────────────────────────────────────────
+// Optional module — users must already have AssertJ on their classpath.
+// Provides fluent custom assertions for all dmx-fun types.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    // Exposes dmx-fun types to callers; they only need one dependency declaration.
+    api project(':core:lib')
+
+    // AssertJ is an optional peer dependency: declared compileOnly so it is not
+    // pulled in transitively. Users bring their own version.
+    compileOnly libs.assertj.core
+
+    // Tests run against the version passed via -PassertjVersion=X.Y.Z (used by
+    // the CI compatibility matrix), falling back to the catalog version locally.
+    testImplementation "org.assertj:assertj-core:${findProperty('assertjVersion') ?: libs.versions.assertj.get()}"
+}
+
+jpmsTest {
+    moduleName = 'dmx.fun.assertj'
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-assertj", "${project.version}")
+
+    pom {
+        name = 'dmx-fun AssertJ integration'
+        description = 'AssertJ module for dmx-fun: fluent custom assertions for Option, Result, Try, Validated, Either, Tuple2/3/4, and NonEmptyList.'
+    }
+}
