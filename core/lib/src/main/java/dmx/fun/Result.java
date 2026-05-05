@@ -553,10 +553,13 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     /**
      * Converts this {@code Result} to a standard {@link Optional Optional&lt;V&gt;}.
      *
-     * <p>{@code Ok(v)} maps to {@code Optional.ofNullable(v)}; {@code Err(e)} maps to
-     * {@link Optional#empty()}, discarding the error. This is the inverse of
-     * {@link #fromOptional(Optional) fromOptional}, completing the bidirectional bridge
-     * between {@code Result} and {@code Optional}.
+     * <p>{@link Result.Ok Ok(v)} maps to {@code Optional.ofNullable(v)};
+     * {@link Result.Err Err(e)} maps to {@link Optional#empty()}, silently discarding the
+     * error value. This is a <em>partial</em> inverse of
+     * {@link #fromOptional(Optional) fromOptional}: while {@code fromOptional} can produce
+     * both {@code Ok} and {@code Err}, {@code toOptional} is not a true inverse because
+     * {@code Err} information is permanently lost — calling
+     * {@code fromOptional(result.toOptional())} cannot recover the original {@code Err}.
      *
      * <p>Use {@link #toOption()} to convert to the dmx-fun {@link Option} type instead.
      *

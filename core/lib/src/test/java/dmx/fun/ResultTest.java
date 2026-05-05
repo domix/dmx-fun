@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -814,6 +815,11 @@ class ResultTest {
     void toFuture_err_shouldReturnFailedFuture() {
         CompletableFuture<String> future = Result.<String, String>err("fail").toFuture();
         assertThat(future.isCompletedExceptionally()).isTrue();
+        assertThatThrownBy(future::join)
+            .isInstanceOf(CompletionException.class)
+            .cause()
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Result is Err: fail");
     }
 
     // ---------- toFuture(errorMapper) ----------
@@ -831,6 +837,11 @@ class ResultTest {
         CompletableFuture<String> future =
             Result.<String, String>err("bad").toFuture(msg -> new IllegalArgumentException(msg));
         assertThat(future.isCompletedExceptionally()).isTrue();
+        assertThatThrownBy(future::join)
+            .isInstanceOf(CompletionException.class)
+            .cause()
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("bad");
     }
 
     @Test
