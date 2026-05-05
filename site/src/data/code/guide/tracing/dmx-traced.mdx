@@ -1,0 +1,23 @@
+---
+fileName: 'DmxTraced fluent builder'
+---
+
+```java
+import dmx.fun.Try;
+import dmx.fun.Result;
+import dmx.fun.tracing.DmxTraced;
+
+// Chain span name → tracer → execute
+Try<Receipt> result = DmxTraced.of("payment.charge")
+    .tracer(tracer)
+    .traceTry(() -> stripe.charge(amount));
+
+// Same with Result
+Result<User, Throwable> user = DmxTraced.of("db.user.find")
+    .tracer(tracer)
+    .traceResult(() -> userRepo.findById(id));
+```
+
+> `DmxTraced` is a mutable builder — call `traceTry` or `traceResult` once at the end.
+> For repeated instrumentation of the same operation, prefer `DmxTracing.of(tracer)` and
+> call `traceTry` directly.

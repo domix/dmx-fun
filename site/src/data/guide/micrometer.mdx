@@ -29,7 +29,7 @@ and backend (Prometheus, Datadog, CloudWatch, etc.), following the same pattern 
 For every instrumented call, these two metric families are updated:
 
 | Metric | Type | Tags |
-|---|---|---|
+|----|----|----|
 | `{name}.count` | Counter | `outcome=success\|failure` + your custom tags |
 | `{name}.duration` | Timer | `outcome=success\|failure` + your custom tags |
 
@@ -37,10 +37,10 @@ Try-only metric:
 
 | Metric | Type | Tags |
 |---|---|---|
-| `{name}.failure` | Counter | `exception=<ClassName>` + your custom tags (emitted on `recordTry` failure only) |
+| `{name}.failure` | Counter | `exception=<label>` + your custom tags (emitted on `recordTry` failure only) |
 
 The `outcome` tag lets you calculate the error rate with a simple PromQL ratio.
-The `exception` tag on `{name}.failure` pinpoints which exception class is causing failures
+The `exception` tag on `{name}.failure` pinpoints which failure category is causing failures
 without needing to dig into logs.
 
 ## Metric naming convention
@@ -58,13 +58,36 @@ Avoid embedding IDs or user input in metric names.
 
 ## Exception tag cardinality
 
-`{name}.failure` is tagged with `exception=<ClassName>`. Keep this cardinality bounded:
+> **Warning:** The default `exception` tag uses `getClass().getSimpleName()`. When
+> arbitrary third-party exceptions can appear at runtime, this produces an unbounded
+> number of tag values — a violation of Micrometer's low-cardinality contract that causes
+> excessive series growth in Prometheus and similar backends.
 
-- Prefer stable exception classes (for example `TimeoutException`, `IllegalStateException`).
-- Avoid dynamically generated exception types.
-- Do not encode request-specific values in tags.
+**In production, always supply an explicit classifier** that maps every reachable exception
+type to one of a small, fixed set of labels:
 
-This keeps storage costs and query performance predictable in Prometheus/Datadog/etc.
+```java
+DmxMicrometer dmx = DmxMicrometer.of(registry, cause ->
+    switch (cause) {
+        case IOException _           -> "io";
+        case TimeoutException _      -> "timeout";
+        case IllegalStateException _ -> "state";
+        default                      -> "other";
+    }
+);
+```
+
+The same option is available on the `DmxMetered` builder:
+
+```java
+DmxMetered.of("payment.charge")
+    .registry(registry)
+    .exceptionClassifier(cause -> cause instanceof IOException ? "io" : "other")
+    .recordTry(() -> stripe.charge(amount));
+```
+
+A `MeterFilter` can also enforce cardinality globally across all meters, but an explicit
+classifier is clearer and requires no global configuration.
 
 ## `DmxMicrometer`
 

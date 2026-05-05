@@ -5,7 +5,7 @@ fileName: 'build.gradle.kts'
 ```kotlin
 // Kotlin DSL — import the BOM, then declare modules without versions
 dependencies {
-    implementation(platform("codes.domix:fun-bom:0.0.14"))
+    implementation(platform("codes.domix:fun-bom:0.0.15"))
 
     implementation("codes.domix:fun")
     implementation("codes.domix:fun-jackson")      // version managed by BOM
@@ -16,7 +16,7 @@ dependencies {
 ```groovy
 // Groovy DSL
 dependencies {
-    implementation platform('codes.domix:fun-bom:0.0.14')
+    implementation platform('codes.domix:fun-bom:0.0.15')
 
     implementation 'codes.domix:fun'
     implementation 'codes.domix:fun-jackson'

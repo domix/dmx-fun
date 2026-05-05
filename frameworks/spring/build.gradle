@@ -1,0 +1,71 @@
+// ── Spring integration module ─────────────────────────────────────────────────
+// Optional module — users must already have Spring Framework on their classpath.
+// Provides transaction-aware wrappers (TxResult, TxTry, TxValidated) that execute
+// actions inside a Spring-managed transaction and return dmx-fun types instead of
+// throwing exceptions.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    // Exposes dmx-fun types to callers; they only need one dependency declaration.
+    api project(':core:lib')
+
+    // Spring is an optional peer dependency: declared compileOnly so it is not
+    // pulled in transitively. Users bring their own Spring version.
+    compileOnly libs.spring.tx       // PlatformTransactionManager, TransactionTemplate
+    compileOnly libs.spring.context  // @Component for TxResult / TxTry / TxValidated
+
+    // Tests run against the version passed via -PspringVersion=X.Y.Z (used by
+    // the CI compatibility matrix), falling back to the catalog version locally.
+    testImplementation "org.springframework:spring-tx:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+    testImplementation "org.springframework:spring-context:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+    testImplementation "org.springframework:spring-jdbc:${findProperty('springVersion') ?: libs.versions.spring.get()}"
+
+    // Integration tests use H2 for lightweight unit tests and Testcontainers +
+    // PostgreSQL to verify real rollback/commit behaviour across isolation levels.
+    testImplementation libs.h2
+    testImplementation libs.testcontainers.junit5
+    testImplementation libs.testcontainers.postgresql
+    testRuntimeOnly    libs.postgresql
+
+    // Fluent assertions for dmx-fun types (ResultAssert, TryAssert, etc.).
+    // compileOnly puts dmx.fun.assertj on compileClasspath so the JPMS module-path
+    // plugin can expose it to compileTestJava; testImplementation covers test runtime.
+    // assertj-core is already on the classpath via dmx-fun.java-base.
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+
+    // AspectJ weaver: needed at compile time (aspect annotations) and test runtime
+    // (Spring AOP uses it to parse @Around pointcut expressions).
+    // compileOnly puts it on compileClasspath so the JPMS module-path plugin
+    // includes it for compileJava/compileTestJava; testImplementation covers test runtime.
+    compileOnly        libs.aspectj.weaver
+    testImplementation libs.aspectj.weaver
+}
+
+// java.sql is required at both compile and runtime because Spring's transaction
+// infrastructure uses JDBC types (Connection, DataSource) that live in java.sql.
+// extraOpens allows Spring's reflection-heavy internals (spring.core, spring.beans,
+// spring.context) and JUnit's unnamed module to access test classes that are
+// patched into the named dmx.fun.spring module.
+jpmsTest {
+    moduleName   = 'dmx.fun.spring'
+    extraModules = ['java.sql', 'dmx.fun.assertj', 'org.aspectj.weaver']
+    extraReads   = ['java.sql', 'dmx.fun.assertj']
+    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop']
+}
+
+// assertj-core is on the classpath (unnamed module) at compile time but dmx.fun.assertj
+// is on the module path and requires it. This read allows the compiler to resolve it.
+tasks.named('compileTestJava') {
+    options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-spring", "${project.version}")
+    pom {
+        name = 'dmx-fun Spring integration'
+        description = 'Spring module for dmx-fun: transaction support for Result, Try, Option, and Validated without giving up declarative transaction management.'
+    }
+}

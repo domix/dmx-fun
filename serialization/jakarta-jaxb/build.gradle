@@ -1,0 +1,46 @@
+// ── Jakarta JSON-B + JAXB integration module ──────────────────────────────────
+// Provides JsonbAdapter (Jakarta JSON Binding) and XmlAdapter (Jakarta XML Binding)
+// implementations for all dmx-fun types. Jakarta APIs are declared compileOnly —
+// users bring their own Jakarta EE or MicroProfile runtime.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+// Versions: overridable for CI compatibility matrix.
+//   ./gradlew :jakarta-jaxb:test -PjakartaJsonbVersion=2.0.0 -PyassonVersion=2.0.4
+//                                 -PjakartaJaxbVersion=3.0.1 -PjaxbImplVersion=3.0.2
+def jakartaJsonbVersion = findProperty('jakartaJsonbVersion') ?: libs.versions.jakartaJsonb.get()
+def jakartaJaxbVersion  = findProperty('jakartaJaxbVersion')  ?: libs.versions.jakartaJaxb.get()
+def yassonVersion       = findProperty('yassonVersion')       ?: libs.versions.yasson.get()
+def jaxbImplVersion     = findProperty('jaxbImplVersion')     ?: libs.versions.jaxbImpl.get()
+def jakartaJsonApiVersion = findProperty('jakartaJsonApiVersion') ?: libs.versions.jakartaJsonApi.get()
+def parssonVersion      = findProperty('parssonVersion')      ?: libs.versions.parsson.get()
+
+dependencies {
+    api project(':core:lib')
+
+    // Jakarta JSON-B and JAXB APIs: compileOnly — not pulled in transitively.
+    // Users bring their own Jakarta EE or MicroProfile runtime.
+    compileOnly "jakarta.json.bind:jakarta.json.bind-api:${jakartaJsonbVersion}"
+    compileOnly "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaJaxbVersion}"
+
+    testImplementation "jakarta.json.bind:jakarta.json.bind-api:${jakartaJsonbVersion}"
+    testImplementation "jakarta.json:jakarta.json-api:${jakartaJsonApiVersion}"
+    testImplementation "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaJaxbVersion}"
+    // Reference implementations for tests
+    testImplementation "org.eclipse:yasson:${yassonVersion}"
+    testImplementation "com.sun.xml.bind:jaxb-impl:${jaxbImplVersion}"
+    // JSON-P implementation required by Yasson at runtime
+    testRuntimeOnly    "org.eclipse.parsson:parsson:${parssonVersion}"
+
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-jakarta-jaxb", "${project.version}")
+    pom {
+        name = 'dmx-fun Jakarta JSON-B + JAXB integration'
+        description = 'Jakarta JSON Binding (JSON-B) and Jakarta XML Binding (JAXB) adapters for dmx-fun: serializes Option, Result, Try, Either, Validated, Tuple, and NonEmptyList to JSON and XML.'
+    }
+}

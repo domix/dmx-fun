@@ -70,6 +70,7 @@ explicit `@Bean` declarations required:
 | `TxValidated` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
 | `DmxTransactionalAspect` | Same as above **and** `aspectjweaver` is also on the classpath |
 | `DmxFunModule` | `jackson-databind` **and** `fun-jackson` are both on the classpath |
+| `DmxTracing` | `micrometer-tracing` **and** `fun-tracing` on classpath **and** a `Tracer` bean is present |
 | `optionReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
 | `resultReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
 
@@ -116,6 +117,7 @@ dmx.fun.tx-result.enabled=false          # disable TxResult
 dmx.fun.tx-try.enabled=false             # disable TxTry
 dmx.fun.tx-validated.enabled=false       # disable TxValidated
 dmx.fun.aspect.enabled=false             # disable DmxTransactionalAspect
+dmx.fun.tracing.enabled=false            # disable DmxTracing (requires fun-tracing on classpath)
 dmx.fun.mvc.option-handler.enabled=false # disable Option MVC handler
 dmx.fun.mvc.result-handler.enabled=false # disable Result/Try/Validated MVC handler
 ```
@@ -260,12 +262,13 @@ or register the aspect explicitly with the `@Bean` declaration shown above.
 
 All three annotations accept the same attributes as Spring's `@Transactional`:
 
-| Attribute | Type | Default |
-|---|---|---|
-| `propagation` | `Propagation` | `REQUIRED` |
-| `isolation` | `Isolation` | `DEFAULT` |
-| `timeout` | `int` (seconds) | `TIMEOUT_DEFAULT` (-1, no explicit timeout) |
-| `transactionManager` | `String` (bean name) | primary `PlatformTransactionManager` |
+| Attribute | Type | Default | Notes |
+|---|---|---|---|
+| `propagation` | `Propagation` | `REQUIRED` | |
+| `isolation` | `Isolation` | `DEFAULT` | |
+| `timeout` | `int` (seconds) | `TIMEOUT_DEFAULT` (-1) | |
+| `readOnly` | `boolean` | `false` | Hint to the driver/ORM; enforcement depends on the transaction manager |
+| `transactionManager` | `String` (bean name) | primary `PlatformTransactionManager` | |
 
 <TransactionalAttributes/>
 

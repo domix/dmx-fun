@@ -12,14 +12,19 @@ plugins {
 //   • ./gradlew check                       (testAggregateTestReport + testCodeCoverageReport)
 //   • ./gradlew aggregateJavadoc            (--module-source-path + --module args)
 def moduleMap = [
-    ':lib'                : 'dmx.fun',
-    ':assertj'            : 'dmx.fun.assertj',
-    ':jackson'            : 'dmx.fun.jackson',
-    ':spring'             : 'dmx.fun.spring',
-    ':spring-boot'        : 'dmx.fun.spring.boot',
-    ':resilience4j'       : 'dmx.fun.resilience4j',
-    ':micrometer'         : 'dmx.fun.micrometer',
-    ':jakarta-validation' : 'dmx.fun.jakarta.validation'
+    ':core:lib'                         : 'dmx.fun',
+    ':core:assertj'                     : 'dmx.fun.assertj',
+    ':serialization:jackson'            : 'dmx.fun.jackson',
+    ':serialization:jakarta-jaxb'       : 'dmx.fun.jakarta.jaxb',
+    ':serialization:jakarta-validation' : 'dmx.fun.jakarta.validation',
+    ':observability:micrometer'         : 'dmx.fun.micrometer',
+    ':observability:observation'        : 'dmx.fun.observation',
+    ':observability:tracing'            : 'dmx.fun.tracing',
+    ':resilience:resilience4j'          : 'dmx.fun.resilience4j',
+    ':protocols:http'                   : 'dmx.fun.http',
+    ':frameworks:spring'                : 'dmx.fun.spring',
+    ':frameworks:spring-boot'           : 'dmx.fun.spring.boot',
+    ':frameworks:quarkus:runtime'       : 'dmx.fun.quarkus'
 ]
 
 // ── Report aggregation ────────────────────────────────────────────────────────

@@ -1,0 +1,17 @@
+plugins {
+    id 'dmx-fun.java-base'
+}
+
+javadoc.enabled = false
+jacocoTestReport.enabled = false
+
+dependencies {
+    implementation project(':core:lib')
+    implementation project(':serialization:jackson')
+    implementation project(':observability:micrometer')
+    implementation libs.jackson.databind
+    implementation libs.micrometer.core
+
+    testImplementation project(':core:assertj')
+    testImplementation libs.assertj.core
+}

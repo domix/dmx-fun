@@ -1,0 +1,46 @@
+// ── Jackson integration module ────────────────────────────────────────────────
+// Optional module — users must already have Jackson on their classpath.
+// Provides serializers and deserializers for all dmx-fun types.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    // Exposes dmx-fun types to callers; they only need one dependency declaration.
+    api project(':core:lib')
+
+    // Jackson is an optional peer dependency: declared compileOnly so it is not
+    // pulled in transitively. Users bring their own version.
+    compileOnly libs.jackson.databind
+
+    // Tests run against the version passed via -PjacksonVersion=X.Y.Z (used by
+    // the CI compatibility matrix), falling back to the catalog version locally.
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${findProperty('jacksonVersion') ?: libs.versions.jackson.get()}"
+
+    // Fluent assertions for dmx-fun types (ResultAssert, TryAssert, etc.).
+    // compileOnly puts dmx.fun.assertj on compileClasspath so the JPMS module-path
+    // plugin can expose it to compileTestJava; testImplementation covers test runtime.
+    // assertj-core is already on the classpath via dmx-fun.java-base.
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+jpmsTest {
+    moduleName   = 'dmx.fun.jackson'
+    extraModules = ['dmx.fun.assertj']
+    extraReads   = ['dmx.fun.assertj']
+}
+
+// assertj-core is on the classpath (unnamed module) at compile time but dmx.fun.assertj
+// is on the module path and requires it. This read allows the compiler to resolve it.
+tasks.named('compileTestJava') {
+    options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-jackson", "${project.version}")
+    pom {
+        name = 'dmx-fun Jackson integration'
+        description = 'Jackson module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
+    }
+}
