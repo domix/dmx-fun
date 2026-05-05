@@ -3,15 +3,19 @@ fileName: 'Demo.java'
 ---
 
 ```java
-// Result -> Option (discards the error)
-Option<User> user = userResult.toOption();
+// Result -> Option: discard the error track
+Option<User> fromResult1 = userResult.toOption();          // instance method
+Option<User> fromResult2 = Option.fromResult(userResult);  // static factory (same semantics)
 
-// Try -> Option (discards the exception)
-Option<Config> cfg = tryReadConfig.toOption();
+// Try -> Option: discard the exception track
+// Note: Try.Success(null) produced by Try.run() maps to None
+Option<Config> fromTry1 = tryReadConfig.toOption();       // instance method
+Option<Config> fromTry2 = Option.fromTry(tryReadConfig);  // static factory (same semantics)
 
-// Try<Optional<T>> -> Option<T>  (flattens both layers in one step)
+// Try<Optional<T>> -> Option<T>: flatten both layers in one step
 // Success(Optional.of(v))  -> Some(v)
 // Success(Optional.empty()) -> None
-// Failure(ex)              -> None
-Option<Item> item = Option.fromTryOptional(Try.of(() -> repository.findById(id)));
+// Failure(ex)               -> None  (exception discarded)
+Option<Item> item = Option.fromTryOptional(
+    Try.of(() -> repository.findById(id)));
 ```
