@@ -1,6 +1,8 @@
 package dmx.fun;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -366,6 +368,120 @@ class EitherTest {
         var e = err.toEither();
         assertThat(e.isLeft()).isTrue();
         assertThat(e.getLeft()).isEqualTo("fail");
+    }
+
+    // -------------------------------------------------------------------------
+    // toOptional
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toOptional_shouldReturnPresent_whenRight() {
+        Optional<Integer> opt = Either.<String, Integer>right(42).toOptional();
+        assertThat(opt).isPresent().hasValue(42);
+    }
+
+    @Test
+    void toOptional_shouldReturnEmpty_whenLeft() {
+        Optional<Integer> opt = Either.<String, Integer>left("err").toOptional();
+        assertThat(opt).isEmpty();
+    }
+
+    // -------------------------------------------------------------------------
+    // stream
+    // -------------------------------------------------------------------------
+
+    @Test
+    void stream_shouldReturnSingleElementStream_whenRight() {
+        List<Integer> collected = Either.<String, Integer>right(7).stream().toList();
+        assertThat(collected).containsExactly(7);
+    }
+
+    @Test
+    void stream_shouldReturnEmptyStream_whenLeft() {
+        List<Integer> collected = Either.<String, Integer>left("err").stream().toList();
+        assertThat(collected).isEmpty();
+    }
+
+    @Test
+    void stream_shouldIntegrateIntoStreamPipeline() {
+        List<Either<String, Integer>> eithers = List.of(
+            Either.right(1), Either.left("err"), Either.right(3));
+        List<Integer> rights = eithers.stream()
+            .flatMap(Either::stream)
+            .toList();
+        assertThat(rights).containsExactly(1, 3);
+    }
+
+    // -------------------------------------------------------------------------
+    // toTry
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toTry_shouldReturnSuccess_whenRight() {
+        Try<Integer> t = Either.<String, Integer>right(42)
+            .toTry(IllegalArgumentException::new);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo(42);
+    }
+
+    @Test
+    void toTry_shouldReturnFailure_whenLeft() {
+        Try<Integer> t = Either.<String, Integer>left("bad")
+            .toTry(IllegalArgumentException::new);
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("bad");
+    }
+
+    @Test
+    void toTry_shouldThrowNPE_whenLeftMapperIsNull() {
+        var e = Either.<String, Integer>left("x");
+        assertThatThrownBy(() -> e.toTry(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("leftMapper");
+    }
+
+    @Test
+    void toTry_shouldThrowNPE_whenLeftMapperReturnsNull() {
+        var e = Either.<String, Integer>left("x");
+        assertThatThrownBy(() -> e.toTry(_ -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("leftMapper returned null");
+    }
+
+    // -------------------------------------------------------------------------
+    // match
+    // -------------------------------------------------------------------------
+
+    @Test
+    void match_shouldExecuteOnLeft_whenLeft() {
+        var seen = new ArrayList<String>();
+        Either.<String, Integer>left("err").match(seen::add, v -> seen.add("right:" + v));
+        assertThat(seen).containsExactly("err");
+    }
+
+    @Test
+    void match_shouldExecuteOnRight_whenRight() {
+        var seen = new ArrayList<String>();
+        Either.<String, Integer>right(42).match(seen::add, v -> seen.add("right:" + v));
+        assertThat(seen).containsExactly("right:42");
+    }
+
+    @Test
+    void match_shouldThrowNPE_whenOnLeftIsNull() {
+        var e = Either.<String, Integer>left("x");
+        assertThatThrownBy(() -> e.match(null, v -> {}))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onLeft");
+    }
+
+    @Test
+    void match_shouldThrowNPE_whenOnRightIsNull() {
+        var e = Either.<String, Integer>right(1);
+        assertThatThrownBy(() -> e.match(l -> {}, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onRight");
     }
 
     // -------------------------------------------------------------------------

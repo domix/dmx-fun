@@ -2,8 +2,10 @@ package dmx.fun;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -303,5 +305,107 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
             case Right<L, R> right -> Validated.valid(right.value());
             case Left<L, R> left   -> Validated.invalid(left.value());
         };
+    }
+
+    /**
+     * Converts this {@code Either} to a standard {@link Optional Optional&lt;R&gt;}.
+     *
+     * <p>{@link Right Right(r)} maps to {@link Optional#of(Object) Optional.of(r)};
+     * {@link Left} maps to {@link Optional#empty()}, discarding the left value.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Either.<String, Integer>right(42).toOptional(); // Optional.of(42)
+     * Either.<String, Integer>left("err").toOptional(); // Optional.empty()
+     * }</pre>
+     *
+     * @return an {@code Optional} containing the right value, or empty if this is {@code Left}
+     */
+    default Optional<R> toOptional() {
+        return switch (this) {
+            case Right<L, R> right -> Optional.of(right.value());
+            case Left<L, R> _      -> Optional.empty();
+        };
+    }
+
+    /**
+     * Returns this {@code Either} as a single-element or empty {@link Stream}.
+     *
+     * <p>{@link Right Right(r)} produces {@code Stream.of(r)};
+     * {@link Left} produces {@code Stream.empty()}.
+     * Useful for integrating into stream pipelines without an explicit filter.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Stream<Either<String, Integer>> eithers = ...;
+     * List<Integer> rights = eithers
+     *     .flatMap(Either::stream)
+     *     .toList();
+     * }</pre>
+     *
+     * @return a one-element stream of the right value, or an empty stream
+     */
+    default Stream<R> stream() {
+        return switch (this) {
+            case Right<L, R> right -> Stream.of(right.value());
+            case Left<L, R> _      -> Stream.empty();
+        };
+    }
+
+    /**
+     * Converts this {@code Either} to a {@link Try}.
+     *
+     * <p>{@link Right Right(r)} maps to {@link Try#success(Object) Try.success(r)};
+     * {@link Left Left(l)} maps to {@link Try#failure(Throwable) Try.failure(leftMapper(l))}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Either.<String, Integer>right(1).toTry(IllegalStateException::new); // Try.success(1)
+     * Either.<String, Integer>left("bad").toTry(IllegalStateException::new); // Try.failure(...)
+     * }</pre>
+     *
+     * @param leftMapper function that converts the left value into a {@link Throwable};
+     *                   must not be {@code null} and must not return {@code null}
+     * @return a {@code Try<R>} equivalent of this {@code Either}
+     * @throws NullPointerException if {@code leftMapper} is {@code null} or returns {@code null}
+     */
+    default Try<R> toTry(Function<? super L, ? extends Throwable> leftMapper) {
+        Objects.requireNonNull(leftMapper, "leftMapper");
+        return switch (this) {
+            case Right<L, R> right -> Try.success(right.value());
+            case Left<L, R> left   -> Try.failure(
+                Objects.requireNonNull(leftMapper.apply(left.value()), "leftMapper returned null")
+            );
+        };
+    }
+
+    // -------------------------------------------------------------------------
+    // Terminal side effects
+    // -------------------------------------------------------------------------
+
+    /**
+     * Executes one of the provided consumers depending on whether this is a {@link Left}
+     * or a {@link Right}, then discards the result. This is the terminal, side-effecting
+     * counterpart to {@link #fold(Function, Function)}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * either.match(
+     *     left  -> log.warn("Left: {}", left),
+     *     right -> process(right)
+     * );
+     * }</pre>
+     *
+     * @param onLeft  consumer executed when this is {@code Left}; must not be {@code null}
+     * @param onRight consumer executed when this is {@code Right}; must not be {@code null}
+     * @throws NullPointerException if {@code onLeft} or {@code onRight} is {@code null}
+     */
+    default void match(Consumer<? super L> onLeft, Consumer<? super R> onRight) {
+        Objects.requireNonNull(onLeft, "onLeft");
+        Objects.requireNonNull(onRight, "onRight");
+        switch (this) {
+            case Left<L, R> left   -> onLeft.accept(left.value());
+            case Right<L, R> right -> onRight.accept(right.value());
+        }
     }
 }
