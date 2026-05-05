@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -372,6 +373,31 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     }
 
     /**
+     * Converts this {@code Option} into an already-completed {@link CompletableFuture}.
+     *
+     * <ul>
+     *   <li>{@code Some(v)} → {@code CompletableFuture.completedFuture(v)}</li>
+     *   <li>{@code None} → a future failed with {@link NoSuchElementException}</li>
+     * </ul>
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Option.some("hello").toFuture(); // CompletableFuture completed with "hello"
+     * Option.none().toFuture();        // CompletableFuture failed with NoSuchElementException
+     * }</pre>
+     *
+     * @return a completed or failed {@code CompletableFuture<Value>}
+     */
+    default CompletableFuture<Value> toFuture() {
+        return switch (this) {
+            case Some<Value> s -> CompletableFuture.completedFuture(s.value());
+            case None<Value> _ -> CompletableFuture.failedFuture(
+                new NoSuchElementException("Option is None")
+            );
+        };
+    }
+
+    /**
      * Collects all present (non-empty) values from a stream of {@code Option} instances into an
      * unmodifiable list.
      *
@@ -571,6 +597,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * if the current instance is {@code None}.
      */
     default Try<Value> toTry(Supplier<? extends Throwable> exceptionSupplier) {
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
         return switch (this) {
             case Some<Value> s -> Try.success(s.value());
             case None<Value> _ -> Try.failure(
@@ -649,6 +676,31 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     static <V> Option<V> fromTryOptional(Try<Optional<V>> t) {
         Objects.requireNonNull(t, "t");
         return t.isSuccess() ? fromOptional(t.get()) : Option.none();
+    }
+
+    /**
+     * Converts an {@link Either} into an {@link Option}, keeping only the {@link Either.Right} value.
+     *
+     * <ul>
+     *   <li>{@link Either.Right Right(r)} → {@code Some(r)}</li>
+     *   <li>{@link Either.Left Left(_)} → {@code None}</li>
+     * </ul>
+     *
+     * <p>This is the static complement of {@link Either#toOption()}: both express the same
+     * conversion but from different call sites.
+     *
+     * @param <L>    the left type (discarded on conversion)
+     * @param <R>    the right type (preserved as the {@code Option} value)
+     * @param either the {@link Either} to convert; must not be {@code null}
+     * @return {@code Some(r)} if {@code either} is {@code Right}, otherwise {@code None}
+     * @throws NullPointerException if {@code either} is {@code null}
+     */
+    static <L, R> Option<R> fromEither(Either<? extends L, ? extends R> either) {
+        Objects.requireNonNull(either, "either");
+        return switch (either) {
+            case Either.Right<? extends L, ? extends R> r -> Option.some(r.value());
+            case Either.Left<? extends L, ? extends R>  _ -> Option.none();
+        };
     }
 
     // ---------- zip / map2 ----------
