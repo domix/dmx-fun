@@ -551,6 +551,32 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     }
 
     /**
+     * Converts this {@code Result} to a standard {@link Optional Optional&lt;V&gt;}.
+     *
+     * <p>{@code Ok(v)} maps to {@code Optional.ofNullable(v)}; {@code Err(e)} maps to
+     * {@link Optional#empty()}, discarding the error. This is the inverse of
+     * {@link #fromOptional(Optional) fromOptional}, completing the bidirectional bridge
+     * between {@code Result} and {@code Optional}.
+     *
+     * <p>Use {@link #toOption()} to convert to the dmx-fun {@link Option} type instead.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Result.ok("hello").toOptional();    // Optional.of("hello")
+     * Result.err("oops").toOptional();    // Optional.empty()
+     * }</pre>
+     *
+     * @return {@code Optional.of(value)} if this is {@code Ok}, or {@code Optional.empty()}
+     *         if this is {@code Err}
+     */
+    default Optional<Value> toOptional() {
+        return switch (this) {
+            case Ok<Value, Error>  ok  -> Optional.ofNullable(ok.value());
+            case Err<Value, Error> _   -> Optional.empty();
+        };
+    }
+
+    /**
      * Converts an {@link Option} to a {@link Result}.
      *
      * @param <V>         The type of the value contained in the {@link Option}.
@@ -616,6 +642,39 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      */
     static <V> Result<V, Throwable> fromFuture(CompletableFuture<? extends V> future) {
         return Try.<V>fromFuture(future).toResult();
+    }
+
+    /**
+     * Converts an {@link Either} into a {@code Result}.
+     *
+     * <p>{@code Either.right(v)} maps to {@code Result.ok(v)};
+     * {@code Either.left(e)} maps to {@code Result.err(e)}.
+     * This is the inverse of {@link #toEither()}, completing the bidirectional bridge
+     * between {@code Result} and {@code Either}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Either<String, Integer> right = Either.right(42);
+     * Result<Integer, String> ok = Result.fromEither(right);
+     * // Result.ok(42)
+     *
+     * Either<String, Integer> left = Either.left("not found");
+     * Result<Integer, String> err = Result.fromEither(left);
+     * // Result.err("not found")
+     * }</pre>
+     *
+     * @param <V>    the right (success) type of the {@code Either}
+     * @param <E>    the left (error) type of the {@code Either}
+     * @param either the {@code Either} to convert; must not be {@code null}
+     * @return {@code Result.ok(right)} if the {@code Either} is right, or
+     *         {@code Result.err(left)} if it is left
+     * @throws NullPointerException if {@code either} is {@code null}
+     */
+    static <V, E> Result<V, E> fromEither(Either<? extends E, ? extends V> either) {
+        Objects.requireNonNull(either, "either");
+        return either.isRight()
+            ? Result.ok(either.getRight())
+            : Result.err(either.getLeft());
     }
 
     // ---------- sequence / traverse ----------
