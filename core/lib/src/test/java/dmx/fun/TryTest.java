@@ -1313,6 +1313,86 @@ class TryTest {
     }
 
     // -------------------------------------------------------------------------
+    // ofNullable
+    // -------------------------------------------------------------------------
+
+    @Test
+    void ofNullable_returnsSuccess_whenValueIsNonNull() {
+        Try<String> t = Try.ofNullable("hello", () -> new NoSuchElementException("missing"));
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void ofNullable_returnsFailure_whenValueIsNull() {
+        NoSuchElementException ex = new NoSuchElementException("missing");
+        Try<String> t = Try.ofNullable(null, () -> ex);
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(ex);
+    }
+
+    @Test
+    void ofNullable_shouldThrowNPE_whenExceptionSupplierIsNull() {
+        assertThatThrownBy(() -> Try.ofNullable("x", null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier");
+    }
+
+    @Test
+    void ofNullable_shouldThrowNPE_whenExceptionSupplierReturnsNull() {
+        assertThatThrownBy(() -> Try.ofNullable(null, () -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier returned null");
+    }
+
+    // -------------------------------------------------------------------------
+    // match
+    // -------------------------------------------------------------------------
+
+    @Test
+    void match_callsOnSuccess_whenSuccess() {
+        var called = new java.util.concurrent.atomic.AtomicReference<String>();
+        Try.success("hello").match(called::set, _ -> {});
+        assertThat(called.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void match_callsOnFailure_whenFailure() {
+        RuntimeException ex = new RuntimeException("boom");
+        var called = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        Try.<String>failure(ex).match(_ -> {}, called::set);
+        assertThat(called.get()).isSameAs(ex);
+    }
+
+    @Test
+    void match_doesNotCallOnFailure_whenSuccess() {
+        var failureCalled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        Try.success("ok").match(_ -> {}, _ -> failureCalled.set(true));
+        assertThat(failureCalled.get()).isFalse();
+    }
+
+    @Test
+    void match_doesNotCallOnSuccess_whenFailure() {
+        var successCalled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        Try.<String>failure(new RuntimeException()).match(_ -> successCalled.set(true), _ -> {});
+        assertThat(successCalled.get()).isFalse();
+    }
+
+    @Test
+    void match_shouldThrowNPE_whenOnSuccessIsNull() {
+        assertThatThrownBy(() -> Try.success("x").match(null, _ -> {}))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onSuccess");
+    }
+
+    @Test
+    void match_shouldThrowNPE_whenOnFailureIsNull() {
+        assertThatThrownBy(() -> Try.success("x").match(_ -> {}, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onFailure");
+    }
+
+    // -------------------------------------------------------------------------
     // withTimeout
     // -------------------------------------------------------------------------
 

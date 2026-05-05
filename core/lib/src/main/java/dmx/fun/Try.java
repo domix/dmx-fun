@@ -122,6 +122,44 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Creates a {@code Try} from a potentially {@code null} value.
+     *
+     * <p>If {@code value} is non-null, returns {@code Success(value)}.
+     * If {@code value} is {@code null}, returns {@code Failure} using the supplied exception —
+     * the {@code exceptionSupplier} is only called when {@code value} is {@code null}.
+     *
+     * <p>This factory is a convenient alternative to the two-step
+     * {@code Try.fromOptional(Optional.ofNullable(value), exceptionSupplier)} pattern when
+     * working with APIs that return {@code null} instead of throwing.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * // Legacy API that returns null on failure
+     * Try<Connection> t = Try.ofNullable(
+     *     pool.borrowConnection(),
+     *     () -> new NoSuchElementException("no connections available")
+     * );
+     * }</pre>
+     *
+     * @param <V>               the value type
+     * @param value             the potentially {@code null} value
+     * @param exceptionSupplier a supplier for the throwable used when {@code value} is {@code null};
+     *                          must not be {@code null} and must not return {@code null}
+     * @return {@code Success(value)} if {@code value} is non-null, or
+     *         {@code Failure(exceptionSupplier.get())} if {@code value} is {@code null}
+     * @throws NullPointerException if {@code exceptionSupplier} is {@code null} or returns {@code null}
+     */
+    static <V> Try<V> ofNullable(@Nullable V value, Supplier<? extends Throwable> exceptionSupplier) {
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
+        if (value != null) {
+            return Try.success(value);
+        }
+        return Try.failure(
+            Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
+        );
+    }
+
+    /**
      * Executes the provided {@code CheckedRunnable} and returns a {@code Try} instance
      * representing the outcome of the execution.
      *
@@ -351,6 +389,42 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
             action.accept(cause);
         }
         return this;
+    }
+
+    /**
+     * Applies {@code onSuccess} to the value when this is a {@code Success}, or
+     * {@code onFailure} to the cause when this is a {@code Failure}.
+     *
+     * <p>This is the void terminal counterpart to
+     * {@link #fold(java.util.function.Function, java.util.function.Function) fold} — use it
+     * when you need to perform side effects on both tracks without producing a return value.
+     * It forces both branches to be handled explicitly.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Try.of(() -> readConfig(path))
+     *    .match(
+     *        config  -> applyConfig(config),
+     *        failure -> log.error("config unavailable", failure)
+     *    );
+     * }</pre>
+     *
+     * @param onSuccess consumer called with the value when this is a {@code Success};
+     *                  must not be {@code null}
+     * @param onFailure consumer called with the cause when this is a {@code Failure};
+     *                  must not be {@code null}
+     * @throws NullPointerException if {@code onSuccess} or {@code onFailure} is {@code null}
+     */
+    default void match(
+        Consumer<? super Value> onSuccess,
+        Consumer<? super Throwable> onFailure
+    ) {
+        Objects.requireNonNull(onSuccess, "onSuccess");
+        Objects.requireNonNull(onFailure, "onFailure");
+        switch (this) {
+            case Success<Value> s -> onSuccess.accept(s.value());
+            case Failure<Value> f -> onFailure.accept(f.cause());
+        }
     }
 
     /**
