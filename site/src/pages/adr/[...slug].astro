@@ -1,0 +1,247 @@
+---
+import { getCollection, render } from 'astro:content';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+
+export async function getStaticPaths() {
+    const adrEntries = await getCollection('adr');
+    return adrEntries.map(entry => ({
+        params: { slug: entry.id },
+        props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+
+const allAdrs = (await getCollection('adr')).sort((a, b) => a.data.number - b.data.number);
+const currentIndex = allAdrs.findIndex(e => e.id === entry.id);
+const prev = currentIndex > 0 ? allAdrs[currentIndex - 1] : null;
+const next = currentIndex < allAdrs.length - 1 ? allAdrs[currentIndex + 1] : null;
+
+const toc = headings.filter(h => h.depth === 2);
+
+const statusColor: Record<string, string> = {
+    Accepted: 'status-accepted',
+    Proposed: 'status-proposed',
+    Superseded: 'status-superseded',
+};
+
+const num = String(entry.data.number).padStart(3, '0');
+---
+
+<DocsLayout
+    title={`ADR-${num} — ${entry.data.title}`}
+    description={`Architecture Decision Record ${num}: ${entry.data.title}`}
+>
+    <div class="adr-content">
+        <div class="adr-header">
+            <a href={`${base}adr`} class="back-link">&larr; All ADRs</a>
+            <div class="adr-meta">
+                <span class="adr-id">ADR-{num}</span>
+                <span class={`status-badge ${statusColor[entry.data.status]}`}>{entry.data.status}</span>
+                <span class="adr-date">{entry.data.date.toISOString().slice(0, 10)}</span>
+            </div>
+        </div>
+
+        <h1>{entry.data.title}</h1>
+
+        {toc.length > 0 && (
+            <nav class="toc" aria-label="Table of contents">
+                <ol>
+                    {toc.map(h => (
+                        <li><a href={`#${h.slug}`}>{h.text}</a></li>
+                    ))}
+                </ol>
+            </nav>
+        )}
+
+        <Content />
+
+        <div class="page-nav">
+            {prev ? (
+                <a href={`${base}adr/${prev.id}`}>&larr; ADR-{String(prev.data.number).padStart(3, '0')}</a>
+            ) : (
+                <a href={`${base}adr`}>&larr; All ADRs</a>
+            )}
+            {next ? (
+                <a href={`${base}adr/${next.id}`}>ADR-{String(next.data.number).padStart(3, '0')} &rarr;</a>
+            ) : (
+                <span></span>
+            )}
+        </div>
+    </div>
+</DocsLayout>
+
+<style>
+    .adr-content {
+        max-width: 860px;
+    }
+
+    .adr-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .back-link {
+        color: var(--color-text-secondary);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+        color: var(--color-primary);
+    }
+
+    .adr-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .adr-id {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+    }
+
+    .adr-date {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--color-text-secondary);
+    }
+
+    h1 {
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    .adr-content :global(h2) {
+        margin-top: 3rem;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 0.5rem;
+    }
+
+    .adr-content :global(h3) {
+        margin-top: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .adr-content :global(p) {
+        line-height: 1.7;
+    }
+
+    .adr-content :global(ul),
+    .adr-content :global(ol:not(.toc ol)) {
+        line-height: 1.8;
+        padding-left: 1.5rem;
+    }
+
+    .adr-content :global(li) {
+        margin: 0.3rem 0;
+    }
+
+    .adr-content :global(strong) {
+        color: var(--color-text);
+    }
+
+    .adr-content :global(a) {
+        color: var(--color-primary);
+        text-decoration: underline;
+    }
+
+    .adr-content :global(a:hover) {
+        color: var(--color-primary-hover);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .status-accepted {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    [data-theme="dark"] .status-accepted {
+        background-color: #064e3b;
+        color: #6ee7b7;
+    }
+
+    .status-proposed {
+        background-color: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    [data-theme="dark"] .status-proposed {
+        background-color: #1e3a8a;
+        color: #93c5fd;
+    }
+
+    .status-superseded {
+        background-color: var(--color-surface);
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border);
+    }
+
+    /* TOC */
+    .toc {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        margin: 2rem 0;
+        display: inline-block;
+        min-width: 220px;
+    }
+
+    .toc ol {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+
+    .toc li {
+        line-height: 1.9;
+        font-size: 0.9rem;
+    }
+
+    .toc a {
+        text-decoration: none;
+        color: var(--color-text-secondary);
+        transition: color 0.2s ease;
+    }
+
+    .toc a:hover {
+        color: var(--color-primary);
+    }
+
+    /* Page navigation */
+    .page-nav {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-border);
+        font-size: 0.9rem;
+    }
+
+    .page-nav a {
+        text-decoration: none;
+        color: var(--color-primary);
+    }
+
+    .page-nav a:hover {
+        text-decoration: underline;
+    }
+</style>
