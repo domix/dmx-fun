@@ -58,15 +58,18 @@ until the terminal `get()` is invoked on the result.
 
 ## Interoperability
 
-| Method / Factory          | Forces evaluation? | Returns                | Notes                                                |
-|---------------------------|--------------------|------------------------|------------------------------------------------------|
-| `get()`                   | Yes                | `T`                    | Rethrows supplier exceptions.                        |
-| `toTry()`                 | Yes                | `Try<T>`               | Captures exceptions as `Failure`; result memoized.   |
-| `toResult()`              | Yes                | `Result<T, Throwable>` | Exception becomes `Err`.                             |
-| `toResult(errorMapper)`   | Yes                | `Result<T, E>`         | Maps exception to a domain error.                    |
-| `toOption()`              | Yes                | `Option<T>`            | Throws if supplier throws.                           |
-| `toFuture()`              | If already cached  | `CompletableFuture<T>` | Returns completed future if cached; async otherwise. |
-| `Lazy.fromFuture(future)` | No                 | `Lazy<T>`              | Defers the blocking join to `get()` time.            |
+| Method / Factory          | Forces evaluation? | Returns                    | Notes                                                             |
+|---------------------------|--------------------|----------------------------|-------------------------------------------------------------------|
+| `get()`                   | Yes                | `T`                        | Rethrows supplier exceptions.                                     |
+| `toTry()`                 | Yes                | `Try<T>`                   | Captures exceptions as `Failure`; result memoized.                |
+| `toResult()`              | Yes                | `Result<T, Throwable>`     | Exception becomes `Err`.                                          |
+| `toResult(errorMapper)`   | Yes                | `Result<T, E>`             | Maps exception to a domain error.                                 |
+| `toEither()`              | Yes                | `Either<Throwable, T>`     | Exception becomes `Left`; safe (no throw).                        |
+| `toEither(errorMapper)`   | Yes                | `Either<E, T>`             | Maps exception to a typed left value; safe (no throw).            |
+| `toOption()`              | Yes                | `Option<T>`                | Throws if supplier throws.                                        |
+| `toOptional()`            | Yes                | `Optional<T>`              | JDK interop; throws if supplier throws. Use `toTry().toOptional()` for safe conversion. |
+| `toFuture()`              | No (async if not cached) | `CompletableFuture<T>` | Returns already-completed future if cached; async via `supplyAsync` otherwise. |
+| `Lazy.fromFuture(future)` | No                 | `Lazy<T>`                  | Defers the blocking join to `get()` time.                         |
 
 <InteropConversions/>
 
