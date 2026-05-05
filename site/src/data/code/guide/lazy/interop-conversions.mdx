@@ -30,7 +30,7 @@ Option<Config> opt = config.toOption();
 // toOptional() — forces evaluation; wraps value in Optional.of (throws if supplier throws)
 //   Use toTry().toOptional() for a safe, exception-capturing alternative
 Optional<Config> optional = config.toOptional();
-Optional<Config> safeOptional = config.toTry().toOptional(); // None on failure
+Optional<Config> safeOptional = config.toTry().toOptional(); // Optional.empty() on failure
 
 // ── Async interop ────────────────────────────────────────────────────────────
 
