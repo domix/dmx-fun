@@ -83,17 +83,23 @@ Prefer exhaustive switch patterns — the compiler enforces that both sides are 
 `peek` runs an action on the `Right` value and returns `this` unchanged.
 `peekLeft` does the same for the `Left` value. Both are chainable.
 
+`match(onLeft, onRight)` is the terminal, side-effecting counterpart to `fold`:
+it executes exactly one consumer and returns `void`.
+
 ## Interoperability
 
-| Conversion                   | Method / Factory                           | Notes                                  |
-|------------------------------|--------------------------------------------|----------------------------------------|
-| `Either` → `Option`          | `e.toOption()`                             | Right → Some; Left → None (discarded). |
-| `Either` → `Result`          | `e.toResult()`                             | Right → Ok; Left → Err.                |
-| `Either` → `Validated`       | `e.toValidated()`                          | Right → Valid; Left → Invalid.         |
-| `Try` → `Either`             | `tryVal.toEither()`                        | Success → Right; Failure → Left.       |
-| `Result` → `Either`          | `result.toEither()`                        | Ok → Right; Err → Left.                |
-| `Validated` → `Either`       | `validated.toEither()`                     | Valid → Right; Invalid → Left.         |
-| `Option` → `Either`          | `option.toEither(leftSupplier)`            | Some → Right; None → Left.             |
+| Conversion                   | Method / Factory                           | Notes                                                   |
+|------------------------------|--------------------------------------------|---------------------------------------------------------|
+| `Either` → `Option`          | `e.toOption()`                             | Right → Some; Left → None (discarded).                  |
+| `Either` → `Result`          | `e.toResult()`                             | Right → Ok; Left → Err.                                 |
+| `Either` → `Validated`       | `e.toValidated()`                          | Right → Valid; Left → Invalid.                          |
+| `Either` → `Optional`        | `e.toOptional()`                           | Right(r) → Optional.of(r); Left → Optional.empty().     |
+| `Either` → `Try`             | `e.toTry(leftMapper)`                      | Right → Success; Left mapped to `Throwable` → Failure.  |
+| `Either` → `Stream`          | `e.stream()`                               | Right(r) → Stream.of(r); Left → Stream.empty().         |
+| `Try` → `Either`             | `tryVal.toEither()`                        | Success → Right; Failure → Left.                        |
+| `Result` → `Either`          | `result.toEither()`                        | Ok → Right; Err → Left.                                 |
+| `Validated` → `Either`       | `validated.toEither()`                     | Valid → Right; Invalid → Left.                          |
+| `Option` → `Either`          | `option.toEither(leftIfNone)`              | Some → Right; None → Left(leftIfNone).                  |
 
 <InteropConversions/>
 
