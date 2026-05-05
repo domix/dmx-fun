@@ -10,7 +10,7 @@
 7. First steps with function composition
 8. Higher-order functions explained with real examples
 9. map, filter, and reduce beyond the basic tutorial
-10. Why avoid mutable state?
+10. ~~Why avoid mutable state?~~
 
 ### Practical topics
 
@@ -79,7 +79,7 @@
 58. Why so many developers reject functional programming
 59. ~~Pragmatic functional programming vs academic purism~~ [74]
 60. The problem with explaining monads too early
-61. When “making it functional” actually makes the code worse
+61. ~~When “making it functional” actually makes the code worse~~
 62. FP in real teams: resistance, adoption, and learning
 63. ~~Should all business logic be pure?~~ [205]
 64. The cognitive cost of functional abstraction
