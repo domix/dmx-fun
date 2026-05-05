@@ -28,6 +28,25 @@ Result<String, String> r2 = username.checkToResult(
     "a!", errors -> String.join("; ", errors.toList()));
 // Result.err("min 3 chars")
 
+// checkToEither(value) — Either<NonEmptyList<String>, T>
+Either<NonEmptyList<String>, String> right = username.checkToEither("alice");
+// Either.right("alice")
+Either<NonEmptyList<String>, String> left  = username.checkToEither("a!");
+// Either.left(NonEmptyList.of("min 3 chars"))
+
+// checkToTry(value) — Try<T> with default IllegalArgumentException
+Try<String> success = username.checkToTry("alice");
+// Try.success("alice")
+Try<String> failure = username.checkToTry("a!");
+// Try.failure(new IllegalArgumentException("min 3 chars"))
+
+// checkToTry(value, toThrowable) — caller controls the exception type
+Try<String> typed = username.checkToTry(
+    "a!",
+    errors -> new ValidationException(errors.toList())
+);
+// Try.failure(new ValidationException(["min 3 chars"]))
+
 // checkToOption(value) — discard errors, keep value or None
 Option<String> opt = username.checkToOption("alice");   // Some("alice")
 username.checkToOption("a!");                           // None
@@ -37,4 +56,13 @@ List<String> valid = Stream.of("alice", "a!", "bob")
     .flatMap(s -> username.checkToOption(s).stream())
     .toList();
 // ["alice", "bob"]
+
+// checkToOptional(value) — Java standard Optional<T>
+Optional<String> present = username.checkToOptional("alice"); // Optional.of("alice")
+Optional<String> empty   = username.checkToOptional("a!");    // Optional.empty()
+
+// integrates naturally with Optional chaining
+String upper = username.checkToOptional(input)
+    .map(String::toUpperCase)
+    .orElse("INVALID");
 ```
