@@ -1,5 +1,6 @@
 package dmx.fun;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
@@ -484,6 +485,127 @@ class GuardTest {
     void andThen_shouldThrowNPE_whenNextIsNull() {
         assertThatThrownBy(() -> notBeBlank.andThen(null))
             .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // checkToEither
+    // -------------------------------------------------------------------------
+
+    @Test
+    void checkToEither_returnsRight_whenGuardPasses() {
+        var result = notBeBlank.checkToEither("hello");
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight()).isEqualTo("hello");
+    }
+
+    @Test
+    void checkToEither_returnsLeft_whenGuardFails() {
+        var result = notBeBlank.checkToEither("   ");
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft().toList()).containsExactly("must not be blank");
+    }
+
+    @Test
+    void checkToEither_accumulatesAllErrors_whenComposedGuardFails() {
+        var minLength = Guard.<String>of(s -> s.length() >= 3, "min 3 chars");
+        var result = notBeBlank.and(minLength).checkToEither("  ");
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft().toList()).containsExactly("must not be blank", "min 3 chars");
+    }
+
+    // -------------------------------------------------------------------------
+    // checkToTry — default IllegalArgumentException
+    // -------------------------------------------------------------------------
+
+    @Test
+    void checkToTry_returnsSuccess_whenGuardPasses() {
+        var result = notBeBlank.checkToTry("hello");
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void checkToTry_returnsFailure_whenGuardFails() {
+        var result = notBeBlank.checkToTry("   ");
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(result.getCause().getMessage()).isEqualTo("must not be blank");
+    }
+
+    @Test
+    void checkToTry_joinsMultipleErrors_withSemicolon() {
+        var minLength = Guard.<String>of(s -> s.length() >= 3, "min 3 chars");
+        var result = notBeBlank.and(minLength).checkToTry("  ");
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause().getMessage()).isEqualTo("must not be blank; min 3 chars");
+    }
+
+    // -------------------------------------------------------------------------
+    // checkToTry — custom throwable mapper
+    // -------------------------------------------------------------------------
+
+    @Test
+    void checkToTry_withMapper_returnsSuccess_whenGuardPasses() {
+        var result = notBeBlank.checkToTry("hello", errors -> new RuntimeException("oops"));
+        assertThat(result.isSuccess()).isTrue();
+    }
+
+    @Test
+    void checkToTry_withMapper_usesProvidedThrowable_whenGuardFails() {
+        var result = notBeBlank.checkToTry(
+            "   ",
+            errors -> new IllegalStateException(String.join("|", errors.toList()))
+        );
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(IllegalStateException.class);
+        assertThat(result.getCause().getMessage()).isEqualTo("must not be blank");
+    }
+
+    @Test
+    void checkToTry_withMapper_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> notBeBlank.checkToTry("x",
+            (java.util.function.Function<NonEmptyList<String>, RuntimeException>) null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("toThrowable");
+    }
+
+    // -------------------------------------------------------------------------
+    // checkToOptional
+    // -------------------------------------------------------------------------
+
+    @Test
+    void checkToOptional_returnsPresent_whenGuardPasses() {
+        Optional<String> result = notBeBlank.checkToOptional("hello");
+        assertThat(result).isPresent().contains("hello");
+    }
+
+    @Test
+    void checkToOptional_returnsEmpty_whenGuardFails() {
+        Optional<String> result = notBeBlank.checkToOptional("   ");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void checkToOptional_returnsEmpty_forNullInput_doesNotThrowNPE() {
+        // Guard.nonNull() is typed Guard<@Nullable T> and rejects null → Optional.empty()
+        // Regression: Optional.ofNullable is used so null never reaches Optional.of(null).
+        Guard<@Nullable String> nonNullGuard = Guard.nonNull();
+
+        Optional<@Nullable String> result = nonNullGuard.checkToOptional(null);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void checkToOptional_usefulForOptionalChaining() {
+        var minLength = Guard.<String>of(s -> s.length() >= 3, "min 3 chars");
+        var username = notBeBlank.and(minLength);
+
+        Optional<String> valid = username.checkToOptional("alice").map(String::toUpperCase);
+        assertThat(valid).contains("ALICE");
+
+        Optional<String> invalid = username.checkToOptional("a!").map(String::toUpperCase);
+        assertThat(invalid).isEmpty();
     }
 
     @Test

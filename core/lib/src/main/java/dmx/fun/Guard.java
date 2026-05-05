@@ -1,6 +1,7 @@
 package dmx.fun;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import org.jspecify.annotations.NullMarked;
@@ -389,6 +390,125 @@ public interface Guard<T> {
     default Option<T> checkToOption(T value) {
         var result = this.check(value);
         return result.isValid() ? Option.some(result.get()) : Option.none();
+    }
+
+    /**
+     * Applies this guard to {@code value} and returns an {@link Either Either&lt;NonEmptyList&lt;String&gt;, T&gt;}.
+     *
+     * <p>Returns {@code Either.right(value)} when the guard passes and
+     * {@code Either.left(errors)} when it fails. Use this when downstream logic is already
+     * expressed in terms of {@link Either}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+     *
+     * Either<NonEmptyList<String>, String> right = notBlank.checkToEither("hello");
+     * // Either.right("hello")
+     *
+     * Either<NonEmptyList<String>, String> left = notBlank.checkToEither("   ");
+     * // Either.left(NonEmptyList.of("must not be blank"))
+     * }</pre>
+     *
+     * @param value the value to validate
+     * @return {@code Either.right(value)} if the guard passes, or
+     *         {@code Either.left(errors)} if it fails
+     */
+    default Either<NonEmptyList<String>, T> checkToEither(T value) {
+        var result = this.check(value);
+        return result.isValid()
+            ? Either.right(result.get())
+            : Either.left(result.getError());
+    }
+
+    /**
+     * Applies this guard to {@code value} and returns a {@code Try<T>}.
+     *
+     * <p>Returns {@code Try.success(value)} when the guard passes. When it fails, the
+     * accumulated error messages are joined with {@code "; "} and wrapped in an
+     * {@link IllegalArgumentException}. Use {@link #checkToTry(Object, Function)} to supply
+     * a domain-specific exception instead.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+     *
+     * Try<String> success = notBlank.checkToTry("hello");
+     * // Try.success("hello")
+     *
+     * Try<String> failure = notBlank.checkToTry("   ");
+     * // Try.failure(new IllegalArgumentException("must not be blank"))
+     * }</pre>
+     *
+     * @param value the value to validate
+     * @return {@code Try.success(value)} if the guard passes, or a {@code Try.failure} wrapping
+     *         an {@link IllegalArgumentException} with the joined error messages
+     */
+    default Try<T> checkToTry(T value) {
+        return checkToTry(
+            value,
+            errors -> new IllegalArgumentException(
+                String.join("; ", errors.toList())
+            )
+        );
+    }
+
+    /**
+     * Applies this guard to {@code value} and returns a {@code Try<T>}, converting any
+     * accumulated errors to a domain-specific {@link Throwable} via {@code toThrowable}.
+     *
+     * <p>Use this at boundaries where the caller controls the exception type.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> username = notBlank.and(minLength3);
+     *
+     * Try<String> result = username.checkToTry(
+     *     input,
+     *     errors -> new ValidationException(errors.toList())
+     * );
+     * }</pre>
+     *
+     * @param <X>         the throwable type
+     * @param value       the value to validate
+     * @param toThrowable function mapping the accumulated error list to a {@link Throwable};
+     *                    must not be {@code null}
+     * @return {@code Try.success(value)} if the guard passes, or
+     *         {@code Try.failure(toThrowable(errors))} if it fails
+     * @throws NullPointerException if {@code toThrowable} is {@code null}
+     */
+    default <X extends Throwable> Try<T> checkToTry(
+        T value,
+        Function<NonEmptyList<String>, X> toThrowable
+    ) {
+        Objects.requireNonNull(toThrowable, "toThrowable");
+        var result = this.check(value);
+        return result.isValid()
+            ? Try.success(result.get())
+            : Try.failure(toThrowable.apply(result.getError()));
+    }
+
+    /**
+     * Applies this guard to {@code value} and returns a standard {@link Optional Optional&lt;T&gt;}.
+     *
+     * <p>Returns {@code Optional.of(value)} when the guard passes and {@link Optional#empty()}
+     * when it fails, discarding the error details. Use this to integrate with Java standard
+     * library APIs that work with {@link Optional}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+     *
+     * Optional<String> present = notBlank.checkToOptional("hello"); // Optional.of("hello")
+     * Optional<String> empty   = notBlank.checkToOptional("   ");   // Optional.empty()
+     * }</pre>
+     *
+     * @param value the value to validate
+     * @return {@code Optional.of(value)} if the guard passes and {@code value} is non-null,
+     *         {@code Optional.empty()} if the guard fails or {@code value} is null
+     */
+    default Optional<T> checkToOptional(T value) {
+        return this.check(value).isValid() ? Optional.ofNullable(value) : Optional.empty();
     }
 
     /**
