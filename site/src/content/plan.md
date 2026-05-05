@@ -27,7 +27,7 @@
 
 ### Intermediate topics
 
-21. Monads without the smoke and mirrors: a pragmatic explanation
+21. ~~Monads without the smoke and mirrors: a pragmatic explanation~~
 22. Option/Maybe: modeling absence without null
 23. Result/Either: explicit error handling
 24. Try: capturing operations that may fail
