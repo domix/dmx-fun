@@ -128,4 +128,32 @@ class TryCollectorTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("null");
     }
+
+    // ── parallel combiner coverage ────────────────────────────────────────────
+
+    @Test
+    void toList_parallelStream_allSuccess_shouldCollectAllValues() {
+        List<Try<Integer>> items = List.of(Try.success(1), Try.success(2), Try.success(3));
+        Try<List<Integer>> result = items.parallelStream().collect(Try.toList());
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get()).containsExactlyInAnyOrder(1, 2, 3);
+    }
+
+    @Test
+    void toList_parallelStream_withFailure_shouldReturnAFailure() {
+        RuntimeException boom = new RuntimeException("boom");
+        List<Try<Integer>> items = List.of(
+            Try.success(1), Try.<Integer>failure(boom), Try.success(3));
+        Try<List<Integer>> result = items.parallelStream().collect(Try.toList());
+        assertThat(result.isFailure()).isTrue();
+    }
+
+    @Test
+    void partitioningBy_parallelStream_shouldPartitionCorrectly() {
+        RuntimeException ex = new RuntimeException("err");
+        List<Try<Integer>> items = List.of(Try.success(1), Try.<Integer>failure(ex), Try.success(3));
+        Try.Partition<Integer> p = items.parallelStream().collect(Try.partitioningBy());
+        assertThat(p.successes()).containsExactlyInAnyOrder(1, 3);
+        assertThat(p.failures()).containsExactly(ex);
+    }
 }

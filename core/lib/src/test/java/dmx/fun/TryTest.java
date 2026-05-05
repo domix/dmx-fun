@@ -1030,6 +1030,15 @@ class TryTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void filter_withFunction_whenPredicateThrows_shouldReturnFailure() {
+        RuntimeException boom = new RuntimeException("predicate error");
+        Try<Integer> t = Try.success(10)
+            .filter(n -> { throw boom; }, n -> new IllegalArgumentException("unreachable"));
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(boom);
+    }
+
     // ---------- flatMapError ----------
 
     @Test
