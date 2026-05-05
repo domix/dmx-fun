@@ -5,6 +5,8 @@ fileName: 'Demo.java'
 ```java
 Lazy<Config> config = Lazy.of(() -> Config.loadFromDisk());
 
+// ── Safe conversions (capture exceptions) ───────────────────────────────────
+
 // toTry() — forces evaluation; captures any exception as Failure (result is memoized)
 Try<Config> t = config.toTry();
 
@@ -14,8 +16,23 @@ Result<Config, Throwable> r1 = config.toResult();
 // toResult(errorMapper) — forces evaluation; maps the exception to a domain error
 Result<Config, AppError> r2 = config.toResult(ex -> new AppError("Config load failed", ex));
 
+// toEither() — forces evaluation; exception becomes Left(Throwable)
+Either<Throwable, Config> e1 = config.toEither();
+
+// toEither(errorMapper) — forces evaluation; maps the exception to a typed left value
+Either<AppError, Config> e2 = config.toEither(ex -> new AppError("Config load failed", ex));
+
+// ── Unsafe conversions (propagate exceptions) ────────────────────────────────
+
 // toOption() — forces evaluation; wraps value in Some (throws if supplier throws)
 Option<Config> opt = config.toOption();
+
+// toOptional() — forces evaluation; wraps value in Optional.of (throws if supplier throws)
+//   Use toTry().toOptional() for a safe, exception-capturing alternative
+Optional<Config> optional = config.toOptional();
+Optional<Config> safeOptional = config.toTry().toOptional(); // None on failure
+
+// ── Async interop ────────────────────────────────────────────────────────────
 
 // toFuture() — if already evaluated, returns a completed future immediately;
 //              otherwise evaluates asynchronously via CompletableFuture.supplyAsync

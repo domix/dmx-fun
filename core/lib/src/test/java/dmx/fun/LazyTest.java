@@ -1,5 +1,7 @@
 package dmx.fun;
 
+import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -366,5 +368,76 @@ class LazyTest {
         var lazy = Lazy.<String>of(() -> { throw new RuntimeException("x"); });
         assertThatThrownBy(lazy::get).isInstanceOf(RuntimeException.class);
         assertThat(lazy.toString()).isEqualTo("Lazy[!]");
+    }
+
+    // ---------- get: checked exception wrapping ----------
+
+    @Test
+    void get_throwingCheckedException_wrapsInRuntimeException() {
+        var cause = new IOException("checked");
+        var lazy = Lazy.<String>of(() -> sneakyThrow(cause));
+        assertThatThrownBy(lazy::get)
+            .isInstanceOf(RuntimeException.class)
+            .hasCause(cause);
+    }
+
+    // ---------- toOptional ----------
+
+    @Test
+    void toOptional_successfulSupplier_returnsPresent() {
+        Optional<Integer> opt = Lazy.of(() -> 42).toOptional();
+        assertThat(opt).isPresent().hasValue(42);
+    }
+
+    @Test
+    void toOptional_throwingSupplier_propagatesException() {
+        var lazy = Lazy.<String>of(() -> { throw new IllegalStateException("boom"); });
+        assertThatThrownBy(lazy::toOptional).isInstanceOf(IllegalStateException.class);
+    }
+
+    // ---------- toEither ----------
+
+    @Test
+    void toEither_successfulSupplier_returnsRight() {
+        Either<Throwable, Integer> e = Lazy.of(() -> 42).toEither();
+        assertThat(e.isRight()).isTrue();
+        assertThat(e.getRight()).isEqualTo(42);
+    }
+
+    @Test
+    void toEither_throwingSupplier_returnsLeft() {
+        var lazy = Lazy.<Integer>of(() -> { throw new IllegalStateException("boom"); });
+        Either<Throwable, Integer> e = lazy.toEither();
+        assertThat(e.isLeft()).isTrue();
+        assertThat(e.getLeft())
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("boom");
+    }
+
+    @Test
+    void toEither_withMapper_successfulSupplier_returnsRight() {
+        Either<String, Integer> e = Lazy.of(() -> 7).toEither(Throwable::getMessage);
+        assertThat(e.isRight()).isTrue();
+        assertThat(e.getRight()).isEqualTo(7);
+    }
+
+    @Test
+    void toEither_withMapper_throwingSupplier_appliesMapper() {
+        var lazy = Lazy.<Integer>of(() -> { throw new IllegalArgumentException("bad"); });
+        Either<String, Integer> e = lazy.toEither(Throwable::getMessage);
+        assertThat(e.isLeft()).isTrue();
+        assertThat(e.getLeft()).isEqualTo("bad");
+    }
+
+    @Test
+    void toEither_withMapper_nullMapper_throwsNullPointerException() {
+        assertThatThrownBy(() -> Lazy.of(() -> "x").toEither(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("errorMapper");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable, T> T sneakyThrow(Throwable t) throws E {
+        throw (E) t;
     }
 }

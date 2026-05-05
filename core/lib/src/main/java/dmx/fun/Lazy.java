@@ -1,6 +1,7 @@
 package dmx.fun;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -211,6 +212,51 @@ public final class Lazy<T> {
     public <E> Result<T, E> toResult(Function<? super Throwable, ? extends E> errorMapper) {
         return toTry()
             .toResult(errorMapper);
+    }
+
+    /**
+     * Evaluates this {@code Lazy} and returns the value wrapped in a
+     * {@link java.util.Optional Optional}.
+     *
+     * <p>Unlike {@link #toTry()}, this method does <em>not</em> capture exceptions —
+     * if the supplier throws, the exception propagates to the caller.
+     * Use {@code toTry().toOptional()} if you need exception-safe conversion.
+     *
+     * @return {@code Optional.of(value)}; never {@code Optional.empty()}
+     * @throws RuntimeException if the supplier throws (same semantics as {@link #get()})
+     */
+    public Optional<T> toOptional() {
+        return Optional.of(get());
+    }
+
+    /**
+     * Evaluates this {@code Lazy} inside an {@link Either}, capturing any exception thrown by the
+     * supplier as {@code Left(Throwable)}.
+     *
+     * @return {@code Either.right(value)} if the supplier completes normally,
+     *         or {@code Either.left(exception)} if it throws
+     */
+    public Either<Throwable, T> toEither() {
+        return toTry().toEither();
+    }
+
+    /**
+     * Evaluates this {@code Lazy} inside an {@link Either}, converting any exception thrown by the
+     * supplier into a typed left value using {@code errorMapper}.
+     *
+     * @param <E>         the left (error) type
+     * @param errorMapper a function that converts the thrown exception to the left value;
+     *                    must not be {@code null} and must not return {@code null}
+     * @return {@code Either.right(value)} if the supplier completes normally,
+     *         or {@code Either.left(errorMapper.apply(exception))} if it throws
+     * @throws NullPointerException if {@code errorMapper} is {@code null} or returns {@code null}
+     */
+    public <E> Either<E, T> toEither(Function<? super Throwable, ? extends E> errorMapper) {
+        Objects.requireNonNull(errorMapper, "errorMapper must not be null");
+        var t = toTry();
+        return t.isSuccess()
+            ? Either.right(t.get())
+            : Either.left(Objects.requireNonNull(errorMapper.apply(t.getCause()), "errorMapper returned null"));
     }
 
     /**

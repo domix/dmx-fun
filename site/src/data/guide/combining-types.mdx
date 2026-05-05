@@ -27,12 +27,24 @@ and the anti-patterns to avoid.
 |-----------------------|---------------------------|-------------------------------------------------|
 | `Option<T>`           | `Result<T, E>`            | `option.toResult(errorIfNone)`                  |
 | `Option<T>`           | `Try<T>`                  | `option.toTry(exceptionSupplier)`               |
+| `Option<T>`           | `Either<L, T>`            | `option.toEither(leftIfNone)`                   |
+| `Option<T>`           | `Optional<T>`             | `option.toOptional()`                           |
 | `Try<T>`              | `Result<T, Throwable>`    | `tryValue.toResult()`                           |
 | `Try<T>`              | `Result<T, E>`            | `tryValue.toResult(errorMapper)`                |
 | `Try<T>`              | `Option<T>`               | `tryValue.toOption()`                           |
+| `Try<T>`              | `Either<Throwable, T>`    | `tryValue.toEither()`                           |
+| `Try<T>`              | `Optional<T>`             | `tryValue.toOptional()`                         |
 | `Result<T, E>`        | `Option<T>`               | `result.toOption()`                             |
 | `Result<T, E>`        | `Try<T>`                  | `result.toTry(errorToThrowable)`                |
+| `Result<T, E>`        | `Either<E, T>`            | `result.toEither()`                             |
+| `Result<T, E>`        | `Optional<T>`             | `result.toOptional()`                           |
+| `Either<L, R>`        | `Option<R>`               | `either.toOption()`                             |
+| `Either<L, R>`        | `Result<R, L>`            | `either.toResult()`                             |
+| `Either<L, R>`        | `Validated<L, R>`         | `either.toValidated()`                          |
+| `Either<L, R>`        | `Try<R>`                  | `either.toTry(leftMapper)`                      |
+| `Either<L, R>`        | `Optional<R>`             | `either.toOptional()`                           |
 | `Validated<E, A>`     | `Result<A, E>`            | `validated.toResult()`                          |
+| `Validated<E, A>`     | `Either<E, A>`            | `validated.toEither()`                          |
 
 <ConversionCheatSheet/>
 
