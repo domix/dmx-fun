@@ -1,0 +1,37 @@
+---
+fileName: 'DmxObservation usage'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.observation.DmxObservation;
+import io.micrometer.observation.ObservationRegistry;
+
+// One-time setup — typically injected from the application context
+DmxObservation dmx = DmxObservation.of(observationRegistry);
+
+// metrics + spans in one call — name becomes the observation name
+Try<Response> result = dmx.observeTry("http.client.get",
+    () -> httpClient.get(url)
+);
+
+result
+    .onSuccess(r  -> render(r))
+    .onFailure(ex -> renderError(ex));
+
+// Same with Result
+Result<User, Throwable> user = dmx.observeResult("db.user.find",
+    () -> userRepo.findById(id)
+);
+```
+
+**Signals recorded for each call (dispatched through registered `ObservationHandler`s):**
+
+| Signal | When |
+|---|---|
+| Timer `{name}` | Always — tagged `outcome=success\|failure` |
+| Span named `{name}` | When a tracing bridge is configured |
+| `outcome=success\|failure` | Always — low-cardinality key on both metric and span |
+| `exception=<SimpleClassName>` | On failure — low-cardinality key on both metric and span |
+| Observation marked as error | On failure |

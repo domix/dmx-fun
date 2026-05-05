@@ -1,0 +1,85 @@
+// ── Quarkus runtime module ────────────────────────────────────────────────────
+// Provides CDI-based programmatic and declarative transaction support for dmx-fun
+// types in Quarkus applications. quarkus-arc and quarkus-narayana-jta are declared
+// compileOnly — users bring their own Quarkus version.
+//
+// Quarkus version: overridable for CI compatibility matrix.
+//   ./gradlew :frameworks:quarkus:runtime:build -PquarkusVersion=3.15.4
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+def quarkusVersion = findProperty('quarkusVersion') ?: libs.versions.quarkus.get()
+
+dependencies {
+    api project(':core:lib')
+
+    // Quarkus CDI and JTA APIs: declared compileOnly — users bring their own Quarkus.
+    compileOnly "io.quarkus:quarkus-arc:${quarkusVersion}"
+    compileOnly "io.quarkus:quarkus-narayana-jta:${quarkusVersion}"
+
+    // Same APIs are needed at test runtime to implement stubs and run tests.
+    testImplementation "io.quarkus:quarkus-arc:${quarkusVersion}"
+    testImplementation "io.quarkus:quarkus-narayana-jta:${quarkusVersion}"
+
+    // Fluent assertions for dmx-fun types.
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+// Tests are patched into the named module so they can access package-private
+// types (TxExecutor, DmxTransactionalBinding). The Jakarta API modules are
+// added explicitly because they are declared `requires static` in module-info.java.
+jpmsTest {
+    moduleName   = 'dmx.fun.quarkus'
+    extraModules = ['jakarta.transaction', 'jakarta.interceptor', 'jakarta.cdi',
+                    'dmx.fun.assertj']
+    extraReads   = ['dmx.fun.assertj']
+}
+
+tasks.named('compileTestJava') {
+    options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
+}
+
+// Stamp the runtime JAR with the extension coordinates so Quarkus build tools
+// automatically add fun-quarkus-deployment to the augmentation classpath.
+//
+// The Quarkus Gradle plugin reads quarkus-extension.properties from
+// sourceSets.main.resources.getSrcDirs() at Gradle configuration phase (before
+// any task runs). The source template uses ${version} which is only expanded by
+// processResources (execution phase), so the plugin would see the literal
+// "${version}" and fail to find the deployment project.
+//
+// Fix: eagerly write the expanded file to a generated directory at configuration
+// time and prepend it to the resource source dirs so the plugin finds the correct
+// version before it reaches the template file in src/main/resources.
+def generatedQuarkusMeta = layout.buildDirectory.dir("generated-quarkus-meta").get().asFile
+def generatedPropsFile = new File(generatedQuarkusMeta, "META-INF/quarkus-extension.properties")
+generatedPropsFile.parentFile.mkdirs()
+generatedPropsFile.text = "deployment-artifact=codes.domix:fun-quarkus-deployment:${project.version}\n"
+
+def existingSrcDirs = sourceSets.main.resources.srcDirs.toList()
+sourceSets.main.resources.setSrcDirs([generatedQuarkusMeta] + existingSrcDirs)
+
+processResources {
+    // Exclude the template; the pre-expanded generated file is used instead.
+    exclude('META-INF/quarkus-extension.properties')
+    from(generatedQuarkusMeta) {
+        include('META-INF/quarkus-extension.properties')
+    }
+}
+
+afterEvaluate {
+    tasks.named('sourcesJar') {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-quarkus", "${project.version}")
+    pom {
+        name = 'dmx-fun Quarkus integration'
+        description = 'Quarkus module for dmx-fun: CDI-based transaction support for Result and Try ' +
+            'without giving up declarative transaction management.'
+    }
+}

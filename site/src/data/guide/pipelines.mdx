@@ -53,7 +53,7 @@ Uses `dorny/paths-filter` on PRs to skip the build entirely when no relevant fil
 
 **Gotcha**: the workflow reads `version` from `gradle.properties` at runtime.
 If the version ends with `-SNAPSHOT`, all subsequent steps are skipped — the workflow exits early.
-Only stable versions (e.g. `0.0.14`) proceed.
+Only stable versions (e.g. `0.0.15`) proceed.
 
 **What it does**:
 1. Reads the version from `gradle.properties`

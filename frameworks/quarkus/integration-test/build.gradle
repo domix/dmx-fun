@@ -1,0 +1,41 @@
+// ── Quarkus integration-test module ──────────────────────────────────────────
+// Boots a full Quarkus application via @QuarkusTest and validates transactional
+// behaviour against a real PostgreSQL database started by Quarkus Dev Services.
+// Runs against the catalog Quarkus version (3.35.x) only; the compatibility
+// matrix across older Quarkus releases is covered by the unit tests.
+plugins {
+    id 'dmx-fun.java-base'
+    alias(libs.plugins.quarkus)
+}
+
+javadoc.enabled = false
+jacocoTestReport.enabled = false
+
+def quarkusVersion = libs.versions.quarkus.get()
+
+dependencies {
+    implementation enforcedPlatform("io.quarkus.platform:quarkus-bom:${quarkusVersion}")
+
+    // Application code compiles against our runtime + standard Quarkus extensions
+    implementation project(':frameworks:quarkus:runtime')
+    implementation 'io.quarkus:quarkus-arc'
+    implementation 'io.quarkus:quarkus-narayana-jta'
+    implementation 'io.quarkus:quarkus-agroal'
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+
+    // Deployment JARs needed during Quarkus augmentation (build-time processing)
+    testImplementation project(':frameworks:quarkus:fun-quarkus-deployment')
+    testImplementation 'io.quarkus:quarkus-arc-deployment'
+    testImplementation 'io.quarkus:quarkus-narayana-jta-deployment'
+    testImplementation 'io.quarkus:quarkus-agroal-deployment'
+    testImplementation 'io.quarkus:quarkus-jdbc-postgresql-deployment'
+
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation project(':core:assertj')
+    testRuntimeOnly libs.postgresql
+}
+
+test {
+    systemProperty 'java.util.logging.manager', 'org.jboss.logmanager.LogManager'
+    jvmArgs '-Xmx1g'
+}

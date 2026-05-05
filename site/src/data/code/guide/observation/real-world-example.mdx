@@ -1,0 +1,64 @@
+---
+fileName: 'OrderService.java'
+---
+
+```java
+import dmx.fun.Result;
+import dmx.fun.Try;
+import dmx.fun.observation.DmxObservation;
+import io.micrometer.observation.ObservationRegistry;
+
+/**
+ * An order service where each step is wrapped in its own named Observation.
+ *
+ * With Spring Boot 3.0+ and a tracing bridge on the classpath, each call
+ * automatically produces:
+ *   - A timer: payment_charge_seconds_count{outcome="success"|"failure"}
+ *   - A child span: "payment.charge" tagged outcome + exception on failure
+ *
+ * No manual counter.increment(), Span.start(), or stopwatch calls needed.
+ */
+public class OrderService {
+
+    private final DmxObservation dmx;
+    private final PaymentGateway paymentGateway;
+    private final InventoryClient inventoryClient;
+    private final OrderRepository orderRepository;
+
+    public OrderService(ObservationRegistry registry,
+                        PaymentGateway paymentGateway,
+                        InventoryClient inventoryClient,
+                        OrderRepository orderRepository) {
+        this.dmx               = DmxObservation.of(registry);
+        this.paymentGateway    = paymentGateway;
+        this.inventoryClient   = inventoryClient;
+        this.orderRepository   = orderRepository;
+    }
+
+    public Result<Order, String> placeOrder(PlaceOrderCommand cmd) {
+
+        // 1. Reserve inventory — observation: inventory.reserve
+        Try<Reservation> reservation = dmx.observeTry("inventory.reserve",
+            () -> inventoryClient.reserve(cmd.items())
+        );
+        if (reservation.isFailure()) {
+            return Result.err("Inventory unavailable: " + reservation.getCause().getMessage());
+        }
+
+        // 2. Charge payment — observation: payment.charge
+        Try<Receipt> receipt = dmx.observeTry("payment.charge",
+            () -> paymentGateway.charge(cmd.amount(), cmd.paymentToken())
+        );
+        if (receipt.isFailure()) {
+            inventoryClient.release(reservation.get());
+            return Result.err("Payment failed: " + receipt.getCause().getMessage());
+        }
+
+        // 3. Persist order — observation: order.place
+        return dmx.observeResult("order.place",
+            () -> orderRepository.save(Order.from(cmd, reservation.get(), receipt.get()))
+        )
+        .mapError(ex -> "Failed to persist order: " + ex.getMessage());
+    }
+}
+```

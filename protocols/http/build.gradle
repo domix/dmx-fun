@@ -1,0 +1,27 @@
+// ── HTTP module ───────────────────────────────────────────────────────────────
+// Wraps java.net.http.HttpClient, returning Result<T, HttpError> instead of
+// throwing exceptions. No external dependencies — only :lib and the JDK.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+dependencies {
+    api project(':core:lib')
+
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+jpmsTest {
+    moduleName   = 'dmx.fun.http'
+    extraModules = ['jdk.httpserver']
+    extraReads   = ['jdk.httpserver']
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-http", "${project.version}")
+    pom {
+        name = 'dmx-fun HTTP integration'
+        description = 'java.net.http.HttpClient wrapper for dmx-fun: returns Result<T, HttpError> instead of throwing exceptions.'
+    }
+}

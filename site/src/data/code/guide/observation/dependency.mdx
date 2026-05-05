@@ -1,0 +1,38 @@
+---
+fileName: 'build.gradle / pom.xml'
+---
+
+```groovy
+// Gradle
+implementation("codes.domix:fun-observation:LATEST_VERSION")
+// Micrometer — bring your own version (1.10.x – 1.16.x)
+implementation("io.micrometer:micrometer-core:1.16.5")
+// Optional: add a tracing bridge to also get distributed tracing spans
+// implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
+```
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-observation</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- Micrometer — bring your own version (1.10.x – 1.16.x) -->
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-core</artifactId>
+    <version>1.16.5</version>
+</dependency>
+<!-- Optional: add a tracing bridge to also get distributed tracing spans -->
+<!--
+<dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    <version>1.6.5</version>
+</dependency>
+-->
+```
+
+> `fun-observation` declares `micrometer-core` as `compileOnly`. You bring your own version
+> and backend. A tracing bridge is optional — without one, only metrics are recorded.

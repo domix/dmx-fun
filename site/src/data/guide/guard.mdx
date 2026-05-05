@@ -104,13 +104,17 @@ Validated<NonEmptyList<String>, Form> form =
 
 ## Interoperability
 
-| Method                         | Returns                           | Use case                                                                |
-|--------------------------------|-----------------------------------|-------------------------------------------------------------------------|
-| `asPredicate()`                | `Predicate<T>`                    | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
-| `contramap(fn)`                | `Guard<U>`                        | Adapt a field guard to validate the enclosing object type               |
-| `checkToResult(value)`         | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic                       |
-| `checkToResult(value, mapper)` | `Result<T, E>`                    | Map errors to a domain-specific error type at service boundaries        |
-| `checkToOption(value)`         | `Option<T>`                       | Discard errors — keep only valid values (stream filtering)              |
+| Method                             | Returns                           | Use case                                                                |
+|------------------------------------|-----------------------------------|-------------------------------------------------------------------------|
+| `asPredicate()`                    | `Predicate<T>`                    | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
+| `contramap(fn)`                    | `Guard<U>`                        | Adapt a field guard to validate the enclosing object type               |
+| `checkToResult(value)`             | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic                       |
+| `checkToResult(value, mapper)`     | `Result<T, E>`                    | Map errors to a domain-specific error type at service boundaries        |
+| `checkToEither(value)`             | `Either<NonEmptyList<String>, T>` | Integrate with Either-based pipelines (left = errors, right = value)    |
+| `checkToTry(value)`                | `Try<T>`                          | Integrate with Try-based pipelines; errors joined as `IllegalArgumentException` |
+| `checkToTry(value, toThrowable)`   | `Try<T>`                          | Integrate with Try-based pipelines; caller controls the exception type  |
+| `checkToOption(value)`             | `Option<T>`                       | Discard errors — keep only valid values (stream filtering)              |
+| `checkToOptional(value)`           | `Optional<T>`                     | Java standard `Optional` interop — drop-in for APIs expecting `Optional` |
 
 <Interop/>
 

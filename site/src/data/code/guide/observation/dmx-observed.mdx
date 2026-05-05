@@ -1,0 +1,23 @@
+---
+fileName: 'DmxObserved fluent builder'
+---
+
+```java
+import dmx.fun.Try;
+import dmx.fun.Result;
+import dmx.fun.observation.DmxObserved;
+
+// Chain observation name → registry → execute
+Try<Receipt> result = DmxObserved.of("payment.charge")
+    .registry(observationRegistry)
+    .observeTry(() -> stripe.charge(amount));
+
+// Same with Result
+Result<User, Throwable> user = DmxObserved.of("db.user.find")
+    .registry(observationRegistry)
+    .observeResult(() -> userRepo.findById(id));
+```
+
+> `DmxObserved` is a mutable builder — call `observeTry` or `observeResult` once at the end.
+> For repeated instrumentation of the same operation, prefer `DmxObservation.of(registry)` and
+> call `observeTry` directly.

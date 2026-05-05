@@ -1,0 +1,52 @@
+{
+  "properties": [
+    {
+      "name": "dmx.fun.tx-result.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a TxResult bean. Set to false to disable it entirely."
+    },
+    {
+      "name": "dmx.fun.tx-try.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a TxTry bean. Set to false to disable it entirely."
+    },
+    {
+      "name": "dmx.fun.tx-validated.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a TxValidated bean. Set to false to disable it entirely."
+    },
+    {
+      "name": "dmx.fun.aspect.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure the DmxTransactionalAspect bean. Set to false to disable @TransactionalResult, @TransactionalTry, and @TransactionalValidated AOP support entirely."
+    },
+    {
+      "name": "dmx.fun.mvc.option-handler.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure the Spring MVC Option return-value handler. Set to false to disable Option.some() -> 200 / Option.none() -> 404 mapping."
+    },
+    {
+      "name": "dmx.fun.mvc.result-handler.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure the Spring MVC Result/Validated/Try return-value handler. Set to false to disable success -> 200 and error/failure -> 500 mapping."
+    },
+    {
+      "name": "dmx.fun.tracing.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a DmxTracing bean. Set to false to disable automatic distributed tracing span instrumentation for Try and Result operations."
+    },
+    {
+      "name": "dmx.fun.observation.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a DmxObservation bean. When enabled, registers Micrometer Observation instrumentation for Try and Result operations (timers and low-cardinality tags are always recorded; distributed tracing spans are emitted only if a tracing bridge and matching ObservationHandler are configured). Set to false to disable this instrumentation entirely."
+    }
+  ]
+}
