@@ -504,11 +504,11 @@ public interface Guard<T> {
      * }</pre>
      *
      * @param value the value to validate
-     * @return {@code Optional.of(value)} if the guard passes, or {@code Optional.empty()} if
-     *         it fails
+     * @return {@code Optional.of(value)} if the guard passes and {@code value} is non-null,
+     *         {@code Optional.empty()} if the guard fails or {@code value} is null
      */
     default Optional<T> checkToOptional(T value) {
-        return this.check(value).isValid() ? Optional.of(value) : Optional.empty();
+        return this.check(value).isValid() ? Optional.ofNullable(value) : Optional.empty();
     }
 
     /**

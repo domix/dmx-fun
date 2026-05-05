@@ -586,6 +586,17 @@ class GuardTest {
     }
 
     @Test
+    void checkToOptional_returnsEmpty_forNullInput_doesNotThrowNPE() {
+        // Guard.nonNull() is typed Guard<@Nullable T> and rejects null → Optional.empty()
+        // Regression: Optional.ofNullable is used so null never reaches Optional.of(null).
+        Guard<@Nullable String> nonNullGuard = Guard.nonNull();
+
+        Optional<@Nullable String> result = nonNullGuard.checkToOptional(null);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void checkToOptional_usefulForOptionalChaining() {
         var minLength = Guard.<String>of(s -> s.length() >= 3, "min 3 chars");
         var username = notBeBlank.and(minLength);
