@@ -598,6 +598,34 @@ class ResourceTest {
     }
 
     @Test
+    void useAsEither_shouldSuppressReleaseException_whenBothBodyAndReleaseThrow() {
+        var bodyEx    = new RuntimeException("body");
+        var releaseEx = new RuntimeException("release");
+        var r = Resource.of(() -> "hello", _ -> { throw releaseEx; });
+        var captured = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+
+        var result = r.useAsEither(
+            _ -> { throw bodyEx; },
+            t -> { captured.set(t); return t.getMessage(); }
+        );
+
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("body");
+        assertThat(captured.get()).isSameAs(bodyEx);
+        assertThat(captured.get().getSuppressed()).containsExactly(releaseEx);
+    }
+
+    @Test
+    void useAsEither_shouldReturnLeft_whenBodyReturnsNull() {
+        var r = Resource.of(() -> "hello", _ -> {});
+
+        var result = r.useAsEither(_ -> null, Throwable::getMessage);
+
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).contains("body");
+    }
+
+    @Test
     void useAsEither_shouldThrowNPE_whenBodyIsNull() {
         var r = Resource.of(() -> "hello", _ -> {
         });
