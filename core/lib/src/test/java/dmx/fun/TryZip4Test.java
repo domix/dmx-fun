@@ -92,6 +92,36 @@ class TryZip4Test {
     }
 
     @Test
+    void zipWith4_secondFailure_returnsThatCause() {
+        var cause = new RuntimeException("e2");
+        var result = Try.<Integer, Integer, Integer, Integer, String>zipWith4(
+            Try.success(1), Try.failure(cause), Try.success(3), Try.success(4),
+            (a, b, c, d) -> "sum=" + (a + b + c + d));
+        assertTrue(result.isFailure());
+        assertEquals(cause, result.getCause());
+    }
+
+    @Test
+    void zipWith4_thirdFailure_returnsThatCause() {
+        var cause = new RuntimeException("e3");
+        var result = Try.<Integer, Integer, Integer, Integer, String>zipWith4(
+            Try.success(1), Try.success(2), Try.failure(cause), Try.success(4),
+            (a, b, c, d) -> "sum=" + (a + b + c + d));
+        assertTrue(result.isFailure());
+        assertEquals(cause, result.getCause());
+    }
+
+    @Test
+    void zipWith4_fourthFailure_returnsThatCause() {
+        var cause = new RuntimeException("e4");
+        var result = Try.<Integer, Integer, Integer, Integer, String>zipWith4(
+            Try.success(1), Try.success(2), Try.success(3), Try.failure(cause),
+            (a, b, c, d) -> "sum=" + (a + b + c + d));
+        assertTrue(result.isFailure());
+        assertEquals(cause, result.getCause());
+    }
+
+    @Test
     void zipWith4_failFast_firstFailureWins() {
         var cause1 = new RuntimeException("e1");
         var cause2 = new RuntimeException("e2");

@@ -122,6 +122,44 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Creates a {@code Try} from a potentially {@code null} value.
+     *
+     * <p>If {@code value} is non-null, returns {@code Success(value)}.
+     * If {@code value} is {@code null}, returns {@code Failure} using the supplied exception —
+     * the {@code exceptionSupplier} is only called when {@code value} is {@code null}.
+     *
+     * <p>This factory is a convenient alternative to the two-step
+     * {@code Try.fromOptional(Optional.ofNullable(value), exceptionSupplier)} pattern when
+     * working with APIs that return {@code null} instead of throwing.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * // Legacy API that returns null on failure
+     * Try<Connection> t = Try.ofNullable(
+     *     pool.borrowConnection(),
+     *     () -> new NoSuchElementException("no connections available")
+     * );
+     * }</pre>
+     *
+     * @param <V>               the value type
+     * @param value             the potentially {@code null} value
+     * @param exceptionSupplier a supplier for the throwable used when {@code value} is {@code null};
+     *                          must not be {@code null} and must not return {@code null}
+     * @return {@code Success(value)} if {@code value} is non-null, or
+     *         {@code Failure(exceptionSupplier.get())} if {@code value} is {@code null}
+     * @throws NullPointerException if {@code exceptionSupplier} is {@code null} or returns {@code null}
+     */
+    static <V> Try<V> ofNullable(@Nullable V value, Supplier<? extends Throwable> exceptionSupplier) {
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
+        if (value != null) {
+            return Try.success(value);
+        }
+        return Try.failure(
+            Objects.requireNonNull(exceptionSupplier.get(), "exceptionSupplier returned null")
+        );
+    }
+
+    /**
      * Executes the provided {@code CheckedRunnable} and returns a {@code Try} instance
      * representing the outcome of the execution.
      *
@@ -351,6 +389,42 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
             action.accept(cause);
         }
         return this;
+    }
+
+    /**
+     * Applies {@code onSuccess} to the value when this is a {@code Success}, or
+     * {@code onFailure} to the cause when this is a {@code Failure}.
+     *
+     * <p>This is the void terminal counterpart to
+     * {@link #fold(java.util.function.Function, java.util.function.Function) fold} — use it
+     * when you need to perform side effects on both tracks without producing a return value.
+     * It forces both branches to be handled explicitly.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Try.of(() -> readConfig(path))
+     *    .match(
+     *        config  -> applyConfig(config),
+     *        failure -> log.error("config unavailable", failure)
+     *    );
+     * }</pre>
+     *
+     * @param onSuccess consumer called with the value when this is a {@code Success};
+     *                  must not be {@code null}
+     * @param onFailure consumer called with the cause when this is a {@code Failure};
+     *                  must not be {@code null}
+     * @throws NullPointerException if {@code onSuccess} or {@code onFailure} is {@code null}
+     */
+    default void match(
+        Consumer<? super Value> onSuccess,
+        Consumer<? super Throwable> onFailure
+    ) {
+        Objects.requireNonNull(onSuccess, "onSuccess");
+        Objects.requireNonNull(onFailure, "onFailure");
+        switch (this) {
+            case Success<Value> s -> onSuccess.accept(s.value());
+            case Failure<Value> f -> onFailure.accept(f.cause());
+        }
     }
 
     /**
@@ -893,6 +967,75 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
         } catch (CancellationException e) {
             return Try.failure(e);
         }
+    }
+
+    /**
+     * Converts an {@link Either} into a {@code Try}.
+     *
+     * <p>{@code Either.right(v)} maps to {@code Try.success(v)};
+     * {@code Either.left(l)} maps to {@code Try.failure(leftMapper.apply(l))}.
+     *
+     * <p>This is the inverse of {@link #toEither()}, completing the bidirectional bridge
+     * between {@code Try} and {@code Either}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Either<String, Integer> right = Either.right(42);
+     * Try<Integer> t1 = Try.fromEither(right, IllegalArgumentException::new);
+     * // Try.success(42)
+     *
+     * Either<String, Integer> left = Either.left("not found");
+     * Try<Integer> t2 = Try.fromEither(left, IllegalArgumentException::new);
+     * // Try.failure(new IllegalArgumentException("not found"))
+     * }</pre>
+     *
+     * @param <L>        the left (error) type of the {@code Either}
+     * @param <R>        the right (success) type of the {@code Either}
+     * @param either     the {@code Either} to convert; must not be {@code null}
+     * @param leftMapper a function that maps the left value to a {@link Throwable};
+     *                   must not be {@code null} and must not return {@code null}
+     * @return {@code Try.success(right)} if the {@code Either} is right, or
+     *         {@code Try.failure(leftMapper.apply(left))} if it is left
+     * @throws NullPointerException if {@code either} or {@code leftMapper} is {@code null},
+     *                              or if {@code leftMapper} returns {@code null}
+     */
+    static <L, R> Try<R> fromEither(Either<L, R> either, Function<? super L, ? extends Throwable> leftMapper) {
+        Objects.requireNonNull(either, "either");
+        Objects.requireNonNull(leftMapper, "leftMapper");
+        if (either.isRight()) {
+            return Try.success(either.getRight());
+        }
+        return Try.failure(
+            Objects.requireNonNull(leftMapper.apply(either.getLeft()), "leftMapper returned null")
+        );
+    }
+
+    /**
+     * Converts this {@code Try} to a standard {@link Optional Optional&lt;V&gt;}.
+     *
+     * <p>{@code Success(v)} maps to {@code Optional.ofNullable(v)}; {@code Failure} maps to
+     * {@link Optional#empty()}. This is the inverse of
+     * {@link #fromOptional(Optional, Supplier) fromOptional}, completing the bidirectional bridge
+     * between {@code Try} and {@code Optional}.
+     *
+     * <p><strong>Note:</strong> error details are discarded on failure. Use {@link #toResult()}
+     * or {@link #toEither()} to preserve the exception in the converted value.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Try.success("hello").toOptional(); // Optional.of("hello")
+     * Try.failure(ex).toOptional();      // Optional.empty()
+     * Try.success(null).toOptional();    // Optional.empty()  — null success treated as absent
+     * }</pre>
+     *
+     * @return {@code Optional.of(value)} if this is a non-null {@code Success}, or
+     *         {@code Optional.empty()} if this is a {@code Failure} or a {@code Success(null)}
+     */
+    default Optional<Value> toOptional() {
+        return switch (this) {
+            case Success<Value> s -> Optional.ofNullable(s.value());
+            case Failure<Value> _ -> Optional.empty();
+        };
     }
 
     // ---------- Collectors ----------

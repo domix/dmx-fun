@@ -117,6 +117,26 @@ class TryZipTest {
     }
 
     @Test
+    void zipWith3_secondFailure_returnsThatCause() {
+        var cause = new RuntimeException("e2");
+        var result = Try.<Integer, Integer, Integer, String>zipWith3(
+            Try.success(1), Try.failure(cause), Try.success(3),
+            (a, b, c) -> "sum=" + (a + b + c));
+        assertTrue(result.isFailure());
+        assertEquals(cause, result.getCause());
+    }
+
+    @Test
+    void zipWith3_thirdFailure_returnsThatCause() {
+        var cause = new RuntimeException("e3");
+        var result = Try.<Integer, Integer, Integer, String>zipWith3(
+            Try.success(1), Try.success(2), Try.failure(cause),
+            (a, b, c) -> "sum=" + (a + b + c));
+        assertTrue(result.isFailure());
+        assertEquals(cause, result.getCause());
+    }
+
+    @Test
     void zipWith3_failFast_firstFailureWins() {
         var cause1 = new RuntimeException("e1");
         var cause2 = new RuntimeException("e2");

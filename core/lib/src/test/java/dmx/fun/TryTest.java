@@ -1030,6 +1030,15 @@ class TryTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void filter_withFunction_whenPredicateThrows_shouldReturnFailure() {
+        RuntimeException boom = new RuntimeException("predicate error");
+        Try<Integer> t = Try.success(10)
+            .filter(n -> { throw boom; }, n -> new IllegalArgumentException("unreachable"));
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(boom);
+    }
+
     // ---------- flatMapError ----------
 
     @Test
@@ -1109,6 +1118,287 @@ class TryTest {
         assertThatThrownBy(nullSuccess::toEither)
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("null");
+    }
+
+    // ---------- toOption ----------
+
+    @Test
+    void toOption_shouldReturnSome_whenSuccess() {
+        Option<String> opt = Try.success("hello").toOption();
+        assertThat(opt.isDefined()).isTrue();
+        assertThat(opt.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void toOption_shouldReturnNone_whenFailure() {
+        Option<String> opt = Try.<String>failure(new RuntimeException("boom")).toOption();
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    @Test
+    void toOption_shouldReturnNone_whenSuccessValueIsNull() {
+        // Try.run() produces Success(null) — toOption() returns None
+        Option<Void> opt = Try.run(() -> {}).toOption();
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    // ---------- fromOption ----------
+
+    @Test
+    void fromOption_shouldReturnSuccess_whenSome() {
+        Try<String> t = Try.fromOption(Option.some("hello"), RuntimeException::new);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void fromOption_shouldReturnFailure_whenNone() {
+        RuntimeException ex = new RuntimeException("missing");
+        Try<String> t = Try.fromOption(Option.none(), () -> ex);
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(ex);
+    }
+
+    @Test
+    void fromOption_shouldThrowNPE_whenOptIsNull() {
+        assertThatThrownBy(() -> Try.fromOption(null, RuntimeException::new))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("opt");
+    }
+
+    @Test
+    void fromOption_shouldThrowNPE_whenExceptionSupplierIsNull() {
+        assertThatThrownBy(() -> Try.fromOption(Option.none(), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier");
+    }
+
+    // ---------- fromOptional ----------
+
+    @Test
+    void fromOptional_shouldReturnSuccess_whenPresent() {
+        Try<String> t = Try.fromOptional(java.util.Optional.of("hello"), RuntimeException::new);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void fromOptional_shouldReturnFailure_whenEmpty() {
+        RuntimeException ex = new RuntimeException("empty");
+        Try<String> t = Try.fromOptional(java.util.Optional.empty(), () -> ex);
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(ex);
+    }
+
+    @Test
+    void fromOptional_shouldThrowNPE_whenOptionalIsNull() {
+        assertThatThrownBy(() -> Try.fromOptional(null, RuntimeException::new))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("optional");
+    }
+
+    @Test
+    void fromOptional_shouldThrowNPE_whenExceptionSupplierIsNull() {
+        assertThatThrownBy(() -> Try.fromOptional(java.util.Optional.empty(), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier");
+    }
+
+    // ---------- toOptional ----------
+
+    @Test
+    void toOptional_shouldReturnPresent_whenSuccess() {
+        java.util.Optional<String> opt = Try.success("hello").toOptional();
+        assertThat(opt).isPresent().contains("hello");
+    }
+
+    @Test
+    void toOptional_shouldReturnEmpty_whenFailure() {
+        java.util.Optional<String> opt = Try.<String>failure(new RuntimeException("boom")).toOptional();
+        assertThat(opt).isEmpty();
+    }
+
+    @Test
+    void toOptional_shouldReturnEmpty_whenSuccessValueIsNull() {
+        // null success value (Try.run) — Optional cannot hold null
+        java.util.Optional<Void> opt = Try.run(() -> {}).toOptional();
+        assertThat(opt).isEmpty();
+    }
+
+    // ---------- toFuture ----------
+
+    @Test
+    void toFuture_shouldReturnCompletedFuture_whenSuccess() throws Exception {
+        var future = Try.success("hello").toFuture();
+        assertThat(future.isDone()).isTrue();
+        assertThat(future.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void toFuture_shouldReturnFailedFuture_whenFailure() {
+        RuntimeException ex = new RuntimeException("boom");
+        var future = Try.<String>failure(ex).toFuture();
+        assertThat(future.isCompletedExceptionally()).isTrue();
+        assertThatThrownBy(future::get)
+            .cause()
+            .isSameAs(ex);
+    }
+
+    // ---------- fromFuture ----------
+
+    @Test
+    void fromFuture_shouldReturnSuccess_whenFutureCompletesNormally() {
+        var future = java.util.concurrent.CompletableFuture.completedFuture("hello");
+        Try<String> t = Try.fromFuture(future);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void fromFuture_shouldReturnFailure_andUnwrapCompletionException() {
+        RuntimeException cause = new RuntimeException("root cause");
+        var future = java.util.concurrent.CompletableFuture.<String>failedFuture(cause);
+        Try<String> t = Try.fromFuture(future);
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(cause);
+    }
+
+    @Test
+    void fromFuture_shouldReturnFailure_whenFutureIsCancelled() {
+        var future = new java.util.concurrent.CompletableFuture<String>();
+        future.cancel(false);
+        Try<String> t = Try.fromFuture(future);
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isInstanceOf(java.util.concurrent.CancellationException.class);
+    }
+
+    @Test
+    void fromFuture_shouldThrowNPE_whenFutureIsNull() {
+        assertThatThrownBy(() -> Try.fromFuture(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- fromEither ----------
+
+    @Test
+    void fromEither_shouldReturnSuccess_whenRight() {
+        Either<String, Integer> right = Either.right(42);
+        Try<Integer> t = Try.fromEither(right, msg -> new IllegalArgumentException(msg));
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo(42);
+    }
+
+    @Test
+    void fromEither_shouldReturnFailure_whenLeft() {
+        Either<String, Integer> left = Either.left("not found");
+        Try<Integer> t = Try.fromEither(left, msg -> new IllegalArgumentException(msg));
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(t.getCause().getMessage()).isEqualTo("not found");
+    }
+
+    @Test
+    void fromEither_shouldThrowNPE_whenEitherIsNull() {
+        Either<String, Integer> nullEither = null;
+        assertThatThrownBy(() -> Try.fromEither(nullEither, msg -> new IllegalArgumentException(msg)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("either");
+    }
+
+    @Test
+    void fromEither_shouldThrowNPE_whenLeftMapperIsNull() {
+        Either<String, Integer> left = Either.left("oops");
+        assertThatThrownBy(() -> Try.fromEither(left, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("leftMapper");
+    }
+
+    @Test
+    void fromEither_shouldThrowNPE_whenLeftMapperReturnsNull() {
+        Either<String, Integer> left = Either.left("oops");
+        assertThatThrownBy(() -> Try.fromEither(left, _ -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("leftMapper returned null");
+    }
+
+    // -------------------------------------------------------------------------
+    // ofNullable
+    // -------------------------------------------------------------------------
+
+    @Test
+    void ofNullable_returnsSuccess_whenValueIsNonNull() {
+        Try<String> t = Try.ofNullable("hello", () -> new NoSuchElementException("missing"));
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void ofNullable_returnsFailure_whenValueIsNull() {
+        NoSuchElementException ex = new NoSuchElementException("missing");
+        Try<String> t = Try.ofNullable(null, () -> ex);
+        assertThat(t.isFailure()).isTrue();
+        assertThat(t.getCause()).isSameAs(ex);
+    }
+
+    @Test
+    void ofNullable_shouldThrowNPE_whenExceptionSupplierIsNull() {
+        assertThatThrownBy(() -> Try.ofNullable("x", null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier");
+    }
+
+    @Test
+    void ofNullable_shouldThrowNPE_whenExceptionSupplierReturnsNull() {
+        assertThatThrownBy(() -> Try.ofNullable(null, () -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier returned null");
+    }
+
+    // -------------------------------------------------------------------------
+    // match
+    // -------------------------------------------------------------------------
+
+    @Test
+    void match_callsOnSuccess_whenSuccess() {
+        var called = new java.util.concurrent.atomic.AtomicReference<String>();
+        Try.success("hello").match(called::set, _ -> {});
+        assertThat(called.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void match_callsOnFailure_whenFailure() {
+        RuntimeException ex = new RuntimeException("boom");
+        var called = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        Try.<String>failure(ex).match(_ -> {}, called::set);
+        assertThat(called.get()).isSameAs(ex);
+    }
+
+    @Test
+    void match_doesNotCallOnFailure_whenSuccess() {
+        var failureCalled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        Try.success("ok").match(_ -> {}, _ -> failureCalled.set(true));
+        assertThat(failureCalled.get()).isFalse();
+    }
+
+    @Test
+    void match_doesNotCallOnSuccess_whenFailure() {
+        var successCalled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        Try.<String>failure(new RuntimeException()).match(_ -> successCalled.set(true), _ -> {});
+        assertThat(successCalled.get()).isFalse();
+    }
+
+    @Test
+    void match_shouldThrowNPE_whenOnSuccessIsNull() {
+        assertThatThrownBy(() -> Try.success("x").match(null, _ -> {}))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onSuccess");
+    }
+
+    @Test
+    void match_shouldThrowNPE_whenOnFailureIsNull() {
+        assertThatThrownBy(() -> Try.success("x").match(_ -> {}, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onFailure");
     }
 
     // -------------------------------------------------------------------------
