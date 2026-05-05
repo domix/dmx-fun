@@ -169,16 +169,19 @@ Call `toResultPartition()` to obtain the underlying `Result.Partition<V, E>` whe
 
 ## Interoperability
 
-| Conversion                     | Method                           |
-|--------------------------------|----------------------------------|
-| `Result` → `Option`            | `result.toOption()`              |
-| `Result` → `Try`               | `result.toTry(errorMapper)`      |
-| `Result` → `Either`            | `result.toEither()`              |
-| `Result` → `CompletableFuture` | `result.toFuture()`              |
-| `Option` → `Result`            | `option.toResult(errorSupplier)` |
-| `Try` → `Result`               | `tryVal.toResult()`              |
-| `Optional` → `Result`          | `Result.fromOptional(optional)`  |
-| `CompletableFuture` → `Result` | `Result.fromFuture(future)`      |
+| Conversion                       | Method                                      | Notes                                             |
+|----------------------------------|---------------------------------------------|---------------------------------------------------|
+| `Result` → `Option<V>`           | `result.toOption()`                         | `Err` → `None`; discards the error                |
+| `Result` → `Try<V>`             | `result.toTry(errorMapper)`                 | Maps error to `Throwable`                         |
+| `Result` → `Either<E, V>`        | `result.toEither()`                         | `Ok` → `right`; `Err` → `left`                   |
+| `Result` → `Optional<V>`         | `result.toOptional()`                       | `Err` → `Optional.empty()`; discards the error    |
+| `Result` → `CompletableFuture<V>`| `result.toFuture()`                         | `Err` → failed future with `NoSuchElementException`|
+| `Result` → `CompletableFuture<V>`| `result.toFuture(errorMapper)`              | `Err` → failed future with mapped `Throwable`     |
+| `Option` → `Result`              | `Result.fromOption(option, errorIfNone)`    | `None` → `Err(errorIfNone)`                       |
+| `Try` → `Result`                 | `tryVal.toResult()`                         | `Failure` → `Err(throwable)`                      |
+| `Optional` → `Result`            | `Result.fromOptional(optional)`             | `empty` → `Err(NoSuchElementException)`           |
+| `Either<E, V>` → `Result`        | `Result.fromEither(either)`                 | `left` → `Err`; `right` → `Ok`                   |
+| `CompletableFuture` → `Result`   | `Result.fromFuture(future)`                 | Blocks; unwraps `CompletionException`             |
 
 <InteropConversions/>
 

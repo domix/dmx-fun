@@ -1,10 +1,13 @@
 package dmx.fun;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -766,5 +769,474 @@ class ResultTest {
         assertThatThrownBy(() -> Stream.of("a").collect(Result.groupingBy(String::length, null)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("downstream");
+    }
+
+    // ---------- toEither ----------
+
+    @Test
+    void toEither_ok_shouldReturnRight() {
+        Either<String, Integer> either = Result.<Integer, String>ok(42).toEither();
+        assertThat(either.isRight()).isTrue();
+        assertThat(either.getRight()).isEqualTo(42);
+    }
+
+    @Test
+    void toEither_err_shouldReturnLeft() {
+        Either<String, Integer> either = Result.<Integer, String>err("boom").toEither();
+        assertThat(either.isLeft()).isTrue();
+        assertThat(either.getLeft()).isEqualTo("boom");
+    }
+
+    // ---------- toOptional ----------
+
+    @Test
+    void toOptional_ok_shouldReturnPresentOptional() {
+        Optional<String> opt = Result.<String, String>ok("hello").toOptional();
+        assertThat(opt).isPresent().hasValue("hello");
+    }
+
+    @Test
+    void toOptional_err_shouldReturnEmpty() {
+        Optional<String> opt = Result.<String, String>err("oops").toOptional();
+        assertThat(opt).isEmpty();
+    }
+
+    // ---------- toFuture() ----------
+
+    @Test
+    void toFuture_ok_shouldReturnCompletedFuture() throws Exception {
+        CompletableFuture<String> future = Result.<String, String>ok("done").toFuture();
+        assertThat(future.isDone()).isTrue();
+        assertThat(future.get()).isEqualTo("done");
+    }
+
+    @Test
+    void toFuture_err_shouldReturnFailedFuture() {
+        CompletableFuture<String> future = Result.<String, String>err("fail").toFuture();
+        assertThat(future.isCompletedExceptionally()).isTrue();
+    }
+
+    // ---------- toFuture(errorMapper) ----------
+
+    @Test
+    void toFuture_withMapper_ok_shouldReturnCompletedFuture() throws Exception {
+        CompletableFuture<String> future =
+            Result.<String, String>ok("done").toFuture(IllegalStateException::new);
+        assertThat(future.isDone()).isTrue();
+        assertThat(future.get()).isEqualTo("done");
+    }
+
+    @Test
+    void toFuture_withMapper_err_shouldReturnFailedFutureWithMappedException() {
+        CompletableFuture<String> future =
+            Result.<String, String>err("bad").toFuture(msg -> new IllegalArgumentException(msg));
+        assertThat(future.isCompletedExceptionally()).isTrue();
+    }
+
+    @Test
+    void toFuture_withMapper_shouldThrowNPE_ifMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>ok("x").toFuture(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("errorMapper");
+    }
+
+    // ---------- fromOptional ----------
+
+    @Test
+    void fromOptional_present_shouldReturnOk() {
+        Result<String, NoSuchElementException> r = Result.fromOptional(Optional.of("hi"));
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEqualTo("hi");
+    }
+
+    @Test
+    void fromOptional_empty_shouldReturnErrWithNoSuchElementException() {
+        Result<String, NoSuchElementException> r = Result.fromOptional(Optional.empty());
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isInstanceOf(NoSuchElementException.class);
+    }
+
+    @Test
+    void fromOptional_null_shouldThrowNPE() {
+        assertThatThrownBy(() -> Result.fromOptional(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("optional");
+    }
+
+    // ---------- fromFuture ----------
+
+    @Test
+    void fromFuture_completed_shouldReturnOk() {
+        Result<String, Throwable> r = Result.fromFuture(CompletableFuture.completedFuture("ok"));
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEqualTo("ok");
+    }
+
+    @Test
+    void fromFuture_failed_shouldReturnErrWithCause() {
+        IOException ex = new IOException("net down");
+        Result<String, Throwable> r =
+            Result.fromFuture(CompletableFuture.failedFuture(ex));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo(ex);
+    }
+
+    @Test
+    void fromFuture_null_shouldThrowNPE() {
+        assertThatThrownBy(() -> Result.fromFuture(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- fromEither ----------
+
+    @Test
+    void fromEither_right_shouldReturnOk() {
+        Either<String, Integer> right = Either.right(42);
+        Result<Integer, String> r = Result.fromEither(right);
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEqualTo(42);
+    }
+
+    @Test
+    void fromEither_left_shouldReturnErr() {
+        Either<String, Integer> left = Either.left("not found");
+        Result<Integer, String> r = Result.fromEither(left);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("not found");
+    }
+
+    @Test
+    void fromEither_null_shouldThrowNPE() {
+        Either<String, Integer> nullEither = null;
+        assertThatThrownBy(() -> Result.fromEither(nullEither))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("either");
+    }
+
+    // ---------- sequence(Iterable) ----------
+
+    @Test
+    void sequence_iterable_allOk_shouldReturnOkList() {
+        List<Result<Integer, String>> inputs = List.of(
+            Result.ok(1), Result.ok(2), Result.ok(3));
+        Result<List<Integer>, String> r = Result.sequence(inputs);
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void sequence_iterable_firstErrReturned() {
+        List<Result<Integer, String>> inputs = List.of(
+            Result.ok(1), Result.err("fail"), Result.ok(3));
+        Result<List<Integer>, String> r = Result.sequence(inputs);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("fail");
+    }
+
+    @Test
+    void sequence_iterable_empty_shouldReturnOkEmptyList() {
+        Result<List<Integer>, String> r = Result.sequence(List.of());
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEmpty();
+    }
+
+    // ---------- traverse(Iterable) ----------
+
+    @Test
+    void traverse_iterable_allSucceed_shouldReturnOkList() {
+        Result<List<Integer>, String> r =
+            Result.traverse(List.of("1", "2", "3"), s -> Result.ok(Integer.parseInt(s)));
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void traverse_iterable_firstErrReturned() {
+        Result<List<Integer>, String> r =
+            Result.traverse(List.of("1", "bad", "3"),
+                s -> s.equals("bad") ? Result.err("parse error") : Result.ok(Integer.parseInt(s)));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("parse error");
+    }
+
+    // ---------- zip ----------
+
+    @Test
+    void zip_bothOk_shouldReturnTuple2() {
+        Result<Tuple2<Integer, String>, String> r =
+            Result.zip(Result.ok(1), Result.ok("a"));
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()._1()).isEqualTo(1);
+        assertThat(r.get()._2()).isEqualTo("a");
+    }
+
+    @Test
+    void zip_firstErr_shouldReturnFirstErr() {
+        Result<Tuple2<Integer, String>, String> r =
+            Result.zip(Result.err("e1"), Result.ok("a"));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e1");
+    }
+
+    @Test
+    void zip_secondErr_shouldReturnSecondErr() {
+        Result<Tuple2<Integer, String>, String> r =
+            Result.zip(Result.ok(1), Result.err("e2"));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e2");
+    }
+
+    // ---------- zip3 ----------
+
+    @Test
+    void zip3_allOk_shouldReturnTuple3() {
+        Result<Tuple3<Integer, String, Boolean>, String> r =
+            Result.zip3(Result.ok(1), Result.ok("a"), Result.ok(true));
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()._1()).isEqualTo(1);
+        assertThat(r.get()._2()).isEqualTo("a");
+        assertThat(r.get()._3()).isEqualTo(true);
+    }
+
+    @Test
+    void zip3_firstErr_shouldReturnFirstErr() {
+        Result<Tuple3<Integer, String, Boolean>, String> r =
+            Result.zip3(Result.err("e1"), Result.ok("a"), Result.ok(true));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e1");
+    }
+
+    // ---------- zipWith3 ----------
+
+    @Test
+    void zipWith3_allOk_shouldApplyCombiner() {
+        Result<String, String> r =
+            Result.zipWith3(Result.ok("a"), Result.ok("b"), Result.ok("c"),
+                (a, b, c) -> a + b + c);
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEqualTo("abc");
+    }
+
+    @Test
+    void zipWith3_firstErr_shouldReturnFirstErr() {
+        Result<String, String> r =
+            Result.zipWith3(Result.<String, String>err("e1"), Result.ok("b"), Result.ok("c"),
+                (a, b, c) -> a + b + c);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e1");
+    }
+
+    // ---------- zip4 ----------
+
+    @Test
+    void zip4_allOk_shouldReturnTuple4() {
+        Result<Tuple4<Integer, Integer, Integer, Integer>, String> r =
+            Result.zip4(Result.ok(1), Result.ok(2), Result.ok(3), Result.ok(4));
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()._1()).isEqualTo(1);
+        assertThat(r.get()._4()).isEqualTo(4);
+    }
+
+    @Test
+    void zip4_firstErr_shouldReturnFirstErr() {
+        Result<Tuple4<Integer, Integer, Integer, Integer>, String> r =
+            Result.zip4(Result.err("e1"), Result.ok(2), Result.ok(3), Result.ok(4));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e1");
+    }
+
+    // ---------- zipWith4 ----------
+
+    @Test
+    void zipWith4_allOk_shouldApplyCombiner() {
+        Result<String, String> r =
+            Result.zipWith4(Result.ok("a"), Result.ok("b"), Result.ok("c"), Result.ok("d"),
+                (a, b, c, d) -> a + b + c + d);
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEqualTo("abcd");
+    }
+
+    @Test
+    void zipWith4_firstErr_shouldReturnFirstErr() {
+        Result<String, String> r =
+            Result.zipWith4(Result.<String, String>err("e1"), Result.ok("b"), Result.ok("c"), Result.ok("d"),
+                (a, b, c, d) -> a + b + c + d);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e1");
+    }
+
+    // ---------- deprecated factory overloads ----------
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void ok_deprecated_withClassHint_shouldReturnOk() {
+        Result<String, Integer> r = Result.ok("hello", Integer.class);
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).isEqualTo("hello");
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void err_deprecated_withClassHint_shouldReturnErr() {
+        Result<Integer, String> r = Result.err("oops", Integer.class);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("oops");
+    }
+
+    // ---------- filter(Predicate, Function) on Err ----------
+
+    @Test
+    void filter_withFunction_onErr_shouldReturnSameInstance() {
+        Result<String, String> err = Result.err("original");
+        Result<String, String> result = err.filter(s -> true, s -> "mapped error");
+        assertThat(result).isSameAs(err);
+    }
+
+    // ---------- toList() parallel combiner and null element ----------
+
+    @Test
+    void toList_parallelStream_allOk_shouldCollectAllValues() {
+        List<Result<Integer, String>> items = List.of(Result.ok(1), Result.ok(2), Result.ok(3));
+        Result<List<Integer>, String> r = items.parallelStream().collect(Result.toList());
+        assertThat(r.isOk()).isTrue();
+        assertThat(r.get()).containsExactlyInAnyOrder(1, 2, 3);
+    }
+
+    @Test
+    void toList_nullElement_shouldThrowNPE() {
+        List<Result<String, String>> withNull = new ArrayList<>();
+        withNull.add(Result.ok("a"));
+        withNull.add(null);
+        withNull.add(Result.ok("c"));
+        assertThatThrownBy(() -> withNull.stream().collect(Result.toList()))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null element");
+    }
+
+    // ---------- partitioningBy() parallel combiner and null element ----------
+
+    @Test
+    void partitioningBy_parallelStream_shouldPartitionCorrectly() {
+        List<Result<Integer, String>> items = List.of(Result.ok(1), Result.err("x"), Result.ok(2));
+        Result.Partition<Integer, String> p = items.parallelStream().collect(Result.partitioningBy());
+        assertThat(p.oks()).containsExactlyInAnyOrder(1, 2);
+        assertThat(p.errors()).containsExactly("x");
+    }
+
+    @Test
+    void partitioningBy_nullElement_shouldThrowNPE() {
+        List<Result<String, String>> withNull = new ArrayList<>();
+        withNull.add(Result.ok("a"));
+        withNull.add(null);
+        assertThatThrownBy(() -> withNull.stream().collect(Result.partitioningBy()))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("null element");
+    }
+
+    // ---------- groupingBy() parallel combiner ----------
+
+    @Test
+    void groupingBy_parallelStream_shouldGroupByKey() {
+        Map<Integer, NonEmptyList<String>> grouped =
+            Stream.of("a", "bb", "cc", "ddd")
+                .parallel()
+                .collect(Result.groupingBy(String::length));
+        assertThat(grouped).containsKey(1);
+        assertThat(grouped).containsKey(2);
+        assertThat(grouped).containsKey(3);
+        assertThat(grouped.get(2).toList()).containsExactlyInAnyOrder("bb", "cc");
+    }
+
+    // ---------- zip3: r2 and r3 Err ----------
+
+    @Test
+    void zip3_secondErr_shouldReturnSecondErr() {
+        Result<Tuple3<Integer, String, Boolean>, String> r =
+            Result.zip3(Result.ok(1), Result.<String, String>err("e2"), Result.ok(true));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e2");
+    }
+
+    @Test
+    void zip3_thirdErr_shouldReturnThirdErr() {
+        Result<Tuple3<Integer, String, Boolean>, String> r =
+            Result.zip3(Result.ok(1), Result.ok("a"), Result.<Boolean, String>err("e3"));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e3");
+    }
+
+    // ---------- zip4: r2, r3, r4 Err ----------
+
+    @Test
+    void zip4_secondErr_shouldReturnSecondErr() {
+        Result<Tuple4<Integer, Integer, Integer, Integer>, String> r =
+            Result.zip4(Result.ok(1), Result.<Integer, String>err("e2"), Result.ok(3), Result.ok(4));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e2");
+    }
+
+    @Test
+    void zip4_thirdErr_shouldReturnThirdErr() {
+        Result<Tuple4<Integer, Integer, Integer, Integer>, String> r =
+            Result.zip4(Result.ok(1), Result.ok(2), Result.<Integer, String>err("e3"), Result.ok(4));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e3");
+    }
+
+    @Test
+    void zip4_fourthErr_shouldReturnFourthErr() {
+        Result<Tuple4<Integer, Integer, Integer, Integer>, String> r =
+            Result.zip4(Result.ok(1), Result.ok(2), Result.ok(3), Result.<Integer, String>err("e4"));
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e4");
+    }
+
+    // ---------- zipWith3: r2 and r3 Err ----------
+
+    @Test
+    void zipWith3_secondErr_shouldReturnSecondErr() {
+        Result<String, String> r =
+            Result.zipWith3(Result.ok("a"), Result.<String, String>err("e2"), Result.ok("c"),
+                (a, b, c) -> a + b + c);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e2");
+    }
+
+    @Test
+    void zipWith3_thirdErr_shouldReturnThirdErr() {
+        Result<String, String> r =
+            Result.zipWith3(Result.ok("a"), Result.ok("b"), Result.<String, String>err("e3"),
+                (a, b, c) -> a + b + c);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e3");
+    }
+
+    // ---------- zipWith4: r2, r3, r4 Err ----------
+
+    @Test
+    void zipWith4_secondErr_shouldReturnSecondErr() {
+        Result<String, String> r =
+            Result.zipWith4(Result.ok("a"), Result.<String, String>err("e2"), Result.ok("c"), Result.ok("d"),
+                (a, b, c, d) -> a + b + c + d);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e2");
+    }
+
+    @Test
+    void zipWith4_thirdErr_shouldReturnThirdErr() {
+        Result<String, String> r =
+            Result.zipWith4(Result.ok("a"), Result.ok("b"), Result.<String, String>err("e3"), Result.ok("d"),
+                (a, b, c, d) -> a + b + c + d);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e3");
+    }
+
+    @Test
+    void zipWith4_fourthErr_shouldReturnFourthErr() {
+        Result<String, String> r =
+            Result.zipWith4(Result.ok("a"), Result.ok("b"), Result.ok("c"), Result.<String, String>err("e4"),
+                (a, b, c, d) -> a + b + c + d);
+        assertThat(r.isError()).isTrue();
+        assertThat(r.getError()).isEqualTo("e4");
     }
 }
