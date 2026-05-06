@@ -132,15 +132,19 @@ streams and the standard `Stream.collect` API.
 
 ## Interoperability
 
-| Conversion             | Method                                      |
-|------------------------|---------------------------------------------|
-| `Validated` → `Result` | `v.toResult()`                              |
-| `Validated` → `Try`    | `v.toTry(errorMapper)`                      |
-| `Validated` → `Either` | `v.toEither()`                              |
-| `Validated` → `Option` | `v.toOption()`                              |
-| `Result` → `Validated` | `Validated.fromResult(result)`              |
-| `Option` → `Validated` | `Validated.fromOption(option, errorIfNone)` |
-| `Try` → `Validated`    | `Validated.fromTry(t, errorMapper)`         |
+| Conversion                | Method                                         |
+|---------------------------|------------------------------------------------|
+| `Validated` → `Result`    | `v.toResult()`                                 |
+| `Validated` → `Try`       | `v.toTry(errorMapper)`                         |
+| `Validated` → `Either`    | `v.toEither()`                                 |
+| `Validated` → `Option`    | `v.toOption()`                                 |
+| `Validated` → `Optional`  | `v.toOptional()`                               |
+| `Validated` → `Stream`    | `v.stream()`                                   |
+| `Result` → `Validated`    | `Validated.fromResult(result)`                 |
+| `Option` → `Validated`    | `Validated.fromOption(option, errorIfNone)`    |
+| `Try` → `Validated`       | `Validated.fromTry(t, errorMapper)`            |
+| `Either` → `Validated`    | `Validated.fromEither(either)`                 |
+| `Optional` → `Validated`  | `Validated.fromOptional(optional, errorIfEmpty)` |
 
 <InteropConversions/>
 
