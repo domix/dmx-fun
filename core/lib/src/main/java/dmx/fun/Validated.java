@@ -406,11 +406,11 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
      * @return the equivalent {@code Validated}
      * @throws NullPointerException if {@code either} is null
      */
-    static <E, A> Validated<E, A> fromEither(Either<E, A> either) {
+    static <E, A> Validated<E, A> fromEither(Either<? extends E, ? extends A> either) {
         Objects.requireNonNull(either, "either");
         return switch (either) {
-            case Either.Right<E, A> r -> Validated.valid(r.value());
-            case Either.Left<E, A> l  -> Validated.invalid(l.value());
+            case Either.Right<? extends E, ? extends A> r -> Validated.valid(r.value());
+            case Either.Left<? extends E, ? extends A> l  -> Validated.invalid(l.value());
         };
     }
 

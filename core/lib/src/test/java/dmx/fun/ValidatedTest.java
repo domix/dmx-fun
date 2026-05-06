@@ -650,8 +650,6 @@ class ValidatedTest {
         ).isInstanceOf(NullPointerException.class);
     }
 
-    // ---------- toEither ----------
-
     // -------------------------------------------------------------------------
     // combine3
     // -------------------------------------------------------------------------
@@ -781,6 +779,8 @@ class ValidatedTest {
                 (e1, e2) -> e1, (a, _, _, _) -> a)
         ).isInstanceOf(NullPointerException.class);
     }
+
+    // ---------- toEither ----------
 
     @Test
     void toEither_shouldReturnRight_whenValid() {
