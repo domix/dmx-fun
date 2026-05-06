@@ -227,6 +227,55 @@ public final class Resource<T> {
         return Result.err(onError.apply(tryResult.getCause()));
     }
 
+    /**
+     * Acquires the resource, applies {@code body} to produce an {@link Either}, releases the
+     * resource, and returns an {@code Either<E, R>}.
+     *
+     * <p>This is the {@code Either}-integrated variant of {@link #use(CheckedFunction) use()},
+     * symmetric with {@link #useAsResult(Function, Function) useAsResult()}. Use it when the
+     * domain layer models results as neutral two-track {@code Either} values rather than
+     * typed {@code Result} errors.
+     *
+     * <ul>
+     *   <li>If acquire or release throws a {@code Throwable}, it is mapped to {@code E} via
+     *       {@code onError} and returned as {@code Either.left(e)}.</li>
+     *   <li>If the body returns {@code Either.left(e)}, that value is returned as-is.</li>
+     *   <li>If both body and release fail, the release exception is suppressed onto the body
+     *       exception and the combined throwable is passed to {@code onError}.</li>
+     * </ul>
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Either<DbError, List<User>> users = connResource.useAsEither(
+     *     conn -> fetchUsers(conn),
+     *     ex   -> new DbError.ConnectionFailed(ex.getMessage())
+     * );
+     * }</pre>
+     *
+     * @param <R>     the right (success) type
+     * @param <E>     the left (error) type
+     * @param body    function applied to the live resource; returns an {@code Either}
+     * @param onError maps any {@code Throwable} from acquire/release/body to {@code E}
+     * @return {@code Either.right(value)} on success, or {@code Either.left(error)} on any failure
+     * @throws NullPointerException if {@code body} or {@code onError} is {@code null}
+     */
+    public <R, E> Either<E, R> useAsEither(
+            Function<? super T, ? extends Either<? extends E, ? extends R>> body,
+            Function<? super Throwable, ? extends E> onError) {
+        Objects.requireNonNull(body, "body");
+        Objects.requireNonNull(onError, "onError");
+        var tryResult = use(t -> {
+            @SuppressWarnings("unchecked")
+            Either<E, R> r = (Either<E, R>) Objects.requireNonNull(
+                body.apply(t), "useAsEither body must not return null");
+            return r;
+        });
+        if (tryResult.isSuccess()) {
+            return tryResult.get();
+        }
+        return Either.left(onError.apply(tryResult.getCause()));
+    }
+
     // -------------------------------------------------------------------------
     // Transformations
     // -------------------------------------------------------------------------
