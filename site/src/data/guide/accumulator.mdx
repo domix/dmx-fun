@@ -81,18 +81,23 @@ log entries (`List::size`) or to convert raw strings to structured event objects
 
 <Interop/>
 
-| Method / Factory                     | Returns                     | Use case                                                                   |
-|--------------------------------------|-----------------------------|----------------------------------------------------------------------------|
-| `combine(other, merge, f)`           | `Accumulator<E, C>`         | Combine two independent accumulators; both logs merged                     |
-| `sequence(list, merge, empty)`       | `Accumulator<E, List<A>>`   | Fold a list of accumulators into one                                       |
-| `toOption()`                         | `Option<A>`                 | Extract value as Option; `None` for `tell` results; accumulation discarded |
-| `liftOption(opt, someLog, noneLog)`  | `Accumulator<E, Option<A>>` | Log the presence or absence of an Option value                             |
-| `liftTry(t, successLog, failureLog)` | `Accumulator<E, Try<A>>`    | Log the success or failure of a Try; the Try itself is the value           |
-| `toResult()`                         | `Result<A, E>`              | `Ok(value)` when has value; `Err(accumulated)` for `tell` results          |
-| `toTuple2()`                         | `Tuple2<E, A>`              | Structural decomposition; `_1` is accumulated, `_2` is value               |
-| `hasValue()`                         | `boolean`                   | Distinguish `of`/`pure` results from `tell` results                        |
-| `value()`                            | `@Nullable A`               | Extract the value; `null` for `tell` results                               |
-| `accumulated()`                      | `E`                         | Extract the accumulation; always non-null                                  |
+| Method / Factory                       | Returns                       | Use case                                                                   |
+|----------------------------------------|-------------------------------|----------------------------------------------------------------------------|
+| `combine(other, merge, f)`             | `Accumulator<E, C>`           | Combine two independent accumulators; both logs merged                     |
+| `sequence(list, merge, empty)`         | `Accumulator<E, List<A>>`     | Fold a list of accumulators into one                                       |
+| `toOption()`                           | `Option<A>`                   | Extract value as Option; `None` for `tell` results; accumulation discarded |
+| `toOptional()`                         | `Optional<A>`                 | JDK Optional bridge; `empty()` for `tell` results; accumulation discarded  |
+| `stream()`                             | `Stream<A>`                   | Single-element stream; empty for `tell` results; accumulation discarded    |
+| `toResult()`                           | `Result<A, E>`                | `Ok(value)` when has value; `Err(accumulated)` for `tell` results          |
+| `toEither()`                           | `Either<E, A>`                | `right(value)` when has value; `left(accumulated)` for `tell` results      |
+| `toTuple2()`                           | `Tuple2<E, A>`                | Structural decomposition; `_1` is accumulated, `_2` is value               |
+| `liftOption(opt, someLog, noneLog)`    | `Accumulator<E, Option<A>>`   | Log the presence or absence of an Option value                             |
+| `liftTry(t, successLog, failureLog)`   | `Accumulator<E, Try<A>>`      | Log the success or failure of a Try; the Try itself is the value           |
+| `liftResult(r, okLog, errLog)`         | `Accumulator<E, Result<V,Err>>` | Log the ok or error branch of a Result; the Result itself is the value   |
+| `liftEither(e, rightLog, leftLog)`     | `Accumulator<E, Either<L,R>>` | Log the right or left branch of an Either; the Either itself is the value  |
+| `hasValue()`                           | `boolean`                     | Distinguish `of`/`pure` results from `tell` results                        |
+| `value()`                              | `@Nullable A`                 | Extract the value; `null` for `tell` results                               |
+| `accumulated()`                        | `E`                           | Extract the accumulation; always non-null                                  |
 
 ## Real-world example
 
