@@ -9,6 +9,10 @@ NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20)
 NonEmptyMap<String, String> labeled = nem.mapValues(v -> v + " pts");
 // {alice="10 pts", bob="20 pts"}
 
+// mapValuesWithKey — transform every value with access to both the key and value
+NonEmptyMap<String, String> annotated = nem.mapValuesWithKey((k, v) -> k + "=" + v);
+// {alice="alice=10", bob="bob=20"}
+
 // mapKeys — transform every key; values follow their original key
 NonEmptyMap<String, Integer> upper = nem.mapKeys(String::toUpperCase);
 // {ALICE=10, BOB=20}
