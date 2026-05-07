@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.function.Function;
@@ -95,6 +96,22 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
         T head = list.get(0);
         var tail = List.<T>copyOf(list.subList(1, list.size()));
         return Option.some(new NonEmptyList<>(head, tail));
+    }
+
+    /**
+     * Attempts to construct a singleton {@code NonEmptyList} from a JDK {@link Optional}.
+     *
+     * @param optional the source optional; must not be {@code null}
+     * @param <T>      the element type
+     * @return {@link Option#some(Object)} wrapping a singleton {@code NonEmptyList} if the
+     *         optional is present, or {@link Option#none()} if the optional is empty
+     * @throws NullPointerException if {@code optional} is {@code null}
+     */
+    public static <T> Option<NonEmptyList<T>> fromOptional(Optional<? extends T> optional) {
+        Objects.requireNonNull(optional, "optional must not be null");
+        return optional.isPresent()
+            ? Option.some(NonEmptyList.singleton(optional.get()))
+            : Option.none();
     }
 
     // -------------------------------------------------------------------------
@@ -385,6 +402,86 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
         }
         // values.size() == nel.size() >= 1, so fromList always returns Some
         return NonEmptyList.fromList(values);
+    }
+
+    /**
+     * Sequences a {@code NonEmptyList} of {@link Try}s into a {@code Try} of a
+     * {@code NonEmptyList}.
+     *
+     * <p>Returns {@link Try#success(Object)} containing all unwrapped values if every element
+     * is a success; returns {@link Try#failure(Throwable)} from the first failing element
+     * (fail-fast — remaining elements are not evaluated).
+     *
+     * @param <T> the success value type
+     * @param nel a {@code NonEmptyList<Try<T>>}; must not be {@code null}
+     * @return {@code Success(NonEmptyList<T>)} if all succeed, {@code Failure} from the first
+     *         failing element otherwise
+     * @throws NullPointerException if {@code nel} is {@code null}
+     */
+    public static <T> Try<NonEmptyList<T>> sequenceTry(NonEmptyList<Try<T>> nel) {
+        Objects.requireNonNull(nel, "nel must not be null");
+        var values = new ArrayList<T>(nel.size());
+        for (Try<T> t : nel) {
+            switch (t) {
+                case Try.Failure<T> f -> { return Try.failure(f.cause()); }
+                case Try.Success<T> s -> values.add(s.value());
+            }
+        }
+        return Try.success(fromList(values).get()); // always Some since nel.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptyList} of {@link Either}s into an {@code Either} of a
+     * {@code NonEmptyList}.
+     *
+     * <p>Returns {@link Either#right(Object)} containing all unwrapped values if every element
+     * is right; returns {@link Either#left(Object)} from the first left element
+     * (fail-fast — remaining elements are not evaluated).
+     *
+     * @param <E> the left (error) type
+     * @param <T> the right (success) type
+     * @param nel a {@code NonEmptyList<Either<E, T>>}; must not be {@code null}
+     * @return {@code right(NonEmptyList<T>)} if all are right, {@code left(E)} from the first
+     *         left element otherwise
+     * @throws NullPointerException if {@code nel} is {@code null}
+     */
+    public static <E, T> Either<E, NonEmptyList<T>> sequenceEither(NonEmptyList<Either<E, T>> nel) {
+        Objects.requireNonNull(nel, "nel must not be null");
+        var values = new ArrayList<T>(nel.size());
+        for (Either<E, T> e : nel) {
+            switch (e) {
+                case Either.Left<E, T> l  -> { return Either.left(l.value()); }
+                case Either.Right<E, T> r -> values.add(r.value());
+            }
+        }
+        return Either.right(fromList(values).get()); // always Some since nel.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptyList} of {@link Result}s into a {@code Result} of a
+     * {@code NonEmptyList}.
+     *
+     * <p>Returns {@link Result#ok(Object)} containing all unwrapped values if every element
+     * is ok; returns {@link Result#err(Object)} from the first error element
+     * (fail-fast — remaining elements are not evaluated).
+     *
+     * @param <T> the ok value type
+     * @param <E> the error type
+     * @param nel a {@code NonEmptyList<Result<T, E>>}; must not be {@code null}
+     * @return {@code ok(NonEmptyList<T>)} if all succeed, {@code err(E)} from the first
+     *         error element otherwise
+     * @throws NullPointerException if {@code nel} is {@code null}
+     */
+    public static <T, E> Result<NonEmptyList<T>, E> sequenceResult(NonEmptyList<Result<T, E>> nel) {
+        Objects.requireNonNull(nel, "nel must not be null");
+        var values = new ArrayList<T>(nel.size());
+        for (Result<T, E> r : nel) {
+            switch (r) {
+                case Result.Err<T, E> err -> { return Result.err(err.error()); }
+                case Result.Ok<T, E> ok   -> values.add(ok.value());
+            }
+        }
+        return Result.ok(fromList(values).get()); // always Some since nel.size() >= 1
     }
 
     // -------------------------------------------------------------------------
