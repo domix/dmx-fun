@@ -410,7 +410,9 @@ class NonEmptyListTest {
             Stream.iterate(1, n -> n + 1).limit(100).parallel()
                 .collect(NonEmptyList.collector());
         assertThat(result.isDefined()).isTrue();
-        assertThat(result.get().size()).isEqualTo(100);
+        var expected = java.util.stream.IntStream.rangeClosed(1, 100)
+            .boxed().collect(java.util.stream.Collectors.toList());
+        assertThat(result.get().toList()).containsExactlyElementsOf(expected);
     }
 
     // -------------------------------------------------------------------------

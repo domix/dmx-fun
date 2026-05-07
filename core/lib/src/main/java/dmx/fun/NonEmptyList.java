@@ -410,7 +410,9 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      *
      * <p>Returns {@link Try#success(Object)} containing all unwrapped values if every element
      * is a success; returns {@link Try#failure(Throwable)} from the first failing element
-     * (fail-fast — remaining elements are not evaluated).
+     * (fail-fast in inspection — the method stops iterating after the first failure; elements
+     * are already materialized in the list before sequencing, so later elements are not inspected
+     * but were already evaluated).
      *
      * @param <T> the success value type
      * @param nel a {@code NonEmptyList<Try<T>>}; must not be {@code null}
@@ -436,7 +438,9 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      *
      * <p>Returns {@link Either#right(Object)} containing all unwrapped values if every element
      * is right; returns {@link Either#left(Object)} from the first left element
-     * (fail-fast — remaining elements are not evaluated).
+     * (fail-fast in inspection — the method stops iterating after the first left; elements
+     * are already materialized in the list before sequencing, so later elements are not inspected
+     * but were already evaluated).
      *
      * @param <E> the left (error) type
      * @param <T> the right (success) type
@@ -463,7 +467,9 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      *
      * <p>Returns {@link Result#ok(Object)} containing all unwrapped values if every element
      * is ok; returns {@link Result#err(Object)} from the first error element
-     * (fail-fast — remaining elements are not evaluated).
+     * (fail-fast in inspection — the method stops iterating after the first err; elements
+     * are already materialized in the list before sequencing, so later elements are not inspected
+     * but were already evaluated).
      *
      * @param <T> the ok value type
      * @param <E> the error type
