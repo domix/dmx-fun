@@ -9,7 +9,7 @@ BinaryOperator<List<String>> concat = (a, b) -> {
     return merged;
 };
 
-// ---- combine — two independent accumulators ----
+// ── combine — two independent accumulators ────────────────────────────────────
 
 Accumulator<List<String>, String>  userAcc  = fetchUser(id);    // ("Alice", ["user loaded"])
 Accumulator<List<String>, Integer> scoreAcc = fetchScore(id);   // (98, ["score loaded"])
@@ -20,7 +20,7 @@ Accumulator<List<String>, String> dashboard =
 dashboard.value();        // "Alice — score: 98"
 dashboard.accumulated();  // ["user loaded", "score loaded"]
 
-// ---- sequence — fold a list ----
+// ── sequence — fold a list ────────────────────────────────────────────────────
 
 List<Accumulator<List<String>, Integer>> steps = List.of(
     Accumulator.of(10, List.of("step A")),
@@ -32,28 +32,59 @@ Accumulator<List<String>, List<Integer>> all = Accumulator.sequence(steps, conca
 all.value();        // [10, 20, 30]
 all.accumulated();  // ["step A", "step B", "step C"]
 
-// ---- toOption — discard accumulation ----
+// ── Accumulator → other types (accumulation discarded) ───────────────────────
 
-Accumulator.of(42, List.of("log")).toOption();    // Some(42)
+Accumulator<List<String>, Integer> acc = Accumulator.of(42, List.of("log"));
+
+acc.toOption();    // Some(42)
+acc.toOptional();  // Optional.of(42)
+acc.stream();      // Stream.of(42)
+acc.toResult();    // Ok(42)
+acc.toEither();    // right(42)
+acc.toTuple2();    // Tuple2(["log"], 42)  — _1=accumulated, _2=value
+
 Accumulator.tell(List.of("entry")).toOption();    // None
+Accumulator.tell(List.of("entry")).toOptional();  // Optional.empty()
+Accumulator.tell(List.of("entry")).toResult();    // Err(["entry"])
+Accumulator.tell(List.of("entry")).toEither();    // left(["entry"])
 
-// ---- liftOption — log present / absent paths ----
+// ── liftOption — log present / absent paths ───────────────────────────────────
 
-Accumulator<List<String>, Option<String>> acc = Accumulator.liftOption(
+Accumulator<List<String>, Option<String>> liftedOpt = Accumulator.liftOption(
     userRepo.findName(id),
     name -> List.of("found: " + name),       // called when Some
     List.of("not found")                     // used when None
 );
-// Some("Alice") → ("Some(Alice)", ["found: Alice"])
-// None          → ("None",        ["not found"])
+// Some("Alice") → (Some("Alice"), ["found: Alice"])
+// None          → (None,          ["not found"])
 
-// ---- liftTry — log success / failure ----
+// ── liftTry — log success / failure ──────────────────────────────────────────
 
-Accumulator<List<String>, Try<Config>> loaded = Accumulator.liftTry(
+Accumulator<List<String>, Try<Config>> liftedTry = Accumulator.liftTry(
     Try.of(() -> ConfigLoader.load(path)),
     cfg -> List.of("config loaded from " + path),
     ex  -> List.of("config load failed: " + ex.getMessage())
 );
-loaded.accumulated();  // always set — success or failure
-loaded.value();        // Try<Config> — caller decides what to do with it
+liftedTry.accumulated();  // always set — success or failure
+liftedTry.value();        // Try<Config> — caller decides what to do with it
+
+// ── liftResult — log ok / error paths ────────────────────────────────────────
+
+Accumulator<List<String>, Result<Config, String>> liftedResult = Accumulator.liftResult(
+    configService.load(path),
+    cfg -> List.of("config loaded"),
+    err -> List.of("config error: " + err)
+);
+liftedResult.accumulated();  // always set — ok or error
+liftedResult.value();        // Result<Config, String> — caller handles it
+
+// ── liftEither — log right / left paths ──────────────────────────────────────
+
+Accumulator<List<String>, Either<String, Config>> liftedEither = Accumulator.liftEither(
+    configParser.parse(input),
+    cfg -> List.of("parsed successfully"),
+    err -> List.of("parse failed: " + err)
+);
+liftedEither.accumulated();  // always set — right or left
+liftedEither.value();        // Either<String, Config> — caller handles it
 ```

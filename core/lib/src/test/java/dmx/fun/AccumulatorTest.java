@@ -2,6 +2,7 @@ package dmx.fun;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 import org.junit.jupiter.api.Test;
 
@@ -582,5 +583,162 @@ class AccumulatorTest {
         assertThat(result.value()).isEqualTo("CONFIG.YAML");
         assertThat(result.accumulated())
             .containsExactly("config path resolved: config.yaml", "path normalized");
+    }
+
+    // -------------------------------------------------------------------------
+    // toOptional
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toOptional_returnsPresent_forOfAccumulator() {
+        var acc = Accumulator.of(42, List.of("log"));
+        assertThat(acc.toOptional())
+            .isPresent().contains(42);
+    }
+
+    @Test
+    void toOptional_returnsEmpty_forTellAccumulator() {
+        var acc = Accumulator.tell(List.of("log"));
+        assertThat(acc.toOptional()).isEmpty();
+    }
+
+    @Test
+    void toOptional_discardsAccumulation() {
+        var acc = Accumulator.of("value", List.of("important log"));
+        assertThat(acc.toOptional()).contains("value");
+    }
+
+    // -------------------------------------------------------------------------
+    // stream
+    // -------------------------------------------------------------------------
+
+    @Test
+    void stream_returnsSingleElement_forOfAccumulator() {
+        var acc = Accumulator.of(42, List.of("log"));
+        assertThat(acc.stream().toList()).containsExactly(42);
+    }
+
+    @Test
+    void stream_returnsEmpty_forTellAccumulator() {
+        var acc = Accumulator.tell(List.of("log"));
+        assertThat(acc.stream().toList()).isEmpty();
+    }
+
+    // -------------------------------------------------------------------------
+    // toEither
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toEither_returnsRight_forOfAccumulator() {
+        var acc = Accumulator.of(42, List.of("log"));
+        var either = acc.toEither();
+        assertThat(either.isRight()).isTrue();
+        assertThat(either.getRight()).isEqualTo(42);
+    }
+
+    @Test
+    void toEither_returnsLeft_forTellAccumulator() {
+        var acc = Accumulator.tell(List.of("entry"));
+        var either = acc.toEither();
+        assertThat(either.isLeft()).isTrue();
+        assertThat(either.getLeft()).containsExactly("entry");
+    }
+
+    // -------------------------------------------------------------------------
+    // liftResult
+    // -------------------------------------------------------------------------
+
+    @Test
+    void liftResult_ok_appliesOkLog() {
+        var result = Accumulator.liftResult(
+            Result.ok("alice"),
+            name -> List.of("found: " + name),
+            err  -> List.of("error: " + err)
+        );
+        assertThat(result.value().isOk()).isTrue();
+        assertThat(result.value().get()).isEqualTo("alice");
+        assertThat(result.accumulated()).containsExactly("found: alice");
+    }
+
+    @Test
+    void liftResult_error_appliesErrLog() {
+        var result = Accumulator.liftResult(
+            Result.<String, String>err("not found"),
+            name -> List.of("found: " + name),
+            err  -> List.of("error: " + err)
+        );
+        assertThat(result.value().isError()).isTrue();
+        assertThat(result.value().getError()).isEqualTo("not found");
+        assertThat(result.accumulated()).containsExactly("error: not found");
+    }
+
+    @Test
+    void liftResult_shouldThrowNPE_whenResultIsNull() {
+        assertThatThrownBy(() ->
+            Accumulator.liftResult(null, v -> List.of(), e -> List.of()))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void liftResult_shouldThrowNPE_whenOkLogReturnsNull() {
+        assertThatThrownBy(() ->
+            Accumulator.liftResult(Result.ok(1), v -> null, e -> List.of()))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void liftResult_shouldThrowNPE_whenErrLogReturnsNull() {
+        assertThatThrownBy(() ->
+            Accumulator.liftResult(Result.err("bad"), v -> List.of(), e -> null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // liftEither
+    // -------------------------------------------------------------------------
+
+    @Test
+    void liftEither_right_appliesRightLog() {
+        var result = Accumulator.liftEither(
+            Either.<String, Integer>right(42),
+            v   -> List.of("right: " + v),
+            err -> List.of("left: " + err)
+        );
+        assertThat(result.value().isRight()).isTrue();
+        assertThat(result.value().getRight()).isEqualTo(42);
+        assertThat(result.accumulated()).containsExactly("right: 42");
+    }
+
+    @Test
+    void liftEither_left_appliesLeftLog() {
+        var result = Accumulator.liftEither(
+            Either.<String, Integer>left("oops"),
+            v   -> List.of("right: " + v),
+            err -> List.of("left: " + err)
+        );
+        assertThat(result.value().isLeft()).isTrue();
+        assertThat(result.value().getLeft()).isEqualTo("oops");
+        assertThat(result.accumulated()).containsExactly("left: oops");
+    }
+
+    @Test
+    void liftEither_shouldThrowNPE_whenEitherIsNull() {
+        assertThatThrownBy(() ->
+            Accumulator.liftEither(null, v -> List.of(), e -> List.of()))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void liftEither_shouldThrowNPE_whenRightLogReturnsNull() {
+        assertThatThrownBy(() ->
+            Accumulator.liftEither(Either.right(1), v -> null, e -> List.of()))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void liftEither_shouldThrowNPE_whenLeftLogReturnsNull() {
+        assertThatThrownBy(() ->
+            Accumulator.liftEither(Either.left("bad"), v -> List.of(), e -> null))
+            .isInstanceOf(NullPointerException.class);
     }
 }
