@@ -1,0 +1,47 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// sequenceTry: NonEmptyList<Try<T>> → Try<NonEmptyList<T>>
+// Success if every element succeeds; Failure from the first failing element.
+NonEmptyList<Try<Integer>> tries = NonEmptyList.of(
+    Try.success(1), List.of(Try.success(2), Try.success(3)));
+
+Try<NonEmptyList<Integer>> allOk = NonEmptyList.sequenceTry(tries);
+// Success([1, 2, 3])
+
+NonEmptyList<Try<Integer>> withFailure = NonEmptyList.of(
+    Try.success(1), List.of(Try.failure(new RuntimeException("boom")), Try.success(3)));
+
+Try<NonEmptyList<Integer>> failed = NonEmptyList.sequenceTry(withFailure);
+// Failure(RuntimeException("boom"))
+
+// sequenceEither: NonEmptyList<Either<E, T>> → Either<E, NonEmptyList<T>>
+// right if every element is right; left from the first left element.
+NonEmptyList<Either<String, Integer>> eithers = NonEmptyList.of(
+    Either.right(1), List.of(Either.right(2), Either.right(3)));
+
+Either<String, NonEmptyList<Integer>> allRight = NonEmptyList.sequenceEither(eithers);
+// right([1, 2, 3])
+
+NonEmptyList<Either<String, Integer>> withLeft = NonEmptyList.of(
+    Either.right(1), List.of(Either.left("invalid"), Either.right(3)));
+
+Either<String, NonEmptyList<Integer>> firstLeft = NonEmptyList.sequenceEither(withLeft);
+// left("invalid")
+
+// sequenceResult: NonEmptyList<Result<T, E>> → Result<NonEmptyList<T>, E>
+// ok if every element is ok; err from the first error element.
+NonEmptyList<Result<Integer, String>> results = NonEmptyList.of(
+    Result.ok(1), List.of(Result.ok(2), Result.ok(3)));
+
+Result<NonEmptyList<Integer>, String> allOkResult = NonEmptyList.sequenceResult(results);
+// ok([1, 2, 3])
+
+NonEmptyList<Result<Integer, String>> withErr = NonEmptyList.of(
+    Result.ok(1), List.of(Result.err("not found"), Result.ok(3)));
+
+Result<NonEmptyList<Integer>, String> firstErr = NonEmptyList.sequenceResult(withErr);
+// err("not found")
+```

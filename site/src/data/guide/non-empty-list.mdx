@@ -9,6 +9,7 @@ import {Content as CreatingInstances}  from '../code/guide/non-empty-list/creati
 import {Content as AccessingElements}  from '../code/guide/non-empty-list/accessing-elements.mdx';
 import {Content as Transformations}    from '../code/guide/non-empty-list/transformations.mdx';
 import {Content as InteropOption}      from '../code/guide/non-empty-list/interop-option.mdx';
+import {Content as InteropSequences}   from '../code/guide/non-empty-list/interop-sequences.mdx';
 import {Content as InteropValidated}   from '../code/guide/non-empty-list/interop-validated.mdx';
 import {Content as StreamInterop}      from '../code/guide/non-empty-list/stream-interop.mdx';
 import {Content as EqualityToString}       from '../code/guide/non-empty-list/equality-tostring.mdx';
@@ -50,6 +51,7 @@ Use it when:
 | `NonEmptyList.of(head, tail)`                   | N/A — head is always required |
 | `NonEmptyList.singleton(head)`                  | N/A — always one element      |
 | `NonEmptyList.fromList(list)`                   | Returns `None`                |
+| `NonEmptyList.fromOptional(optional)`           | Returns `None`                |
 | `stream.collect(NonEmptyList.collector())`      | Returns `None`                |
 | `stream.collect(NonEmptyList.toNonEmptyList())` | Returns `None`                |
 
@@ -110,6 +112,23 @@ at stream call sites. It returns `Some(NonEmptyList)` for a non-empty stream and
 `sequence` and `collector` bridge between `NonEmptyList` and `Option`.
 
 <InteropOption/>
+
+## Interoperability — `Try`, `Either`, `Result`
+
+`sequenceTry`, `sequenceEither`, and `sequenceResult` each convert a
+`NonEmptyList` of wrapped values into a single wrapped `NonEmptyList`.
+All three are **fail-fast**: they return the first failure and stop processing.
+
+| Method                              | Input                          | Returns                         |
+|-------------------------------------|--------------------------------|---------------------------------|
+| `NonEmptyList.sequenceTry(nel)`     | `NonEmptyList<Try<T>>`         | `Try<NonEmptyList<T>>`          |
+| `NonEmptyList.sequenceEither(nel)`  | `NonEmptyList<Either<E, T>>`   | `Either<E, NonEmptyList<T>>`    |
+| `NonEmptyList.sequenceResult(nel)`  | `NonEmptyList<Result<T, E>>`   | `Result<NonEmptyList<T>, E>`    |
+
+Use `Validated.sequenceNel` when you need **error accumulation** (all errors collected);
+use these when you need **fail-fast** behaviour (stop at the first failure).
+
+<InteropSequences/>
 
 ## Interoperability — `Validated` and error accumulation
 

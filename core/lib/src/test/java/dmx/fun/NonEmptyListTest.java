@@ -1,6 +1,7 @@
 package dmx.fun;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
@@ -402,6 +403,18 @@ class NonEmptyListTest {
         assertThat(viaAlias).isEqualTo(viaCollector);
     }
 
+    @Test
+    void collector_combiner_invokedByParallelStream() {
+        // The combiner lambda is only called when splitting/merging parallel stream segments.
+        Option<NonEmptyList<Integer>> result =
+            Stream.iterate(1, n -> n + 1).limit(100).parallel()
+                .collect(NonEmptyList.collector());
+        assertThat(result.isDefined()).isTrue();
+        var expected = java.util.stream.IntStream.rangeClosed(1, 100)
+            .boxed().collect(java.util.stream.Collectors.toList());
+        assertThat(result.get().toList()).containsExactlyElementsOf(expected);
+    }
+
     // -------------------------------------------------------------------------
     // SequencedCollection — getFirst() / getLast() / reversed()
     // -------------------------------------------------------------------------
@@ -514,5 +527,223 @@ class NonEmptyListTest {
     void clear_throwsUnsupported() {
         assertThatThrownBy(() -> NonEmptyList.singleton(1).clear())
             .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void containsAll_shouldReturnTrue_whenAllPresent() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        assertThat(nel.containsAll(List.of(1, 3))).isTrue();
+    }
+
+    @Test
+    void containsAll_shouldReturnFalse_whenAnyAbsent() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2));
+        assertThat(nel.containsAll(List.of(1, 99))).isFalse();
+    }
+
+    @Test
+    void toArray_shouldReturnAllElements() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        assertThat(nel.toArray()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void toArrayTyped_shouldReturnAllElements() {
+        NonEmptyList<String> nel = NonEmptyList.of("a", List.of("b", "c"));
+        assertThat(nel.toArray(new String[0])).containsExactly("a", "b", "c");
+    }
+
+    @Test
+    void addAll_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).addAll(List.of(2)))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void removeAll_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).removeAll(List.of(1)))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void retainAll_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).retainAll(List.of(1)))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void removeIf_throwsUnsupported() {
+        assertThatThrownBy(() -> NonEmptyList.singleton(1).removeIf(x -> true))
+            .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // fromOptional()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void fromOptional_shouldReturnSome_whenPresent() {
+        Option<NonEmptyList<String>> result = NonEmptyList.fromOptional(Optional.of("hello"));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().head()).isEqualTo("hello");
+        assertThat(result.get().size()).isEqualTo(1);
+    }
+
+    @Test
+    void fromOptional_shouldReturnNone_whenEmpty() {
+        Option<NonEmptyList<String>> result = NonEmptyList.fromOptional(Optional.empty());
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromOptional_shouldThrowNPE_whenOptionalIsNull() {
+        assertThatThrownBy(() -> NonEmptyList.fromOptional(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("optional");
+    }
+
+    // -------------------------------------------------------------------------
+    // toStream()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toStream_shouldYieldAllElementsInOrder() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(1, List.of(2, 3));
+        assertThat(nel.toStream().toList()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void toStream_singleton_shouldYieldSingleElement() {
+        assertThat(NonEmptyList.singleton("x").toStream().toList()).containsExactly("x");
+    }
+
+    // -------------------------------------------------------------------------
+    // sequence(NonEmptyList<Option<T>>)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequence_options_allSome_shouldReturnSome() {
+        NonEmptyList<Option<Integer>> nel = NonEmptyList.of(
+            Option.some(1), List.of(Option.some(2), Option.some(3)));
+        Option<NonEmptyList<Integer>> result = NonEmptyList.sequence(nel);
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().toList()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void sequence_options_withNone_shouldReturnNone() {
+        NonEmptyList<Option<Integer>> nel = NonEmptyList.of(
+            Option.some(1), List.of(Option.none(), Option.some(3)));
+        Option<NonEmptyList<Integer>> result = NonEmptyList.sequence(nel);
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void sequence_options_singletonSome_shouldReturnSome() {
+        Option<NonEmptyList<String>> result =
+            NonEmptyList.sequence(NonEmptyList.singleton(Option.some("x")));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().head()).isEqualTo("x");
+    }
+
+    @Test
+    void sequence_options_singletonNone_shouldReturnNone() {
+        Option<NonEmptyList<String>> result =
+            NonEmptyList.sequence(NonEmptyList.singleton(Option.<String>none()));
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceTry(NonEmptyList<Try<T>>)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceTry_allSuccess_shouldReturnSuccess() {
+        NonEmptyList<Try<Integer>> nel = NonEmptyList.of(
+            Try.success(1), List.of(Try.success(2), Try.success(3)));
+        Try<NonEmptyList<Integer>> result = NonEmptyList.sequenceTry(nel);
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get().toList()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void sequenceTry_withFailure_shouldReturnFailure() {
+        var ex = new RuntimeException("boom");
+        NonEmptyList<Try<Integer>> nel = NonEmptyList.of(
+            Try.success(1), List.of(Try.failure(ex), Try.success(3)));
+        Try<NonEmptyList<Integer>> result = NonEmptyList.sequenceTry(nel);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(ex);
+    }
+
+    @Test
+    void sequenceTry_firstElementFailure_shouldReturnFailure() {
+        var ex = new RuntimeException("first fails");
+        Try<NonEmptyList<Integer>> result =
+            NonEmptyList.sequenceTry(NonEmptyList.singleton(Try.failure(ex)));
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(ex);
+    }
+
+    @Test
+    void sequenceTry_shouldThrowNPE_whenNelIsNull() {
+        assertThatThrownBy(() -> NonEmptyList.sequenceTry(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceEither(NonEmptyList<Either<E, T>>)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceEither_allRight_shouldReturnRight() {
+        NonEmptyList<Either<String, Integer>> nel = NonEmptyList.of(
+            Either.right(1), List.of(Either.right(2), Either.right(3)));
+        Either<String, NonEmptyList<Integer>> result = NonEmptyList.sequenceEither(nel);
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight().toList()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void sequenceEither_withLeft_shouldReturnLeft() {
+        NonEmptyList<Either<String, Integer>> nel = NonEmptyList.of(
+            Either.right(1), List.of(Either.left("error"), Either.right(3)));
+        Either<String, NonEmptyList<Integer>> result = NonEmptyList.sequenceEither(nel);
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("error");
+    }
+
+    @Test
+    void sequenceEither_shouldThrowNPE_whenNelIsNull() {
+        assertThatThrownBy(() -> NonEmptyList.sequenceEither(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceResult(NonEmptyList<Result<T, E>>)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceResult_allOk_shouldReturnOk() {
+        NonEmptyList<Result<Integer, String>> nel = NonEmptyList.of(
+            Result.ok(1), List.of(Result.ok(2), Result.ok(3)));
+        Result<NonEmptyList<Integer>, String> result = NonEmptyList.sequenceResult(nel);
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get().toList()).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void sequenceResult_withError_shouldReturnErr() {
+        NonEmptyList<Result<Integer, String>> nel = NonEmptyList.of(
+            Result.ok(1), List.of(Result.err("bad"), Result.ok(3)));
+        Result<NonEmptyList<Integer>, String> result = NonEmptyList.sequenceResult(nel);
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("bad");
+    }
+
+    @Test
+    void sequenceResult_shouldThrowNPE_whenNelIsNull() {
+        assertThatThrownBy(() -> NonEmptyList.sequenceResult(null))
+            .isInstanceOf(NullPointerException.class);
     }
 }
