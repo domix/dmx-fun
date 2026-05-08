@@ -1,0 +1,47 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// sequenceTry: NonEmptyMap<K, Try<V>> → Try<NonEmptyMap<K, V>>
+// Success if every value succeeds; Failure from the first failing entry.
+NonEmptyMap<String, Try<Integer>> tries = NonEmptyMap.of(
+    "alice", Try.success(10), Map.of("bob", Try.success(20)));
+
+Try<NonEmptyMap<String, Integer>> allOk = NonEmptyMap.sequenceTry(tries);
+// Success({alice=10, bob=20})
+
+NonEmptyMap<String, Try<Integer>> withFailure = NonEmptyMap.of(
+    "alice", Try.failure(new RuntimeException("boom")), Map.of("bob", Try.success(20)));
+
+Try<NonEmptyMap<String, Integer>> failed = NonEmptyMap.sequenceTry(withFailure);
+// Failure(RuntimeException("boom"))
+
+// sequenceEither: NonEmptyMap<K, Either<E, V>> → Either<E, NonEmptyMap<K, V>>
+// right if every value is right; left from the first left entry.
+NonEmptyMap<String, Either<String, Integer>> eithers = NonEmptyMap.of(
+    "alice", Either.right(10), Map.of("bob", Either.right(20)));
+
+Either<String, NonEmptyMap<String, Integer>> allRight = NonEmptyMap.sequenceEither(eithers);
+// right({alice=10, bob=20})
+
+NonEmptyMap<String, Either<String, Integer>> withLeft = NonEmptyMap.of(
+    "alice", Either.left("invalid"), Map.of("bob", Either.right(20)));
+
+Either<String, NonEmptyMap<String, Integer>> firstLeft = NonEmptyMap.sequenceEither(withLeft);
+// left("invalid")
+
+// sequenceResult: NonEmptyMap<K, Result<V, E>> → Result<NonEmptyMap<K, V>, E>
+// ok if every value is ok; err from the first error entry.
+NonEmptyMap<String, Result<Integer, String>> results = NonEmptyMap.of(
+    "alice", Result.ok(10), Map.of("bob", Result.ok(20)));
+
+Result<NonEmptyMap<String, Integer>, String> allOkResult = NonEmptyMap.sequenceResult(results);
+// ok({alice=10, bob=20})
+
+NonEmptyMap<String, Result<Integer, String>> withErr = NonEmptyMap.of(
+    "alice", Result.err("not found"), Map.of("bob", Result.ok(20)));
+
+Result<NonEmptyMap<String, Integer>, String> firstErr = NonEmptyMap.sequenceResult(withErr);
+// err("not found")
+```
