@@ -1,7 +1,9 @@
 package dmx.fun;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +17,11 @@ class NonEmptyMapTest {
 
     @Test
     void of_shouldCreateMapWithHeadAndRest() {
-        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+        var nem = NonEmptyMap.of(
+            "alice", 10,
+            Map.of("bob", 20)
+        );
+
         assertThat(nem.headKey()).isEqualTo("alice");
         assertThat(nem.headValue()).isEqualTo(10);
         assertThat(nem.size()).isEqualTo(2);
@@ -334,5 +340,292 @@ class NonEmptyMapTest {
     void toString_shouldIncludeEntries() {
         NonEmptyMap<String, Integer> nem = NonEmptyMap.singleton("alice", 10);
         assertThat(nem.toString()).contains("alice").contains("10");
+    }
+
+    // -------------------------------------------------------------------------
+    // fromOptional()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void fromOptional_shouldReturnSome_whenPresentAndNonEmpty() {
+        Option<NonEmptyMap<String, Integer>> result =
+            NonEmptyMap.fromOptional(Optional.of(Map.of("a", 1)));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().size()).isEqualTo(1);
+        assertThat(result.get().containsKey("a")).isTrue();
+    }
+
+    @Test
+    void fromOptional_shouldReturnNone_whenPresentButEmpty() {
+        Option<NonEmptyMap<String, Integer>> result =
+            NonEmptyMap.fromOptional(Optional.of(Map.of()));
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromOptional_shouldReturnNone_whenEmpty() {
+        Option<NonEmptyMap<String, Integer>> result =
+            NonEmptyMap.fromOptional(Optional.empty());
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromOptional_shouldThrowNPE_whenOptionalIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.fromOptional(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("optional");
+    }
+
+    // -------------------------------------------------------------------------
+    // collector()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void collector_shouldReturnSome_whenStreamIsNonEmpty() {
+        Option<NonEmptyMap<String, Integer>> result =
+            Stream.of(Map.entry("a", 1), Map.entry("b", 2))
+                .collect(NonEmptyMap.collector(Map.Entry::getKey, Map.Entry::getValue));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().size()).isEqualTo(2);
+        assertThat(result.get().get("a").get()).isEqualTo(1);
+        assertThat(result.get().get("b").get()).isEqualTo(2);
+    }
+
+    @Test
+    void collector_shouldReturnNone_whenStreamIsEmpty() {
+        Option<NonEmptyMap<String, Integer>> result =
+            Stream.<Map.Entry<String, Integer>>empty()
+                .collect(NonEmptyMap.collector(Map.Entry::getKey, Map.Entry::getValue));
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void collector_lastWriteWins_onDuplicateKeys() {
+        Option<NonEmptyMap<String, Integer>> result =
+            Stream.of(Map.entry("a", 1), Map.entry("a", 99))
+                .collect(NonEmptyMap.collector(Map.Entry::getKey, Map.Entry::getValue));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().get("a").get()).isEqualTo(99);
+    }
+
+    @Test
+    void collector_shouldThrowNPE_whenKeyMapperIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.collector(null, java.util.function.Function.identity()))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("keyMapper");
+    }
+
+    @Test
+    void collector_shouldThrowNPE_whenValueMapperIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.collector(java.util.function.Function.identity(), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("valueMapper");
+    }
+
+    // -------------------------------------------------------------------------
+    // toStream()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toStream_shouldYieldAllEntriesInOrder() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("a", 1, Map.of("b", 2));
+        var keys = nem.toStream().map(Map.Entry::getKey).toList();
+        assertThat(keys).containsExactly("a", "b");
+    }
+
+    @Test
+    void toStream_singleton_shouldYieldOneEntry() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.singleton("x", 42);
+        assertThat(nem.toStream().count()).isEqualTo(1);
+    }
+
+    // -------------------------------------------------------------------------
+    // mapValuesWithKey()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void mapValuesWithKey_shouldPassKeyAndValueToMapper() {
+        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("a", 1, Map.of("b", 2));
+        NonEmptyMap<String, String> result = nem.mapValuesWithKey((k, v) -> k + "=" + v);
+        assertThat(result.get("a").get()).isEqualTo("a=1");
+        assertThat(result.get("b").get()).isEqualTo("b=2");
+    }
+
+    @Test
+    void mapValuesWithKey_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.singleton("a", 1).mapValuesWithKey(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void mapValuesWithKey_shouldThrowNPE_whenMapperReturnsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.singleton("a", 1).mapValuesWithKey((k, v) -> null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceOption()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceOption_allSome_shouldReturnSome() {
+        NonEmptyMap<String, Option<Integer>> nem = NonEmptyMap.of(
+            "a", Option.some(1), Map.of("b", Option.some(2)));
+        Option<NonEmptyMap<String, Integer>> result = NonEmptyMap.sequenceOption(nem);
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().get("a").get()).isEqualTo(1);
+        assertThat(result.get().get("b").get()).isEqualTo(2);
+    }
+
+    @Test
+    void sequenceOption_withNone_shouldReturnNone() {
+        NonEmptyMap<String, Option<Integer>> nem = NonEmptyMap.of(
+            "a", Option.some(1), Map.of("b", Option.none()));
+        Option<NonEmptyMap<String, Integer>> result = NonEmptyMap.sequenceOption(nem);
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void sequenceOption_shouldThrowNPE_whenNemIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.sequenceOption(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceTry()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceTry_allSuccess_shouldReturnSuccess() {
+        NonEmptyMap<String, Try<Integer>> nem = NonEmptyMap.of(
+            "a", Try.success(1), Map.of("b", Try.success(2)));
+        Try<NonEmptyMap<String, Integer>> result = NonEmptyMap.sequenceTry(nem);
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get().get("a").get()).isEqualTo(1);
+        assertThat(result.get().get("b").get()).isEqualTo(2);
+    }
+
+    @Test
+    void sequenceTry_withFailure_shouldReturnFailure() {
+        var boom = new RuntimeException("boom");
+        NonEmptyMap<String, Try<Integer>> nem = NonEmptyMap.of(
+            "a", Try.failure(boom), Map.of("b", Try.success(2)));
+        Try<NonEmptyMap<String, Integer>> result = NonEmptyMap.sequenceTry(nem);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(boom);
+    }
+
+    @Test
+    void sequenceTry_withFailureInTail_shouldReturnFailure() {
+        var boom = new RuntimeException("boom");
+        var nem = NonEmptyMap
+            .<String, Try<Integer>>of(
+                "a", Try.success(1),
+                Map.of(
+                    "b", Try.failure(boom)
+                )
+        );
+        var result = NonEmptyMap.sequenceTry(nem);
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(boom);
+    }
+
+    @Test
+    void sequenceTry_shouldThrowNPE_whenNemIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.sequenceTry(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceEither()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceEither_allRight_shouldReturnRight() {
+        NonEmptyMap<String, Either<String, Integer>> nem = NonEmptyMap.of(
+            "a", Either.right(1), Map.of("b", Either.right(2)));
+        Either<String, NonEmptyMap<String, Integer>> result = NonEmptyMap.sequenceEither(nem);
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight().get("a").get()).isEqualTo(1);
+    }
+
+    @Test
+    void sequenceEither_withLeft_shouldReturnLeft() {
+        NonEmptyMap<String, Either<String, Integer>> nem = NonEmptyMap.of(
+            "a", Either.left("invalid"), Map.of("b", Either.right(2)));
+        Either<String, NonEmptyMap<String, Integer>> result = NonEmptyMap.sequenceEither(nem);
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("invalid");
+    }
+
+    @Test
+    void sequenceEither_withLeftInTail_shouldReturnLeft() {
+        var nem = NonEmptyMap
+            .<String, Either<String, Integer>>of(
+                "a", Either.right(1),
+                Map.of(
+                    "b", Either.left("invalid")
+                )
+            );
+        var result = NonEmptyMap.sequenceEither(nem);
+
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("invalid");
+    }
+
+    @Test
+    void sequenceEither_shouldThrowNPE_whenNemIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.sequenceEither(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceResult()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceResult_allOk_shouldReturnOk() {
+        NonEmptyMap<String, Result<Integer, String>> nem = NonEmptyMap.of(
+            "a", Result.ok(1), Map.of("b", Result.ok(2)));
+        Result<NonEmptyMap<String, Integer>, String> result = NonEmptyMap.sequenceResult(nem);
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get().get("a").get()).isEqualTo(1);
+    }
+
+    @Test
+    void sequenceResult_withErr_shouldReturnErr() {
+        var nem = NonEmptyMap
+            .<String, Result<Integer, String>>of(
+                "a", Result.err("not found"),
+                Map.of(
+                    "b", Result.ok(2)
+                )
+            );
+        var result = NonEmptyMap.sequenceResult(nem);
+
+        assertThat(result.isOk()).isFalse();
+        assertThat(result.getError()).isEqualTo("not found");
+    }
+
+    @Test
+    void sequenceResult_withErrInTail_shouldReturnErr() {
+        var nem = NonEmptyMap
+            .<String, Result<Integer, String>>of(
+                "a", Result.ok(1),
+                Map.of(
+                    "b", Result.err("not found")
+                )
+            );
+        var result = NonEmptyMap.sequenceResult(nem);
+
+        assertThat(result.isOk()).isFalse();
+        assertThat(result.getError()).isEqualTo("not found");
+    }
+
+    @Test
+    void sequenceResult_shouldThrowNPE_whenNemIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.sequenceResult(null))
+            .isInstanceOf(NullPointerException.class);
     }
 }

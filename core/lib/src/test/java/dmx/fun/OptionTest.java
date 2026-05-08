@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -684,5 +686,166 @@ class OptionTest {
             .collect(Option.sequenceCollector());
         assertThatThrownBy(() -> result.get().add("z"))
             .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void sequenceCollector_parallelStream_allSome_shouldCombinePartialAccumulators() {
+        List<Option<Integer>> items = List.of(
+            Option.some(1), Option.some(2), Option.some(3), Option.some(4));
+        Optional<List<Integer>> result = items.parallelStream()
+            .collect(Option.sequenceCollector());
+        assertThat(result).isPresent();
+        assertThat(result.get()).containsExactlyInAnyOrder(1, 2, 3, 4);
+    }
+
+    @Test
+    void sequenceCollector_parallelStream_withNone_shouldReturnEmpty() {
+        List<Option<Integer>> items = List.of(
+            Option.some(1), Option.none(), Option.some(3));
+        Optional<List<Integer>> result = items.parallelStream()
+            .collect(Option.sequenceCollector());
+        assertThat(result).isEmpty();
+    }
+
+    // ---------- fromResult ----------
+
+    @Test
+    void fromResult_ok_shouldReturnSome() {
+        Option<String> opt = Option.fromResult(Result.ok("hello"));
+        assertThat(opt.isDefined()).isTrue();
+        assertThat(opt.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void fromResult_err_shouldReturnNone() {
+        Option<String> opt = Option.fromResult(Result.<String, String>err("error"));
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromResult_null_shouldThrowNPE() {
+        assertThatThrownBy(() -> Option.fromResult(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- fromTry ----------
+
+    @Test
+    void fromTry_success_shouldReturnSome() {
+        Option<String> opt = Option.fromTry(Try.success("value"));
+        assertThat(opt.isDefined()).isTrue();
+        assertThat(opt.get()).isEqualTo("value");
+    }
+
+    @Test
+    void fromTry_failure_shouldReturnNone() {
+        Option<String> opt = Option.fromTry(Try.failure(new RuntimeException("boom")));
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromTry_successWithNullValue_shouldReturnNone() {
+        // Try.run() produces Success(null) for void side-effects
+        Option<Void> opt = Option.fromTry(Try.run(() -> {}));
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromTry_null_shouldThrowNPE() {
+        assertThatThrownBy(() -> Option.fromTry(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- fromTryOptional ----------
+
+    @Test
+    void fromTryOptional_successPresent_shouldReturnSome() {
+        Option<String> opt = Option.fromTryOptional(Try.success(Optional.of("hi")));
+        assertThat(opt.isDefined()).isTrue();
+        assertThat(opt.get()).isEqualTo("hi");
+    }
+
+    @Test
+    void fromTryOptional_successEmpty_shouldReturnNone() {
+        Option<String> opt = Option.fromTryOptional(Try.success(Optional.<String>empty()));
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromTryOptional_failure_shouldReturnNone() {
+        Option<String> opt = Option.fromTryOptional(
+            Try.failure(new RuntimeException("fail")));
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromTryOptional_null_shouldThrowNPE() {
+        assertThatThrownBy(() -> Option.fromTryOptional(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // ---------- toTry NPE edge cases ----------
+
+    @Test
+    void toTry_nullExceptionSupplier_shouldThrowNPE() {
+        assertThatThrownBy(() -> Option.some("v").toTry(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier");
+    }
+
+    @Test
+    void toTry_supplierReturnsNull_shouldThrowNPE() {
+        assertThatThrownBy(() -> Option.<String>none().toTry(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier returned null");
+    }
+
+    // ---------- fromEither ----------
+
+    @Test
+    void fromEither_right_shouldReturnSome() {
+        Option<String> opt = Option.fromEither(Either.<Integer, String>right("hello"));
+        assertThat(opt.isDefined()).isTrue();
+        assertThat(opt.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void fromEither_left_shouldReturnNone() {
+        Option<String> opt = Option.fromEither(Either.<Integer, String>left(42));
+        assertThat(opt.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromEither_null_shouldThrowNPE() {
+        assertThatThrownBy(() -> Option.fromEither(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void fromEither_isConsistentWith_eitherToOption() {
+        Either<Integer, String> right = Either.right("v");
+        Either<Integer, String> left  = Either.left(0);
+        assertThat(Option.fromEither(right)).isEqualTo(right.toOption());
+        assertThat(Option.fromEither(left)).isEqualTo(left.toOption());
+    }
+
+    // ---------- toFuture ----------
+
+    @Test
+    void toFuture_some_shouldReturnCompletedFutureWithValue() throws Exception {
+        CompletableFuture<String> future = Option.some("hello").toFuture();
+        assertThat(future.isDone()).isTrue();
+        assertThat(future.get()).isEqualTo("hello");
+    }
+
+    @Test
+    void toFuture_none_shouldReturnFailedFutureWithNoSuchElementException() {
+        CompletableFuture<String> future = Option.<String>none().toFuture();
+        assertThat(future.isCompletedExceptionally()).isTrue();
+        assertThatThrownBy(future::join)
+            .isInstanceOf(CompletionException.class)
+            .cause()
+            .isInstanceOf(NoSuchElementException.class)
+            .hasMessage("Option is None");
     }
 }

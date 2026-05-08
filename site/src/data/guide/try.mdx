@@ -17,6 +17,8 @@ import {Content as SequenceTraverse}   from '../code/guide/try/sequence-traverse
 import {Content as TryCollectors}      from '../code/guide/try/try-collectors.mdx';
 import {Content as TriesFacade}        from '../code/guide/try/tries-facade.mdx';
 import {Content as NullHandling}       from '../code/guide/try/null-handling.mdx';
+
+export const base = import.meta.env.BASE_URL;
 import {Content as InteropConversions} from '../code/guide/try/interop-conversions.mdx';
 import {Content as PitfallsGet}        from '../code/guide/try/pitfalls-get.mdx';
 import {Content as PitfallsUseResult}  from '../code/guide/try/pitfalls-use-result.mdx';
@@ -156,6 +158,9 @@ for a `Try<Void>`, even on success — use `isSuccess()` or `fold()` instead.
 
 `sequence` uses `Collections.unmodifiableList` internally (not `List.copyOf`),
 so `null` elements in successful results are preserved.
+
+This asymmetry with `Result.Ok` — which rejects `null` — is a deliberate design decision
+documented in <a href={`${base}adr/adr-004-null-in-try-vs-result`}>ADR-004 — Try allows Success(null); Result.Ok rejects null</a>.
 
 <NullHandling/>
 

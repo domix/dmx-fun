@@ -7,10 +7,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -115,6 +118,68 @@ public final class NonEmptyMap<K, V> {
             Objects.requireNonNull(v, "map values must not be null");
         });
         return Option.some(fromMapUnsafe(map));
+    }
+
+    /**
+     * Attempts to construct a {@code NonEmptyMap} from a JDK {@link Optional} wrapping a
+     * plain {@link Map}.
+     *
+     * <p>If the optional is present and the wrapped map is non-empty, returns
+     * {@link Option#some(Object)} wrapping the {@code NonEmptyMap}. If the optional is empty,
+     * or if the wrapped map is itself empty, returns {@link Option#none()}.
+     *
+     * @param optional the source optional; must not be {@code null}
+     * @param <K>      the key type
+     * @param <V>      the value type
+     * @return {@link Option#some(Object)} if the optional is present and the map is non-empty,
+     *         {@link Option#none()} otherwise
+     * @throws NullPointerException if {@code optional} is {@code null}
+     */
+    public static <K, V> Option<NonEmptyMap<K, V>> fromOptional(
+            Optional<? extends Map<? extends K, ? extends V>> optional) {
+        Objects.requireNonNull(optional, "optional must not be null");
+        return optional.isPresent() ? fromMap(optional.get()) : Option.none();
+    }
+
+    /**
+     * Returns a {@link Collector} that accumulates a {@code Stream<T>} into an
+     * {@code Option<NonEmptyMap<K, V>>} using the provided key and value extractor functions.
+     *
+     * <p>Produces {@link Option#some(Object)} for a non-empty stream and {@link Option#none()}
+     * for an empty stream. If multiple stream elements map to the same key, later elements
+     * overwrite earlier ones (last-write-wins semantics).
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Option<NonEmptyMap<String, Integer>> result =
+     *     employees.stream()
+     *         .collect(NonEmptyMap.collector(Employee::name, Employee::score));
+     * }</pre>
+     *
+     * @param <T>         the stream element type
+     * @param <K>         the key type
+     * @param <V>         the value type
+     * @param keyMapper   extracts the key from each element; must not be {@code null} or return
+     *                    {@code null}
+     * @param valueMapper extracts the value from each element; must not be {@code null} or return
+     *                    {@code null}
+     * @return a collector producing {@code Option<NonEmptyMap<K, V>>}
+     * @throws NullPointerException if {@code keyMapper} or {@code valueMapper} is {@code null}
+     */
+    public static <T, K, V> Collector<T, ?, Option<NonEmptyMap<K, V>>> collector(
+            Function<? super T, ? extends K> keyMapper,
+            Function<? super T, ? extends V> valueMapper) {
+        Objects.requireNonNull(keyMapper,   "keyMapper must not be null");
+        Objects.requireNonNull(valueMapper, "valueMapper must not be null");
+        return Collector.of(
+            LinkedHashMap<K, V>::new,
+            (map, t) -> map.put(
+                Objects.requireNonNull(keyMapper.apply(t),   "keyMapper must not return null"),
+                Objects.requireNonNull(valueMapper.apply(t), "valueMapper must not return null")
+            ),
+            (a, b) -> { a.putAll(b); return a; },
+            map -> NonEmptyMap.fromMap(map)
+        );
     }
 
     /** Internal: builds from a known-non-empty map without Option wrapping. */
@@ -231,6 +296,18 @@ public final class NonEmptyMap<K, V> {
         return m;
     }
 
+    /**
+     * Returns a sequential {@link Stream} of all entries in insertion order.
+     *
+     * <p>The stream always contains at least one element (the head entry). Use it to bridge
+     * {@code NonEmptyMap} into the standard Java stream API.
+     *
+     * @return a non-empty stream of {@link Map.Entry} elements in insertion order
+     */
+    public Stream<Map.Entry<K, V>> toStream() {
+        return toMap().entrySet().stream();
+    }
+
     // -------------------------------------------------------------------------
     // Transformations
     // -------------------------------------------------------------------------
@@ -250,6 +327,28 @@ public final class NonEmptyMap<K, V> {
         Map<K, R> newTail = new LinkedHashMap<>();
         tail.forEach((k, v) ->
             newTail.put(k, Objects.requireNonNull(mapper.apply(v), "mapper must not return null")));
+        return new NonEmptyMap<>(headKey, newHead, Collections.unmodifiableMap(newTail));
+    }
+
+    /**
+     * Applies {@code mapper} to every key-value pair and returns a new {@code NonEmptyMap}
+     * with the same keys and mapped values.
+     *
+     * <p>Unlike {@link #mapValues(Function)}, the mapper receives both the key and the value,
+     * enabling value transformations that depend on the key.
+     *
+     * @param mapper a non-null function to apply to each key-value pair; must not return
+     *               {@code null}
+     * @param <R>    the result value type
+     * @return a new {@code NonEmptyMap} with mapped values
+     * @throws NullPointerException if {@code mapper} is {@code null} or returns {@code null}
+     */
+    public <R> NonEmptyMap<K, R> mapValuesWithKey(BiFunction<? super K, ? super V, ? extends R> mapper) {
+        Objects.requireNonNull(mapper, "mapper must not be null");
+        R newHead = Objects.requireNonNull(mapper.apply(headKey, headValue), "mapper must not return null");
+        Map<K, R> newTail = new LinkedHashMap<>();
+        tail.forEach((k, v) ->
+            newTail.put(k, Objects.requireNonNull(mapper.apply(k, v), "mapper must not return null")));
         return new NonEmptyMap<>(headKey, newHead, Collections.unmodifiableMap(newTail));
     }
 
@@ -328,6 +427,121 @@ public final class NonEmptyMap<K, V> {
         Map.Entry<K, V> head = entries.get(0);
         List<Map.Entry<K, V>> tailList = entries.subList(1, entries.size());
         return NonEmptyList.of(head, List.copyOf(tailList));
+    }
+
+    // -------------------------------------------------------------------------
+    // Interoperability — sequence
+    // -------------------------------------------------------------------------
+
+    /**
+     * Sequences a {@code NonEmptyMap<K, Option<V>>} into an {@code Option<NonEmptyMap<K, V>>}.
+     *
+     * <p>Returns {@link Option#some(Object)} containing all unwrapped values if every entry's
+     * value is {@code Some}; returns {@link Option#none()} as soon as any entry's value is
+     * {@code None} (fail-fast in inspection — the method stops iterating after the first
+     * {@code None}; entries are already materialized in the map before sequencing, so later
+     * entries are not inspected but were already evaluated).
+     *
+     * @param <K> the key type
+     * @param <V> the unwrapped value type
+     * @param nem a {@code NonEmptyMap<K, Option<V>>}; must not be {@code null}
+     * @return {@code Some(NonEmptyMap<K, V>)} if all values are present, {@code None} otherwise
+     * @throws NullPointerException if {@code nem} is {@code null}
+     */
+    public static <K, V> Option<NonEmptyMap<K, V>> sequenceOption(NonEmptyMap<K, Option<V>> nem) {
+        Objects.requireNonNull(nem, "nem must not be null");
+        Map<K, V> result = new LinkedHashMap<>();
+        for (Map.Entry<K, Option<V>> entry : nem.toMap().entrySet()) {
+            switch (entry.getValue()) {
+                case Option.None<V> ignored -> { return Option.none(); }
+                case Option.Some<V>(V v)   -> result.put(entry.getKey(), v);
+            }
+        }
+        return Option.some(fromMapUnsafe(result)); // always non-empty since nem.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptyMap<K, Try<V>>} into a {@code Try<NonEmptyMap<K, V>>}.
+     *
+     * <p>Returns {@link Try#success(Object)} if all values succeed; returns
+     * {@link Try#failure(Throwable)} from the first failing entry (fail-fast in inspection —
+     * the method stops iterating after the first failure; entries are already materialized in
+     * the map before sequencing, so later entries are not inspected but were already evaluated).
+     *
+     * @param <K> the key type
+     * @param <V> the success value type
+     * @param nem a {@code NonEmptyMap<K, Try<V>>}; must not be {@code null}
+     * @return {@code Success(NonEmptyMap<K, V>)} if all succeed, {@code Failure} otherwise
+     * @throws NullPointerException if {@code nem} is {@code null}
+     */
+    public static <K, V> Try<NonEmptyMap<K, V>> sequenceTry(NonEmptyMap<K, Try<V>> nem) {
+        Objects.requireNonNull(nem, "nem must not be null");
+        Map<K, V> result = new LinkedHashMap<>();
+        for (Map.Entry<K, Try<V>> entry : nem.toMap().entrySet()) {
+            switch (entry.getValue()) {
+                case Try.Failure<V> f -> { return Try.failure(f.cause()); }
+                case Try.Success<V> s -> result.put(entry.getKey(), s.value());
+            }
+        }
+        return Try.success(fromMapUnsafe(result)); // always non-empty since nem.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptyMap<K, Either<E, V>>} into an
+     * {@code Either<E, NonEmptyMap<K, V>>}.
+     *
+     * <p>Returns {@link Either#right(Object)} if all values are right; returns
+     * {@link Either#left(Object)} from the first left entry (fail-fast in inspection —
+     * the method stops iterating after the first left; entries are already materialized in
+     * the map before sequencing, so later entries are not inspected but were already evaluated).
+     *
+     * @param <K> the key type
+     * @param <E> the left (error) type
+     * @param <V> the right (success) type
+     * @param nem a {@code NonEmptyMap<K, Either<E, V>>}; must not be {@code null}
+     * @return {@code right(NonEmptyMap<K, V>)} if all are right, {@code left(E)} otherwise
+     * @throws NullPointerException if {@code nem} is {@code null}
+     */
+    public static <K, E, V> Either<E, NonEmptyMap<K, V>> sequenceEither(
+            NonEmptyMap<K, Either<E, V>> nem) {
+        Objects.requireNonNull(nem, "nem must not be null");
+        Map<K, V> result = new LinkedHashMap<>();
+        for (Map.Entry<K, Either<E, V>> entry : nem.toMap().entrySet()) {
+            switch (entry.getValue()) {
+                case Either.Left<E, V> l  -> { return Either.left(l.value()); }
+                case Either.Right<E, V> r -> result.put(entry.getKey(), r.value());
+            }
+        }
+        return Either.right(fromMapUnsafe(result)); // always non-empty since nem.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptyMap<K, Result<V, E>>} into a
+     * {@code Result<NonEmptyMap<K, V>, E>}.
+     *
+     * <p>Returns {@link Result#ok(Object)} if all values are ok; returns
+     * {@link Result#err(Object)} from the first error entry (fail-fast in inspection —
+     * the method stops iterating after the first err; entries are already materialized in
+     * the map before sequencing, so later entries are not inspected but were already evaluated).
+     *
+     * @param <K> the key type
+     * @param <V> the ok value type
+     * @param <E> the error type
+     * @param nem a {@code NonEmptyMap<K, Result<V, E>>}; must not be {@code null}
+     * @return {@code ok(NonEmptyMap<K, V>)} if all succeed, {@code err(E)} otherwise
+     * @throws NullPointerException if {@code nem} is {@code null}
+     */
+    public static <K, V, E> Result<NonEmptyMap<K, V>, E> sequenceResult(
+            NonEmptyMap<K, Result<V, E>> nem) {
+        Objects.requireNonNull(nem, "nem must not be null");
+        Map<K, V> result = new LinkedHashMap<>();
+        for (Map.Entry<K, Result<V, E>> entry : nem.toMap().entrySet()) {
+            switch (entry.getValue()) {
+                case Result.Err<V, E> err -> { return Result.err(err.error()); }
+                case Result.Ok<V, E> ok   -> result.put(entry.getKey(), ok.value());
+            }
+        }
+        return Result.ok(fromMapUnsafe(result)); // always non-empty since nem.size() >= 1
     }
 
     // -------------------------------------------------------------------------

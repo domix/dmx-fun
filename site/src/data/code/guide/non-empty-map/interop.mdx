@@ -24,8 +24,37 @@ Map<String, Integer> javaMap = nem.toMap();
 NonEmptyList<Map.Entry<String, Integer>> entries = nem.toNonEmptyList();
 // [alice=10, bob=20, carol=30]
 
+// toStream() — bridge to java.util.stream.Stream for pipeline operations
+nem.toStream()
+   .filter(e -> e.getValue() >= 20)
+   .forEach(e -> System.out.println(e.getKey() + " → " + e.getValue()));
+// bob → 20
+// carol → 30
+
 // fromMap() — bridge from plain Map (e.g. from external source)
 Map<String, Integer> external = fetchScoresFromDatabase();
 Option<NonEmptyMap<String, Integer>> safe = NonEmptyMap.fromMap(external);
 safe.peek(scores -> processScores(scores));
+
+// fromOptional() — bridge from Optional<Map<K,V>>
+Optional<Map<String, Integer>> maybeMap = Optional.of(Map.of("alice", 10));
+Option<NonEmptyMap<String, Integer>> fromOpt = NonEmptyMap.fromOptional(maybeMap);
+// Some({alice=10})
+
+Option<NonEmptyMap<String, Integer>> fromEmptyOpt = NonEmptyMap.fromOptional(Optional.empty());
+// None
+
+// collector(keyMapper, valueMapper) — build NonEmptyMap from a Stream
+record Employee(String name, int score) {}
+List<Employee> employees = List.of(new Employee("alice", 90), new Employee("bob", 75));
+
+Option<NonEmptyMap<String, Integer>> scores =
+    employees.stream()
+        .collect(NonEmptyMap.collector(Employee::name, Employee::score));
+// Some({alice=90, bob=75})
+
+Option<NonEmptyMap<String, Integer>> emptyResult =
+    Stream.<Employee>empty()
+        .collect(NonEmptyMap.collector(Employee::name, Employee::score));
+// None
 ```

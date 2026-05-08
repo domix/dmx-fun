@@ -1,6 +1,8 @@
 package dmx.fun;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -318,5 +320,221 @@ class NonEmptySetTest {
     void toString_shouldIncludeElements() {
         NonEmptySet<String> nes = NonEmptySet.singleton("admin");
         assertThat(nes.toString()).contains("admin");
+    }
+
+    // -------------------------------------------------------------------------
+    // fromOptional()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void fromOptional_shouldReturnSome_whenPresent() {
+        Option<NonEmptySet<String>> result = NonEmptySet.fromOptional(Optional.of("admin"));
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().size()).isEqualTo(1);
+        assertThat(result.get().head()).isEqualTo("admin");
+    }
+
+    @Test
+    void fromOptional_shouldReturnNone_whenEmpty() {
+        Option<NonEmptySet<String>> result = NonEmptySet.fromOptional(Optional.empty());
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void fromOptional_shouldThrowNPE_whenOptionalIsNull() {
+        assertThatThrownBy(() -> NonEmptySet.fromOptional(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("optional");
+    }
+
+    // -------------------------------------------------------------------------
+    // collector()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void collector_shouldReturnSome_whenStreamIsNonEmpty() {
+        Option<NonEmptySet<String>> result =
+            Stream.of("admin", "user", "admin")
+                .collect(NonEmptySet.collector());
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().size()).isEqualTo(2); // "admin" deduplicated
+        assertThat(result.get().contains("admin")).isTrue();
+        assertThat(result.get().contains("user")).isTrue();
+    }
+
+    @Test
+    void collector_shouldReturnNone_whenStreamIsEmpty() {
+        Option<NonEmptySet<String>> result =
+            Stream.<String>empty().collect(NonEmptySet.collector());
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void collector_shouldThrowNPE_whenStreamElementIsNull() {
+        assertThatThrownBy(() ->
+            Stream.<String>of("a", null).collect(NonEmptySet.collector()))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("stream elements must not be null");
+    }
+
+    // -------------------------------------------------------------------------
+    // toStream()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void toStream_shouldYieldAllElementsInOrder() {
+        NonEmptySet<String> nes = NonEmptySet.of("admin", new java.util.LinkedHashSet<>(java.util.List.of("user", "editor")));
+        var elements = nes.toStream().toList();
+        assertThat(elements).containsExactly("admin", "user", "editor");
+    }
+
+    @Test
+    void toStream_singleton_shouldYieldOneElement() {
+        NonEmptySet<String> nes = NonEmptySet.singleton("admin");
+        assertThat(nes.toStream().count()).isEqualTo(1);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceOption()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceOption_allSome_shouldReturnSome() {
+        NonEmptySet<Option<String>> nes = NonEmptySet.of(
+            Option.some("admin"), Set.of(Option.some("user")));
+        Option<NonEmptySet<String>> result = NonEmptySet.sequenceOption(nes);
+        assertThat(result.isDefined()).isTrue();
+        assertThat(result.get().contains("admin")).isTrue();
+        assertThat(result.get().contains("user")).isTrue();
+    }
+
+    @Test
+    void sequenceOption_withNone_shouldReturnNone() {
+        NonEmptySet<Option<String>> nes = NonEmptySet.of(
+            Option.some("admin"), Set.of(Option.none()));
+        Option<NonEmptySet<String>> result = NonEmptySet.sequenceOption(nes);
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    void sequenceOption_shouldThrowNPE_whenNesIsNull() {
+        assertThatThrownBy(() -> NonEmptySet.sequenceOption(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceTry()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceTry_allSuccess_shouldReturnSuccess() {
+        NonEmptySet<Try<String>> nes = NonEmptySet.of(
+            Try.success("admin"), Set.of(Try.success("user")));
+        Try<NonEmptySet<String>> result = NonEmptySet.sequenceTry(nes);
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.get().contains("admin")).isTrue();
+        assertThat(result.get().contains("user")).isTrue();
+    }
+
+    @Test
+    void sequenceTry_withHeadFailure_shouldReturnFailure() {
+        var boom = new RuntimeException("boom");
+        NonEmptySet<Try<String>> nes = NonEmptySet.of(
+            Try.failure(boom), Set.of(Try.success("user")));
+        Try<NonEmptySet<String>> result = NonEmptySet.sequenceTry(nes);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(boom);
+    }
+
+    @Test
+    void sequenceTry_withTailFailure_shouldReturnFailure() {
+        var boom = new RuntimeException("boom");
+        NonEmptySet<Try<String>> nes = NonEmptySet.of(
+            Try.success("admin"), Set.of(Try.failure(boom)));
+        Try<NonEmptySet<String>> result = NonEmptySet.sequenceTry(nes);
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(boom);
+    }
+
+    @Test
+    void sequenceTry_shouldThrowNPE_whenNesIsNull() {
+        assertThatThrownBy(() -> NonEmptySet.sequenceTry(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceEither()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceEither_allRight_shouldReturnRight() {
+        NonEmptySet<Either<String, Integer>> nes = NonEmptySet.of(
+            Either.right(1), Set.of(Either.right(2)));
+        Either<String, NonEmptySet<Integer>> result = NonEmptySet.sequenceEither(nes);
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight().contains(1)).isTrue();
+        assertThat(result.getRight().contains(2)).isTrue();
+    }
+
+    @Test
+    void sequenceEither_withHeadLeft_shouldReturnLeft() {
+        NonEmptySet<Either<String, Integer>> nes = NonEmptySet.of(
+            Either.left("invalid"), Set.of(Either.right(2)));
+        Either<String, NonEmptySet<Integer>> result = NonEmptySet.sequenceEither(nes);
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("invalid");
+    }
+
+    @Test
+    void sequenceEither_withTailLeft_shouldReturnLeft() {
+        NonEmptySet<Either<String, Integer>> nes = NonEmptySet.of(
+            Either.right(1), Set.of(Either.left("invalid")));
+        Either<String, NonEmptySet<Integer>> result = NonEmptySet.sequenceEither(nes);
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("invalid");
+    }
+
+    @Test
+    void sequenceEither_shouldThrowNPE_whenNesIsNull() {
+        assertThatThrownBy(() -> NonEmptySet.sequenceEither(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // sequenceResult()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void sequenceResult_allOk_shouldReturnOk() {
+        NonEmptySet<Result<Integer, String>> nes = NonEmptySet.of(
+            Result.ok(1), Set.of(Result.ok(2)));
+        Result<NonEmptySet<Integer>, String> result = NonEmptySet.sequenceResult(nes);
+        assertThat(result.isOk()).isTrue();
+        assertThat(result.get().contains(1)).isTrue();
+        assertThat(result.get().contains(2)).isTrue();
+    }
+
+    @Test
+    void sequenceResult_withHeadErr_shouldReturnErr() {
+        NonEmptySet<Result<Integer, String>> nes = NonEmptySet.of(
+            Result.err("not found"), Set.of(Result.ok(2)));
+        Result<NonEmptySet<Integer>, String> result = NonEmptySet.sequenceResult(nes);
+        assertThat(result.isOk()).isFalse();
+        assertThat(result.getError()).isEqualTo("not found");
+    }
+
+    @Test
+    void sequenceResult_withTailErr_shouldReturnErr() {
+        NonEmptySet<Result<Integer, String>> nes = NonEmptySet.of(
+            Result.ok(1), Set.of(Result.err("not found")));
+        Result<NonEmptySet<Integer>, String> result = NonEmptySet.sequenceResult(nes);
+        assertThat(result.isOk()).isFalse();
+        assertThat(result.getError()).isEqualTo("not found");
+    }
+
+    @Test
+    void sequenceResult_shouldThrowNPE_whenNesIsNull() {
+        assertThatThrownBy(() -> NonEmptySet.sequenceResult(null))
+            .isInstanceOf(NullPointerException.class);
     }
 }

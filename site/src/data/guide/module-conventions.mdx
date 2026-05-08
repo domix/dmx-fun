@@ -60,6 +60,8 @@ def moduleMap = [
 
 ### 4. Configure JPMS tests
 
+Every module ships a `module-info.java` — this is a deliberate architectural decision documented in
+[ADR-002 — JPMS from day one](https://github.com/domix/dmx-fun/blob/main/docs/adr/ADR-002-jpms.md).
 The `dmx-fun.java-module` convention plugin exposes a `jpmsTest` DSL block that wires
 `--module-path`, `--patch-module`, and `--add-modules` into `compileTestJava` and `test`
 automatically. Add it to the module's `build.gradle`:

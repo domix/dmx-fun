@@ -1,0 +1,19 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// sequenceOption: NonEmptyMap<K, Option<V>> → Option<NonEmptyMap<K, V>>
+// Some if every value is Some; None as soon as any value is None (fail-fast in inspection).
+NonEmptyMap<String, Option<Integer>> allPresent = NonEmptyMap.of(
+    "alice", Option.some(10), Map.of("bob", Option.some(20)));
+
+Option<NonEmptyMap<String, Integer>> result = NonEmptyMap.sequenceOption(allPresent);
+// Some({alice=10, bob=20})
+
+NonEmptyMap<String, Option<Integer>> withAbsent = NonEmptyMap.of(
+    "alice", Option.some(10), Map.of("bob", Option.none()));
+
+Option<NonEmptyMap<String, Integer>> missing = NonEmptyMap.sequenceOption(withAbsent);
+// None
+```
