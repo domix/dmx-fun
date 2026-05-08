@@ -404,6 +404,20 @@ class NonEmptyMapTest {
         assertThat(result.get().get("a").get()).isEqualTo(99);
     }
 
+    @Test
+    void collector_shouldThrowNPE_whenKeyMapperIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.collector(null, java.util.function.Function.identity()))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("keyMapper");
+    }
+
+    @Test
+    void collector_shouldThrowNPE_whenValueMapperIsNull() {
+        assertThatThrownBy(() -> NonEmptyMap.collector(java.util.function.Function.identity(), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("valueMapper");
+    }
+
     // -------------------------------------------------------------------------
     // toStream()
     // -------------------------------------------------------------------------

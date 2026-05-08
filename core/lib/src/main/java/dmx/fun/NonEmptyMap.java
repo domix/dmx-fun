@@ -457,7 +457,7 @@ public final class NonEmptyMap<K, V> {
                 case Option.Some<V>(V v)   -> result.put(entry.getKey(), v);
             }
         }
-        return fromMap(result); // always Some since nem.size() >= 1 and all values are present
+        return Option.some(fromMapUnsafe(result)); // always non-empty since nem.size() >= 1
     }
 
     /**
