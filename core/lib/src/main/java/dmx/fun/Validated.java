@@ -24,6 +24,11 @@ import org.jspecify.annotations.Nullable;
  * This makes it ideal for form/DTO validation where all errors should be reported at once.
  * Sequential fail-fast composition is still available through {@link #flatMap}.
  *
+ * <p>The deliberate co-existence of both types — {@code Validated} for accumulation and
+ * {@link Result} for fail-fast — is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-006-validated-vs-result/">
+ * ADR-006 — Validated (error accumulation) vs Result (fail-fast)</a>.
+ *
  * <p>This interface is {@link NullMarked}: all types are non-null by default.
  *
  * @param <E> the type of the error contained in an invalid result
