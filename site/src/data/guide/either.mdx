@@ -13,6 +13,8 @@ import {Content as SideEffects}        from '../code/guide/either/side-effects.m
 import {Content as InteropConversions} from '../code/guide/either/interop-conversions.mdx';
 import {Content as RealWorldExample}   from '../code/guide/either/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`EitherSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/EitherSample.java)
 
 ## What is Either&lt;L, R&gt;?
@@ -30,6 +32,8 @@ neither should be labelled an error.
 
 By convention, `map`, `flatMap`, and related operations act on the **right** side.
 Use `swap()` to flip the sides when you need to operate on the left.
+
+This design — semantically neutral but right-biased for operations — is documented in <a href={`${base}adr/adr-007-either-neutral`}>ADR-007 — Either as a neutral type with no directional bias</a>.
 
 **When to use `Either` vs other types:**
 

@@ -21,6 +21,11 @@ import org.jspecify.annotations.NullMarked;
  * the <em>right</em> side. Use {@link #swap()} to flip the sides when you need
  * to operate on the left.
  *
+ * <p>This semantic neutrality — and the decision to keep right-biased operations
+ * without error/success connotation — is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-007-either-neutral/">
+ * ADR-007 — Either as a neutral type with no directional bias</a>.
+ *
  * <p>This interface is {@code @NullMarked}: all values — left and right — are
  * non-null by default.
  *
