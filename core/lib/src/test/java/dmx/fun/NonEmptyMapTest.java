@@ -17,7 +17,11 @@ class NonEmptyMapTest {
 
     @Test
     void of_shouldCreateMapWithHeadAndRest() {
-        NonEmptyMap<String, Integer> nem = NonEmptyMap.of("alice", 10, Map.of("bob", 20));
+        var nem = NonEmptyMap.of(
+            "alice", 10,
+            Map.of("bob", 20)
+        );
+
         assertThat(nem.headKey()).isEqualTo("alice");
         assertThat(nem.headValue()).isEqualTo(10);
         assertThat(nem.size()).isEqualTo(2);
@@ -512,6 +516,22 @@ class NonEmptyMapTest {
     }
 
     @Test
+    void sequenceTry_withFailureInTail_shouldReturnFailure() {
+        var boom = new RuntimeException("boom");
+        var nem = NonEmptyMap
+            .<String, Try<Integer>>of(
+                "a", Try.success(1),
+                Map.of(
+                    "b", Try.failure(boom)
+                )
+        );
+        var result = NonEmptyMap.sequenceTry(nem);
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isSameAs(boom);
+    }
+
+    @Test
     void sequenceTry_shouldThrowNPE_whenNemIsNull() {
         assertThatThrownBy(() -> NonEmptyMap.sequenceTry(null))
             .isInstanceOf(NullPointerException.class);
@@ -540,6 +560,21 @@ class NonEmptyMapTest {
     }
 
     @Test
+    void sequenceEither_withLeftInTail_shouldReturnLeft() {
+        var nem = NonEmptyMap
+            .<String, Either<String, Integer>>of(
+                "a", Either.right(1),
+                Map.of(
+                    "b", Either.left("invalid")
+                )
+            );
+        var result = NonEmptyMap.sequenceEither(nem);
+
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("invalid");
+    }
+
+    @Test
     void sequenceEither_shouldThrowNPE_whenNemIsNull() {
         assertThatThrownBy(() -> NonEmptyMap.sequenceEither(null))
             .isInstanceOf(NullPointerException.class);
@@ -560,9 +595,30 @@ class NonEmptyMapTest {
 
     @Test
     void sequenceResult_withErr_shouldReturnErr() {
-        NonEmptyMap<String, Result<Integer, String>> nem = NonEmptyMap.of(
-            "a", Result.err("not found"), Map.of("b", Result.ok(2)));
-        Result<NonEmptyMap<String, Integer>, String> result = NonEmptyMap.sequenceResult(nem);
+        var nem = NonEmptyMap
+            .<String, Result<Integer, String>>of(
+                "a", Result.err("not found"),
+                Map.of(
+                    "b", Result.ok(2)
+                )
+            );
+        var result = NonEmptyMap.sequenceResult(nem);
+
+        assertThat(result.isOk()).isFalse();
+        assertThat(result.getError()).isEqualTo("not found");
+    }
+
+    @Test
+    void sequenceResult_withErrInTail_shouldReturnErr() {
+        var nem = NonEmptyMap
+            .<String, Result<Integer, String>>of(
+                "a", Result.ok(1),
+                Map.of(
+                    "b", Result.err("not found")
+                )
+            );
+        var result = NonEmptyMap.sequenceResult(nem);
+
         assertThat(result.isOk()).isFalse();
         assertThat(result.getError()).isEqualTo("not found");
     }
