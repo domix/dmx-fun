@@ -369,6 +369,14 @@ class NonEmptySetTest {
         assertThat(result.isEmpty()).isTrue();
     }
 
+    @Test
+    void collector_shouldThrowNPE_whenStreamElementIsNull() {
+        assertThatThrownBy(() ->
+            Stream.<String>of("a", null).collect(NonEmptySet.collector()))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("stream elements must not be null");
+    }
+
     // -------------------------------------------------------------------------
     // toStream()
     // -------------------------------------------------------------------------

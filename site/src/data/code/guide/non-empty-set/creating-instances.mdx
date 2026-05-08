@@ -27,7 +27,7 @@ Option<NonEmptySet<String>> fromPresent = NonEmptySet.fromOptional(present);
 Option<NonEmptySet<String>> fromEmpty = NonEmptySet.fromOptional(Optional.empty());
 // None
 
-// collector() — build NonEmptyMap from a Stream; None if the stream is empty
+// collector() — build NonEmptySet from a Stream; None if the stream is empty
 List<String> roles = List.of("admin", "editor", "viewer", "editor"); // duplicate dropped
 Option<NonEmptySet<String>> collected =
     roles.stream().collect(NonEmptySet.collector());
