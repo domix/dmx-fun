@@ -18,6 +18,8 @@ import {Content as Combining34}          from '../code/guide/validated/combining
 import {Content as PitfallsFlatMap}     from '../code/guide/validated/pitfalls-flatmap.mdx';
 import {Content as RealWorldExample}    from '../code/guide/validated/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`ValidatedSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/ValidatedSample.java)
 
 ## What is Validated&lt;E, A&gt;?
@@ -159,6 +161,8 @@ See the [Combining Types](combining-types) page for the full conversion matrix.
 | Wrap throwing legacy code                                | `Try`       |
 | Independent field validations (form, config)             | `Validated` |
 | Pipeline where each step feeds the next                  | `Result`    |
+
+The deliberate co-existence of both types is documented in <a href={`${base}adr/adr-006-validated-vs-result`}>ADR-006 — Validated (error accumulation) vs Result (fail-fast)</a>.
 
 ## Common pitfalls
 
