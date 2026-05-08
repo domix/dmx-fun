@@ -12,6 +12,8 @@ import {Content as Negate}           from '../code/guide/guard/negate.mdx';
 import {Content as Interop}          from '../code/guide/guard/interop.mdx';
 import {Content as RealWorldExample} from '../code/guide/guard/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`GuardSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/GuardSample.java)
 
 ## What is Guard&lt;T&gt;?
@@ -21,6 +23,10 @@ a predicate over `T` with an associated error message.
 Applying a guard via `check(value)` returns a
 `Validated<NonEmptyList<String>, T>` — `Valid(value)` when the rule passes,
 or `Invalid(errors)` when it fails.
+
+The error type is fixed as `NonEmptyList<String>` — this keeps composition simple (no external
+`Monoid<E>` needed for `and`/`or`) and guarantees at least one error is always present. This
+design decision is documented in <a href={`${base}adr/adr-005-guard-error-type`}>ADR-005 — Guard&lt;T&gt; accumulates errors as a fixed NonEmptyList&lt;String&gt;</a>.
 
 Guards are the composable building block for [`Validated`](validated) pipelines.
 Instead of writing repeated `if`/`Validated.invalidNel(...)` branches, define each
