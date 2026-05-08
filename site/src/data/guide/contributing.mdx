@@ -60,6 +60,10 @@ All public methods must be annotated with `@NullMarked` (via the package-info or
 Return `Option<T>` instead of a nullable type; accept `@Nullable` parameters only when the absence is
 meaningful to the implementation.
 
+> **Exception:** `Try.Success` deliberately accepts `null` as a valid value when produced by
+> `Try.run()` (void side-effects — `Void` has no instances in Java). `Result.Ok` rejects `null`.
+> This asymmetry is documented in <a href={`${base}adr/adr-004-null-in-try-vs-result`}>ADR-004 — Try allows Success(null); Result.Ok rejects null</a>.
+
 ### Sealed interfaces and records
 
 Every sum type in the library is a sealed interface with record implementations —

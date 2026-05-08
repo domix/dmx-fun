@@ -45,6 +45,11 @@ import org.jspecify.annotations.Nullable;
  * {@link #fold(java.util.function.Function, java.util.function.Function) fold()},
  * or {@link #get()} rather than {@link #getOrNull()}.
  *
+ * <p>This deliberate asymmetry — {@code Try.Success} accepting {@code null} while
+ * {@code Result.Ok} rejects it — is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-004-null-in-try-vs-result/">
+ * ADR-004 — Try&lt;V&gt; allows Success(null); Result.Ok rejects null</a>.
+ *
  * @param <Value> the type of the successful value
  */
 @NullMarked
