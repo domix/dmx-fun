@@ -8,9 +8,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -101,6 +104,48 @@ public final class NonEmptySet<T> implements Iterable<T> {
         return Option.some(fromSetUnsafe(set));
     }
 
+    /**
+     * Attempts to construct a singleton {@code NonEmptySet} from a JDK {@link Optional}.
+     *
+     * @param optional the source optional; must not be {@code null}
+     * @param <T>      the element type
+     * @return {@link Option#some(Object)} wrapping a singleton {@code NonEmptySet} if the
+     *         optional is present, or {@link Option#none()} if the optional is empty
+     * @throws NullPointerException if {@code optional} is {@code null}
+     */
+    public static <T> Option<NonEmptySet<T>> fromOptional(Optional<? extends T> optional) {
+        Objects.requireNonNull(optional, "optional must not be null");
+        return optional.isPresent()
+            ? Option.some(NonEmptySet.singleton(optional.get()))
+            : Option.none();
+    }
+
+    /**
+     * Returns a {@link Collector} that accumulates a {@code Stream<T>} into an
+     * {@code Option<NonEmptySet<T>>}.
+     *
+     * <p>Produces {@link Option#some(Object)} for a non-empty stream and {@link Option#none()}
+     * for an empty stream. Duplicate elements are automatically deduplicated (set semantics).
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Option<NonEmptySet<String>> roles =
+     *     userRoles.stream()
+     *         .collect(NonEmptySet.collector());
+     * }</pre>
+     *
+     * @param <T> the element type
+     * @return a collector producing {@code Option<NonEmptySet<T>>}
+     */
+    public static <T> Collector<T, ?, Option<NonEmptySet<T>>> collector() {
+        return Collector.of(
+            LinkedHashSet<T>::new,
+            (set, t) -> set.add(Objects.requireNonNull(t, "stream elements must not be null")),
+            (a, b) -> { a.addAll(b); return a; },
+            set -> set.isEmpty() ? Option.none() : Option.some(fromSetUnsafe(set))
+        );
+    }
+
     /** Internal: builds from a known-non-empty set without Option wrapping. */
     private static <T> NonEmptySet<T> fromSetUnsafe(Set<? extends T> set) {
         Iterator<? extends T> it = set.iterator();
@@ -167,6 +212,19 @@ public final class NonEmptySet<T> implements Iterable<T> {
             }
         }
         return s;
+    }
+
+    /**
+     * Returns a sequential {@link Stream} of all elements in insertion order.
+     *
+     * <p>The stream always contains at least one element (the head). Use it to bridge
+     * {@code NonEmptySet} into the standard Java stream API without going through
+     * {@link #toSet()}.
+     *
+     * @return a non-empty stream of elements in insertion order
+     */
+    public Stream<T> toStream() {
+        return toSet().stream();
     }
 
     // -------------------------------------------------------------------------
@@ -282,6 +340,115 @@ public final class NonEmptySet<T> implements Iterable<T> {
             tailMap.put(element, val);
         }
         return NonEmptyMap.of(head, headVal, tailMap);
+    }
+
+    // -------------------------------------------------------------------------
+    // Interoperability — sequence
+    // -------------------------------------------------------------------------
+
+    /**
+     * Sequences a {@code NonEmptySet<Option<T>>} into an {@code Option<NonEmptySet<T>>}.
+     *
+     * <p>Returns {@link Option#some(Object)} containing all unwrapped values if every element
+     * is {@code Some}; returns {@link Option#none()} as soon as any element is {@code None}
+     * (fail-fast in inspection — the method stops iterating after the first {@code None};
+     * elements are already materialized in the set before sequencing, so later elements are
+     * not inspected but were already evaluated).
+     *
+     * @param <T> the unwrapped element type
+     * @param nes a {@code NonEmptySet<Option<T>>}; must not be {@code null}
+     * @return {@code Some(NonEmptySet<T>)} if all elements are present, {@code None} otherwise
+     * @throws NullPointerException if {@code nes} is {@code null}
+     */
+    public static <T> Option<NonEmptySet<T>> sequenceOption(NonEmptySet<Option<T>> nes) {
+        Objects.requireNonNull(nes, "nes must not be null");
+        Set<T> result = new LinkedHashSet<>();
+        for (Option<T> opt : nes) {
+            switch (opt) {
+                case Option.None<T> ignored -> { return Option.none(); }
+                case Option.Some<T>(T v)   -> result.add(v);
+            }
+        }
+        return Option.some(fromSetUnsafe(result)); // always non-empty since nes.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptySet<Try<T>>} into a {@code Try<NonEmptySet<T>>}.
+     *
+     * <p>Returns {@link Try#success(Object)} if all elements succeed; returns
+     * {@link Try#failure(Throwable)} from the first failing element (fail-fast in inspection —
+     * the method stops iterating after the first failure; elements are already materialized in
+     * the set before sequencing, so later elements are not inspected but were already evaluated).
+     *
+     * @param <T> the success value type
+     * @param nes a {@code NonEmptySet<Try<T>>}; must not be {@code null}
+     * @return {@code Success(NonEmptySet<T>)} if all succeed, {@code Failure} otherwise
+     * @throws NullPointerException if {@code nes} is {@code null}
+     */
+    public static <T> Try<NonEmptySet<T>> sequenceTry(NonEmptySet<Try<T>> nes) {
+        Objects.requireNonNull(nes, "nes must not be null");
+        Set<T> result = new LinkedHashSet<>();
+        for (Try<T> t : nes) {
+            switch (t) {
+                case Try.Failure<T> f -> { return Try.failure(f.cause()); }
+                case Try.Success<T> s -> result.add(s.value());
+            }
+        }
+        return Try.success(fromSetUnsafe(result)); // always non-empty since nes.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptySet<Either<E, T>>} into an
+     * {@code Either<E, NonEmptySet<T>>}.
+     *
+     * <p>Returns {@link Either#right(Object)} if all elements are right; returns
+     * {@link Either#left(Object)} from the first left element (fail-fast in inspection —
+     * the method stops iterating after the first left; elements are already materialized in
+     * the set before sequencing, so later elements are not inspected but were already evaluated).
+     *
+     * @param <E> the left (error) type
+     * @param <T> the right (success) type
+     * @param nes a {@code NonEmptySet<Either<E, T>>}; must not be {@code null}
+     * @return {@code right(NonEmptySet<T>)} if all are right, {@code left(E)} otherwise
+     * @throws NullPointerException if {@code nes} is {@code null}
+     */
+    public static <E, T> Either<E, NonEmptySet<T>> sequenceEither(NonEmptySet<Either<E, T>> nes) {
+        Objects.requireNonNull(nes, "nes must not be null");
+        Set<T> result = new LinkedHashSet<>();
+        for (Either<E, T> e : nes) {
+            switch (e) {
+                case Either.Left<E, T> l  -> { return Either.left(l.value()); }
+                case Either.Right<E, T> r -> result.add(r.value());
+            }
+        }
+        return Either.right(fromSetUnsafe(result)); // always non-empty since nes.size() >= 1
+    }
+
+    /**
+     * Sequences a {@code NonEmptySet<Result<T, E>>} into a
+     * {@code Result<NonEmptySet<T>, E>}.
+     *
+     * <p>Returns {@link Result#ok(Object)} if all elements are ok; returns
+     * {@link Result#err(Object)} from the first error element (fail-fast in inspection —
+     * the method stops iterating after the first err; elements are already materialized in
+     * the set before sequencing, so later elements are not inspected but were already evaluated).
+     *
+     * @param <T> the ok value type
+     * @param <E> the error type
+     * @param nes a {@code NonEmptySet<Result<T, E>>}; must not be {@code null}
+     * @return {@code ok(NonEmptySet<T>)} if all succeed, {@code err(E)} otherwise
+     * @throws NullPointerException if {@code nes} is {@code null}
+     */
+    public static <T, E> Result<NonEmptySet<T>, E> sequenceResult(NonEmptySet<Result<T, E>> nes) {
+        Objects.requireNonNull(nes, "nes must not be null");
+        Set<T> result = new LinkedHashSet<>();
+        for (Result<T, E> r : nes) {
+            switch (r) {
+                case Result.Err<T, E> err -> { return Result.err(err.error()); }
+                case Result.Ok<T, E> ok   -> result.add(ok.value());
+            }
+        }
+        return Result.ok(fromSetUnsafe(result)); // always non-empty since nes.size() >= 1
     }
 
     // -------------------------------------------------------------------------
