@@ -1,0 +1,19 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// sequenceOption: NonEmptySet<Option<T>> → Option<NonEmptySet<T>>
+// Some if every element is Some; None as soon as any element is None (fail-fast in inspection).
+NonEmptySet<Option<String>> allPresent = NonEmptySet.of(
+    Option.some("admin"), Set.of(Option.some("editor"), Option.some("viewer")));
+
+Option<NonEmptySet<String>> result = NonEmptySet.sequenceOption(allPresent);
+// Some([admin, editor, viewer])
+
+NonEmptySet<Option<String>> withAbsent = NonEmptySet.of(
+    Option.some("admin"), Set.of(Option.none(), Option.some("viewer")));
+
+Option<NonEmptySet<String>> missing = NonEmptySet.sequenceOption(withAbsent);
+// None
+```

@@ -22,8 +22,33 @@ Set<String> javaSet = nes.toSet();
 NonEmptyList<String> nel = nes.toNonEmptyList();
 // NonEmptyList["admin", "editor", "viewer"]
 
+// toStream() — bridge to java.util.stream.Stream for pipeline operations
+nes.toStream()
+   .filter(role -> !role.equals("viewer"))
+   .forEach(System.out::println);
+// admin
+// editor
+
 // fromSet() — bridge from plain Set (e.g. from external source)
 Set<String> external = fetchRolesFromDatabase();
 Option<NonEmptySet<String>> safe = NonEmptySet.fromSet(external);
 safe.peek(roles -> processRoles(roles));
+
+// fromOptional() — bridge from Optional<T>; wraps the value as a singleton NonEmptySet
+Optional<String> maybeRole = Optional.of("admin");
+Option<NonEmptySet<String>> fromOpt = NonEmptySet.fromOptional(maybeRole);
+// Some([admin])
+
+Option<NonEmptySet<String>> fromEmptyOpt = NonEmptySet.fromOptional(Optional.empty());
+// None
+
+// collector() — build NonEmptySet from a Stream; None if the stream is empty
+List<String> permissions = List.of("read", "write", "read"); // duplicate "read" dropped
+Option<NonEmptySet<String>> perms =
+    permissions.stream().collect(NonEmptySet.collector());
+// Some([read, write])
+
+Option<NonEmptySet<String>> emptyPerms =
+    Stream.<String>empty().collect(NonEmptySet.collector());
+// None
 ```

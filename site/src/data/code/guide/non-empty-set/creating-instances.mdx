@@ -18,4 +18,22 @@ NonEmptySet<String> single = NonEmptySet.singleton("admin");
 // fromSet — safe conversion from a plain Set; empty set returns None
 Option<NonEmptySet<String>> fromSet = NonEmptySet.fromSet(someSet);
 // Some([...])  or  None
+
+// fromOptional — bridge from Optional<T>; wraps the value as a singleton NonEmptySet
+Optional<String> present = Optional.of("admin");
+Option<NonEmptySet<String>> fromPresent = NonEmptySet.fromOptional(present);
+// Some([admin])
+
+Option<NonEmptySet<String>> fromEmpty = NonEmptySet.fromOptional(Optional.empty());
+// None
+
+// collector() — build NonEmptyMap from a Stream; None if the stream is empty
+List<String> roles = List.of("admin", "editor", "viewer", "editor"); // duplicate dropped
+Option<NonEmptySet<String>> collected =
+    roles.stream().collect(NonEmptySet.collector());
+// Some([admin, editor, viewer])
+
+Option<NonEmptySet<String>> emptyCollected =
+    Stream.<String>empty().collect(NonEmptySet.collector());
+// None
 ```

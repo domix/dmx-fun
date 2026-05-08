@@ -1,6 +1,6 @@
 ---
 title: "NonEmptySet<T> — Developer Guide"
-description: "Comprehensive guide to NonEmptySet<T>: construction, element access, transformations, filter, set operations (union, intersection), and cross-type conversions (toNonEmptyMap, toNonEmptyList)."
+description: "Comprehensive guide to NonEmptySet<T>: construction, element access, transformations, filter, set operations (union, intersection), cross-type conversions, and interoperability with Option, Try, Either, and Result."
 order: 10
 h1: "NonEmptySet<T>"
 ---
@@ -11,6 +11,8 @@ import {Content as Transformations}    from '../code/guide/non-empty-set/transfo
 import {Content as Filter}             from '../code/guide/non-empty-set/filter.mdx';
 import {Content as SetOperations}      from '../code/guide/non-empty-set/set-operations.mdx';
 import {Content as Interop}            from '../code/guide/non-empty-set/interop.mdx';
+import {Content as InteropOption}      from '../code/guide/non-empty-set/interop-option.mdx';
+import {Content as InteropSequences}   from '../code/guide/non-empty-set/interop-sequences.mdx';
 import {Content as RealWorldExample}   from '../code/guide/non-empty-set/real-world-example.mdx';
 
 > **Runnable example:** [`NonEmptySetSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/NonEmptySetSample.java)
@@ -43,11 +45,13 @@ Use it when:
 
 ## Creating instances
 
-| Factory                       | When input is empty?          |
-|-------------------------------|-------------------------------|
-| `NonEmptySet.of(head, rest)`  | N/A — head is always required |
-| `NonEmptySet.singleton(head)` | N/A — always one element      |
-| `NonEmptySet.fromSet(set)`    | Returns `None`                |
+| Factory                          | When input is empty?          |
+|----------------------------------|-------------------------------|
+| `NonEmptySet.of(head, rest)`     | N/A — head is always required |
+| `NonEmptySet.singleton(head)`    | N/A — always one element      |
+| `NonEmptySet.fromSet(set)`       | Returns `None`                |
+| `NonEmptySet.fromOptional(opt)`  | Returns `None`                |
+| `NonEmptySet.collector()`        | Returns `None`                |
 
 <CreatingInstances/>
 
@@ -88,14 +92,31 @@ not just `NonEmptySet`.
 Cross-type conversions bridge `NonEmptySet` with `NonEmptyMap`, `NonEmptyList`, and the
 standard Java collections.
 
-| Method                       | Returns                  | Notes                                                 |
-|------------------------------|--------------------------|-------------------------------------------------------|
-| `toNonEmptyMap(valueMapper)` | `NonEmptyMap<T, V>`      | Elements become keys; mapper produces values          |
-| `toNonEmptyList()`           | `NonEmptyList<T>`        | Ordered snapshot; head element preserved              |
-| `toSet()`                    | `Set<T>`                 | Unmodifiable `java.util.Set` for standard API interop |
-| `fromSet(set)`               | `Option<NonEmptySet<T>>` | Safe bridge from a plain `Set`; `None` if empty       |
+| Method                         | Returns                  | Notes                                                         |
+|--------------------------------|--------------------------|---------------------------------------------------------------|
+| `toNonEmptyMap(valueMapper)`   | `NonEmptyMap<T, V>`      | Elements become keys; mapper produces values                  |
+| `toNonEmptyList()`             | `NonEmptyList<T>`        | Ordered snapshot; head element preserved                      |
+| `toSet()`                      | `Set<T>`                 | Unmodifiable `java.util.Set` for standard API interop         |
+| `toStream()`                   | `Stream<T>`              | Bridge to `java.util.stream.Stream` for pipeline operations   |
+| `fromSet(set)`                 | `Option<NonEmptySet<T>>` | Safe bridge from a plain `Set`; `None` if empty               |
+| `fromOptional(optional)`       | `Option<NonEmptySet<T>>` | Wraps the present value as singleton; `None` if empty         |
+| `collector()`                  | `Collector<T, ?, Option<NonEmptySet<T>>>` | Build from a `Stream`; `None` if stream is empty |
 
 <Interop/>
+
+## Interoperability — Option
+
+`sequenceOption` turns a `NonEmptySet<Option<T>>` into an `Option<NonEmptySet<T>>`.
+It returns `Some` only when every element is `Some`; the first `None` short-circuits and returns `None`.
+
+<InteropOption/>
+
+## Interoperability — Try, Either, Result
+
+`sequenceTry`, `sequenceEither`, and `sequenceResult` follow the same fail-fast-in-inspection
+pattern: the method stops iterating as soon as it encounters a failure, `Left`, or `Err`.
+
+<InteropSequences/>
 
 ## `equals`, `hashCode`, and `toString`
 
