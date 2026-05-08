@@ -16,7 +16,7 @@ Require **Java 25** as the minimum version.
 ## Consequences
 
 **Positive:**
-- Access to `Gatherer` (Java 22+) to implement `sequence`/`traverse` with true short-circuit.
+- Access to `Gatherer` (Java 24+) to implement `sequence`/`traverse` with true short-circuit.
 - Stable virtual threads (Java 21+) used in `Try.withTimeout`.
 - Exhaustive pattern matching in `switch` over sealed interfaces.
 - Record patterns, unnamed variables (`_`), and other post-17 features.

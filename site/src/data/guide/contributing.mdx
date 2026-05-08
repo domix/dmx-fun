@@ -23,6 +23,11 @@ This page covers everything you need to go from a fresh clone to a passing build
 
 No other global tools are required.
 
+> **Why Java 25?** The Java 25 minimum is an explicit architecture decision: it enables `Gatherer`
+> (finalized in Java 24) for true short-circuit `sequence`/`traverse`, stable virtual threads
+> (Java 21+) for `Try.withTimeout`, and exhaustive sealed-interface pattern matching (Java 21+).
+> See [ADR-001 — Java 25 as the minimum required version](https://github.com/domix/dmx-fun/blob/main/docs/adr/ADR-001-java-version.md).
+
 ## Clone and build
 
 <CloneAndBuild/>
