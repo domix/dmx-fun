@@ -134,6 +134,9 @@ to achieve true short-circuit — a design decision documented in <a href={`${ba
 
 `Try.Partition<V>` is a record with two unmodifiable lists.
 
+**Important:** `toList()` always consumes the entire stream — the `Collector` contract has no early-termination mechanism. Use `sequence` when you need true fail-fast behaviour on large or expensive streams.
+The intentional difference between `toList()` and `sequence` is documented in <a href={`${base}adr/adr-016-tolist-vs-sequence-consumption`}>ADR-016 — Try.toList() collector consumes the entire stream while sequence is fail-fast</a>.
+
 <TryCollectors/>
 
 ## Collector facade: Tries
