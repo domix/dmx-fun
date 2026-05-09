@@ -213,6 +213,8 @@ and enforces the time limit via `Future.get(timeout, unit)`.
 **Requires Java 21+** (virtual threads). Because `Try` is an immutable value type
 (already computed), timeout applies at creation time — use the static factory
 rather than trying to retroactively time-limit an existing `Try`.
+The choice to use `Thread.ofVirtual()` over a platform-thread `ExecutorService` or a shared
+`CompletableFuture` pool is documented in <a href={`${base}adr/adr-013-try-with-timeout-virtual-threads`}>ADR-013 — Try.withTimeout uses virtual threads (Thread.ofVirtual())</a>.
 
 <Timeout/>
 

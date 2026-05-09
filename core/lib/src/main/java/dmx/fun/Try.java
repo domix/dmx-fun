@@ -196,7 +196,11 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * e.g. {@code "Operation timed out after 500000000ns"}. Nanosecond precision is used so
      * that sub-millisecond timeouts are honoured without truncation.
      *
-     * <p><b>Requires Java 21+</b> (virtual threads).
+     * <p><b>Requires Java 21+</b> (virtual threads). The decision to use
+     * {@code Thread.ofVirtual()} over a platform-thread {@code ExecutorService} or a shared
+     * {@code CompletableFuture} pool is documented in
+     * <a href="https://domix.github.io/dmx-fun/adr/adr-013-try-with-timeout-virtual-threads/">
+     * ADR-013 — Try.withTimeout uses virtual threads (Thread.ofVirtual())</a>.
      *
      * <p>Example:
      * <pre>{@code
