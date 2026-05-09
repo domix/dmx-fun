@@ -46,6 +46,7 @@ Unlike a raw `null`, an `Option` is explicit in the type system:
 callers are forced to handle both the present and absent cases.
 Unlike `java.util.Optional`, `Option` is a _sealed interface_
 and can be used in switch expressions with exhaustive pattern matching.
+The decision to provide a custom `Option<T>` type instead of reusing `java.util.Optional` is documented in <a href={`${base}adr/adr-015-option-vs-optional`}>ADR-015 — Option&lt;T&gt; as a custom type instead of java.util.Optional</a>.
 
 ## Creating instances
 
