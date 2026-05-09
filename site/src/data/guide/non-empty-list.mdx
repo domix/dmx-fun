@@ -18,6 +18,8 @@ import {Content as ToNonEmptyListCollector} from '../code/guide/non-empty-list/t
 import {Content as SequencedCollection}    from '../code/guide/non-empty-list/sequenced-collection.mdx';
 import {Content as RealWorldExample}       from '../code/guide/non-empty-list/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`NonEmptyListSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/NonEmptyListSample.java)
 
 ## What is NonEmptyList&lt;T&gt;?
@@ -37,6 +39,9 @@ present.
 `Validated.Invalid` always carries at least one error, so
 `Validated<NonEmptyList<E>, A>` is the idiomatic type for accumulating validation
 errors without losing any of them.
+
+The design rationale — why a structural head+tail representation was chosen over
+runtime checks or existing JDK types — is documented in <a href={`${base}adr/adr-018-non-empty-collections`}>ADR-018 — NonEmptyList&lt;T&gt;, NonEmptySet&lt;T&gt;, NonEmptyMap&lt;K,V&gt; as structural guarantee types</a>.
 
 Use it when:
 
