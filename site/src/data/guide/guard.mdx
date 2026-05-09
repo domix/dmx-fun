@@ -89,12 +89,32 @@ If all guards fail, errors from all of them are accumulated.
 Use `or` when a value is allowed to satisfy any one of several alternative formats
 (e.g., email or phone number, UUID or slug).
 
-## `negate()` / `negate(message)`
+## `negate()` / `negate(message)` / `negate(messageFromValue)`
 
-Inverts the predicate. Use `negate(message)` to supply a domain-specific error
-message; `negate()` falls back to the generic message `"must not satisfy the condition"`.
+Inverts the predicate. Three overloads are available:
+
+| Overload                         | Error message when original guard passes          |
+|----------------------------------|---------------------------------------------------|
+| `negate()`                       | Generic: `"must not satisfy the condition"`       |
+| `negate(String message)`         | Fixed string supplied by the caller               |
+| `negate(Function<T,String> fn)`  | Dynamic — the function receives the passing value |
 
 <Negate/>
+
+## `withMessage(message)`
+
+Replaces all error messages produced by this guard with a single fixed message.
+Useful at public API boundaries where you want to hide internal validation details
+and expose one clean, user-facing message regardless of which rule failed:
+
+```java
+Guard<String> username = notBlank.and(minLength3).and(alphanumeric)
+    .withMessage("invalid username");
+
+username.check("");    // Invalid(["invalid username"])
+username.check("a");   // Invalid(["invalid username"]) — not "min 3 chars"
+username.check("alice"); // Valid("alice")
+```
 
 ## Integrating with `Validated.combine`
 
@@ -115,6 +135,7 @@ Validated<NonEmptyList<String>, Form> form =
 
 | Method                             | Returns                           | Use case                                                                |
 |------------------------------------|-----------------------------------|-------------------------------------------------------------------------|
+| `withMessage(message)`             | `Guard<T>`                        | Replace all errors with one fixed message (hides internal rule details) |
 | `asPredicate()`                    | `Predicate<T>`                    | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
 | `contramap(fn)`                    | `Guard<U>`                        | Adapt a field guard to validate the enclosing object type               |
 | `checkToResult(value)`             | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic                       |

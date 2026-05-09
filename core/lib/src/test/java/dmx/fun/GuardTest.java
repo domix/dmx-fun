@@ -256,9 +256,66 @@ class GuardTest {
     @Test
     void negate_withMessage_shouldThrowNPE_whenMessageIsNull() {
         var g = Guard.<String>of(_ -> true, "msg");
-        assertThatThrownBy(() -> g.negate(null))
+        assertThatThrownBy(() -> g.negate((String) null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("errorMessage");
+    }
+
+    @Test
+    void negate_withFunction_returnsDynamicError_whenOriginalPasses() {
+        var notReserved = Guard.<String>of(s -> s.equals("admin"), "is admin")
+            .negate(s -> "username '" + s + "' is reserved");
+
+        var result = notReserved.check("admin");
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("username 'admin' is reserved");
+    }
+
+    @Test
+    void negate_withFunction_returnsValid_whenOriginalFails() {
+        var notReserved = Guard.<String>of(s -> s.equals("admin"), "is admin")
+            .negate(s -> "username '" + s + "' is reserved");
+
+        assertThat(notReserved.check("alice").isValid()).isTrue();
+    }
+
+    @Test
+    void negate_withFunction_shouldThrowNPE_whenFunctionIsNull() {
+        var g = Guard.<String>of(_ -> true, "msg");
+        assertThatThrownBy(() -> g.negate((java.util.function.Function<String, String>) null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("messageFromValue");
+    }
+
+    // -------------------------------------------------------------------------
+    // withMessage
+    // -------------------------------------------------------------------------
+
+    @Test
+    void withMessage_replacesAllErrors_withSingleMessage_whenGuardFails() {
+        var minLength = Guard.<String>of(s -> s.length() >= 3, "min 3 chars");
+        var guard = notBeBlank.and(minLength).withMessage("invalid username");
+
+        var result = guard.check("  "); // fails both notBeBlank and minLength
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getError().toList()).containsExactly("invalid username");
+    }
+
+    @Test
+    void withMessage_returnsValid_whenGuardPasses() {
+        var guard = notBeBlank.withMessage("invalid");
+
+        assertThat(guard.check("alice").isValid()).isTrue();
+        assertThat(guard.check("alice").get()).isEqualTo("alice");
+    }
+
+    @Test
+    void withMessage_shouldThrowNPE_whenMessageIsNull() {
+        assertThatThrownBy(() -> notBeBlank.withMessage(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("message");
     }
 
     // -------------------------------------------------------------------------
@@ -587,13 +644,21 @@ class GuardTest {
 
     @Test
     void checkToOptional_returnsEmpty_forNullInput_doesNotThrowNPE() {
-        // Guard.nonNull() is typed Guard<@Nullable T> and rejects null → Optional.empty()
-        // Regression: Optional.ofNullable is used so null never reaches Optional.of(null).
+        // Guard.nonNull() rejects null → Invalid → Optional.empty(); Optional.of is never reached.
         Guard<@Nullable String> nonNullGuard = Guard.nonNull();
 
         Optional<@Nullable String> result = nonNullGuard.checkToOptional(null);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void checkToOptional_usesOptionalOf_notOfNullable_whenGuardPasses() {
+        // Verify that the implementation calls Optional.of (not ofNullable) on the passing value.
+        // Optional.of would throw NPE if value were null — but that cannot happen under @NullMarked
+        // when the guard passes.
+        Optional<String> result = notBeBlank.checkToOptional("hello");
+        assertThat(result).isPresent().contains("hello");
     }
 
     @Test

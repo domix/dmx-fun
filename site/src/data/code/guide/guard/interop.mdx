@@ -65,4 +65,10 @@ Optional<String> empty   = username.checkToOptional("a!");    // Optional.empty(
 String upper = username.checkToOptional(input)
     .map(String::toUpperCase)
     .orElse("INVALID");
+
+// withMessage(message) — replace all errors with a single fixed message
+Guard<String> usernameSafe = notBlank.and(minLength3).withMessage("invalid username");
+usernameSafe.check("");    // Invalid(["invalid username"])
+usernameSafe.check("a");   // Invalid(["invalid username"])
+usernameSafe.check("alice"); // Valid("alice")
 ```
