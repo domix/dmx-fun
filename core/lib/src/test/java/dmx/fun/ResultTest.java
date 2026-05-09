@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -135,6 +136,18 @@ class ResultTest {
         assertThat(ok.mapError(String::length).get()).isEqualTo("v");
     }
 
+    @Test
+    void map_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Result.ok("v").map(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void mapError_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").mapError(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
     // ---------- flatMap ----------
 
     @Test
@@ -155,6 +168,12 @@ class ResultTest {
             });
         assertThat(result.isError()).isTrue();
         assertThat(secondCalled.get()).as("mapper must not be called for Err").isFalse();
+    }
+
+    @Test
+    void flatMap_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Result.ok("v").flatMap(null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     // ---------- filter ----------
@@ -191,6 +210,24 @@ class ResultTest {
     void filter_shouldLeaveErrUntouched() {
         Result<String, String> err = Result.err("original");
         assertThat(err.filter(s -> false, "new error")).isSameAs(err);
+    }
+
+    @Test
+    void filter_withValue_shouldThrowNPE_whenPredicateIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>ok("v").filter(null, "e"))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void filter_withFunction_shouldThrowNPE_whenPredicateIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>ok("v").filter(null, s -> "e"))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void filter_withFunction_shouldThrowNPE_whenErrorIfFalseIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>ok("v").filter(s -> true, (Function<String, String>) null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     // ---------- fold / match ----------
@@ -250,6 +287,18 @@ class ResultTest {
         assertThat(touched.get()).isFalse();
     }
 
+    @Test
+    void peek_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Result.ok("v").peek(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void peekError_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>err("e").peekError(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
     // ---------- interop: toOption / toTry ----------
 
     @Test
@@ -278,6 +327,12 @@ class ResultTest {
     void fromOption_shouldWrapSome_andUseErrorForNone() {
         assertThat(Result.fromOption(Option.some("v"), "missing").get()).isEqualTo("v");
         assertThat(Result.fromOption(Option.none(), "missing").getError()).isEqualTo("missing");
+    }
+
+    @Test
+    void fromOption_shouldThrowNPE_whenErrorIfNoneIsNull() {
+        assertThatThrownBy(() -> Result.fromOption(Option.none(), null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -434,50 +489,6 @@ class ResultTest {
         assertThatThrownBy(() -> Result.<String, String>err("e").orElse(() -> null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("alternative returned null");
-    }
-
-    // ---------- or ----------
-
-    @Test
-    void or_shouldReturnSelf_whenOk() {
-        AtomicBoolean called = new AtomicBoolean(false);
-        Result<String, String> ok = Result.ok("primary");
-        Result<String, String> result = ok.or(() -> {
-            called.set(true);
-            return Result.ok("fallback");
-        });
-        assertThat(result).isSameAs(ok);
-        assertThat(called.get()).as("fallback supplier must not be called for Ok").isFalse();
-    }
-
-    @Test
-    void or_shouldReturnFallback_whenErr() {
-        Result<String, String> result = Result.<String, String>err("e")
-            .or(() -> Result.ok("fallback"));
-        assertThat(result.isOk()).isTrue();
-        assertThat(result.get()).isEqualTo("fallback");
-    }
-
-    @Test
-    void or_shouldChain_multipleAlternatives() {
-        Result<String, String> result = Result.<String, String>err("e1")
-            .or(() -> Result.err("e2"))
-            .or(() -> Result.ok("found"));
-        assertThat(result.isOk()).isTrue();
-        assertThat(result.get()).isEqualTo("found");
-    }
-
-    @Test
-    void or_shouldThrowNPE_ifFallbackIsNull() {
-        assertThatThrownBy(() -> Result.<String, String>err("e").or(null))
-            .isInstanceOf(NullPointerException.class);
-    }
-
-    @Test
-    void or_shouldThrowNPE_ifFallbackReturnsNull() {
-        assertThatThrownBy(() -> Result.<String, String>err("e").or(() -> null))
-            .isInstanceOf(NullPointerException.class)
-            .hasMessageContaining("fallback returned null");
     }
 
     // ---------- flatMapError ----------
