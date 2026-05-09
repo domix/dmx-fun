@@ -141,6 +141,7 @@ to achieve true short-circuit — a design decision documented in <a href={`${ba
 `Tries` is a single discoverable entry point for all `Stream<Try<V>>` collectors —
 analogous to `java.util.stream.Collectors`. Import `dmx.fun.Tries` instead of
 remembering which collector lives on which type.
+The decision to provide companion facade classes as pure-delegation entry points is documented in <a href={`${base}adr/adr-014-facade-collectors`}>ADR-014 — Facade collectors (Results, Options, Tries) as a single entry point</a>.
 
 | Method                    | Returns                   | Semantics                                          |
 |---------------------------|---------------------------|----------------------------------------------------|
