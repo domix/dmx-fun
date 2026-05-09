@@ -223,8 +223,10 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      * @param mapper     the function to apply to the value of the successful result
      * @return a new {@code Result} instance, containing the mapped value if the original instance
      * was successful, or the same error if the original instance was an error
+     * @throws NullPointerException if {@code mapper} is {@code null}
      */
     default <NewValue> Result<NewValue, Error> map(Function<Value, NewValue> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Ok<Value, Error> ok -> Result.ok(mapper.apply(ok.value()));
             case Err<Value, Error> err -> Result.err(err.error());
@@ -239,8 +241,10 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      * @param mapper     the function to apply to the error of the erroneous result
      * @return a new {@code Result} instance, containing the transformed error if the original instance
      * was an error, or the same value if the original instance was successful
+     * @throws NullPointerException if {@code mapper} is {@code null}
      */
     default <NewError> Result<Value, NewError> mapError(Function<Error, NewError> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Ok<Value, Error> ok -> Result.ok(ok.value());
             case Err<Value, Error> err -> Result.err(mapper.apply(err.error()));
@@ -256,10 +260,12 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      * @param mapper     the function to apply to the value of the successful {@code Result} to produce a new {@code Result}
      * @return a new {@code Result} instance returned by applying the mapping function to the value if the original instance
      * was successful, or the same error if the original instance was an error
+     * @throws NullPointerException if {@code mapper} is {@code null}
      */
     default <NewValue> Result<NewValue, Error> flatMap(Function<Value, Result<NewValue, Error>> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
-            case Ok<Value, Error> ok -> mapper.apply(ok.value());
+            case Ok<Value, Error> ok -> Objects.requireNonNull(mapper.apply(ok.value()), "mapper returned null");
             case Err<Value, Error> err -> Result.err(err.error());
         };
     }
@@ -271,8 +277,10 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      *
      * @param action a {@link Consumer} that accepts the value contained in a successful result
      * @return the original {@code Result} instance
+     * @throws NullPointerException if {@code action} is {@code null}
      */
     default Result<Value, Error> peek(Consumer<Value> action) {
+        Objects.requireNonNull(action, "action");
         if (this instanceof Ok<Value, Error>(Value value)) {
             action.accept(value);
         }
@@ -286,8 +294,10 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      *
      * @param action a {@link Consumer} that accepts the error contained in an erroneous result
      * @return the original {@code Result} instance
+     * @throws NullPointerException if {@code action} is {@code null}
      */
     default Result<Value, Error> peekError(Consumer<Error> action) {
+        Objects.requireNonNull(action, "action");
         if (this instanceof Err<Value, Error>(Error error)) {
             action.accept(error);
         }
@@ -305,8 +315,11 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      * @param errorIfFalse the error to return if the predicate evaluates to false
      * @return the current result if it is not an Ok instance or the predicate evaluates to true,
      * otherwise a new error result with the specified error value
+     * @throws NullPointerException if {@code predicate} or {@code errorIfFalse} is {@code null}
      */
     default Result<Value, Error> filter(Predicate<Value> predicate, Error errorIfFalse) {
+        Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(errorIfFalse, "errorIfFalse");
         if (this instanceof Ok<Value, Error>(Value value)) {
             return predicate.test(value) ? this : Result.err(errorIfFalse);
         }
@@ -323,8 +336,11 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      * @param errorIfFalse a function to generate an error if the predicate evaluates to false.
      * @return a filtered result, returning the same instance if the predicate evaluates to true or the result is Err;
      * otherwise, returns an Err with the provided error value.
+     * @throws NullPointerException if {@code predicate} or {@code errorIfFalse} is {@code null}
      */
     default Result<Value, Error> filter(Predicate<Value> predicate, Function<Value, Error> errorIfFalse) {
+        Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(errorIfFalse, "errorIfFalse");
         if (this instanceof Ok<Value, Error>(Value value)) {
             return predicate.test(value) ? this : Result.err(errorIfFalse.apply(value));
         }
@@ -396,20 +412,6 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
             return this;
         }
         return (Result<Value, Error>) Objects.requireNonNull(alternative.get(), "alternative returned null");
-    }
-
-    /**
-     * Returns this {@code Result} if it is {@code Ok}; otherwise evaluates the given supplier
-     * and returns its result. The supplier is <em>not</em> called when this instance is {@code Ok}.
-     *
-     * @param fallback a lazy supplier of an alternative {@code Result} evaluated only on {@code Err};
-     *                 must not return {@code null}
-     * @return this instance if {@code Ok}, or the result of {@code fallback.get()} if {@code Err}
-     * @throws NullPointerException if {@code fallback} is null or if {@code fallback} returns {@code null}
-     */
-    default Result<Value, Error> or(Supplier<Result<Value, Error>> fallback) {
-        Objects.requireNonNull(fallback, "fallback");
-        return this instanceof Ok ? this : Objects.requireNonNull(fallback.get(), "fallback returned null");
     }
 
     /**
@@ -553,7 +555,8 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     /**
      * Converts this {@code Result} to a standard {@link Optional Optional&lt;V&gt;}.
      *
-     * <p>{@link Result.Ok Ok(v)} maps to {@code Optional.ofNullable(v)};
+     * <p>{@link Result.Ok Ok(v)} maps to {@code Optional.of(v)} — the value is guaranteed non-null
+     * by {@link Ok}'s compact constructor;
      * {@link Result.Err Err(e)} maps to {@link Optional#empty()}, silently discarding the
      * error value. This is a <em>partial</em> inverse of
      * {@link #fromOptional(Optional) fromOptional}: while {@code fromOptional} can produce
@@ -574,7 +577,7 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      */
     default Optional<Value> toOptional() {
         return switch (this) {
-            case Ok<Value, Error>  ok  -> Optional.ofNullable(ok.value());
+            case Ok<Value, Error>  ok  -> Optional.of(ok.value());
             case Err<Value, Error> _   -> Optional.empty();
         };
     }
@@ -588,9 +591,11 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      * @param errorIfNone The error value to return if the {@link Option} is empty.
      * @return A {@link Result} that wraps the value from the {@link Option} if it is defined,
      * or an error containing {@code errorIfNone} if the {@link Option} is empty.
+     * @throws NullPointerException if {@code opt} or {@code errorIfNone} is {@code null}
      */
     static <V, E> Result<V, E> fromOption(Option<? extends V> opt, E errorIfNone) {
         Objects.requireNonNull(opt, "opt");
+        Objects.requireNonNull(errorIfNone, "errorIfNone");
         return switch (opt) {
             case Option.Some<? extends V> s -> Result.ok(s.value());
             case Option.None<? extends V> _ -> Result.err(errorIfNone);
@@ -995,15 +1000,13 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
             Result<? extends V2, ? extends E> r2) {
         Objects.requireNonNull(r1, "r1");
         Objects.requireNonNull(r2, "r2");
-        if (r1 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r2 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
-        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
-        return Result.ok(new Tuple2<>(v1, v2));
+        return switch (r1) {
+            case Err<?, ? extends E> e -> Result.err(e.error());
+            case Ok<? extends V1, ?> ok1 -> switch (r2) {
+                case Err<?, ? extends E> e -> Result.err(e.error());
+                case Ok<? extends V2, ?> ok2 -> Result.ok(new Tuple2<>(ok1.value(), ok2.value()));
+            };
+        };
     }
 
     /**
@@ -1027,19 +1030,16 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         Objects.requireNonNull(r1, "r1");
         Objects.requireNonNull(r2, "r2");
         Objects.requireNonNull(r3, "r3");
-        if (r1 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r2 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r3 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
-        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
-        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
-        return Result.ok(new Tuple3<>(v1, v2, v3));
+        return switch (r1) {
+            case Err<?, ? extends E> e -> Result.err(e.error());
+            case Ok<? extends V1, ?> ok1 -> switch (r2) {
+                case Err<?, ? extends E> e -> Result.err(e.error());
+                case Ok<? extends V2, ?> ok2 -> switch (r3) {
+                    case Err<?, ? extends E> e -> Result.err(e.error());
+                    case Ok<? extends V3, ?> ok3 -> Result.ok(new Tuple3<>(ok1.value(), ok2.value(), ok3.value()));
+                };
+            };
+        };
     }
 
     /**
@@ -1067,19 +1067,17 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         Objects.requireNonNull(r2, "r2");
         Objects.requireNonNull(r3, "r3");
         Objects.requireNonNull(combiner, "combiner");
-        if (r1 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r2 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r3 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
-        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
-        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
-        return Result.ok(Objects.requireNonNull(combiner.apply(v1, v2, v3), "combiner returned null"));
+        return switch (r1) {
+            case Err<?, ? extends E> e -> Result.err(e.error());
+            case Ok<? extends V1, ?> ok1 -> switch (r2) {
+                case Err<?, ? extends E> e -> Result.err(e.error());
+                case Ok<? extends V2, ?> ok2 -> switch (r3) {
+                    case Err<?, ? extends E> e -> Result.err(e.error());
+                    case Ok<? extends V3, ?> ok3 -> Result.ok(Objects.requireNonNull(
+                        combiner.apply(ok1.value(), ok2.value(), ok3.value()), "combiner returned null"));
+                };
+            };
+        };
     }
 
     // ---------- zip4 ----------
@@ -1109,23 +1107,19 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         Objects.requireNonNull(r2, "r2");
         Objects.requireNonNull(r3, "r3");
         Objects.requireNonNull(r4, "r4");
-        if (r1 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r2 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r3 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r4 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
-        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
-        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
-        V4 v4 = ((Ok<? extends V4, ?>) r4).value();
-        return Result.ok(new Tuple4<>(v1, v2, v3, v4));
+        return switch (r1) {
+            case Err<?, ? extends E> e -> Result.err(e.error());
+            case Ok<? extends V1, ?> ok1 -> switch (r2) {
+                case Err<?, ? extends E> e -> Result.err(e.error());
+                case Ok<? extends V2, ?> ok2 -> switch (r3) {
+                    case Err<?, ? extends E> e -> Result.err(e.error());
+                    case Ok<? extends V3, ?> ok3 -> switch (r4) {
+                        case Err<?, ? extends E> e -> Result.err(e.error());
+                        case Ok<? extends V4, ?> ok4 -> Result.ok(new Tuple4<>(ok1.value(), ok2.value(), ok3.value(), ok4.value()));
+                    };
+                };
+            };
+        };
     }
 
     /**
@@ -1157,23 +1151,21 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
         Objects.requireNonNull(r3, "r3");
         Objects.requireNonNull(r4, "r4");
         Objects.requireNonNull(combiner, "combiner");
-        if (r1 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r2 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r3 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        if (r4 instanceof Err<?, ? extends E> e) {
-            return Result.err(e.error());
-        }
-        V1 v1 = ((Ok<? extends V1, ?>) r1).value();
-        V2 v2 = ((Ok<? extends V2, ?>) r2).value();
-        V3 v3 = ((Ok<? extends V3, ?>) r3).value();
-        V4 v4 = ((Ok<? extends V4, ?>) r4).value();
-        return Result.ok(Objects.requireNonNull(combiner.apply(v1, v2, v3, v4), "combiner returned null"));
+        return switch (r1) {
+            case Err<?, ? extends E> e -> Result.err(e.error());
+            case Ok<? extends V1, ?> ok1 -> switch (r2) {
+                case Err<?, ? extends E> e -> Result.err(e.error());
+                case Ok<? extends V2, ?> ok2 -> switch (r3) {
+                    case Err<?, ? extends E> e -> Result.err(e.error());
+                    case Ok<? extends V3, ?> ok3 -> switch (r4) {
+                        case Err<?, ? extends E> e -> Result.err(e.error());
+                        case Ok<? extends V4, ?> ok4 -> Result.ok(Objects.requireNonNull(
+                            combiner.apply(ok1.value(), ok2.value(), ok3.value(), ok4.value()),
+                            "combiner returned null"));
+                    };
+                };
+            };
+        };
     }
 
 }
