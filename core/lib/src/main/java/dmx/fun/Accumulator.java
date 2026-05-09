@@ -3,9 +3,11 @@ package dmx.fun;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -488,6 +490,102 @@ public record Accumulator<E, A>(@Nullable A value, E accumulated) {
         return Accumulator.of(result, log);
     }
 
+    /**
+     * Lifts a {@link Result} value into an {@code Accumulator}, recording a log entry via
+     * {@code okLog} on success or {@code errLog} on failure.
+     *
+     * <p>The {@code Result<V, Err>} itself becomes the value of the returned accumulator,
+     * preserving full access to the outcome. The log records what happened regardless of
+     * which branch was taken:
+     *
+     * <pre>{@code
+     * Accumulator<List<String>, Result<Config, String>> acc = Accumulator.liftResult(
+     *     configService.load(path),
+     *     cfg -> List.of("config loaded from " + path),
+     *     err -> List.of("config load failed: " + err)
+     * );
+     *
+     * acc.accumulated();  // always set — ok or error
+     * acc.value();        // Result<Config, String> — caller decides how to handle it
+     * }</pre>
+     *
+     * @param <E>    the accumulation type
+     * @param <V>    the ok value type of the Result
+     * @param <Err>  the error type of the Result
+     * @param result the Result to lift; must not be {@code null}
+     * @param okLog  function that produces the log entry on ok; must not be {@code null}
+     *               and must not return {@code null}
+     * @param errLog function that produces the log entry on error; must not be {@code null}
+     *               and must not return {@code null}
+     * @return an {@code Accumulator<E, Result<V, Err>>} pairing the Result with its log entry
+     * @throws NullPointerException if any argument is {@code null} or if either log function
+     *                              returns {@code null}
+     */
+    public static <E, V, Err> Accumulator<E, Result<V, Err>> liftResult(
+            Result<V, Err> result,
+            Function<? super V, ? extends E> okLog,
+            Function<? super Err, ? extends E> errLog) {
+        Objects.requireNonNull(result, "result");
+        Objects.requireNonNull(okLog, "okLog");
+        Objects.requireNonNull(errLog, "errLog");
+        if (result.isOk()) {
+            E log = okLog.apply(result.get());
+            Objects.requireNonNull(log, "okLog function must not return null");
+            return Accumulator.of(result, log);
+        }
+        E log = errLog.apply(result.getError());
+        Objects.requireNonNull(log, "errLog function must not return null");
+        return Accumulator.of(result, log);
+    }
+
+    /**
+     * Lifts an {@link Either} value into an {@code Accumulator}, recording a log entry via
+     * {@code rightLog} on the right track or {@code leftLog} on the left track.
+     *
+     * <p>The {@code Either<L, R>} itself becomes the value of the returned accumulator,
+     * preserving full access to the outcome. The log records what happened regardless of
+     * which branch was taken:
+     *
+     * <pre>{@code
+     * Accumulator<List<String>, Either<String, Config>> acc = Accumulator.liftEither(
+     *     configParser.parse(input),
+     *     cfg -> List.of("parsed successfully"),
+     *     err -> List.of("parse failed: " + err)
+     * );
+     *
+     * acc.accumulated();  // always set — right or left
+     * acc.value();        // Either<String, Config> — caller decides how to handle it
+     * }</pre>
+     *
+     * @param <E>      the accumulation type
+     * @param <L>      the left type of the Either
+     * @param <R>      the right (success) type of the Either
+     * @param either   the Either to lift; must not be {@code null}
+     * @param rightLog function that produces the log entry on the right track;
+     *                 must not be {@code null} and must not return {@code null}
+     * @param leftLog  function that produces the log entry on the left track;
+     *                 must not be {@code null} and must not return {@code null}
+     * @return an {@code Accumulator<E, Either<L, R>>} pairing the Either with its log entry
+     * @throws NullPointerException if any argument is {@code null} or if either log function
+     *                              returns {@code null}
+     */
+    public static <E, L, R> Accumulator<E, Either<L, R>> liftEither(
+            Either<L, R> either,
+            Function<? super R, ? extends E> rightLog,
+            Function<? super L, ? extends E> leftLog) {
+        Objects.requireNonNull(either, "either");
+        Objects.requireNonNull(rightLog, "rightLog");
+        Objects.requireNonNull(leftLog, "leftLog");
+        if (either.isRight()) {
+            E log = rightLog.apply(either.getRight());
+            Objects.requireNonNull(log, "rightLog function must not return null");
+            return Accumulator.of(either, log);
+        }
+        E log = leftLog.apply(either.getLeft());
+        Objects.requireNonNull(log, "leftLog function must not return null");
+        return Accumulator.of(either, log);
+    }
+
     // -------------------------------------------------------------------------
     // Interoperability
     // -------------------------------------------------------------------------
@@ -553,5 +651,71 @@ public record Accumulator<E, A>(@Nullable A value, E accumulated) {
     @SuppressWarnings("NullAway")
     public Result<A, E> toResult() {
         return hasValue() ? Result.ok(value) : Result.err(accumulated);
+    }
+
+    /**
+     * Converts this accumulator to a JDK {@link Optional}.
+     * Returns {@link Optional#of(Object)} when {@link #hasValue()} is {@code true},
+     * or {@link Optional#empty()} for {@link #tell(Object)} results.
+     *
+     * <p>The accumulation is discarded. Use this when only the presence or absence of a
+     * value matters and the log is not needed at this point:
+     *
+     * <pre>{@code
+     * Accumulator<List<String>, Integer> acc = Accumulator.of(42, List.of("step 1"));
+     * acc.toOptional();  // Optional.of(42)
+     *
+     * Accumulator<List<String>, Void> tell = Accumulator.tell(List.of("entry"));
+     * tell.toOptional(); // Optional.empty()
+     * }</pre>
+     *
+     * @return {@code Optional.of(value)} when {@link #hasValue()},
+     *         or {@code Optional.empty()} for {@link #tell(Object)} results
+     */
+    public Optional<A> toOptional() {
+        return value != null ? Optional.of(value) : Optional.empty();
+    }
+
+    /**
+     * Returns a single-element {@link Stream} of the value when {@link #hasValue()} is
+     * {@code true}, or an empty stream for {@link #tell(Object)} results.
+     *
+     * <p>The accumulation is discarded. Useful for integrating with stream pipelines:
+     *
+     * <pre>{@code
+     * Accumulator<List<String>, Integer> acc = Accumulator.of(42, List.of("log"));
+     * acc.stream().forEach(System.out::println); // prints 42
+     *
+     * Accumulator<List<String>, Void> tell = Accumulator.tell(List.of("entry"));
+     * tell.stream().count(); // 0
+     * }</pre>
+     *
+     * @return a single-element stream of the value, or an empty stream for {@code tell} results
+     */
+    public Stream<A> stream() {
+        return value != null ? Stream.of(value) : Stream.empty();
+    }
+
+    /**
+     * Converts this accumulator to an {@link Either}: {@link Either#right(Object)} when
+     * {@link #hasValue()} is {@code true}, or {@link Either#left(Object)} carrying the
+     * accumulated side-channel when this accumulator was created by {@link #tell(Object)}.
+     *
+     * <p>This is the {@code Either}-counterpart of {@link #toResult()}, useful when the
+     * surrounding code works in the {@code Either} world:
+     *
+     * <pre>{@code
+     * Accumulator<List<String>, Config> acc = loadAndTrace(path);
+     *
+     * Either<List<String>, Config> result = acc.toEither();
+     * // right(config)       — when a value was computed
+     * // left(["entry..."])  — when only tell() steps ran (no real value was produced)
+     * }</pre>
+     *
+     * @return {@code right(value)} when {@link #hasValue()}, or {@code left(accumulated)} otherwise
+     */
+    @SuppressWarnings("NullAway")
+    public Either<E, A> toEither() {
+        return hasValue() ? Either.right(value) : Either.left(accumulated);
     }
 }

@@ -9,6 +9,8 @@ import {Content as CloneAndBuild} from '../code/guide/contributing/clone-and-bui
 import {Content as RunTests}      from '../code/guide/contributing/run-tests.mdx';
 import {Content as RunSite}       from '../code/guide/contributing/run-site.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 Contributions are welcome — bug reports, documentation improvements, and new features alike.
 This page covers everything you need to go from a fresh clone to a passing build and an open PR.
 
@@ -22,6 +24,11 @@ This page covers everything you need to go from a fresh clone to a passing build
 | npm     | bundled with Node.js  | Run from the `site/` directory                                                 |
 
 No other global tools are required.
+
+> **Why Java 25?** The Java 25 minimum is an explicit architecture decision: it enables `Gatherer`
+> (finalized in Java 24) for true short-circuit `sequence`/`traverse`, stable virtual threads
+> (Java 21+) for `Try.withTimeout`, and exhaustive sealed-interface pattern matching (Java 21+).
+> See <a href={`${base}adr/adr-001-java-version`}>ADR-001 — Java 25 as the minimum required version</a>.
 
 ## Clone and build
 
@@ -52,10 +59,16 @@ The site is served under the `/dmx-fun/` base path to match GitHub Pages.
 All public methods must be annotated with `@NullMarked` (via the package-info or class-level annotation).
 Return `Option<T>` instead of a nullable type; accept `@Nullable` parameters only when the absence is
 meaningful to the implementation.
+The choice of jspecify as the null-safety annotation library is documented in <a href={`${base}adr/adr-008-jspecify-null-safety`}>ADR-008 — jspecify (@NullMarked, @Nullable) for null safety</a>.
+
+> **Exception:** `Try.Success` deliberately accepts `null` as a valid value when produced by
+> `Try.run()` (void side-effects — `Void` has no instances in Java). `Result.Ok` rejects `null`.
+> This asymmetry is documented in <a href={`${base}adr/adr-004-null-in-try-vs-result`}>ADR-004 — Try allows Success(null); Result.Ok rejects null</a>.
 
 ### Sealed interfaces and records
 
-Every sum type in the library is a sealed interface with record implementations.
+Every sum type in the library is a sealed interface with record implementations —
+a deliberate design decision documented in <a href={`${base}adr/adr-003-sealed-interfaces-records`}>ADR-003 — Sealed interfaces + records as ADT representation.</a>
 This enables exhaustive pattern matching for callers and removes the need for `instanceof` chains.
 
 ```java

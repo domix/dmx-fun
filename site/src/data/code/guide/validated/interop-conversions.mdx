@@ -5,17 +5,27 @@ fileName: 'Demo.java'
 ```java
 Validated<String, Integer> v = parseAge(input);
 
+// ── Validated → other types ──────────────────────────────────────────────────
+
 // Validated → Result (Valid→Ok, Invalid→Err)
 Result<Integer, String> result = v.toResult();
 
-// Validated → Try (requires mapping the error to a Throwable)
+// Validated → Try (map the error to a Throwable)
 Try<Integer> t = v.toTry(err -> new IllegalArgumentException(err));
 
 // Validated → Either (Valid→right, Invalid→left)
 Either<String, Integer> either = v.toEither();
 
-// Validated → Option (discards the error)
+// Validated → Option (discards the error on Invalid)
 Option<Integer> opt = v.toOption();
+
+// Validated → Optional (discards the error on Invalid)
+Optional<Integer> optional = v.toOptional();
+
+// Validated → Stream (single-element on Valid, empty on Invalid)
+List<Integer> values = v.stream().toList();
+
+// ── Other types → Validated ──────────────────────────────────────────────────
 
 // Result → Validated
 Validated<String, Integer> fromResult = Validated.fromResult(result);
@@ -25,4 +35,10 @@ Validated<String, Integer> fromOption = Validated.fromOption(opt, "value missing
 
 // Try → Validated (map exception to error type)
 Validated<String, Integer> fromTry = Validated.fromTry(t, Throwable::getMessage);
+
+// Either → Validated (right→Valid, left→Invalid)
+Validated<String, Integer> fromEither = Validated.fromEither(either);
+
+// Optional → Validated (supply error for the empty case)
+Validated<String, Integer> fromOptional = Validated.fromOptional(optional, "value missing");
 ```

@@ -1,0 +1,47 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+// sequenceTry: NonEmptySet<Try<T>> → Try<NonEmptySet<T>>
+// Success if every element succeeds; Failure from the first failing element.
+NonEmptySet<Try<String>> tries = NonEmptySet.of(
+    Try.success("admin"), Set.of(Try.success("editor"), Try.success("viewer")));
+
+Try<NonEmptySet<String>> allOk = NonEmptySet.sequenceTry(tries);
+// Success([admin, editor, viewer])
+
+NonEmptySet<Try<String>> withFailure = NonEmptySet.of(
+    Try.failure(new RuntimeException("boom")), Set.of(Try.success("editor")));
+
+Try<NonEmptySet<String>> failed = NonEmptySet.sequenceTry(withFailure);
+// Failure(RuntimeException("boom"))
+
+// sequenceEither: NonEmptySet<Either<E, T>> → Either<E, NonEmptySet<T>>
+// Right if every element is Right; Left from the first Left element.
+NonEmptySet<Either<String, Integer>> eithers = NonEmptySet.of(
+    Either.right(10), Set.of(Either.right(20), Either.right(30)));
+
+Either<String, NonEmptySet<Integer>> allRight = NonEmptySet.sequenceEither(eithers);
+// Right([10, 20, 30])
+
+NonEmptySet<Either<String, Integer>> withLeft = NonEmptySet.of(
+    Either.left("invalid"), Set.of(Either.right(20)));
+
+Either<String, NonEmptySet<Integer>> firstLeft = NonEmptySet.sequenceEither(withLeft);
+// Left("invalid")
+
+// sequenceResult: NonEmptySet<Result<T, E>> → Result<NonEmptySet<T>, E>
+// Ok if every element is Ok; Err from the first error element.
+NonEmptySet<Result<Integer, String>> results = NonEmptySet.of(
+    Result.ok(10), Set.of(Result.ok(20), Result.ok(30)));
+
+Result<NonEmptySet<Integer>, String> allOkResult = NonEmptySet.sequenceResult(results);
+// Ok([10, 20, 30])
+
+NonEmptySet<Result<Integer, String>> withErr = NonEmptySet.of(
+    Result.err("not found"), Set.of(Result.ok(20)));
+
+Result<NonEmptySet<Integer>, String> firstErr = NonEmptySet.sequenceResult(withErr);
+// Err("not found")
+```

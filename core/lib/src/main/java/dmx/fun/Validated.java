@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
@@ -22,6 +23,11 @@ import org.jspecify.annotations.Nullable;
  * applicative-style <em>error accumulation</em> via {@link #combine} and {@link #product}.
  * This makes it ideal for form/DTO validation where all errors should be reported at once.
  * Sequential fail-fast composition is still available through {@link #flatMap}.
+ *
+ * <p>The deliberate co-existence of both types — {@code Validated} for accumulation and
+ * {@link Result} for fail-fast — is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-006-validated-vs-result/">
+ * ADR-006 — Validated (error accumulation) vs Result (fail-fast)</a>.
  *
  * <p>This interface is {@link NullMarked}: all types are non-null by default.
  *
@@ -320,6 +326,20 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
     }
 
     /**
+     * Converts this {@code Validated} to a JDK {@link Optional}.
+     * {@link Valid} maps to {@link Optional#of}; {@link Invalid} maps to {@link Optional#empty()}.
+     * The error is discarded on the invalid track.
+     *
+     * @return an {@code Optional} containing the success value, or empty
+     */
+    default Optional<A> toOptional() {
+        return switch (this) {
+            case Valid<E, A> v     -> Optional.of(v.value());
+            case Invalid<E, A> _   -> Optional.empty();
+        };
+    }
+
+    /**
      * Converts a {@link Result} to a {@code Validated}.
      * {@link Result.Ok} maps to {@link Valid}; {@link Result.Err} maps to {@link Invalid}.
      *
@@ -379,6 +399,44 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
                 Objects.requireNonNull(errorMapper.apply(f.cause()), "errorMapper returned null")
             );
         };
+    }
+
+    /**
+     * Converts an {@link Either} to a {@code Validated}.
+     * {@link Either#right} maps to {@link Valid}; {@link Either#left} maps to {@link Invalid}.
+     *
+     * @param <E>    the error type
+     * @param <A>    the value type
+     * @param either the either to convert; must not be null
+     * @return the equivalent {@code Validated}
+     * @throws NullPointerException if {@code either} is null
+     */
+    static <E, A> Validated<E, A> fromEither(Either<? extends E, ? extends A> either) {
+        Objects.requireNonNull(either, "either");
+        return switch (either) {
+            case Either.Right<? extends E, ? extends A> r -> Validated.valid(r.value());
+            case Either.Left<? extends E, ? extends A> l  -> Validated.invalid(l.value());
+        };
+    }
+
+    /**
+     * Converts a JDK {@link Optional} to a {@code Validated}.
+     * {@link Optional#isPresent()} maps to {@link Valid}; {@link Optional#isEmpty()} maps to
+     * {@link Invalid} using the provided error.
+     *
+     * @param <E>          the error type
+     * @param <A>          the value type
+     * @param optional     the optional to convert; must not be null
+     * @param errorIfEmpty the error to use if the optional is empty; must not be null
+     * @return the equivalent {@code Validated}
+     * @throws NullPointerException if {@code optional} or {@code errorIfEmpty} is null
+     */
+    static <E, A> Validated<E, A> fromOptional(Optional<? extends A> optional, E errorIfEmpty) {
+        Objects.requireNonNull(optional, "optional");
+        Objects.requireNonNull(errorIfEmpty, "errorIfEmpty");
+        return optional.isPresent()
+            ? Validated.valid(optional.get())
+            : Validated.invalid(errorIfEmpty);
     }
 
     // ---------- sequence / traverse ----------

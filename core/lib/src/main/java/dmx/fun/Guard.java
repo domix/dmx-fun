@@ -30,6 +30,15 @@ import org.jspecify.annotations.Nullable;
  * username.check("alice"); // Valid("alice")
  * }</pre>
  *
+ * <h2>Error type</h2>
+ * <p>The error type is fixed as {@link NonEmptyList}{@code <String>} — human-readable messages
+ * accumulated across all failing guards. This design avoids requiring a {@code BinaryOperator<E>}
+ * for merging in {@link #and}/{@link #or}, and guarantees at least one error is always present.
+ * The trade-off is that typed domain error objects require working directly with
+ * {@link Validated}{@code <E, A>} instead. This decision is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-005-guard-error-type/">
+ * ADR-005 — Guard&lt;T&gt; accumulates errors as a fixed NonEmptyList&lt;String&gt;</a>.
+ *
  * <h2>Composition semantics</h2>
  * <ul>
  *   <li>{@link #and(Guard) and} — both guards must pass; errors from all failing guards are

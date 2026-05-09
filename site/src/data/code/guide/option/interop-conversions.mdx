@@ -3,10 +3,40 @@ fileName: 'Demo.java'
 ---
 
 ```java
-// Promote to Result when absence should be an error
-Result<User, String> result = findUser(id)
-    .toResult(() -> "User not found: " + id);
+Option<User> user = findUser(id);
 
-// Demote to JDK Optional for older APIs
-Optional<User> opt = findUser(id).toOptional();
+// ── Option → other types ────────────────────────────────────────────────────
+
+// → Optional  (bridge to JDK APIs)
+Optional<User> optional = user.toOptional();
+
+// → Result  (None becomes Err with the supplied error value)
+Result<User, String> result = user.toResult("User not found: " + id);
+
+// → Try  (None becomes Failure; supplier is called lazily)
+Try<User> tried = user.toTry(() -> new NoSuchElementException("User " + id + " not found"));
+
+// → Either  (Some → Right, None → Left with the supplied left value)
+Either<String, User> either = user.toEither("not-found");
+
+// → CompletableFuture  (Some → completed, None → failed with NoSuchElementException)
+CompletableFuture<User> future = user.toFuture();
+
+// ── Other types → Option ────────────────────────────────────────────────────
+
+// Optional → Option
+Option<User> fromOptional = Option.fromOptional(legacyOptional);
+
+// Result → Option  (Err is discarded)
+Option<User> fromResult = Option.fromResult(userResult);
+
+// Try → Option  (Failure is discarded; Try.Success(null) from Try.run() → None)
+Option<Config> fromTry = Option.fromTry(tryReadConfig);
+
+// Try<Optional<T>> → Option<T>  (flattens both layers in one step)
+Option<Item> fromTryOpt = Option.fromTryOptional(
+    Try.of(() -> repository.findById(id)));
+
+// Either → Option  (Left is discarded; Right(v) → Some(v))
+Option<User> fromEither = Option.fromEither(eitherValue);
 ```

@@ -5,19 +5,40 @@ fileName: 'Demo.java'
 ```java
 Either<String, Integer> e = compute();
 
-// Either → Option (Right → Some, Left → None — left value discarded)
+// ── Either → other types ────────────────────────────────────────────────────
+
+// → Option  (Right → Some, Left → None — left value discarded)
 Option<Integer> opt = e.toOption();
 
-// Either → Result (Right → Ok, Left → Err)
+// → Result  (Right → Ok, Left → Err)
 Result<Integer, String> result = e.toResult();
 
-// Either → Validated (Right → Valid, Left → Invalid)
+// → Validated  (Right → Valid, Left → Invalid)
 Validated<String, Integer> validated = e.toValidated();
 
-// Other types → Either
-Either<Throwable, String> fromTry       = Try.of(() -> fetch()).toEither();
-Either<String, Integer>   fromResult    = Result.<Integer, String>ok(1).toEither();
-Either<String, Integer>   fromValidated = Validated.<String, Integer>valid(1).toEither();
-Either<String, Integer>   fromOption    = Option.some(42)
-    .toEither(() -> "value absent");
+// → Optional  (Right(r) → Optional.of(r), Left → Optional.empty())
+Optional<Integer> optional = e.toOptional();
+
+// → Try  (Right → Success, Left mapped to Throwable → Failure)
+Try<Integer> tried = e.toTry(IllegalArgumentException::new);
+
+// → Stream  (Right(r) → Stream.of(r), Left → Stream.empty())
+//   Useful for flatMap pipelines that collect only the right values
+List<Integer> rights = Stream.of(Either.right(1), Either.left("err"), Either.right(3))
+    .flatMap(Either::stream)
+    .toList(); // [1, 3]
+
+// ── Other types → Either ────────────────────────────────────────────────────
+
+// Try → Either  (Success → Right, Failure → Left with the exception)
+Either<Throwable, String> fromTry = Try.of(() -> fetch()).toEither();
+
+// Result → Either  (Ok → Right, Err → Left)
+Either<String, Integer> fromResult = Result.<Integer, String>ok(1).toEither();
+
+// Validated → Either  (Valid → Right, Invalid → Left)
+Either<String, Integer> fromValidated = Validated.<String, Integer>valid(1).toEither();
+
+// Option → Either  (Some(v) → Right(v), None → Left(leftIfNone))
+Either<String, Integer> fromOption = Option.some(42).toEither("value absent");
 ```

@@ -18,6 +18,8 @@ import {Content as Combining34}          from '../code/guide/validated/combining
 import {Content as PitfallsFlatMap}     from '../code/guide/validated/pitfalls-flatmap.mdx';
 import {Content as RealWorldExample}    from '../code/guide/validated/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`ValidatedSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/ValidatedSample.java)
 
 ## What is Validated&lt;E, A&gt;?
@@ -132,15 +134,19 @@ streams and the standard `Stream.collect` API.
 
 ## Interoperability
 
-| Conversion             | Method                                      |
-|------------------------|---------------------------------------------|
-| `Validated` → `Result` | `v.toResult()`                              |
-| `Validated` → `Try`    | `v.toTry(errorMapper)`                      |
-| `Validated` → `Either` | `v.toEither()`                              |
-| `Validated` → `Option` | `v.toOption()`                              |
-| `Result` → `Validated` | `Validated.fromResult(result)`              |
-| `Option` → `Validated` | `Validated.fromOption(option, errorIfNone)` |
-| `Try` → `Validated`    | `Validated.fromTry(t, errorMapper)`         |
+| Conversion                | Method                                         |
+|---------------------------|------------------------------------------------|
+| `Validated` → `Result`    | `v.toResult()`                                 |
+| `Validated` → `Try`       | `v.toTry(errorMapper)`                         |
+| `Validated` → `Either`    | `v.toEither()`                                 |
+| `Validated` → `Option`    | `v.toOption()`                                 |
+| `Validated` → `Optional`  | `v.toOptional()`                               |
+| `Validated` → `Stream`    | `v.stream()`                                   |
+| `Result` → `Validated`    | `Validated.fromResult(result)`                 |
+| `Option` → `Validated`    | `Validated.fromOption(option, errorIfNone)`    |
+| `Try` → `Validated`       | `Validated.fromTry(t, errorMapper)`            |
+| `Either` → `Validated`    | `Validated.fromEither(either)`                 |
+| `Optional` → `Validated`  | `Validated.fromOptional(optional, errorIfEmpty)` |
 
 <InteropConversions/>
 
@@ -155,6 +161,8 @@ See the [Combining Types](combining-types) page for the full conversion matrix.
 | Wrap throwing legacy code                                | `Try`       |
 | Independent field validations (form, config)             | `Validated` |
 | Pipeline where each step feeds the next                  | `Result`    |
+
+The deliberate co-existence of both types is documented in <a href={`${base}adr/adr-006-validated-vs-result`}>ADR-006 — Validated (error accumulation) vs Result (fail-fast)</a>.
 
 ## Common pitfalls
 

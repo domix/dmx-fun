@@ -1,0 +1,27 @@
+---
+fileName: 'Demo.java'
+---
+
+```java
+sealed interface DbError {
+    record QueryFailed(String message) implements DbError {}
+    record ConnectionFailed(String message) implements DbError {}
+}
+
+Resource<Connection> connResource = Resource.of(
+    () -> dataSource.getConnection(),
+    Connection::close
+);
+
+// Body returns Either<E, R> — acquire/release Throwables are mapped to E via onError
+Either<DbError, List<User>> users = connResource.useAsEither(
+    conn  -> fetchUsers(conn),                              // returns Either<DbError, List<User>>
+    ex    -> new DbError.ConnectionFailed(ex.getMessage())
+);
+
+// Both branches are explicit — no Try wrapping needed
+users.match(
+    err  -> System.err.println("DB error: " + err),
+    list -> list.forEach(System.out::println)
+);
+```

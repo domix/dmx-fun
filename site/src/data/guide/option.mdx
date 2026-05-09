@@ -30,6 +30,8 @@ import {Content as PitfallsNested}         from '../code/guide/option/pitfalls-n
 import {Content as PitfallsNullMapper}     from '../code/guide/option/pitfalls-null-mapper.mdx';
 import {Content as RealWorldExample}       from '../code/guide/option/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`OptionSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/OptionSample.java)
 
 ## What is Option&lt;T&gt;?
@@ -75,7 +77,9 @@ Converts a `java.util.Optional` into an `Option`.
 
 ### Converting from Result or Try
 
-Both `Result` and `Try` can be narrowed to an `Option` when you only care about presence:
+`Result` and `Try` expose `toOption()` to discard the error/exception track.
+The static factory forms are symmetric: `Option.fromResult(result)` and `Option.fromTry(t)`.
+`Option.fromTryOptional(t)` flattens a `Try<Optional<T>>` in one step.
 
 <CreatingFromResultTry/>
 
@@ -168,7 +172,8 @@ _from_ the first value.
 ### Collecting a list with `sequence`
 
 Converts a `List<Option<T>>` into an `Option<List<T>>`.
-Returns `None` as soon as any element is `None`.
+Returns `None` as soon as any element is `None`. The stream-based overload uses
+`Stream.gather(Gatherer.ofSequential(...))` for true short-circuit (see <a href={`${base}adr/adr-010-gatherer-sequence-traverse`}>ADR-010</a>).
 
 <ComposingSequence/>
 
@@ -203,16 +208,18 @@ Useful for integrating into Stream pipelines without `filter + map`.
 
 ## Interoperability
 
-| Conversion                    | Method                                          |
-|-------------------------------|-------------------------------------------------|
-| `Option` → `Optional`         | `option.toOptional()`                           |
-| `Option` → `Result`           | `option.toResult(errorSupplier)`                |
-| `Option` → `Try`              | `option.toTry(exceptionSupplier)`               |
-| `Option` → `Either`           | `option.toEither(leftSupplier)`                 |
-| `Result` → `Option`           | `result.toOption()`                             |
-| `Try` → `Option`              | `tryVal.toOption()`                             |
-| `Optional` → `Option`         | `Option.fromOptional(optional)`                 |
-| `Try<Optional<T>>` → `Option` | `Option.fromTryOptional(tryOfOptional)` _(flattens both layers; converts Failure to None — drops the error)_ |
+| Conversion                    | Method                                          | Notes                                                           |
+|-------------------------------|-------------------------------------------------|-----------------------------------------------------------------|
+| `Option` → `Optional`         | `option.toOptional()`                           | `Some(v)` → `Optional.of(v)`, `None` → `Optional.empty()`      |
+| `Option` → `Result`           | `option.toResult(errorIfNone)`                  | `None` becomes `Err(errorIfNone)`                               |
+| `Option` → `Try`              | `option.toTry(exceptionSupplier)`               | `None` becomes `Failure`; supplier called lazily                |
+| `Option` → `Either`           | `option.toEither(leftIfNone)`                   | `Some(v)` → `Right(v)`, `None` → `Left(leftIfNone)`            |
+| `Option` → `CompletableFuture`| `option.toFuture()`                             | `Some(v)` → completed future, `None` → failed with `NoSuchElementException` |
+| `Optional` → `Option`         | `Option.fromOptional(optional)`                 |                                                                 |
+| `Result` → `Option`           | `Option.fromResult(result)` or `result.toOption()` | `Err` is discarded                                           |
+| `Try` → `Option`              | `Option.fromTry(t)` or `t.toOption()`           | `Failure` is discarded; `Success(null)` → `None`               |
+| `Try<Optional<T>>` → `Option` | `Option.fromTryOptional(t)`                     | Flattens both layers; `Failure` and `Optional.empty()` → `None` |
+| `Either` → `Option`           | `Option.fromEither(either)` or `either.toOption()` | `Left` is discarded; `Right(v)` → `Some(v)`                 |
 
 <InteropConversions/>
 

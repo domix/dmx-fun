@@ -3,6 +3,14 @@ fileName: 'Demo.java'
 ---
 
 ```java
+// fromOptional: Optional<T> → Option<NonEmptyList<T>>
+// Present → Some(singleton); empty → None
+Option<NonEmptyList<String>> fromPresent = NonEmptyList.fromOptional(Optional.of("hello"));
+// Some(["hello"])
+
+Option<NonEmptyList<String>> fromEmpty = NonEmptyList.fromOptional(Optional.empty());
+// None
+
 // sequence: NonEmptyList<Option<T>> → Option<NonEmptyList<T>>
 // Returns Some if every element is Some; None as soon as any element is None.
 NonEmptyList<Option<Integer>> opts =

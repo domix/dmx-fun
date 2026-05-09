@@ -1,6 +1,6 @@
 ---
 title: "NonEmptyMap<K, V> — Developer Guide"
-description: "Comprehensive guide to NonEmptyMap<K, V>: construction, entry access, transformations, filter, merge, interoperability, and cross-type conversions (keySet, values)."
+description: "Comprehensive guide to NonEmptyMap<K, V>: construction, entry access, transformations, filter, merge, interoperability with Option/Try/Either/Result, and cross-type conversions."
 order: 9
 h1: "NonEmptyMap<K, V>"
 ---
@@ -11,6 +11,8 @@ import {Content as Transformations}    from '../code/guide/non-empty-map/transfo
 import {Content as Filter}             from '../code/guide/non-empty-map/filter.mdx';
 import {Content as Merge}              from '../code/guide/non-empty-map/merge.mdx';
 import {Content as Interop}            from '../code/guide/non-empty-map/interop.mdx';
+import {Content as InteropOption}      from '../code/guide/non-empty-map/interop-option.mdx';
+import {Content as InteropSequences}   from '../code/guide/non-empty-map/interop-sequences.mdx';
 import {Content as RealWorldExample}   from '../code/guide/non-empty-map/real-world-example.mdx';
 
 > **Runnable example:** [`NonEmptyMapSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/NonEmptyMapSample.java)
@@ -39,11 +41,13 @@ Use it when:
 
 ## Creating instances
 
-| Factory                             | When input is empty?                |
-|-------------------------------------|-------------------------------------|
-| `NonEmptyMap.of(key, value, rest)`  | N/A — head entry is always required |
-| `NonEmptyMap.singleton(key, value)` | N/A — always one entry              |
-| `NonEmptyMap.fromMap(map)`          | Returns `None`                      |
+| Factory                                              | When input is empty?                |
+|------------------------------------------------------|-------------------------------------|
+| `NonEmptyMap.of(key, value, rest)`                   | N/A — head entry is always required |
+| `NonEmptyMap.singleton(key, value)`                  | N/A — always one entry              |
+| `NonEmptyMap.fromMap(map)`                           | Returns `None`                      |
+| `NonEmptyMap.fromOptional(optional)`                 | Returns `None`                      |
+| `stream.collect(NonEmptyMap.collector(keyFn, valFn))`| Returns `None`                      |
 
 <CreatingInstances/>
 
@@ -59,9 +63,10 @@ null-safe access to the first entry. `get(key)` returns `Option<V>` — no nulls
 
 <Transformations/>
 
-`mapValues` and `mapKeys` always return a **new `NonEmptyMap`** — the original is
-unchanged. When `mapKeys` produces collisions, the head key takes priority and
-conflicting tail entries are dropped.
+`mapValues`, `mapValuesWithKey`, and `mapKeys` always return a **new `NonEmptyMap`** —
+the original is unchanged. `mapValuesWithKey` is preferred over `mapValues` when the
+mapped value needs the corresponding key. When `mapKeys` produces collisions, the head
+key takes priority and conflicting tail entries are dropped.
 
 ## Filter
 
@@ -78,20 +83,47 @@ result. The predicate receives both the key and the value via `BiPredicate<K, V>
 conflicts. Because both inputs are non-empty, the result is guaranteed non-empty —
 no `Option` wrapping needed.
 
-## Interoperability
+## Interoperability — Java standard types
 
 Cross-type conversions bridge `NonEmptyMap` with `NonEmptySet`, `NonEmptyList`, and the
 standard Java collections.
 
-| Method             | Returns                        | Notes                                                  |
-|--------------------|--------------------------------|--------------------------------------------------------|
-| `keySet()`         | `NonEmptySet<K>`               | All keys as a non-empty set; head key becomes set head |
-| `values()`         | `NonEmptyList<V>`              | All values in insertion order; duplicates preserved    |
-| `toMap()`          | `Map<K, V>`                    | Unmodifiable `java.util.Map` for standard API interop  |
-| `toNonEmptyList()` | `NonEmptyList<Map.Entry<K,V>>` | All entries in insertion order                         |
-| `fromMap(map)`     | `Option<NonEmptyMap<K,V>>`     | Safe bridge from a plain `Map`; `None` if empty        |
+| Method / Factory                                      | Returns                        | Notes                                                      |
+|-------------------------------------------------------|--------------------------------|------------------------------------------------------------|
+| `keySet()`                                            | `NonEmptySet<K>`               | All keys as a non-empty set; head key becomes set head     |
+| `values()`                                            | `NonEmptyList<V>`              | All values in insertion order; duplicates preserved        |
+| `toMap()`                                             | `Map<K, V>`                    | Unmodifiable `java.util.Map` for standard API interop      |
+| `toStream()`                                          | `Stream<Map.Entry<K,V>>`       | Bridge to Java stream pipelines; always at least one entry |
+| `toNonEmptyList()`                                    | `NonEmptyList<Map.Entry<K,V>>` | All entries in insertion order                             |
+| `fromMap(map)`                                        | `Option<NonEmptyMap<K,V>>`     | Safe bridge from a plain `Map`; `None` if empty            |
+| `fromOptional(optional)`                              | `Option<NonEmptyMap<K,V>>`     | Bridge from `Optional<Map<K,V>>`; `None` if absent/empty   |
+| `collector(keyMapper, valueMapper)`                   | `Option<NonEmptyMap<K,V>>`     | Stream collector; `None` for an empty stream               |
 
 <Interop/>
+
+## Interoperability — `Option`
+
+`sequenceOption` converts a `NonEmptyMap<K, Option<V>>` into an
+`Option<NonEmptyMap<K, V>>`. It is fail-fast in inspection: it stops iterating after
+the first `None`.
+
+<InteropOption/>
+
+## Interoperability — `Try`, `Either`, `Result`
+
+`sequenceTry`, `sequenceEither`, and `sequenceResult` each convert a
+`NonEmptyMap` of wrapped values into a single wrapped `NonEmptyMap`.
+All three are **fail-fast in inspection**: they stop iterating after the first
+failure/left/err.
+
+| Method                               | Input                            | Returns                           |
+|--------------------------------------|----------------------------------|-----------------------------------|
+| `NonEmptyMap.sequenceOption(nem)`    | `NonEmptyMap<K, Option<V>>`      | `Option<NonEmptyMap<K, V>>`       |
+| `NonEmptyMap.sequenceTry(nem)`       | `NonEmptyMap<K, Try<V>>`         | `Try<NonEmptyMap<K, V>>`          |
+| `NonEmptyMap.sequenceEither(nem)`    | `NonEmptyMap<K, Either<E, V>>`   | `Either<E, NonEmptyMap<K, V>>`    |
+| `NonEmptyMap.sequenceResult(nem)`    | `NonEmptyMap<K, Result<V, E>>`   | `Result<NonEmptyMap<K, V>, E>`    |
+
+<InteropSequences/>
 
 ## `equals`, `hashCode`, and `toString`
 
@@ -102,13 +134,15 @@ ignored). `hashCode` delegates to `toMap().hashCode()`. `toString` prints in
 
 ## When to use `NonEmptyMap` vs plain `Map`
 
-| Scenario                                               | Recommendation                               |
-|--------------------------------------------------------|----------------------------------------------|
-| At least one entry required by contract                | `NonEmptyMap<K, V>`                          |
-| Map may legitimately be empty                          | `Map<K, V>`                                  |
-| Reading from an external source that may be empty      | `NonEmptyMap.fromMap(map)` → handle `None`   |
-| Merging two registries — result is always non-empty    | `nem1.merge(nem2, mergeFunction)`            |
-| Filtering entries — result may be empty                | `nem.filter(predicate)` → handle `None`      |
+| Scenario                                               | Recommendation                                        |
+|--------------------------------------------------------|-------------------------------------------------------|
+| At least one entry required by contract                | `NonEmptyMap<K, V>`                                   |
+| Map may legitimately be empty                          | `Map<K, V>`                                           |
+| Reading from an external source that may be empty      | `NonEmptyMap.fromMap(map)` → handle `None`            |
+| Building from a stream                                 | `.collect(NonEmptyMap.collector(keyFn, valFn))`       |
+| Merging two registries — result is always non-empty    | `nem1.merge(nem2, mergeFunction)`                     |
+| Filtering entries — result may be empty                | `nem.filter(predicate)` → handle `None`               |
+| All values must be present before processing           | `NonEmptyMap.sequenceOption(nem)` → handle `None`     |
 
 ## Real-world example
 
