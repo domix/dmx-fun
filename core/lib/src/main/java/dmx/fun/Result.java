@@ -880,7 +880,15 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     /**
      * Returns a {@link Collector} that groups stream elements by a key derived from each element.
      * Each group is collected into a {@link NonEmptyList}, making the non-emptiness of every
-     * group explicit in the type.
+     * group explicit in the type. A group that appears in the returned map always contains at least
+     * one element by construction — {@link NonEmptyList} encodes this invariant at the type level,
+     * eliminating the need for defensive {@code isEmpty()} checks.
+     *
+     * <p>The returned map preserves encounter order (backed by {@link java.util.LinkedHashMap}) and
+     * is unmodifiable. The rationale for using {@code NonEmptyList} instead of {@code List} is
+     * documented in
+     * <a href="https://domix.github.io/dmx-fun/adr/adr-017-groupingby-nonemptylist/">
+     * ADR-017 — Result.groupingBy returns Map&lt;K, NonEmptyList&lt;V&gt;&gt; instead of Map&lt;K, List&lt;V&gt;&gt;</a>.
      *
      * <p>Example:
      * <pre>{@code
