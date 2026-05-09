@@ -13,6 +13,8 @@ import {Content as PitfallsSideEffects} from '../code/guide/lazy/pitfalls-side-e
 import {Content as PitfallsGetOrElse}  from '../code/guide/lazy/pitfalls-get-or-else.mdx';
 import {Content as RealWorldExample}   from '../code/guide/lazy/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`LazySample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/LazySample.java)
 
 ## What is Lazy&lt;T&gt;?
@@ -33,6 +35,7 @@ Use it when:
 **at most once** even under concurrent access. Both the successful value and any
 thrown exception are memoized — subsequent `get()` calls rethrow the same exception
 without re-invoking the supplier.
+The thread-safety design is documented in <a href={`${base}adr/adr-012-lazy-double-checked-locking`}>ADR-012 — Lazy&lt;T&gt; with volatile Try&lt;T&gt; and double-checked locking</a>.
 
 **Null policy**: the supplier must return a non-null value (`@NullMarked`).
 Use `Lazy<Option<T>>` to model a lazily evaluated result that may be absent.

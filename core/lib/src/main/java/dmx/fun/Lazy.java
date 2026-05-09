@@ -13,8 +13,15 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>The supplier passed to {@link #of(Supplier)} is not invoked until the first call to
  * {@link #get()}. Subsequent calls return the cached result without invoking the supplier again.
- * Memoization is thread-safe: the supplier is guaranteed to be called at most once even under
- * concurrent access.
+ * Memoization is thread-safe via a {@code volatile} {@link Try}{@code <T>} state field and
+ * double-checked locking: the first read is lock-free; if the state is {@code null}, a
+ * {@code synchronized} block is entered and the state is checked again before evaluating
+ * the supplier. Both successful values and supplier exceptions are stored in the state as a
+ * {@link Try}, so any exception thrown during evaluation is memoized and rethrown on every
+ * subsequent {@link #get()} call without re-invoking the supplier. The thread-safety design
+ * is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-012-lazy-double-checked-locking/">
+ * ADR-012 — Lazy&lt;T&gt; with volatile Try&lt;T&gt; and double-checked locking</a>.
  *
  * <p>This type is {@code @NullMarked}: the supplier must return a non-null value.
  * Use {@code Lazy<Option<T>>} to model a lazily evaluated optional result.
