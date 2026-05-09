@@ -8,6 +8,14 @@ import org.jspecify.annotations.NullMarked;
  * This is a variation of the standard {@code Consumer} interface, intended for use in scenarios where
  * the operation may involve checked exceptions.
  *
+ * <p>Used as the {@code release} parameter of {@link Resource#of(CheckedSupplier, CheckedConsumer)}
+ * to define the teardown action for a managed resource.
+ *
+ * <p>The rationale for providing checked variants of the standard functional interfaces
+ * (and the choice of {@code throws Exception} over {@code throws Throwable}) is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-019-checked-functional-interfaces/">
+ * ADR-019 — CheckedFunction, CheckedSupplier, CheckedRunnable, CheckedConsumer as first-class interfaces</a>.
+ *
  * @param <T> the type of the input to the operation
  */
 @NullMarked
