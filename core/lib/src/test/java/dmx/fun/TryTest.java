@@ -592,8 +592,7 @@ class TryTest {
         Try<Integer> t = Try.failure(error);
 
         assertThatThrownBy(t::getOrThrow)
-            .isInstanceOf(AssertionError.class)
-            .hasMessage("assert failed");
+            .isSameAs(error);
     }
 
     /**
@@ -1339,6 +1338,22 @@ class TryTest {
         assertThatThrownBy(() -> Try.fromEither(left, _ -> null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("leftMapper returned null");
+    }
+
+    @Test
+    void fromEither_covariance_shouldAcceptNarrowerTypeArguments() {
+        Either<String, Integer> right = Either.right(42);
+        Try<Number> t = Try.fromEither(right, IllegalArgumentException::new);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo(42);
+    }
+
+    @Test
+    void fromResult_covariance_shouldAcceptNarrowerValueType() throws Exception {
+        Result<String, IOException> result = Result.ok("hello");
+        Try<CharSequence> t = Try.fromResult(result);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.getOrThrow()).isEqualTo("hello");
     }
 
     // -------------------------------------------------------------------------

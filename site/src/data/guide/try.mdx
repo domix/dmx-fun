@@ -182,7 +182,7 @@ documented in <a href={`${base}adr/adr-004-null-in-try-vs-result`}>ADR-004 — T
 | `Try` → `CompletableFuture<V>`          | `tryVal.toFuture()`                             | Already-completed future |
 | `Option` → `Try`                        | `Try.fromOption(opt, exceptionSupplier)`        | `None` → `Failure(supplied exception)` |
 | `Optional` → `Try`                      | `Try.fromOptional(optional, exceptionSupplier)` | `empty` → `Failure(supplied exception)` |
-| `Either<L, R>` → `Try`                  | `Try.fromEither(either, leftMapper)`            | `left(l)` → `Failure(leftMapper(l))` |
+| `Either<L, R>` → `Try`                  | `Try.fromEither(either, leftMapper)`            | Accepts `Either<? extends L, ? extends R>` (covariant); `left(l)` → `Failure(leftMapper(l))` |
 | `Result<V, Throwable>` → `Try`          | `Try.fromResult(result)`                        | Accepts `Result<? extends V, ? extends Throwable>` (covariant)   |
 | `Result<V, E>` → `Try`                  | `result.toTry(errorMapper)`                     | Maps error to a `Throwable` |
 | `CompletableFuture<V>` → `Try`          | `Try.fromFuture(future)`                        | Blocks; unwraps `CompletionException` |
