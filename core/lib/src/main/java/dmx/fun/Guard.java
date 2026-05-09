@@ -10,10 +10,16 @@ import org.jspecify.annotations.Nullable;
 /**
  * A named, composable predicate that produces a {@link Validated} result when applied to a value.
  *
- * <p>{@code Guard<T>} is a functional interface whose single abstract method is
+ * <p>{@code Guard<T>} is a {@code @FunctionalInterface} whose single abstract method is
  * {@link #check(Object) check(T)}, which returns
  * {@code Validated<NonEmptyList<String>, T>}: {@code Valid(value)} when the predicate passes,
  * or {@code Invalid(errors)} when it fails.
+ * All composition operators ({@link #and}, {@link #or}, {@link #negate()}, {@link #andThen},
+ * {@link #contramap}) are {@code default} methods, so guards can be defined as lambdas and
+ * composed without inheritance. The choice to use {@code @FunctionalInterface} with
+ * {@code default} methods rather than an abstract class is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-011-guard-functional-interface/">
+ * ADR-011 — Guard&lt;T&gt; as a @FunctionalInterface with default methods</a>.
  *
  * <p>Guards are designed to be defined once and reused across validation pipelines, eliminating
  * the repetitive {@code if}/{@link Validated#invalidNel(Object)} pattern:

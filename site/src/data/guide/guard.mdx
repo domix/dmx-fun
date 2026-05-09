@@ -23,6 +23,9 @@ a predicate over `T` with an associated error message.
 Applying a guard via `check(value)` returns a
 `Validated<NonEmptyList<String>, T>` — `Valid(value)` when the rule passes,
 or `Invalid(errors)` when it fails.
+All composition operators (`and`, `or`, `negate`, `andThen`, `contramap`) are `default` methods
+on the interface, so guards can be defined as lambdas and composed without inheritance.
+This design decision is documented in <a href={`${base}adr/adr-011-guard-functional-interface`}>ADR-011 — Guard&lt;T&gt; as a @FunctionalInterface with default methods</a>.
 
 The error type is fixed as `NonEmptyList<String>` — this keeps composition simple (no external
 `Monoid<E>` needed for `and`/`or`) and guarantees at least one error is always present. This
