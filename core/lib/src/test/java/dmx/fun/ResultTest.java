@@ -176,6 +176,13 @@ class ResultTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void flatMap_shouldThrowNPE_whenMapperReturnsNull() {
+        assertThatThrownBy(() -> Result.ok("v").flatMap(_ -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
+    }
+
     // ---------- filter ----------
 
     @Test
@@ -215,6 +222,12 @@ class ResultTest {
     @Test
     void filter_withValue_shouldThrowNPE_whenPredicateIsNull() {
         assertThatThrownBy(() -> Result.<String, String>ok("v").filter(null, "e"))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void filter_withValue_shouldThrowNPE_whenErrorIfFalseIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>ok("v").filter(s -> false, (String) null))
             .isInstanceOf(NullPointerException.class);
     }
 

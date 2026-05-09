@@ -265,7 +265,7 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     default <NewValue> Result<NewValue, Error> flatMap(Function<Value, Result<NewValue, Error>> mapper) {
         Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
-            case Ok<Value, Error> ok -> mapper.apply(ok.value());
+            case Ok<Value, Error> ok -> Objects.requireNonNull(mapper.apply(ok.value()), "mapper returned null");
             case Err<Value, Error> err -> Result.err(err.error());
         };
     }
@@ -315,10 +315,11 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
      * @param errorIfFalse the error to return if the predicate evaluates to false
      * @return the current result if it is not an Ok instance or the predicate evaluates to true,
      * otherwise a new error result with the specified error value
-     * @throws NullPointerException if {@code predicate} is {@code null}
+     * @throws NullPointerException if {@code predicate} or {@code errorIfFalse} is {@code null}
      */
     default Result<Value, Error> filter(Predicate<Value> predicate, Error errorIfFalse) {
         Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(errorIfFalse, "errorIfFalse");
         if (this instanceof Ok<Value, Error>(Value value)) {
             return predicate.test(value) ? this : Result.err(errorIfFalse);
         }
