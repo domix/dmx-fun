@@ -30,6 +30,8 @@ import {Content as PitfallsNested}         from '../code/guide/option/pitfalls-n
 import {Content as PitfallsNullMapper}     from '../code/guide/option/pitfalls-null-mapper.mdx';
 import {Content as RealWorldExample}       from '../code/guide/option/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`OptionSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/OptionSample.java)
 
 ## What is Option&lt;T&gt;?
@@ -170,7 +172,8 @@ _from_ the first value.
 ### Collecting a list with `sequence`
 
 Converts a `List<Option<T>>` into an `Option<List<T>>`.
-Returns `None` as soon as any element is `None`.
+Returns `None` as soon as any element is `None`. The stream-based overload uses
+`Stream.gather(Gatherer.ofSequential(...))` for true short-circuit (see <a href={`${base}adr/adr-010-gatherer-sequence-traverse`}>ADR-010</a>).
 
 <ComposingSequence/>
 

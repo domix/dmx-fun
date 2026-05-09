@@ -116,7 +116,9 @@ exception. Typed overloads match only a specific exception subtype.
 ## sequence and traverse
 
 Both operations apply **fail-fast semantics**: they stop at the first `Failure`
-and return it immediately.
+and return it immediately, without consuming the rest of the stream.
+This is implemented with `Stream.gather(Gatherer.ofSequential(...))` (finalized in Java 24)
+to achieve true short-circuit — a design decision documented in <a href={`${base}adr/adr-010-gatherer-sequence-traverse`}>ADR-010 — Gatherer for sequence/traverse with true short-circuit</a>.
 
 <SequenceTraverse/>
 
