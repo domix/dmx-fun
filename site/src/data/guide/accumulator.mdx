@@ -11,6 +11,8 @@ import {Content as MapAccumulated}    from '../code/guide/accumulator/map-accumu
 import {Content as Interop}           from '../code/guide/accumulator/interop.mdx';
 import {Content as RealWorldExample}  from '../code/guide/accumulator/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`AccumulatorSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/AccumulatorSample.java)
 
 ## What is Accumulator&lt;E, A&gt;?
@@ -30,6 +32,7 @@ the accumulation. This makes `Accumulator` unsuitable for error handling (use
 something, but you also want a trace of what happened along the way.
 
 This type is sometimes called the **Writer monad** in functional programming literature.
+The rationale for including it in the library is documented in <a href={`${base}adr/adr-020-accumulator-writer-monad`}>ADR-020 — Accumulator&lt;E, A&gt; (Writer monad) — rationale for inclusion</a>.
 
 ## Factories
 

@@ -62,6 +62,12 @@ import org.jspecify.annotations.Nullable;
  * (the accumulation side-channel is the only meaningful payload). Call
  * {@link #hasValue()} before calling {@link #value()} if the source is not known.
  *
+ * <p>The rationale for including this type in the library — and the design choices around
+ * the Writer monad pattern, the merge-function API, and the alternatives considered — is
+ * documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-020-accumulator-writer-monad/">
+ * ADR-020 — Accumulator&lt;E, A&gt; (Writer monad) — rationale for inclusion</a>.
+ *
  * @param <E>         the accumulation type (log entries, metrics, etc.)
  * @param <A>         the value type
  * @param value       the computed value; {@code null} only for accumulators created by
