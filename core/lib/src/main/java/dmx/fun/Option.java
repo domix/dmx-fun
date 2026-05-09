@@ -23,10 +23,19 @@ import org.jspecify.annotations.Nullable;
 /**
  * A sealed interface representing an optional value with two possible states:
  * either a value is present ("Some") or absent ("None").
- * <p>
- * This interface provides a flexible alternative to {@link Optional},
- * integrating functional-style operations for working with optional values in a more
- * expressive and composable manner.
+ *
+ * <p>Unlike {@link Optional}, which is a {@code final} class, {@code Option} is a
+ * {@code sealed interface} with two record variants — {@link Some} and {@link None} —
+ * enabling exhaustive pattern matching: the compiler enforces that both states are handled
+ * in a switch expression without a wildcard arm.
+ *
+ * <p>{@code Option<T>} participates in the library's type graph with first-class
+ * conversion methods: {@link #toResult(Object)}, {@link #toTry(Supplier)},
+ * {@link #toEither(Object)}. The reverse conversions are symmetric:
+ * {@link #fromOptional(Optional)}, {@link #fromResult(Result)}, {@link #fromTry(Try)}.
+ * The design rationale is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-015-option-vs-optional/">
+ * ADR-015 — Option&lt;T&gt; as a custom type instead of java.util.Optional</a>.
  *
  * <p>This interface is {@link NullMarked}: all types are non-null by default.
  *
