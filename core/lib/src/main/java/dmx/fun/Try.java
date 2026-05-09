@@ -1101,7 +1101,10 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * <p><strong>Note:</strong> this Collector is <em>not</em> fail-fast. All stream elements
      * are always consumed. The accumulator records the first {@code Failure} cause and skips
      * subsequent values; the finisher returns that failure, or {@code Success(List)} if all
-     * elements succeeded.
+     * elements succeeded. Use {@link #sequence(Stream)} for true short-circuit behaviour.
+     * The intentional difference between this collector and {@code sequence} is documented in
+     * <a href="https://domix.github.io/dmx-fun/adr/adr-016-tolist-vs-sequence-consumption/">
+     * ADR-016 — Try.toList() collector consumes the entire stream while sequence is fail-fast</a>.
      *
      * <p>Example:
      * <pre>{@code
@@ -1194,6 +1197,13 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If any element is a {@code Failure}, that failure is returned immediately (fail-fast) and
      * the stream is closed. If all elements are {@code Success}, returns {@code Success} containing
      * an unmodifiable list of values in encounter order.
+     *
+     * <p>This operation is fail-fast: it uses a {@link java.util.stream.Gatherer} (finalized in
+     * Java 24, JEP 485) that returns {@code false} from the integrator on the first {@code Failure},
+     * causing the pipeline to stop consuming elements immediately. This contrasts with
+     * {@link #toList()}, which always consumes the entire stream. The difference is documented in
+     * <a href="https://domix.github.io/dmx-fun/adr/adr-016-tolist-vs-sequence-consumption/">
+     * ADR-016 — Try.toList() collector consumes the entire stream while sequence is fail-fast</a>.
      *
      * @param <V>   the value type
      * @param tries the stream of Try values; must not be {@code null} and must not contain {@code null} elements
