@@ -29,6 +29,11 @@ import org.jspecify.annotations.NullMarked;
  *
  * <p>This class is {@code @NullMarked}: all elements and parameters are non-null by default.
  *
+ * <p>The rationale for introducing dedicated non-empty collection types instead of using
+ * standard JDK types with runtime checks is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-018-non-empty-collections/">
+ * ADR-018 — NonEmptyList&lt;T&gt;, NonEmptySet&lt;T&gt;, NonEmptyMap&lt;K,V&gt; as structural guarantee types</a>.
+ *
  * @param <T> the type of elements in this set
  */
 @NullMarked
