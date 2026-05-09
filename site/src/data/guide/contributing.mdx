@@ -59,6 +59,7 @@ The site is served under the `/dmx-fun/` base path to match GitHub Pages.
 All public methods must be annotated with `@NullMarked` (via the package-info or class-level annotation).
 Return `Option<T>` instead of a nullable type; accept `@Nullable` parameters only when the absence is
 meaningful to the implementation.
+The choice of jspecify as the null-safety annotation library is documented in <a href={`${base}adr/adr-008-jspecify-null-safety`}>ADR-008 — jspecify (@NullMarked, @Nullable) for null safety</a>.
 
 > **Exception:** `Try.Success` deliberately accepts `null` as a valid value when produced by
 > `Try.run()` (void side-effects — `Void` has no instances in Java). `Result.Ok` rejects `null`.

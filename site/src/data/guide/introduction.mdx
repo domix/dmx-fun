@@ -19,8 +19,8 @@ precisely scoped types that eliminate the most common sources of runtime
 surprises: null references, swallowed exceptions, and silent partial failures.
 
 The library depends on **[JSpecify](https://jspecify.dev/)** for its null-safety
-annotations (`@NullMarked`). An optional `fun-jackson` module adds JSON
-serialization for all types.
+annotations (`@NullMarked`) — see <a href={`${base}adr/adr-008-jspecify-null-safety`}>ADR-008</a> for the rationale.
+An optional `fun-jackson` module adds JSON serialization for all types.
 
 ## Core philosophy
 
