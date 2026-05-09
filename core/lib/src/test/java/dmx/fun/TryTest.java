@@ -7,6 +7,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
@@ -583,16 +584,15 @@ class TryTest {
     }
 
     /**
-     * Verifies `getOrThrow` wraps error in `RuntimeException`
+     * Verifies `getOrThrow` rethrows Error directly (not wrapped in RuntimeException)
      */
     @Test
-    void getOrThrow_withoutMapper_shouldWrapErrorInRuntimeException() {
+    void getOrThrow_withoutMapper_shouldRethrowErrorDirectly() {
         AssertionError error = new AssertionError("assert failed");
         Try<Integer> t = Try.failure(error);
 
         assertThatThrownBy(t::getOrThrow)
-            .isInstanceOf(RuntimeException.class)
-            .hasCause(error);
+            .isSameAs(error);
     }
 
     /**
@@ -987,6 +987,25 @@ class TryTest {
         assertThat(called.get()).as("exception supplier must not be called when predicate passes").isFalse();
     }
 
+    @Test
+    void filter_withSupplier_shouldThrowNPE_whenPredicateIsNull() {
+        assertThatThrownBy(() -> Try.success(1).filter(null, () -> new RuntimeException()))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void filter_withSupplier_shouldThrowNPE_whenSupplierIsNull() {
+        assertThatThrownBy(() -> Try.success(1).filter(n -> true, (Supplier<Throwable>) null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void filter_withSupplier_shouldThrowNPE_onFailure_whenPredicateIsNull() {
+        Try<Integer> failure = Try.failure(new RuntimeException("original"));
+        assertThatThrownBy(() -> failure.filter(null, () -> new RuntimeException()))
+            .isInstanceOf(NullPointerException.class);
+    }
+
     // ---------- filter(Predicate, Function) ----------
 
     @Test
@@ -1319,6 +1338,22 @@ class TryTest {
         assertThatThrownBy(() -> Try.fromEither(left, _ -> null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("leftMapper returned null");
+    }
+
+    @Test
+    void fromEither_covariance_shouldAcceptNarrowerTypeArguments() {
+        Either<String, Integer> right = Either.right(42);
+        Try<Number> t = Try.fromEither(right, IllegalArgumentException::new);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.get()).isEqualTo(42);
+    }
+
+    @Test
+    void fromResult_covariance_shouldAcceptNarrowerValueType() throws Exception {
+        Result<String, IOException> result = Result.ok("hello");
+        Try<CharSequence> t = Try.fromResult(result);
+        assertThat(t.isSuccess()).isTrue();
+        assertThat(t.getOrThrow()).isEqualTo("hello");
     }
 
     // -------------------------------------------------------------------------

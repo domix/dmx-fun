@@ -592,7 +592,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *
      * @return the successful value of this {@code Try} if it is a {@code Success}.
      * @throws Exception        if this {@code Try} is a {@code Failure} and the failure cause is an {@code Exception}.
-     * @throws RuntimeException if this {@code Try} is a {@code Failure} and the failure cause is not an {@code Exception}.
+     * @throws Error            if this {@code Try} is a {@code Failure} and the failure cause is an {@code Error}.
+     * @throws RuntimeException if this {@code Try} is a {@code Failure} and the failure cause is neither an
+     *                          {@code Exception} nor an {@code Error} (a bare {@code Throwable}).
      */
     default Value getOrThrow() throws Exception {
         return switch (this) {
@@ -601,6 +603,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
                 Throwable cause = f.cause();
                 if (cause instanceof Exception exception) {
                     throw exception;
+                }
+                if (cause instanceof Error error) {
+                    throw error;
                 }
                 throw new RuntimeException(cause);
             }
@@ -649,14 +654,13 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the predicate evaluates to false, a Failure is returned using an {@link IllegalArgumentException}.
      * If this is already a Failure, the result remains unchanged.
      *
-     * <p>On the Success path, if {@code predicate} is {@code null} or throws, a
-     * {@code Failure(NullPointerException)} or {@code Failure(exception)} is returned rather than
-     * propagating the error. An existing {@code Failure} is returned unchanged without evaluating
-     * the predicate, consistent with the Try philosophy of capturing throwables as values.
+     * <p>{@code predicate} is validated eagerly with {@link Objects#requireNonNull} before any
+     * value is tested (via delegation to {@link #filter(Predicate, Supplier)}).
      * See also {@link #filter(Predicate, Supplier)} and {@link #filter(Predicate, java.util.function.Function)}.
      *
-     * @param predicate the condition to evaluate for the value if this is a Success
+     * @param predicate the condition to evaluate for the value if this is a Success; must not be {@code null}
      * @return a Success if the predicate evaluates to true, or a Failure otherwise
+     * @throws NullPointerException if {@code predicate} is {@code null}
      */
     default Try<Value> filter(Predicate<? super Value> predicate) {
         return filter(predicate, () -> new IllegalArgumentException("Predicate does not hold for value"));
@@ -668,19 +672,21 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the predicate evaluates to false, a Failure is returned using the provided throwable supplier.
      * If this is already a Failure, the result remains unchanged.
      *
-     * <p>On the Success path, if {@code predicate} or {@code throwableSupplier} is {@code null},
-     * or if either throws, a {@code Failure} wrapping the throwable is returned rather than
-     * propagating the error. {@code throwableSupplier} is only invoked when the predicate
-     * evaluates to {@code false}. An existing {@code Failure} is returned unchanged without
-     * evaluating the predicate or the supplier, consistent with the Try philosophy of capturing
-     * throwables as values.
+     * <p>Both {@code predicate} and {@code throwableSupplier} are validated eagerly with
+     * {@link Objects#requireNonNull} before any value is tested, regardless of whether this
+     * instance is a {@code Success} or {@code Failure}.
+     * {@code throwableSupplier} is only invoked when the predicate evaluates to {@code false}.
      * See also {@link #filter(Predicate)} and {@link #filter(Predicate, java.util.function.Function)}.
      *
-     * @param predicate         the condition to evaluate for the value if this is a Success
-     * @param throwableSupplier a supplier to provide the throwable for the Failure if the predicate evaluates to false
+     * @param predicate         the condition to evaluate for the value if this is a Success; must not be {@code null}
+     * @param throwableSupplier a supplier to provide the throwable for the Failure if the predicate evaluates to false;
+     *                          must not be {@code null}
      * @return a Success if the predicate evaluates to true, or a Failure otherwise
+     * @throws NullPointerException if {@code predicate} or {@code throwableSupplier} is {@code null}
      */
     default Try<Value> filter(Predicate<? super Value> predicate, Supplier<? extends Throwable> throwableSupplier) {
+        Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(throwableSupplier, "throwableSupplier");
         return switch (this) {
             case Success<Value> s -> {
                 try {
@@ -788,16 +794,21 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * If the {@code Result} is successful (contains a value), a successful {@code Try} is returned.
      * If the {@code Result} contains an error, a failed {@code Try} is returned with the corresponding cause.
      *
+     * <p>The value type parameter is covariant ({@code Result<? extends V, ...>}), so a
+     * {@code Result<String, IOException>} is accepted where {@code Try<CharSequence>} is expected.
+     *
      * @param <V>    the type of the successful value
-     * @param result the {@code Result} to convert into a {@code Try}
+     * @param result the {@code Result} to convert into a {@code Try}; must not be {@code null}
      * @return a {@code Try} representing either the successful value or the failure cause contained in the {@code Result}
+     * @throws NullPointerException if {@code result} is {@code null}
      */
-    static <V> Try<V> fromResult(Result<V, ? extends Throwable> result) {
+    @SuppressWarnings("unchecked")
+    static <V> Try<V> fromResult(Result<? extends V, ? extends Throwable> result) {
         Objects.requireNonNull(result, "result");
-        if (result.isOk()) {
-            return Try.success(result.get());
-        }
-        return Try.failure(result.getError());
+        return switch (result) {
+            case Result.Ok<?, ?>  ok  -> Try.success((V) ok.value());
+            case Result.Err<?, ?> err -> Try.failure((Throwable) err.error());
+        };
     }
 
 
@@ -998,6 +1009,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * // Try.failure(new IllegalArgumentException("not found"))
      * }</pre>
      *
+     * <p>Both type parameters are covariant ({@code Either<? extends L, ? extends R>}), so a
+     * {@code Either<String, Integer>} is accepted where {@code Try<Number>} is expected.
+     *
      * @param <L>        the left (error) type of the {@code Either}
      * @param <R>        the right (success) type of the {@code Either}
      * @param either     the {@code Either} to convert; must not be {@code null}
@@ -1008,15 +1022,16 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      * @throws NullPointerException if {@code either} or {@code leftMapper} is {@code null},
      *                              or if {@code leftMapper} returns {@code null}
      */
-    static <L, R> Try<R> fromEither(Either<L, R> either, Function<? super L, ? extends Throwable> leftMapper) {
+    @SuppressWarnings("unchecked")
+    static <L, R> Try<R> fromEither(Either<? extends L, ? extends R> either, Function<? super L, ? extends Throwable> leftMapper) {
         Objects.requireNonNull(either, "either");
         Objects.requireNonNull(leftMapper, "leftMapper");
-        if (either.isRight()) {
-            return Try.success(either.getRight());
-        }
-        return Try.failure(
-            Objects.requireNonNull(leftMapper.apply(either.getLeft()), "leftMapper returned null")
-        );
+        return switch (either) {
+            case Either.Right<?, ?> right -> Try.success((R) right.value());
+            case Either.Left<?, ?>  left  -> Try.failure(
+                Objects.requireNonNull(leftMapper.apply((L) left.value()), "leftMapper returned null")
+            );
+        };
     }
 
     /**
