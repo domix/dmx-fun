@@ -156,8 +156,10 @@ Call `toTryPartition()` to obtain the underlying `Try.Partition<V>` when needed.
 `null`. This has one important consequence: `toOption()` always returns `None`
 for a `Try<Void>`, even on success — use `isSuccess()` or `fold()` instead.
 
-`sequence` uses `Collections.unmodifiableList` internally (not `List.copyOf`),
+`sequence`, `traverse`, `toList()`, and `Try.Partition` all use
+`Collections.unmodifiableList` internally (not `List.copyOf`),
 so `null` elements in successful results are preserved.
+This implementation choice is documented in <a href={`${base}adr/adr-009-unmodifiable-list-try`}>ADR-009 — unmodifiableList instead of List.copyOf in Try</a>.
 
 This asymmetry with `Result.Ok` — which rejects `null` — is a deliberate design decision
 documented in <a href={`${base}adr/adr-004-null-in-try-vs-result`}>ADR-004 — Try allows Success(null); Result.Ok rejects null</a>.
