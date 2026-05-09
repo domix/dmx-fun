@@ -11,6 +11,8 @@ import {Content as TryIntegration}    from '../code/guide/checked-interfaces/try
 import {Content as HigherArity}       from '../code/guide/checked-interfaces/higher-arity.mdx';
 import {Content as RealWorldExample}  from '../code/guide/checked-interfaces/real-world-example.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 > **Runnable example:** [`CheckedInterfacesSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/CheckedInterfacesSample.java)
 
 ## The problem: checked exceptions in lambdas
@@ -34,7 +36,9 @@ so that throwing method references can be used directly.
 | `CheckedConsumer<T>`    | `Consumer<T>`         | `void accept(T t) throws Exception` |
 | `CheckedRunnable`       | `Runnable`            | `void run() throws Exception`       |
 
-All four are `@FunctionalInterface` and `@NullMarked`.
+All four are `@FunctionalInterface` and `@NullMarked`. The rationale for providing
+these interfaces — including the choice of `throws Exception` over `throws Throwable`
+— is documented in <a href={`${base}adr/adr-019-checked-functional-interfaces`}>ADR-019 — CheckedFunction, CheckedSupplier, CheckedRunnable, CheckedConsumer as first-class interfaces</a>.
 
 <CheckedIfaces/>
 
