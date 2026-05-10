@@ -51,8 +51,8 @@ import org.jspecify.annotations.Nullable;
  *       accumulated (not fail-fast).</li>
  *   <li>{@link #or(Guard) or} — the first passing guard short-circuits; if all fail, all errors
  *       are accumulated.</li>
- *   <li>{@link #negate() negate} / {@link #negate(String) negate(message)} — inverts the
- *       predicate.</li>
+ *   <li>{@link #negate() negate} / {@link #negate(String) negate(message)} /
+ *       {@link #negate(Function) negate(messageFromValue)} — inverts the predicate.</li>
  * </ul>
  *
  * @param <T> the type of value being validated
@@ -68,7 +68,7 @@ public interface Guard<T> {
     /**
      * Applies this guard to {@code value}.
      *
-     * @param value the value to validate; must not be {@code null}
+     * @param value the value to validate
      * @return {@code Valid(value)} if the predicate passes, or
      *         {@code Invalid(errors)} if it fails
      */
@@ -272,6 +272,60 @@ public interface Guard<T> {
         return value -> this.check(value).isValid()
             ? Validated.invalidNel(errorMessage)
             : Validated.valid(value);
+    }
+
+    /**
+     * Returns a guard that is the logical negation of this guard, using a dynamic error message.
+     *
+     * <p>The {@code messageFromValue} function receives the value that passed the original guard,
+     * allowing a context-specific error message.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notReserved = Guard.of(s -> s.equals("admin") || s.equals("root"), "")
+     *     .negate(s -> "username '" + s + "' is reserved");
+     *
+     * notReserved.check("alice"); // Valid("alice")
+     * notReserved.check("admin"); // Invalid(["username 'admin' is reserved"])
+     * }</pre>
+     *
+     * @param messageFromValue function producing an error message from the passing value;
+     *                         must not be {@code null}
+     * @return the negated {@code Guard<T>}
+     * @throws NullPointerException if {@code messageFromValue} is {@code null}
+     */
+    default Guard<T> negate(Function<? super T, String> messageFromValue) {
+        Objects.requireNonNull(messageFromValue, "messageFromValue");
+        return value -> this.check(value).isValid()
+            ? Validated.invalidNel(messageFromValue.apply(value))
+            : Validated.valid(value);
+    }
+
+    /**
+     * Returns a guard that replaces any error messages produced by this guard with
+     * {@code message}.
+     *
+     * <p>Useful when you want to expose a single clean message at a public API boundary
+     * regardless of the internal validation details.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> username = notBlank.and(minLength3).withMessage("invalid username");
+     *
+     * username.check("");    // Invalid(["invalid username"])
+     * username.check("a");   // Invalid(["invalid username"])
+     * username.check("alice"); // Valid("alice")
+     * }</pre>
+     *
+     * @param message the replacement error message; must not be {@code null}
+     * @return a new {@code Guard<T>} that returns a single fixed error when this guard fails
+     * @throws NullPointerException if {@code message} is {@code null}
+     */
+    default Guard<T> withMessage(String message) {
+        Objects.requireNonNull(message, "message");
+        return value -> this.check(value).isValid()
+            ? Validated.valid(value)
+            : Validated.invalidNel(message);
     }
 
     // -------------------------------------------------------------------------
@@ -518,12 +572,22 @@ public interface Guard<T> {
      * Optional<String> empty   = notBlank.checkToOptional("   ");   // Optional.empty()
      * }</pre>
      *
+     * <p><strong>Not suitable when {@code null} is a valid success value.</strong>
+     * This method calls {@link Optional#of(Object) Optional.of(value)} on the validated value,
+     * which throws {@link NullPointerException} if {@code value} is {@code null}.
+     * Under {@code @NullMarked}, {@code T} is non-null by default, so this is safe for ordinary
+     * guards. However, if {@code T} is a nullable type (e.g., {@code Guard<@Nullable String>})
+     * and the guard can return {@code Valid(null)}, calling this method will throw
+     * {@code NullPointerException}. In that case, use {@link #check(Object) check(value)} and
+     * work with the resulting {@link Validated} directly, applying
+     * {@link Optional#ofNullable(Object)} to the extracted value when needed.
+     *
      * @param value the value to validate
-     * @return {@code Optional.of(value)} if the guard passes and {@code value} is non-null,
-     *         {@code Optional.empty()} if the guard fails or {@code value} is null
+     * @return {@code Optional.of(value)} if the guard passes,
+     *         {@code Optional.empty()} if the guard fails
      */
     default Optional<T> checkToOptional(T value) {
-        return this.check(value).isValid() ? Optional.ofNullable(value) : Optional.empty();
+        return this.check(value).isValid() ? Optional.of(value) : Optional.empty();
     }
 
     /**

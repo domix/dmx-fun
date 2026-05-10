@@ -13,4 +13,13 @@ noAdmin.check("admin"); // Invalid(["username must not be 'admin'"])
 // negate() with no argument uses a generic message
 Guard<String> notReserved = Guard.<String>of(s -> s.equals("root"), "is root").negate();
 notReserved.check("root"); // Invalid(["must not satisfy the condition"])
+
+// negate(messageFromValue) — dynamic message from the failing value
+Guard<String> notReservedDynamic = Guard.<String>of(
+        s -> s.equals("admin") || s.equals("root"), "reserved"
+    ).negate(s -> "username '" + s + "' is reserved");
+
+notReservedDynamic.check("alice"); // Valid("alice")
+notReservedDynamic.check("admin"); // Invalid(["username 'admin' is reserved"])
+notReservedDynamic.check("root");  // Invalid(["username 'root' is reserved"])
 ```
