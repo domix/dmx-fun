@@ -954,7 +954,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
             case None<?> _ -> Option.none();
             case Some<? extends A> sa -> switch (b) {
                 case None<?> _ -> Option.none();
-                case Some<? extends B> sb -> Option.ofNullable(combiner.apply(sa.value(), sb.value()));
+                case Some<? extends B> sb -> Option.some(
+                    Objects.requireNonNull(combiner.apply(sa.value(), sb.value()), "combiner returned null"));
             };
         };
     }
@@ -1023,7 +1024,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
                 case None<?> _ -> Option.none();
                 case Some<? extends B> sb -> switch (c) {
                     case None<?> _ -> Option.none();
-                    case Some<? extends C> sc -> Option.ofNullable(combiner.apply(sa.value(), sb.value(), sc.value()));
+                    case Some<? extends C> sc -> Option.some(
+                        Objects.requireNonNull(combiner.apply(sa.value(), sb.value(), sc.value()), "combiner returned null"));
                 };
             };
         };
@@ -1106,7 +1108,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
                     case None<?> _ -> Option.none();
                     case Some<? extends C> sc -> switch (d) {
                         case None<?> _ -> Option.none();
-                        case Some<? extends D> sd -> Option.ofNullable(combiner.apply(sa.value(), sb.value(), sc.value(), sd.value()));
+                        case Some<? extends D> sd -> Option.some(
+                            Objects.requireNonNull(combiner.apply(sa.value(), sb.value(), sc.value(), sd.value()), "combiner returned null"));
                     };
                 };
             };

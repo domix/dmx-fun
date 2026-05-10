@@ -189,7 +189,7 @@ class OptionTest {
     void map_nullReturningMapper_throwsNPE() {
         assertThatThrownBy(() -> Option.some(1).map(v -> null))
             .isInstanceOf(NullPointerException.class)
-            .hasMessageContaining("null");
+            .hasMessageContaining("map function returned null");
     }
 
     @Test
