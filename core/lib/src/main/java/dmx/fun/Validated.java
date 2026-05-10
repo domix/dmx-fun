@@ -156,7 +156,8 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
      * @param mapper the mapping function
      * @return a new {@code Validated} with the mapped value, or the original error
      */
-    default <B> Validated<E, B> map(Function<A, B> mapper) {
+    default <B> Validated<E, B> map(Function<? super A, ? extends B> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Valid<E, A> v -> Validated.valid(Objects.requireNonNull(mapper.apply(v.value()), "map mapper returned null"));
             case Invalid<E, A> inv -> Validated.invalid(inv.error());
@@ -170,7 +171,8 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
      * @param mapper the error mapping function
      * @return a new {@code Validated} with the mapped error, or the original value
      */
-    default <F> Validated<F, A> mapError(Function<E, F> mapper) {
+    default <F> Validated<F, A> mapError(Function<? super E, ? extends F> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Valid<E, A> v -> Validated.valid(v.value());
             case Invalid<E, A> inv -> Validated.invalid(Objects.requireNonNull(mapper.apply(inv.error()), "mapError mapper returned null"));
@@ -185,7 +187,8 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
      * @param mapper a function that maps the value to a new {@code Validated}
      * @return the result of {@code mapper} if valid, otherwise this invalid
      */
-    default <B> Validated<E, B> flatMap(Function<A, Validated<E, B>> mapper) {
+    default <B> Validated<E, B> flatMap(Function<? super A, Validated<E, B>> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Valid<E, A> v -> Objects.requireNonNull(mapper.apply(v.value()), "flatMap mapper must not return null");
             case Invalid<E, A> inv -> Validated.invalid(inv.error());
@@ -239,7 +242,7 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
     default <B, C> Validated<E, C> combine(
         Validated<E, B> other,
         BinaryOperator<E> errMerge,
-        BiFunction<A, B, C> valueMerge
+        BiFunction<? super A, ? super B, ? extends C> valueMerge
     ) {
         Objects.requireNonNull(valueMerge, "valueMerge");
         return product(other, errMerge).map(t -> valueMerge.apply(t._1(), t._2()));
@@ -253,7 +256,7 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
      * @param action a consumer of the value
      * @return this instance
      */
-    default Validated<E, A> peek(Consumer<A> action) {
+    default Validated<E, A> peek(Consumer<? super A> action) {
         Objects.requireNonNull(action, "action");
         if (this instanceof Valid<E, A>(A value)) {
             action.accept(value);
@@ -267,7 +270,7 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
      * @param action a consumer of the error
      * @return this instance
      */
-    default Validated<E, A> peekError(Consumer<E> action) {
+    default Validated<E, A> peekError(Consumer<? super E> action) {
         Objects.requireNonNull(action, "action");
         if (this instanceof Invalid<E, A>(E error)) {
             action.accept(error);
@@ -600,7 +603,7 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
      * @throws NullPointerException if {@code error} is {@code null}
      */
     static <E, A> Validated<NonEmptyList<E>, A> invalidNel(E error) {
-        Objects.requireNonNull(error, "error must not be null");
+        Objects.requireNonNull(error, "error");
         return Validated.invalid(NonEmptyList.singleton(error));
     }
 
@@ -622,7 +625,7 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
     static <E, A> Validated<NonEmptyList<E>, List<A>> sequenceNel(
         Iterable<Validated<NonEmptyList<E>, A>> validated
     ) {
-        Objects.requireNonNull(validated, "validated must not be null");
+        Objects.requireNonNull(validated, "validated");
         return Validated.sequence(validated, NonEmptyList::concat);
     }
 
@@ -647,8 +650,8 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
         Iterable<A> values,
         Function<? super A, Validated<NonEmptyList<E>, B>> mapper
     ) {
-        Objects.requireNonNull(values, "values must not be null");
-        Objects.requireNonNull(mapper, "mapper must not be null");
+        Objects.requireNonNull(values, "values");
+        Objects.requireNonNull(mapper, "mapper");
         return Validated.traverse(values, mapper, NonEmptyList::concat);
     }
 
@@ -692,11 +695,11 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
         BinaryOperator<E> errMerge,
         TriFunction<? super A, ? super B, ? super C, ? extends R> valueMerge
     ) {
-        Objects.requireNonNull(va,         "va must not be null");
-        Objects.requireNonNull(vb,         "vb must not be null");
-        Objects.requireNonNull(vc,         "vc must not be null");
-        Objects.requireNonNull(errMerge,   "errMerge must not be null");
-        Objects.requireNonNull(valueMerge, "valueMerge must not be null");
+        Objects.requireNonNull(va,         "va");
+        Objects.requireNonNull(vb,         "vb");
+        Objects.requireNonNull(vc,         "vc");
+        Objects.requireNonNull(errMerge,   "errMerge");
+        Objects.requireNonNull(valueMerge, "valueMerge");
         return va.combine(vb, errMerge, Tuple2::new)
                  .combine(vc, errMerge, (t, c) -> valueMerge.apply(t._1(), t._2(), c));
     }
@@ -745,12 +748,12 @@ public sealed interface Validated<E, A> extends Bicontainer<A, E> permits Valida
         BinaryOperator<E> errMerge,
         QuadFunction<? super A, ? super B, ? super C, ? super D, ? extends R> valueMerge
     ) {
-        Objects.requireNonNull(va,         "va must not be null");
-        Objects.requireNonNull(vb,         "vb must not be null");
-        Objects.requireNonNull(vc,         "vc must not be null");
-        Objects.requireNonNull(vd,         "vd must not be null");
-        Objects.requireNonNull(errMerge,   "errMerge must not be null");
-        Objects.requireNonNull(valueMerge, "valueMerge must not be null");
+        Objects.requireNonNull(va,         "va");
+        Objects.requireNonNull(vb,         "vb");
+        Objects.requireNonNull(vc,         "vc");
+        Objects.requireNonNull(vd,         "vd");
+        Objects.requireNonNull(errMerge,   "errMerge");
+        Objects.requireNonNull(valueMerge, "valueMerge");
         return va.combine(vb, errMerge, Tuple2::new)
                  .combine(vc, errMerge, Tuple2::new)
                  .combine(vd, errMerge, (t, d) -> valueMerge.apply(t._1()._1(), t._1()._2(), t._2(), d));
