@@ -73,6 +73,120 @@ class EitherTest {
     }
 
     // -------------------------------------------------------------------------
+    // getRightOrElse / getRightOrElseGet / getLeftOrElse / getLeftOrElseGet
+    // -------------------------------------------------------------------------
+
+    @Test
+    void getRightOrElse_returnsRight_whenRight() {
+        var value = Either
+            .right(42)
+            .getRightOrElse(0);
+        assertThat(value)
+            .isEqualTo(42);
+    }
+
+    @Test
+    void getRightOrElse_returnsFallback_whenLeft() {
+        var value = Either
+            .left("err")
+            .getRightOrElse(0);
+        assertThat(value)
+            .isEqualTo(0);
+    }
+
+    @Test
+    void getRightOrElse_throwsNPE_whenFallbackIsNull() {
+        assertThatThrownBy(() -> Either.<String, Integer>left("err").getRightOrElse(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fallback");
+    }
+
+    @Test
+    void getRightOrElseGet_returnsRight_whenRight() {
+        assertThat(Either.<String, Integer>right(42).getRightOrElseGet(() -> 0)).isEqualTo(42);
+    }
+
+    @Test
+    void getRightOrElseGet_callsSupplier_whenLeft() {
+        assertThat(Either.<String, Integer>left("err").getRightOrElseGet(() -> 99)).isEqualTo(99);
+    }
+
+    @Test
+    void getRightOrElseGet_doesNotCallSupplier_whenRight() {
+        var called = new ArrayList<String>();
+        Either.<String, Integer>right(1).getRightOrElseGet(() -> {
+            called.add("called");
+            return 0;
+        });
+        assertThat(called).isEmpty();
+    }
+
+    @Test
+    void getRightOrElseGet_throwsNPE_whenSupplierIsNull() {
+        assertThatThrownBy(() -> Either.<String, Integer>left("err").getRightOrElseGet(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("supplier");
+    }
+
+    @Test
+    void getRightOrElseGet_throwsNPE_whenSupplierReturnsNull() {
+        assertThatThrownBy(() -> Either.<String, Integer>left("err").getRightOrElseGet(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("supplier returned null");
+    }
+
+    @Test
+    void getLeftOrElse_returnsLeft_whenLeft() {
+        assertThat(Either.<String, Integer>left("err").getLeftOrElse("default")).isEqualTo("err");
+    }
+
+    @Test
+    void getLeftOrElse_returnsFallback_whenRight() {
+        assertThat(Either.<String, Integer>right(1).getLeftOrElse("default")).isEqualTo("default");
+    }
+
+    @Test
+    void getLeftOrElse_throwsNPE_whenFallbackIsNull() {
+        assertThatThrownBy(() -> Either.<String, Integer>right(1).getLeftOrElse(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fallback");
+    }
+
+    @Test
+    void getLeftOrElseGet_returnsLeft_whenLeft() {
+        assertThat(Either.<String, Integer>left("err").getLeftOrElseGet(() -> "default")).isEqualTo("err");
+    }
+
+    @Test
+    void getLeftOrElseGet_callsSupplier_whenRight() {
+        assertThat(Either.<String, Integer>right(1).getLeftOrElseGet(() -> "fallback")).isEqualTo("fallback");
+    }
+
+    @Test
+    void getLeftOrElseGet_doesNotCallSupplier_whenLeft() {
+        var called = new ArrayList<String>();
+        Either.<String, Integer>left("x").getLeftOrElseGet(() -> {
+            called.add("called");
+            return "y";
+        });
+        assertThat(called).isEmpty();
+    }
+
+    @Test
+    void getLeftOrElseGet_throwsNPE_whenSupplierIsNull() {
+        assertThatThrownBy(() -> Either.<String, Integer>right(1).getLeftOrElseGet(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("supplier");
+    }
+
+    @Test
+    void getLeftOrElseGet_throwsNPE_whenSupplierReturnsNull() {
+        assertThatThrownBy(() -> Either.<String, Integer>right(1).getLeftOrElseGet(() -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("supplier returned null");
+    }
+
+    // -------------------------------------------------------------------------
     // fold
     // -------------------------------------------------------------------------
 
@@ -128,7 +242,16 @@ class EitherTest {
     void map_shouldThrowNPE_whenMapperIsNull() {
         var e = Either.right(1);
         assertThatThrownBy(() -> e.map(null))
-            .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void map_shouldThrowNPE_whenMapperReturnsNull() {
+        var e = Either.right(1);
+        assertThatThrownBy(() -> e.map(_ -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
     }
 
     // -------------------------------------------------------------------------
@@ -155,7 +278,16 @@ class EitherTest {
     void mapLeft_shouldThrowNPE_whenMapperIsNull() {
         var e = Either.left("x");
         assertThatThrownBy(() -> e.mapLeft(null))
-            .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void mapLeft_shouldThrowNPE_whenMapperReturnsNull() {
+        var e = Either.left("x");
+        assertThatThrownBy(() -> e.mapLeft(_ -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
     }
 
     // -------------------------------------------------------------------------
@@ -202,6 +334,55 @@ class EitherTest {
     void flatMap_shouldThrowNPE_whenMapperReturnsNull() {
         var e = Either.right(1);
         assertThatThrownBy(() -> e.flatMap(v -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper returned null");
+    }
+
+    // -------------------------------------------------------------------------
+    // flatMapLeft
+    // -------------------------------------------------------------------------
+
+    @Test
+    void flatMapLeft_shouldChain_whenLeft() {
+        var result = Either.<String, Integer>left("error")
+            .flatMapLeft(s -> s.isEmpty() ? Either.right(0) : Either.left(s.toUpperCase()));
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isEqualTo("ERROR");
+    }
+
+    @Test
+    void flatMapLeft_shouldShortCircuit_whenRight() {
+        var called = new ArrayList<String>();
+        var result = Either.<String, Integer>right(42)
+            .flatMapLeft(s -> {
+                called.add("called");
+                return Either.left(s);
+            });
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight()).isEqualTo(42);
+        assertThat(called).isEmpty();
+    }
+
+    @Test
+    void flatMapLeft_shouldReturnRight_whenMapperReturnsRight() {
+        var result = Either.<String, Integer>left("skip")
+            .flatMapLeft(_ -> Either.right(99));
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.getRight()).isEqualTo(99);
+    }
+
+    @Test
+    void flatMapLeft_shouldThrowNPE_whenMapperIsNull() {
+        var e = Either.left("x");
+        assertThatThrownBy(() -> e.flatMapLeft(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void flatMapLeft_shouldThrowNPE_whenMapperReturnsNull() {
+        var e = Either.left("x");
+        assertThatThrownBy(() -> e.flatMapLeft(_ -> null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("mapper returned null");
     }
@@ -410,6 +591,32 @@ class EitherTest {
             .flatMap(Either::stream)
             .toList();
         assertThat(rights).containsExactly(1, 3);
+    }
+
+    // -------------------------------------------------------------------------
+    // streamLeft
+    // -------------------------------------------------------------------------
+
+    @Test
+    void streamLeft_shouldReturnSingleElementStream_whenLeft() {
+        List<String> collected = Either.<String, Integer>left("err").streamLeft().toList();
+        assertThat(collected).containsExactly("err");
+    }
+
+    @Test
+    void streamLeft_shouldReturnEmptyStream_whenRight() {
+        List<String> collected = Either.<String, Integer>right(7).streamLeft().toList();
+        assertThat(collected).isEmpty();
+    }
+
+    @Test
+    void streamLeft_shouldIntegrateIntoStreamPipeline() {
+        List<Either<String, Integer>> eithers = List.of(
+            Either.left("a"), Either.right(1), Either.left("b"));
+        List<String> lefts = eithers.stream()
+            .flatMap(Either::streamLeft)
+            .toList();
+        assertThat(lefts).containsExactly("a", "b");
     }
 
     // -------------------------------------------------------------------------

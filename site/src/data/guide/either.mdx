@@ -60,23 +60,28 @@ Prefer exhaustive switch patterns — the compiler enforces that both sides are 
 
 ## Extracting values
 
-| Method                      | On wrong side                   | Notes                                               |
-|-----------------------------|---------------------------------|-----------------------------------------------------|
-| `getLeft()`                 | Throws `NoSuchElementException` | Only safe after an `isLeft()` check.                |
-| `getRight()`                | Throws `NoSuchElementException` | Only safe after an `isRight()` check.               |
-| `fold(onLeft, onRight)`     | N/A — handles both sides        | The safest extractor; forces both branches.         |
+| Method                              | On wrong side                   | Notes                                                                     |
+|-------------------------------------|---------------------------------|---------------------------------------------------------------------------|
+| `getLeft()`                         | Throws `NoSuchElementException` | Only safe after an `isLeft()` check.                                      |
+| `getRight()`                        | Throws `NoSuchElementException` | Only safe after an `isRight()` check.                                     |
+| `getLeftOrElse(fallback)`           | Returns `fallback`              | Fallback is always evaluated — use `getLeftOrElseGet` for expensive defaults. |
+| `getRightOrElse(fallback)`          | Returns `fallback`              | Fallback is always evaluated — use `getRightOrElseGet` for expensive defaults. |
+| `getLeftOrElseGet(supplier)`        | Calls supplier                  | Lazily computed fallback for the left track.                              |
+| `getRightOrElseGet(supplier)`       | Calls supplier                  | Lazily computed fallback for the right track.                             |
+| `fold(onLeft, onRight)`             | N/A — handles both sides        | The safest extractor; forces both branches.                               |
 
 <ExtractingValues/>
 
 ## Transforming values
 
-| Method             | Operates on | Left passes through | Notes                                                |
-|--------------------|-------------|---------------------|------------------------------------------------------|
-| `map(mapper)`      | Right       | Yes                 | Standard right-biased functor map.                   |
-| `mapLeft(mapper)`  | Left        | Yes (Right)         | Transforms the left value; Right passes through.     |
-| `flatMap(mapper)`  | Right       | Yes                 | Monadic bind for the right track.                    |
-| `swap()`           | Both        | N/A                 | Flips Left ↔ Right; useful before operating on Left. |
-| `fold(fn, fn)`     | Both        | N/A                 | Terminal — collapses both sides into one value.      |
+| Method                | Operates on | Passes through | Notes                                                |
+|-----------------------|-------------|----------------|------------------------------------------------------|
+| `map(mapper)`         | Right       | Left           | Standard right-biased functor map. Mapper must not return `null`. |
+| `mapLeft(mapper)`     | Left        | Right          | Transforms the left value. Mapper must not return `null`.         |
+| `flatMap(mapper)`     | Right       | Left           | Monadic bind for the right track.                    |
+| `flatMapLeft(mapper)` | Left        | Right          | Monadic bind for the left track; symmetric with `flatMap`. |
+| `swap()`              | Both        | N/A            | Flips Left ↔ Right; useful before operating on Left. |
+| `fold(fn, fn)`        | Both        | N/A            | Terminal — collapses both sides into one value.      |
 
 <Transforming/>
 
@@ -99,7 +104,8 @@ it executes exactly one consumer and returns `void`.
 | `Either` → `Validated`       | `e.toValidated()`                          | Right → Valid; Left → Invalid.                          |
 | `Either` → `Optional`        | `e.toOptional()`                           | Right(r) → Optional.of(r); Left → Optional.empty().     |
 | `Either` → `Try`             | `e.toTry(leftMapper)`                      | Right → Success; Left mapped to `Throwable` → Failure.  |
-| `Either` → `Stream`          | `e.stream()`                               | Right(r) → Stream.of(r); Left → Stream.empty().         |
+| `Either` → `Stream` (right)  | `e.stream()`                               | Right(r) → Stream.of(r); Left → Stream.empty().         |
+| `Either` → `Stream` (left)   | `e.streamLeft()`                           | Left(l) → Stream.of(l); Right → Stream.empty().         |
 | `Try` → `Either`             | `tryVal.toEither()`                        | Success → Right; Failure → Left.                        |
 | `Result` → `Either`          | `result.toEither()`                        | Ok → Right; Err → Left.                                 |
 | `Validated` → `Either`       | `validated.toEither()`                     | Valid → Right; Invalid → Left.                          |

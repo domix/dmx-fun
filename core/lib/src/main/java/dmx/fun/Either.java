@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.jspecify.annotations.NullMarked;
 
@@ -145,6 +146,68 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
         };
     }
 
+    /**
+     * Returns the right value if present, or {@code fallback} if this is a {@link Left}.
+     *
+     * @param fallback the non-null value returned when this is {@code Left}
+     * @return the right value, or {@code fallback}
+     * @throws NullPointerException if {@code fallback} is {@code null}
+     */
+    default R getRightOrElse(R fallback) {
+        Objects.requireNonNull(fallback, "fallback");
+        return switch (this) {
+            case Right<L, R> right -> right.value();
+            case Left<L, R> _      -> fallback;
+        };
+    }
+
+    /**
+     * Returns the right value if present, or the value supplied by {@code supplier} if this
+     * is a {@link Left}. The supplier is called lazily — only when this is {@code Left}.
+     *
+     * @param supplier provides the fallback value; must not be {@code null} and must not return {@code null}
+     * @return the right value, or the result of {@code supplier}
+     * @throws NullPointerException if {@code supplier} is {@code null} or returns {@code null}
+     */
+    default R getRightOrElseGet(Supplier<? extends R> supplier) {
+        Objects.requireNonNull(supplier, "supplier");
+        return switch (this) {
+            case Right<L, R> right -> right.value();
+            case Left<L, R> _      -> Objects.requireNonNull(supplier.get(), "supplier returned null");
+        };
+    }
+
+    /**
+     * Returns the left value if present, or {@code fallback} if this is a {@link Right}.
+     *
+     * @param fallback the non-null value returned when this is {@code Right}
+     * @return the left value, or {@code fallback}
+     * @throws NullPointerException if {@code fallback} is {@code null}
+     */
+    default L getLeftOrElse(L fallback) {
+        Objects.requireNonNull(fallback, "fallback");
+        return switch (this) {
+            case Left<L, R> left -> left.value();
+            case Right<L, R> _   -> fallback;
+        };
+    }
+
+    /**
+     * Returns the left value if present, or the value supplied by {@code supplier} if this
+     * is a {@link Right}. The supplier is called lazily — only when this is {@code Right}.
+     *
+     * @param supplier provides the fallback value; must not be {@code null} and must not return {@code null}
+     * @return the left value, or the result of {@code supplier}
+     * @throws NullPointerException if {@code supplier} is {@code null} or returns {@code null}
+     */
+    default L getLeftOrElseGet(Supplier<? extends L> supplier) {
+        Objects.requireNonNull(supplier, "supplier");
+        return switch (this) {
+            case Left<L, R> left -> left.value();
+            case Right<L, R> _   -> Objects.requireNonNull(supplier.get(), "supplier returned null");
+        };
+    }
+
     // -------------------------------------------------------------------------
     // Transformation
     // -------------------------------------------------------------------------
@@ -173,14 +236,16 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
      * Maps the right value using {@code mapper}, leaving a {@link Left} unchanged.
      *
      * @param <R2>   the new right type
-     * @param mapper function applied to the right value
+     * @param mapper function applied to the right value; must not be {@code null} and must not return {@code null}
      * @return a new {@code Either} with the mapped right value, or the original {@code Left}
+     * @throws NullPointerException if {@code mapper} is {@code null} or returns {@code null}
      */
     default <R2> Either<L, R2> map(Function<? super R, ? extends R2> mapper) {
         Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Left<L, R> left   -> Either.left(left.value());
-            case Right<L, R> right -> Either.right(mapper.apply(right.value()));
+            case Right<L, R> right -> Either.right(
+                Objects.requireNonNull(mapper.apply(right.value()), "mapper returned null"));
         };
     }
 
@@ -188,13 +253,20 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
      * Maps the left value using {@code mapper}, leaving a {@link Right} unchanged.
      *
      * @param <L2>   the new left type
-     * @param mapper function applied to the left value
+     * @param mapper function applied to the left value; must not be {@code null} and must not return {@code null}
      * @return a new {@code Either} with the mapped left value, or the original {@code Right}
+     * @throws NullPointerException if {@code mapper} is {@code null} or returns {@code null}
      */
     default <L2> Either<L2, R> mapLeft(Function<? super L, ? extends L2> mapper) {
         Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
-            case Left<L, R> left   -> Either.left(mapper.apply(left.value()));
+            case Left<L, R> left   ->
+                Either.left(
+                    Objects.requireNonNull(
+                        mapper.apply(left.value()),
+                        "mapper returned null"
+                    )
+                );
             case Right<L, R> right -> Either.right(right.value());
         };
     }
@@ -215,6 +287,30 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
             case Right<L, R> right -> {
                 @SuppressWarnings("unchecked")
                 Either<L, R2> result = (Either<L, R2>) mapper.apply(right.value());
+                yield Objects.requireNonNull(result, "mapper returned null");
+            }
+        };
+    }
+
+    /**
+     * Applies {@code mapper} to the left value and returns the resulting {@code Either},
+     * leaving a {@link Right} unchanged. This is the monadic bind for the left track,
+     * symmetric with {@link #flatMap(Function)}.
+     *
+     * @param <L2>   the new left type
+     * @param mapper function that returns an {@code Either} for the left value;
+     *               must not be {@code null} and must not return {@code null}
+     * @return the result of {@code mapper} applied to the left value, or the original {@code Right}
+     * @throws NullPointerException if {@code mapper} is {@code null} or returns {@code null}
+     */
+    default <L2> Either<L2, R> flatMapLeft(
+            Function<? super L, ? extends Either<? extends L2, ? extends R>> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
+        return switch (this) {
+            case Right<L, R> right -> Either.right(right.value());
+            case Left<L, R> left -> {
+                @SuppressWarnings("unchecked")
+                Either<L2, R> result = (Either<L2, R>) mapper.apply(left.value());
                 yield Objects.requireNonNull(result, "mapper returned null");
             }
         };
@@ -354,6 +450,30 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
         return switch (this) {
             case Right<L, R> right -> Stream.of(right.value());
             case Left<L, R> _      -> Stream.empty();
+        };
+    }
+
+    /**
+     * Returns this {@code Either} as a single-element or empty {@link Stream} of the left value.
+     *
+     * <p>{@link Left Left(l)} produces {@code Stream.of(l)};
+     * {@link Right} produces {@code Stream.empty()}.
+     * Symmetric with {@link #stream()}, which operates on the right track.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Stream<Either<String, Integer>> eithers = ...;
+     * List<String> lefts = eithers
+     *     .flatMap(Either::streamLeft)
+     *     .toList();
+     * }</pre>
+     *
+     * @return a one-element stream of the left value, or an empty stream
+     */
+    default Stream<L> streamLeft() {
+        return switch (this) {
+            case Left<L, R> left -> Stream.of(left.value());
+            case Right<L, R> _   -> Stream.empty();
         };
     }
 

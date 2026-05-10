@@ -14,4 +14,12 @@ String rendered = e.fold(
 // Unsafe accessors — throw NoSuchElementException on the wrong side
 String leftVal  = e.getLeft();  // throws if Right
 int    rightVal = e.getRight(); // throws if Left
+
+// Safe accessors with a fallback value (eagerly evaluated)
+int rightOrZero   = e.getRightOrElse(0);
+String leftOrDef  = e.getLeftOrElse("default");
+
+// Safe accessors with a lazy supplier (supplier called only if wrong side)
+int rightLazy   = e.getRightOrElseGet(() -> expensiveDefault());
+String leftLazy = e.getLeftOrElseGet(() -> computeDefault());
 ```

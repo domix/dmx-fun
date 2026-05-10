@@ -19,6 +19,13 @@ Either<String, String> result =
             ? Either.right(Integer.toBinaryString(n))
             : Either.left("non-positive"));
 
+// flatMapLeft — chains left-biased operations (symmetric with flatMap)
+Either<String, Integer> recovered =
+    Either.<String, Integer>left("retry")
+        .flatMapLeft(s -> s.equals("retry")
+            ? Either.right(0)
+            : Either.left("permanent failure"));
+
 // swap — flips Left ↔ Right
 Either<Integer, String> swapped = Either.<String, Integer>left("hello").swap();
 // → Right("hello")
