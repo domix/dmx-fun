@@ -117,10 +117,17 @@ class OptionZip4Test {
     }
 
     @Test
-    void map4_static_nullResultTreatedAsNone() {
-        var result = Option.map4(Option.some(1), Option.some(2), Option.some(3), Option.some(4),
-            (a, b, c, d) -> null);
-        assertEquals(Option.none(), result);
+    void map4_static_nullResultTreatedAsNone_throwsNullPointerException() {
+        assertThrows(
+            NullPointerException.class,
+            () -> Option.map4(
+                Option.some(1),
+                Option.some(2),
+                Option.some(3),
+                Option.some(4),
+                (_, _, _, _) -> null
+            )
+        );
     }
 
     @Test

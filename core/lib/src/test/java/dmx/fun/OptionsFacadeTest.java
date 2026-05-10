@@ -1,7 +1,6 @@
 package dmx.fun;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
@@ -39,28 +38,28 @@ class OptionsFacadeTest {
     // ── Options.sequence() ────────────────────────────────────────────────────
 
     @Test
-    void sequence_allPresent_returnsOptionalOfList() {
-        Optional<List<String>> result = Stream.of(Option.some("x"), Option.some("y"))
+    void sequence_allPresent_returnsSomeList() {
+        Option<List<String>> result = Stream.of(Option.some("x"), Option.some("y"))
             .collect(Options.sequence());
 
-        assertThat(result).isPresent();
+        assertThat(result.isDefined()).isTrue();
         assertThat(result.get()).containsExactly("x", "y");
     }
 
     @Test
-    void sequence_anyNone_returnsEmpty() {
-        Optional<List<String>> result = Stream.<Option<String>>of(Option.some("x"), Option.none())
+    void sequence_anyNone_returnsNone() {
+        Option<List<String>> result = Stream.<Option<String>>of(Option.some("x"), Option.none())
             .collect(Options.sequence());
 
-        assertThat(result).isEmpty();
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
-    void sequence_emptyStream_returnsOptionalOfEmptyList() {
-        Optional<List<String>> result = Stream.<Option<String>>of()
+    void sequence_emptyStream_returnsSomeEmptyList() {
+        Option<List<String>> result = Stream.<Option<String>>of()
             .collect(Options.sequence());
 
-        assertThat(result).isPresent();
+        assertThat(result.isDefined()).isTrue();
         assertThat(result.get()).isEmpty();
     }
 

@@ -14,11 +14,11 @@ List<User> found = ids.stream()
     .map(userRepo::findById)          // Stream<Option<User>>
     .collect(Options.presentToList()); // List<User> — absent entries dropped
 
-// ── Options.sequence() — all-or-nothing: Optional.empty() if any is None ────
-Optional<List<User>> allOrNone = ids.stream()
+// ── Options.sequence() — all-or-nothing: None if any is None ─────────────────
+Option<List<User>> allOrNone = ids.stream()
     .map(userRepo::findById)
     .collect(Options.sequence());
-// Optional.of([...]) only when every ID resolves; Optional.empty() otherwise
+// Some([...]) only when every ID resolves; None otherwise
 
 // ── Options.toNonEmptyList() — wrap a stream into a NonEmptyList if non-empty ─
 Option<NonEmptyList<String>> nel = items.stream()

@@ -113,7 +113,8 @@ You can also use **Java pattern matching** exhaustively:
 ### `map(mapper)`
 
 Applies a function to the value if present. Returns `None` unchanged.
-If the mapper returns `null`, the result becomes `None`.
+The mapper must not be `null` and must not return `null` — both throw `NullPointerException` eagerly,
+consistent with the `@NullMarked` contract and the behavior of `flatMap`.
 
 <TransformingMap/>
 
@@ -181,8 +182,8 @@ Returns `None` as soon as any element is `None`. The stream-based overload uses
 ### Collecting a stream with `sequenceCollector`
 
 `Option.sequenceCollector()` is the stream `Collector` counterpart to `sequence`.
-It reduces a `Stream<Option<V>>` to a single `Optional<List<V>>` — present only if
-every element is `Some`, empty if any element is `None`.
+It reduces a `Stream<Option<V>>` to a single `Option<List<V>>` — `Some(list)` only if
+every element is `Some`, `None` if any element is `None`.
 
 <SequenceCollector/>
 
@@ -196,7 +197,7 @@ The decision to provide companion facade classes as pure-delegation entry points
 | Method                       | Returns                     | Semantics                                              |
 |------------------------------|-----------------------------|--------------------------------------------------------|
 | `Options.presentToList()`    | `List<T>`                   | Drops `None` — returns only present values             |
-| `Options.sequence()`         | `Optional<List<T>>`         | All-or-nothing — `empty()` if any element is `None`    |
+| `Options.sequence()`         | `Option<List<T>>`           | All-or-nothing — `None` if any element is `None`       |
 | `Options.toNonEmptyList()`   | `Option<NonEmptyList<T>>`   | Wraps stream into `NonEmptyList`, or `None` if empty   |
 
 <OptionsFacade/>
@@ -248,8 +249,9 @@ Use `flatMap` instead of `map` when the mapper itself returns an `Option`.
 
 ### Mapper returning null
 
-`map` treats a `null` return from the mapper as `None`.
-This is intentional for legacy interop, but can be surprising if you expect a non-null.
+Under `@NullMarked`, `map` and `flatMap` both throw `NullPointerException` when the
+mapper returns `null`. Use `Option.ofNullable(mapper.apply(value))` explicitly if
+the mapper may return `null` and you want `None` instead of an exception.
 
 <PitfallsNullMapper/>
 

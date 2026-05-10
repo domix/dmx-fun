@@ -3,6 +3,10 @@ fileName: 'Demo.java'
 ---
 
 ```java
-// Silently becomes None if getName() returns null
-Option<String> name = option.map(User::getName);
+// map and flatMap both throw NPE when the mapper returns null (@NullMarked contract)
+Option<String> bad = option.map(User::getName); // NPE if getName() returns null
+
+// If the mapped method may return null, convert explicitly:
+Option<String> safe = Option.ofNullable(option.getOrNull())
+    .flatMap(u -> Option.ofNullable(u.getName())); // None when getName() is null
 ```

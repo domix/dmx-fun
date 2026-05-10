@@ -36,7 +36,9 @@ class OptionTest {
 
     @Test
     void fromOptional_nullOptional_shouldThrowNPE() {
-        assertThatThrownBy(() -> Option.fromOptional(null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> Option.fromOptional(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("optional");
     }
 
     @Test
@@ -157,6 +159,20 @@ class OptionTest {
     }
 
     @Test
+    void getOrThrow_nullSupplier_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).getOrThrow(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("exceptionSupplier");
+    }
+
+    @Test
+    void getOrElseGet_nullSupplier_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).getOrElseGet(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fallbackSupplier");
+    }
+
+    @Test
     void get_onNone_shouldThrow_NoSuchElementException_messageShouldMentionNone() {
         assertThatThrownBy(() -> Option.none().get())
             .isInstanceOf(NoSuchElementException.class)
@@ -170,8 +186,38 @@ class OptionTest {
     }
 
     @Test
-    void map_shouldTurnNullIntoNone() {
-        assertThat(Option.some(1).map(v -> null)).isEqualTo(Option.none());
+    void map_nullReturningMapper_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).map(v -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("map function returned null");
+    }
+
+    @Test
+    void map_nullMapper_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).map(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void map_nullMapper_onNone_throwsNPE() {
+        assertThatThrownBy(() -> Option.<Integer>none().map(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void flatMap_nullMapper_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).flatMap(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void flatMap_nullMapper_onNone_throwsNPE() {
+        assertThatThrownBy(() -> Option.<Integer>none().flatMap(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
     }
 
     @Test
@@ -219,6 +265,20 @@ class OptionTest {
     }
 
     @Test
+    void filter_nullPredicate_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).filter(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("predicate");
+    }
+
+    @Test
+    void filter_nullPredicate_onNone_throwsNPE() {
+        assertThatThrownBy(() -> Option.<Integer>none().filter(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("predicate");
+    }
+
+    @Test
     void peek_shouldRunForSome_andNotForNone() {
         AtomicInteger sum = new AtomicInteger(0);
 
@@ -227,6 +287,20 @@ class OptionTest {
 
         Option.<Integer>none().peek(sum::addAndGet);
         assertThat(sum.get()).as("peek must not run for None").isEqualTo(7);
+    }
+
+    @Test
+    void peek_nullAction_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).peek(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
+    @Test
+    void peek_nullAction_onNone_throwsNPE() {
+        assertThatThrownBy(() -> Option.<Integer>none().peek(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
     }
 
     @Test
@@ -255,12 +329,40 @@ class OptionTest {
     }
 
     @Test
+    void match_nullOnNone_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).match(null, v -> {}))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onNone");
+    }
+
+    @Test
+    void match_nullOnSome_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).match(() -> {}, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onSome");
+    }
+
+    @Test
     void fold_shouldChooseBranch() {
         String a = Option.some(5).fold(() -> "none", v -> "some:" + v);
         String b = Option.<Integer>none().fold(() -> "none", v -> "some:" + v);
 
         assertThat(a).isEqualTo("some:5");
         assertThat(b).isEqualTo("none");
+    }
+
+    @Test
+    void fold_nullOnNone_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).fold(null, v -> "x"))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onNone");
+    }
+
+    @Test
+    void fold_nullOnSome_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).fold(() -> "x", null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onSome");
     }
 
     @Test
@@ -509,6 +611,20 @@ class OptionTest {
     }
 
     @Test
+    void toResult_nullErrorIfNone_throwsNPE() {
+        assertThatThrownBy(() -> Option.<Integer>none().toResult(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("errorIfNone");
+    }
+
+    @Test
+    void toResult_nullErrorIfNone_onSome_throwsNPE() {
+        assertThatThrownBy(() -> Option.some(1).toResult(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("errorIfNone");
+    }
+
+    @Test
     void toTry_shouldReturnSuccessForSome_andFailureForNone() {
         Try<Integer> a = Option.some(10).toTry(() -> new RuntimeException("boom"));
         Try<Integer> b = Option.<Integer>none().toTry(() -> new RuntimeException("boom"));
@@ -657,32 +773,32 @@ class OptionTest {
 
     @Test
     void sequenceCollector_shouldReturnPresentList_whenAllSome() {
-        Optional<List<String>> result = Stream.of(
+        Option<List<String>> result = Stream.of(
                 Option.some("a"), Option.some("b"), Option.some("c"))
             .collect(Option.sequenceCollector());
-        assertThat(result).isPresent();
+        assertThat(result.isDefined()).isTrue();
         assertThat(result.get()).containsExactly("a", "b", "c");
     }
 
     @Test
-    void sequenceCollector_shouldReturnEmpty_whenAnyNone() {
-        Optional<List<String>> result = Stream.of(
+    void sequenceCollector_shouldReturnNone_whenAnyNone() {
+        Option<List<String>> result = Stream.of(
                 Option.some("a"), Option.<String>none(), Option.some("c"))
             .collect(Option.sequenceCollector());
-        assertThat(result).isEmpty();
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
-    void sequenceCollector_shouldReturnPresentEmptyList_forEmptyStream() {
-        Optional<List<String>> result = Stream.<Option<String>>empty()
+    void sequenceCollector_shouldReturnSomeEmptyList_forEmptyStream() {
+        Option<List<String>> result = Stream.<Option<String>>empty()
             .collect(Option.sequenceCollector());
-        assertThat(result).isPresent();
+        assertThat(result.isDefined()).isTrue();
         assertThat(result.get()).isEmpty();
     }
 
     @Test
     void sequenceCollector_resultListShouldBeUnmodifiable() {
-        Optional<List<String>> result = Stream.of(Option.some("a"))
+        Option<List<String>> result = Stream.of(Option.some("a"))
             .collect(Option.sequenceCollector());
         assertThatThrownBy(() -> result.get().add("z"))
             .isInstanceOf(UnsupportedOperationException.class);
@@ -692,19 +808,19 @@ class OptionTest {
     void sequenceCollector_parallelStream_allSome_shouldCombinePartialAccumulators() {
         List<Option<Integer>> items = List.of(
             Option.some(1), Option.some(2), Option.some(3), Option.some(4));
-        Optional<List<Integer>> result = items.parallelStream()
+        Option<List<Integer>> result = items.parallelStream()
             .collect(Option.sequenceCollector());
-        assertThat(result).isPresent();
+        assertThat(result.isDefined()).isTrue();
         assertThat(result.get()).containsExactlyInAnyOrder(1, 2, 3, 4);
     }
 
     @Test
-    void sequenceCollector_parallelStream_withNone_shouldReturnEmpty() {
+    void sequenceCollector_parallelStream_withNone_shouldReturnNone() {
         List<Option<Integer>> items = List.of(
             Option.some(1), Option.none(), Option.some(3));
-        Optional<List<Integer>> result = items.parallelStream()
+        Option<List<Integer>> result = items.parallelStream()
             .collect(Option.sequenceCollector());
-        assertThat(result).isEmpty();
+        assertThat(result.isEmpty()).isTrue();
     }
 
     // ---------- fromResult ----------
