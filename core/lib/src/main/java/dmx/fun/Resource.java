@@ -219,7 +219,7 @@ public final class Resource<T> {
             Function<? super Throwable, ? extends E> onError) {
         Objects.requireNonNull(body, "body");
         Objects.requireNonNull(onError, "onError");
-        Try<Result<R, E>> tryResult = use(t -> {
+        var tryResult = use(t -> {
             @SuppressWarnings("unchecked")
             Result<R, E> r = (Result<R, E>) Objects.requireNonNull(
                 body.apply(t), "useAsResult body must not return null");
@@ -228,7 +228,12 @@ public final class Resource<T> {
         if (tryResult.isSuccess()) {
             return tryResult.get();
         }
-        return Result.err(onError.apply(tryResult.getCause()));
+        return Result.err(
+            Objects.requireNonNull(
+                onError.apply(tryResult.getCause()),
+                "onError returned null"
+            )
+        );
     }
 
     /**
@@ -277,7 +282,12 @@ public final class Resource<T> {
         if (tryResult.isSuccess()) {
             return tryResult.get();
         }
-        return Either.left(onError.apply(tryResult.getCause()));
+        return Either.left(
+            Objects.requireNonNull(
+                onError.apply(tryResult.getCause()),
+                "onError returned null"
+            )
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -298,7 +308,7 @@ public final class Resource<T> {
      * @throws NullPointerException if {@code fn} is {@code null}
      */
     public <R> Resource<R> map(Function<? super T, ? extends R> fn) {
-        Objects.requireNonNull(fn, "fn");
+        Objects.requireNonNull(fn, "mapper");
         Effect<T> self = this.effect;
         return new Resource<>(new Effect<>() {
             @Override
@@ -333,7 +343,7 @@ public final class Resource<T> {
      * @throws NullPointerException if {@code fn} is {@code null} or returns {@code null}
      */
     public <R> Resource<R> flatMap(Function<? super T, ? extends Resource<R>> fn) {
-        Objects.requireNonNull(fn, "fn");
+        Objects.requireNonNull(fn, "resourceMapper");
         Effect<T> self = this.effect;
         return new Resource<>(new Effect<>() {
             @Override
@@ -382,7 +392,7 @@ public final class Resource<T> {
      * @throws NullPointerException if {@code fn} is {@code null}
      */
     public <R> Resource<R> mapTry(Function<? super T, ? extends Try<? extends R>> fn) {
-        Objects.requireNonNull(fn, "fn");
+        Objects.requireNonNull(fn, "mapper");
         Effect<T> self = this.effect;
         return new Resource<>(new Effect<>() {
             @Override
@@ -415,7 +425,7 @@ public final class Resource<T> {
         Throwable bodyEx = null;
         R result = null;
         try {
-            result = body.apply(resource);
+            result = Objects.requireNonNull(body.apply(resource), "body returned null");
         } catch (Throwable t) {
             bodyEx = t;
         }
