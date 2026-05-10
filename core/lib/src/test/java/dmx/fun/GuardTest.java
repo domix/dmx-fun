@@ -653,12 +653,13 @@ class GuardTest {
     }
 
     @Test
-    void checkToOptional_usesOptionalOf_notOfNullable_whenGuardPasses() {
-        // Verify that the implementation calls Optional.of (not ofNullable) on the passing value.
-        // Optional.of would throw NPE if value were null — but that cannot happen under @NullMarked
-        // when the guard passes.
-        Optional<String> result = notBeBlank.checkToOptional("hello");
-        assertThat(result).isPresent().contains("hello");
+    void checkToOptional_throwsNPE_whenNullableGuardPassesNull() {
+        // Proves Optional.of (not ofNullable) is used: a guard that returns Valid(null)
+        // causes checkToOptional to call Optional.of(null), which must throw NPE.
+        Guard<@Nullable String> alwaysPassNullable = value -> Validated.valid(value);
+
+        assertThatThrownBy(() -> alwaysPassNullable.checkToOptional(null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test

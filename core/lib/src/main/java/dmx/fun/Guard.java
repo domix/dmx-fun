@@ -572,6 +572,16 @@ public interface Guard<T> {
      * Optional<String> empty   = notBlank.checkToOptional("   ");   // Optional.empty()
      * }</pre>
      *
+     * <p><strong>Not suitable when {@code null} is a valid success value.</strong>
+     * This method calls {@link Optional#of(Object) Optional.of(value)} on the validated value,
+     * which throws {@link NullPointerException} if {@code value} is {@code null}.
+     * Under {@code @NullMarked}, {@code T} is non-null by default, so this is safe for ordinary
+     * guards. However, if {@code T} is a nullable type (e.g., {@code Guard<@Nullable String>})
+     * and the guard can return {@code Valid(null)}, calling this method will throw
+     * {@code NullPointerException}. In that case, use {@link #check(Object) check(value)} and
+     * work with the resulting {@link Validated} directly, applying
+     * {@link Optional#ofNullable(Object)} to the extracted value when needed.
+     *
      * @param value the value to validate
      * @return {@code Optional.of(value)} if the guard passes,
      *         {@code Optional.empty()} if the guard fails
