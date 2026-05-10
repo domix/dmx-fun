@@ -62,9 +62,15 @@ class OptionZipTest {
     }
 
     @Test
-    void map2_combinerReturnsNull_returnsNone() {
-        Option<String> r = Option.map2(Option.some(1), Option.some(2), (a, b) -> null);
-        assertEquals(Option.none(), r);
+    void map2_combinerReturnsNull_throwsNullPointerException() {
+        assertThrows(
+            NullPointerException.class,
+            () -> Option.map2(
+                Option.some(1),
+                Option.some(2),
+                (_, _) -> null
+            )
+        );
     }
 
     @Test
@@ -153,10 +159,16 @@ class OptionZipTest {
     }
 
     @Test
-    void map3_static_nullResultTreatedAsNone() {
-        var result = Option.map3(Option.some(1), Option.some(2), Option.some(3),
-            (a, b, c) -> null);
-        assertEquals(Option.none(), result);
+    void map3_static_nullResultThrowsNullPointerException() {
+        assertThrows(
+            NullPointerException.class,
+            () -> Option.map3(
+                Option.some(1),
+                Option.some(2),
+                Option.some(3),
+                (_, _, _) -> null
+            )
+        );
     }
 
     @Test
