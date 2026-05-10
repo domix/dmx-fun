@@ -250,6 +250,84 @@ class ValidatedTest {
             .isFalse();
     }
 
+    // ---------- Null-check guards ----------
+
+    @Test
+    void map_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Validated.valid(1).map(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void map_onInvalid_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>invalid("err").map(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void mapError_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>invalid("err").mapError(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void mapError_onValid_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>valid(1).mapError(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void flatMap_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Validated.valid(1).flatMap(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void flatMap_onInvalid_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>invalid("err").flatMap(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
+    }
+
+    @Test
+    void flatMap_shouldThrowNPE_whenMapperReturnsNull() {
+        assertThatThrownBy(() -> Validated.valid(1).flatMap(_ -> null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void peek_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Validated.valid(1).peek(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
+    @Test
+    void peek_onInvalid_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>invalid("err").peek(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
+    @Test
+    void peekError_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>invalid("err").peekError(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
+    @Test
+    void peekError_onValid_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>valid(1).peekError(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
     @Test
     void match_onValid_shouldCallOnValidConsumer() {
         var val = new AtomicReference<Integer>();

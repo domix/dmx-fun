@@ -5,14 +5,25 @@ fileName: 'Demo.java'
 ```java
 Validated<String, Integer> v = parse(input);
 
-// map — transforms the value; Invalid passes through
+// map — transforms the value; Invalid passes through unchanged
 Validated<String, String> hex = v.map(Integer::toHexString);
 
-// mapError — transforms the error; Valid passes through
-Validated<AppError, Integer> typed = v.mapError(msg -> new AppError(msg));
+// Bounded wildcards: a Function<Number, CharSequence> is accepted where
+// Function<Integer, String> was historically required
+Function<Number, CharSequence> broad = n -> n.toString();
+Validated<String, CharSequence> cs = v.map(broad); // compiles
+
+// mapError — transforms the error; Valid passes through unchanged
+Validated<AppError, Integer> typed = v.mapError(AppError::new);
 
 // flatMap — fail-fast sequential composition (does NOT accumulate)
 // Use only when the second validation depends on the first
 Validated<String, Address> address = validateCity(input)
     .flatMap(city -> validateZip(input, city)); // zip depends on city
+
+// Null safety: all three methods null-check the function argument eagerly.
+// NPE fires immediately, regardless of whether this is Valid or Invalid.
+v.map(null);      // NullPointerException("mapper") — always
+v.mapError(null); // NullPointerException("mapper") — always
+v.flatMap(null);  // NullPointerException("mapper") — always
 ```

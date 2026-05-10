@@ -77,6 +77,15 @@ Prefer exhaustive switch patterns — the compiler enforces that both tracks are
 accumulate errors. Use it only when the second validation logically depends on
 the first. For independent validations, always use `combine`.
 
+**Null safety:** `map`, `mapError`, `flatMap`, `peek`, and `peekError` all
+null-check their function argument eagerly — `NullPointerException` is thrown
+immediately regardless of whether the instance is `Valid` or `Invalid`.
+
+**Broader function reuse:** all five methods accept bounded wildcard types
+(`Function<? super A, ? extends B>`, `Consumer<? super A>`, etc.), so a
+`Consumer<Object>` or `Function<Animal, String>` can be passed where a more
+specific type was previously required.
+
 ## Combining independent validations
 
 `combine(other, errMerge, valueMerge)` is the core of error accumulation.
