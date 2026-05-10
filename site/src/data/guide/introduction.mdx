@@ -86,6 +86,9 @@ Each module guide has a copy-ready snippet in its **Adding the dependency** sect
 
 ### Available modules
 
+Each integration is a separate artifact with the peer dependency declared `compileOnly` —
+the rationale is documented in <a href={`${base}adr/adr-022-integration-modules`}>ADR-022 — Integration modules as optional peer dependencies</a>.
+
 | Artifact | What it adds |
 |---|---|
 | `codes.domix:fun` | Core library — always required |

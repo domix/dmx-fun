@@ -7,7 +7,13 @@ h1: "Adding a New Module"
 
 import {Content as NewModuleBuildGradle} from '../code/guide/module-conventions/new-module-build-gradle.mdx';
 
+export const base = import.meta.env.BASE_URL;
+
 Optional integration modules follow a consistent pattern established by `fun-jackson` and `fun-assertj`.
+The design rationale — why each integration is a separate subproject with a `compileOnly` peer
+dependency, how the BOM fits in, and the alternatives considered — is documented in
+<a href={`${base}adr/adr-022-integration-modules`}>ADR-022 — Integration modules as optional peer dependencies</a>.
+
 This page is a checklist for maintainers adding a new module.
 
 ## When to create a module
