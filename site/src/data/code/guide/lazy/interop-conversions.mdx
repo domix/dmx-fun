@@ -25,7 +25,9 @@ Either<AppError, Config> e2 = config.toEither(ex -> new AppError("Config load fa
 // ── Unsafe conversions (propagate exceptions) ────────────────────────────────
 
 // toOption() — forces evaluation; wraps value in Some (throws if supplier throws)
+//   Use toTry().toOption() for a safe, exception-capturing alternative
 Option<Config> opt = config.toOption();
+Option<Config> safeOption = config.toTry().toOption(); // None on failure
 
 // toOptional() — forces evaluation; wraps value in Optional.of (throws if supplier throws)
 //   Use toTry().toOptional() for a safe, exception-capturing alternative
