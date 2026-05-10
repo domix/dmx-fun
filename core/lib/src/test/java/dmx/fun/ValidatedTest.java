@@ -308,8 +308,22 @@ class ValidatedTest {
     }
 
     @Test
+    void peek_onInvalid_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>invalid("err").peek(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
+    @Test
     void peekError_shouldThrowNPE_whenActionIsNull() {
         assertThatThrownBy(() -> Validated.<String, Integer>invalid("err").peekError(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("action");
+    }
+
+    @Test
+    void peekError_onValid_shouldThrowNPE_whenActionIsNull() {
+        assertThatThrownBy(() -> Validated.<String, Integer>valid(1).peekError(null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("action");
     }
