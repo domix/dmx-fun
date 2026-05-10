@@ -124,7 +124,9 @@ class LazyTest {
 
     @Test
     void map_nullFunction_throwsNullPointerException() {
-        assertThatThrownBy(() -> Lazy.of(() -> "x").map(null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> Lazy.of(() -> "x").map(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
     }
 
     @Test
@@ -154,7 +156,9 @@ class LazyTest {
 
     @Test
     void flatMap_nullFunction_throwsNullPointerException() {
-        assertThatThrownBy(() -> Lazy.of(() -> "x").flatMap(null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> Lazy.of(() -> "x").flatMap(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
     }
 
     @Test
@@ -170,6 +174,12 @@ class LazyTest {
         var opt = Lazy.of(() -> "value").toOption();
         assertThat(opt.isDefined()).isTrue();
         assertThat(opt.get()).isEqualTo("value");
+    }
+
+    @Test
+    void toOption_throwingSupplier_propagatesException() {
+        var lazy = Lazy.<String>of(() -> { throw new IllegalStateException("boom"); });
+        assertThatThrownBy(lazy::toOption).isInstanceOf(IllegalStateException.class);
     }
 
     // ---------- toTry ----------

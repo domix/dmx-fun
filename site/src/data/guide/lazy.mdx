@@ -69,7 +69,7 @@ until the terminal `get()` is invoked on the result.
 | `toResult(errorMapper)`   | Yes                | `Result<T, E>`             | Maps exception to a domain error.                                 |
 | `toEither()`              | Yes                | `Either<Throwable, T>`     | Exception becomes `Left`; safe (no throw).                        |
 | `toEither(errorMapper)`   | Yes                | `Either<E, T>`             | Maps exception to a typed left value; safe (no throw).            |
-| `toOption()`              | Yes                | `Option<T>`                | Throws if supplier throws.                                        |
+| `toOption()`              | Yes                | `Option<T>`                | Throws if supplier throws. Use `toTry().toOption()` for safe conversion. |
 | `toOptional()`            | Yes                | `Optional<T>`              | JDK interop; throws if supplier throws. Use `toTry().toOptional()` for safe conversion. |
 | `toFuture()`              | No (async if not cached) | `CompletableFuture<T>` | Returns already-completed future if cached; async via `supplyAsync` otherwise. |
 | `Lazy.fromFuture(future)` | No                 | `Lazy<T>`                  | Defers the blocking join to `get()` time.                         |

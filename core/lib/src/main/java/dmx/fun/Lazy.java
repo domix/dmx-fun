@@ -69,14 +69,7 @@ public final class Lazy<T> {
         if (s.isSuccess()) {
             return s.get();
         }
-        var cause = s.getCause();
-        if (cause instanceof RuntimeException re) {
-            throw re;
-        }
-        if (cause instanceof Error e) {
-            throw e;
-        }
-        throw new RuntimeException(cause);
+        throw rethrowOrWrap(s.getCause());
     }
 
     /**
@@ -100,7 +93,7 @@ public final class Lazy<T> {
      * @throws NullPointerException if {@code f} is {@code null}
      */
     public <R> Lazy<R> map(Function<? super T, ? extends R> f) {
-        Objects.requireNonNull(f, "f must not be null");
+        Objects.requireNonNull(f, "mapper must not be null");
         return Lazy.of(() -> Objects.requireNonNull(f.apply(get()), "map function returned null"));
     }
 
@@ -116,14 +109,19 @@ public final class Lazy<T> {
      * @throws NullPointerException if {@code f} is {@code null} or returns {@code null}
      */
     public <R> Lazy<R> flatMap(Function<? super T, Lazy<? extends R>> f) {
-        Objects.requireNonNull(f, "f must not be null");
+        Objects.requireNonNull(f, "mapper must not be null");
         return Lazy.of(() -> Objects.requireNonNull(f.apply(get()), "flatMap function returned null").get());
     }
 
     /**
      * Evaluates this {@code Lazy} and wraps the result in an {@link Option}.
      *
+     * <p>Unlike {@link #toTry()}, this method does <em>not</em> capture exceptions —
+     * if the supplier throws, the exception propagates to the caller.
+     * Use {@code toTry().toOption()} if you need exception-safe conversion.
+     *
      * @return {@code Option.some(value)}
+     * @throws RuntimeException if the supplier throws (same semantics as {@link #get()})
      */
     public Option<T> toOption() {
         return Option.some(get());
@@ -160,17 +158,7 @@ public final class Lazy<T> {
     public static <T> Lazy<T> fromFuture(CompletableFuture<? extends T> future) {
         Objects.requireNonNull(future, "future must not be null");
         return Lazy.of(
-            () -> Try.<T>fromFuture(future)
-                .getOrThrow(cause -> {
-                        if (cause instanceof RuntimeException re) {
-                            return re;
-                        }
-                        if (cause instanceof Error e) {
-                            throw e;
-                        }
-                        return new RuntimeException(cause);
-                    }
-                )
+            () -> Try.<T>fromFuture(future).getOrThrow(Lazy::rethrowOrWrap)
         );
     }
 
@@ -285,6 +273,17 @@ public final class Lazy<T> {
     }
 
     // ── internals ─────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the cause as a {@link RuntimeException} if it already is one, or wraps it.
+     * Rethrows {@link Error} directly — {@code Error} subclasses signal unrecoverable JVM
+     * conditions and must not be wrapped.
+     */
+    private static RuntimeException rethrowOrWrap(Throwable cause) {
+        if (cause instanceof RuntimeException re) return re;
+        if (cause instanceof Error e) throw e;
+        return new RuntimeException(cause);
+    }
 
     private Try<T> evaluate() {
         // Using a local variable throughout
