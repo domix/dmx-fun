@@ -49,6 +49,9 @@ Each call to `use()` is independent: it acquires the resource, runs the body, an
 resource. The same `Resource<T>` can be used multiple times — each call goes through the full
 acquire/run/release cycle.
 
+The body function must not return `null` — if it does, `use()` returns `Try.failure(NullPointerException)`
+and the resource is still released normally.
+
 ## Exception-merging contract
 
 `Resource<T>` follows the same exception-suppression semantics as `try-with-resources`:
@@ -119,6 +122,7 @@ If the `Try` is a failure, `use` returns that failure immediately and `release` 
 The `Result`-counterpart of `use()`. The body returns a `Result<R, E>` directly.
 Any `Throwable` from acquire, release, or an unexpected body exception is mapped to `E` via
 `onError`, eliminating the `Try<Result<R, E>>` nesting.
+`onError` must not return `null` — a null return throws `NullPointerException` immediately.
 
 <UseAsResult/>
 
@@ -128,6 +132,7 @@ The `Either`-counterpart of `use()`, symmetric with `useAsResult`. Use it when t
 layer models results as neutral two-track `Either<E, R>` values. The body returns an
 `Either<E, R>` directly; any `Throwable` from acquire, release, or an unexpected body
 exception is mapped to `E` via `onError`.
+`onError` must not return `null` — a null return throws `NullPointerException` immediately.
 
 <UseAsEither/>
 

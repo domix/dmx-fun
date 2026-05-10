@@ -60,6 +60,19 @@ class ResourceTest {
     }
 
     @Test
+    void use_nullBodyResult_shouldReturnFailureWithNPE() {
+        var released = new AtomicBoolean(false);
+        var r = Resource.of(() -> "hello", _ -> released.set(true));
+
+        var result = r.use(_ -> null);
+
+        assertThat(released.get()).isTrue();
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.getCause()).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("body returned null");
+    }
+
+    @Test
     void use_shouldAlwaysCallRelease_whenBodySucceeds() {
         var released = new AtomicBoolean(false);
         var r = Resource.of(() -> "hello", _ -> released.set(true));
@@ -200,7 +213,8 @@ class ResourceTest {
         });
 
         assertThatThrownBy(() -> r.map(null))
-            .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
     }
 
     // -------------------------------------------------------------------------
@@ -296,7 +310,8 @@ class ResourceTest {
         var r = Resource.of(() -> "hello", _ -> {
         });
         assertThatThrownBy(() -> r.flatMap(null))
-            .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("resourceMapper");
     }
 
     @Test
@@ -521,6 +536,14 @@ class ResourceTest {
             .hasMessageContaining("onError");
     }
 
+    @Test
+    void useAsResult_nullOnErrorReturn_shouldThrowNPEWithDescriptiveMessage() {
+        var r = Resource.<String>of(() -> { throw new RuntimeException("fail"); }, _ -> {});
+        assertThatThrownBy(() -> r.useAsResult(_ -> Result.ok("x"), _ -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onError returned null");
+    }
+
     // -------------------------------------------------------------------------
     // useAsEither — Either-integrated use
     // -------------------------------------------------------------------------
@@ -645,6 +668,14 @@ class ResourceTest {
             .hasMessageContaining("onError");
     }
 
+    @Test
+    void useAsEither_nullOnErrorReturn_shouldThrowNPEWithDescriptiveMessage() {
+        var r = Resource.<String>of(() -> { throw new RuntimeException("fail"); }, _ -> {});
+        assertThatThrownBy(() -> r.useAsEither(_ -> Either.right("x"), _ -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("onError returned null");
+    }
+
     // -------------------------------------------------------------------------
     // mapTry — transform resource value with Try-returning function
     // -------------------------------------------------------------------------
@@ -689,7 +720,8 @@ class ResourceTest {
         });
 
         assertThatThrownBy(() -> r.mapTry(null))
-            .isInstanceOf(NullPointerException.class);
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("mapper");
     }
 
     @Test
