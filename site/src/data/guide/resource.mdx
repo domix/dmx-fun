@@ -29,6 +29,8 @@ body runs, and the release function is _always_ called when the body completes, 
 succeeds or throws.
 
 The result is returned as a `Try<R>`, making both success and failure explicit values.
+The design rationale — including the exception-merging contract, the internal representation,
+and alternatives considered — is documented in <a href={`${base}adr/adr-021-resource-composable`}>ADR-021 — Resource&lt;T&gt; as composable managed resource</a>.
 
 ## Creating instances
 

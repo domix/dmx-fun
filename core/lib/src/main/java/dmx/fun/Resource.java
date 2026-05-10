@@ -7,6 +7,10 @@ import org.jspecify.annotations.NullMarked;
 /**
  * A functional managed resource: a value that must be acquired before use and released
  * afterward. {@code Resource<T>} is the composable alternative to {@code try-with-resources}.
+ * The design rationale — including the exception-merging contract, the internal
+ * {@code Effect<T>} representation, and the alternatives considered — is documented in
+ * <a href="https://domix.github.io/dmx-fun/adr/adr-021-resource-composable/">
+ * ADR-021 — Resource&lt;T&gt; as composable managed resource</a>.
  *
  * <p>Acquisition and release are declared together at construction time. The resource is only
  * live during the execution of {@link #use(CheckedFunction) use(fn)} — it is acquired just
