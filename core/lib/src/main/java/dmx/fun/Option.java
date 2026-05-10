@@ -127,6 +127,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * or an empty {@code None} instance if the {@link Optional} is empty
      */
     static <V> Option<V> fromOptional(Optional<V> optional) {
+        Objects.requireNonNull(optional, "optional");
         return optional.map(Option::some).orElseGet(Option::none);
     }
 
@@ -190,6 +191,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * or the fallback value computed by the {@code fallbackSupplier} if this instance is a {@code None}
      */
     default Value getOrElseGet(Supplier<? extends Value> fallbackSupplier) {
+        Objects.requireNonNull(fallbackSupplier, "fallbackSupplier");
         return this instanceof Some<Value>(Value v) ? v : fallbackSupplier.get();
     }
 
@@ -243,6 +245,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      *                          using the exception provided by {@code exceptionSupplier}
      */
     default Value getOrThrow(Supplier<? extends RuntimeException> exceptionSupplier) {
+        Objects.requireNonNull(exceptionSupplier, "exceptionSupplier");
         return switch (this) {
             case Some<Value> s -> s.value();
             case None<Value> _ -> throw exceptionSupplier.get();
@@ -257,12 +260,16 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * If the current Option is a None, returns None without applying the mapper.
      *
      * @param <NewValue> the type of the value in the resulting Option after transformation
-     * @param mapper     the function to apply to the value if this Option is a Some
+     * @param mapper     the function to apply to the value if this Option is a Some;
+     *                   must not be {@code null} and must not return {@code null}
      * @return a new Option containing the mapped value if this is a Some, or None if this is a None
+     * @throws NullPointerException if {@code mapper} is {@code null} or returns {@code null}
      */
     default <NewValue> Option<NewValue> map(Function<? super Value, ? extends NewValue> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
-            case Some<Value> s -> Option.ofNullable(mapper.apply(s.value()));
+            case Some<Value> s -> Option.some(
+                Objects.requireNonNull(mapper.apply(s.value()), "map function returned null"));
             case None<Value> _ -> Option.none();
         };
     }
@@ -278,6 +285,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @throws NullPointerException if the mapping function returns null
      */
     default <NewValue> Option<NewValue> flatMap(Function<? super Value, Option<NewValue>> mapper) {
+        Objects.requireNonNull(mapper, "mapper");
         return switch (this) {
             case Some<Value> s -> Objects.requireNonNull(mapper.apply(s.value()),
                 "flatMap mapper must not return null");
@@ -294,6 +302,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @return an Option containing the value if the predicate evaluates to true, otherwise an empty Option
      */
     default Option<Value> filter(Predicate<? super Value> predicate) {
+        Objects.requireNonNull(predicate, "predicate");
         return switch (this) {
             case Some<Value> s -> predicate.test(s.value()) ? this : Option.none();
             case None<Value> _ -> this;
@@ -307,6 +316,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @return this instance after applying the provided action
      */
     default Option<Value> peek(Consumer<? super Value> action) {
+        Objects.requireNonNull(action, "action");
         if (this instanceof Some<Value>(Value v)) {
             action.accept(v);
         }
@@ -327,6 +337,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         Supplier<? extends Folded> onNone,
         Function<? super Value, ? extends Folded> onSome
     ) {
+        Objects.requireNonNull(onNone, "onNone");
+        Objects.requireNonNull(onSome, "onSome");
         return switch (this) {
             case Some<Value> s -> onSome.apply(s.value());
             case None<Value> _ -> onNone.get();
@@ -342,6 +354,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * @param onSome the consumer to execute if the value is "Some", accepting the inner value
      */
     default void match(Runnable onNone, Consumer<? super Value> onSome) {
+        Objects.requireNonNull(onNone, "onNone");
+        Objects.requireNonNull(onSome, "onSome");
         switch (this) {
             case Some<Value> s -> onSome.accept(s.value());
             case None<Value> _ -> onNone.run();
@@ -435,24 +449,24 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      * Returns a {@link Collector} that reduces a {@code Stream<Option<V>>} to a single
      * {@code Optional<List<V>>}.
      *
-     * <p>The result is {@link Optional#of(Object) present} only if <em>every</em> element in the
+     * <p>The result is {@link Option#some(Object) Some} only if <em>every</em> element in the
      * stream is {@link Option#some(Object) Some}. The first {@link Option#none() None} causes the
-     * entire result to be {@link Optional#empty()}. An empty stream yields an empty list wrapped
-     * in {@code Optional.of}.
+     * entire result to be {@link Option#none()}. An empty stream yields an empty list wrapped
+     * in {@code Option.some}.
      *
      * <p>This mirrors {@link #sequence(Iterable)} but operates as a stream {@link Collector}.
      *
      * <p>Example:
      * <pre>{@code
-     * Optional<List<User>> allFound = ids.stream()
+     * Option<List<User>> allFound = ids.stream()
      *     .map(userRepo::findById)             // Stream<Option<User>>
-     *     .collect(Option.sequenceCollector()); // Optional<List<User>>
+     *     .collect(Option.sequenceCollector()); // Option<List<User>>
      * }</pre>
      *
      * @param <V> the element type inside each {@code Option}
-     * @return a collector producing {@code Optional<List<V>>}
+     * @return a collector producing {@code Option<List<V>>}
      */
-    static <V> Collector<Option<V>, ?, Optional<List<V>>> sequenceCollector() {
+    static <V> Collector<Option<V>, ?, Option<List<V>>> sequenceCollector() {
         class Acc {
             final ArrayList<V> values = new ArrayList<>();
             boolean hasNone = false;
@@ -474,8 +488,8 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
                 return a;
             },
             acc -> acc.hasNone
-                ? Optional.empty()
-                : Optional.of(Collections.unmodifiableList(acc.values))
+                ? Option.none()
+                : Option.some(Collections.unmodifiableList(acc.values))
         );
     }
 
@@ -585,11 +599,13 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     /**
      * Converts the current option to a {@code Result} instance.
      *
-     * @param errorIfNone the error value to use if the current option is {@code None}.
+     * @param errorIfNone the error value to use if the current option is {@code None}; must not be {@code null}
      * @param <TError>    the type of the error value.
      * @return a {@code Result} containing the value if this is {@code Some}, or an error if this is {@code None}.
+     * @throws NullPointerException if {@code errorIfNone} is {@code null}
      */
     default <TError> Result<Value, TError> toResult(TError errorIfNone) {
+        Objects.requireNonNull(errorIfNone, "errorIfNone");
         return switch (this) {
             case Some<Value> s -> Result.ok(s.value());
             case None<Value> _ -> Result.err(errorIfNone);
@@ -650,7 +666,7 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
      */
     static <V, E> Option<V> fromResult(Result<? extends V, ? extends E> result) {
         Objects.requireNonNull(result, "result");
-        return result.isOk() ? Option.ofNullable(result.get()) : Option.none();
+        return result.isOk() ? Option.some(result.get()) : Option.none();
     }
 
     /**
@@ -902,14 +918,13 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
     static <A, B> Option<Tuple2<A, B>> zip(Option<? extends A> a, Option<? extends B> b) {
         Objects.requireNonNull(a, "a");
         Objects.requireNonNull(b, "b");
-
-        if (a instanceof None<?> || b instanceof None<?>) {
-            return Option.none();
-        }
-
-        A av = ((Some<? extends A>) a).value();
-        B bv = ((Some<? extends B>) b).value();
-        return Option.some(new Tuple2<>(av, bv));
+        return switch (a) {
+            case None<?> _ -> Option.none();
+            case Some<? extends A> sa -> switch (b) {
+                case None<?> _ -> Option.none();
+                case Some<? extends B> sb -> Option.some(new Tuple2<>(sa.value(), sb.value()));
+            };
+        };
     }
 
     /**
@@ -935,13 +950,13 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         Objects.requireNonNull(b, "b");
         Objects.requireNonNull(combiner, "combiner");
 
-        if (a instanceof None<?> || b instanceof None<?>) {
-            return Option.none();
-        }
-
-        A av = ((Some<? extends A>) a).value();
-        B bv = ((Some<? extends B>) b).value();
-        return Option.ofNullable(combiner.apply(av, bv));
+        return switch (a) {
+            case None<?> _ -> Option.none();
+            case Some<? extends A> sa -> switch (b) {
+                case None<?> _ -> Option.none();
+                case Some<? extends B> sb -> Option.ofNullable(combiner.apply(sa.value(), sb.value()));
+            };
+        };
     }
 
     // ---------- zip3 / map3 ----------
@@ -966,13 +981,16 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         Objects.requireNonNull(a, "a");
         Objects.requireNonNull(b, "b");
         Objects.requireNonNull(c, "c");
-        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?>) {
-            return Option.none();
-        }
-        A av = ((Some<? extends A>) a).value();
-        B bv = ((Some<? extends B>) b).value();
-        C cv = ((Some<? extends C>) c).value();
-        return Option.some(new Tuple3<>(av, bv, cv));
+        return switch (a) {
+            case None<?> _ -> Option.none();
+            case Some<? extends A> sa -> switch (b) {
+                case None<?> _ -> Option.none();
+                case Some<? extends B> sb -> switch (c) {
+                    case None<?> _ -> Option.none();
+                    case Some<? extends C> sc -> Option.some(new Tuple3<>(sa.value(), sb.value(), sc.value()));
+                };
+            };
+        };
     }
 
     /**
@@ -999,13 +1017,16 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         Objects.requireNonNull(b, "b");
         Objects.requireNonNull(c, "c");
         Objects.requireNonNull(combiner, "combiner");
-        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?>) {
-            return Option.none();
-        }
-        A av = ((Some<? extends A>) a).value();
-        B bv = ((Some<? extends B>) b).value();
-        C cv = ((Some<? extends C>) c).value();
-        return Option.ofNullable(combiner.apply(av, bv, cv));
+        return switch (a) {
+            case None<?> _ -> Option.none();
+            case Some<? extends A> sa -> switch (b) {
+                case None<?> _ -> Option.none();
+                case Some<? extends B> sb -> switch (c) {
+                    case None<?> _ -> Option.none();
+                    case Some<? extends C> sc -> Option.ofNullable(combiner.apply(sa.value(), sb.value(), sc.value()));
+                };
+            };
+        };
     }
 
     // ---------- zip4 / map4 ----------
@@ -1034,14 +1055,19 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         Objects.requireNonNull(b, "b");
         Objects.requireNonNull(c, "c");
         Objects.requireNonNull(d, "d");
-        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?> || d instanceof None<?>) {
-            return Option.none();
-        }
-        A av = ((Some<? extends A>) a).value();
-        B bv = ((Some<? extends B>) b).value();
-        C cv = ((Some<? extends C>) c).value();
-        D dv = ((Some<? extends D>) d).value();
-        return Option.some(new Tuple4<>(av, bv, cv, dv));
+        return switch (a) {
+            case None<?> _ -> Option.none();
+            case Some<? extends A> sa -> switch (b) {
+                case None<?> _ -> Option.none();
+                case Some<? extends B> sb -> switch (c) {
+                    case None<?> _ -> Option.none();
+                    case Some<? extends C> sc -> switch (d) {
+                        case None<?> _ -> Option.none();
+                        case Some<? extends D> sd -> Option.some(new Tuple4<>(sa.value(), sb.value(), sc.value(), sd.value()));
+                    };
+                };
+            };
+        };
     }
 
     /**
@@ -1072,14 +1098,19 @@ public sealed interface Option<Value> permits Option.Some, Option.None {
         Objects.requireNonNull(c, "c");
         Objects.requireNonNull(d, "d");
         Objects.requireNonNull(combiner, "combiner");
-        if (a instanceof None<?> || b instanceof None<?> || c instanceof None<?> || d instanceof None<?>) {
-            return Option.none();
-        }
-        A av = ((Some<? extends A>) a).value();
-        B bv = ((Some<? extends B>) b).value();
-        C cv = ((Some<? extends C>) c).value();
-        D dv = ((Some<? extends D>) d).value();
-        return Option.ofNullable(combiner.apply(av, bv, cv, dv));
+        return switch (a) {
+            case None<?> _ -> Option.none();
+            case Some<? extends A> sa -> switch (b) {
+                case None<?> _ -> Option.none();
+                case Some<? extends B> sb -> switch (c) {
+                    case None<?> _ -> Option.none();
+                    case Some<? extends C> sc -> switch (d) {
+                        case None<?> _ -> Option.none();
+                        case Some<? extends D> sd -> Option.ofNullable(combiner.apply(sa.value(), sb.value(), sc.value(), sd.value()));
+                    };
+                };
+            };
+        };
     }
 
 }

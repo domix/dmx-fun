@@ -1,7 +1,6 @@
 package dmx.fun;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collector;
 import org.jspecify.annotations.NullMarked;
 
@@ -18,7 +17,7 @@ import org.jspecify.annotations.NullMarked;
  * import static dmx.fun.Options.*;
  *
  * List<String>              present = stream.collect(Options.presentToList());
- * Optional<List<String>>    seq     = stream.collect(Options.sequence());
+ * Option<List<String>>      seq     = stream.collect(Options.sequence());
  * Option<NonEmptyList<String>> nel  = stream.collect(Options.toNonEmptyList());
  * }</pre>
  *
@@ -45,15 +44,15 @@ public final class Options {
 
     /**
      * Returns a {@link Collector} that reduces a {@code Stream<Option<V>>} to a single
-     * {@code Optional<List<V>>}: {@code Optional.of(list)} if every element is present,
-     * or {@code Optional.empty()} if any element is empty.
+     * {@code Option<List<V>>}: {@code Option.some(list)} if every element is present,
+     * or {@code Option.none()} if any element is empty.
      *
      * <p>Delegates to {@link Option#sequenceCollector()}.
      *
      * @param <V> the value type
-     * @return a collector producing {@code Optional<List<V>>}
+     * @return a collector producing {@code Option<List<V>>}
      */
-    public static <V> Collector<Option<V>, ?, Optional<List<V>>> sequence() {
+    public static <V> Collector<Option<V>, ?, Option<List<V>>> sequence() {
         return Option.sequenceCollector();
     }
 

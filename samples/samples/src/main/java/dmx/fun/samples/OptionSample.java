@@ -1,9 +1,6 @@
 package dmx.fun.samples;
 
 import dmx.fun.Option;
-import dmx.fun.Tuple2;
-import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -24,71 +21,77 @@ public class OptionSample {
         return "api.example.com".equals(host) ? Option.some(8080) : Option.none();
     }
 
-    public static void main(String[] args) {
+    static void main() {
         // Transform the value if present — map returns None when the source is None
-        Option<Integer> length = findEmail("alice").map(String::length);
-        System.out.println("Email length: " + length.getOrElse(0)); // 17
+        var length = findEmail("alice")
+            .map(String::length);
+        IO.println("Email length: " + length.getOrElse(0)); // 17
 
         // Chain a lookup that may also produce None
-        Option<String> domain = findEmail("alice")
+        var domain = findEmail("alice")
             .flatMap(email -> {
                 int at = email.indexOf('@');
                 return at >= 0 ? Option.some(email.substring(at + 1)) : Option.none();
             });
-        System.out.println("Domain: " + domain.getOrElse("unknown")); // example.com
+        IO.println("Domain: " + domain.getOrElse("unknown")); // example.com
 
         // Missing user — all combinators propagate None gracefully
-        Option<String> missing = findEmail("bob").map(String::toUpperCase);
-        System.out.println("Missing: " + missing.getOrElse("not found")); // not found
+        var missing = findEmail("bob")
+            .map(String::toUpperCase);
+        IO.println("Missing: " + missing.getOrElse("not found")); // not found
 
         // Pattern match with sealed interface
-        String result = switch (findEmail("alice")) {
+        var result = switch (findEmail("alice")) {
             case Option.Some<String> some -> "Found: " + some.value();
-            case Option.None<String> none -> "Not found";
+            case Option.None<String> _ -> "Not found";
         };
-        System.out.println(result); // Found: alice@example.com
+        IO.println(result); // Found: alice@example.com
 
         // ---- zipWith(Function) / flatZip ----
 
-        System.out.println("\n=== zipWith(Function) ===");
+        IO.println("\n=== zipWith(Function) ===");
 
         // Pair the value with a derived Option — both present
-        Option<Tuple2<String, Integer>> emailWithLength =
-            findEmail("alice").zipWith(e -> Option.some(e.length()));
-        emailWithLength.peek(t -> System.out.println("email=" + t._1() + " len=" + t._2()));
+        var emailWithLength =
+            findEmail("alice")
+                .zipWith(e -> Option.some(e.length()));
+        emailWithLength
+            .peek(t -> IO.println("email=%s len=%d".formatted(t._1(), t._2())));
         // email=alice@example.com len=17
 
         // Derived lookup returns None — whole result is None
-        Option<Tuple2<String, Integer>> noPort =
-            findEmail("alice").zipWith(e -> findPort(e)); // no port for email domain
-        System.out.println("No port: " + noPort.isEmpty()); // true
+        var noPort =
+            findEmail("alice").zipWith(OptionSample::findPort); // no port for email domain
+        IO.println("No port: " + noPort.isEmpty()); // true
 
         // flatZip — alias, same semantics
-        Option<Tuple2<String, Integer>> hostWithPort =
-            Option.some("api.example.com").flatZip(h -> findPort(h));
-        hostWithPort.peek(t -> System.out.println("host=" + t._1() + " port=" + t._2()));
+        var hostWithPort =
+            Option.some("api.example.com")
+                .flatZip(OptionSample::findPort);
+        hostWithPort
+            .peek(t -> IO.println("host=%s port=%d".formatted(t._1(), t._2())));
         // host=api.example.com port=8080
 
         // Source is None — mapper is not called
-        Option<Tuple2<String, Integer>> noneSource =
-            Option.<String>none().zipWith(e -> findPort(e));
-        System.out.println("None source: " + noneSource.isEmpty()); // true
+        var noneSource =
+            Option.<String>none().zipWith(OptionSample::findPort);
+        IO.println("None source: %s".formatted(noneSource.isEmpty())); // true
 
         // ---- sequenceCollector ----
 
-        System.out.println("\n=== sequenceCollector ===");
+        IO.println("\n=== sequenceCollector ===");
 
-        // All Some — present list
-        Optional<List<String>> allFound = Stream.of("alice", "alice")
-            .map(u -> findEmail(u))
+        // All Some — Some(list)
+        var allFound = Stream.of("alice", "alice")
+            .map(OptionSample::findEmail)
             .collect(Option.sequenceCollector());
-        System.out.println("All found: " + allFound.isPresent()); // true
-        System.out.println("Emails: " + allFound.get()); // [alice@example.com, alice@example.com]
+        IO.println("All found: " + allFound.isDefined()); // true
+        IO.println("Emails: " + allFound.get()); // [alice@example.com, alice@example.com]
 
-        // Any None — empty Optional
-        Optional<List<String>> oneMissing = Stream.of("alice", "bob")
-            .map(u -> findEmail(u))
+        // Any None — None
+        var oneMissing = Stream.of("alice", "bob")
+            .map(OptionSample::findEmail)
             .collect(Option.sequenceCollector());
-        System.out.println("One missing: " + oneMissing.isEmpty()); // true
+        IO.println("One missing: " + oneMissing.isEmpty()); // true
     }
 }
