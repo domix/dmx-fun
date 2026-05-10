@@ -117,11 +117,13 @@ public final class Lazy<T> {
      * Evaluates this {@code Lazy} and wraps the result in an {@link Option}.
      *
      * <p>Unlike {@link #toTry()}, this method does <em>not</em> capture exceptions —
-     * if the supplier throws, the exception propagates to the caller.
+     * any unchecked throwable ({@link RuntimeException} or {@link Error}) thrown by the
+     * supplier propagates to the caller, with the same semantics as {@link #get()}.
      * Use {@code toTry().toOption()} if you need exception-safe conversion.
      *
      * @return {@code Option.some(value)}
-     * @throws RuntimeException if the supplier throws (same semantics as {@link #get()})
+     * @throws RuntimeException if the supplier throws a {@code RuntimeException}
+     * @throws Error            if the supplier throws an {@code Error}
      */
     public Option<T> toOption() {
         return Option.some(get());
@@ -214,11 +216,13 @@ public final class Lazy<T> {
      * {@link java.util.Optional Optional}.
      *
      * <p>Unlike {@link #toTry()}, this method does <em>not</em> capture exceptions —
-     * if the supplier throws, the exception propagates to the caller.
+     * any unchecked throwable ({@link RuntimeException} or {@link Error}) thrown by the
+     * supplier propagates to the caller, with the same semantics as {@link #get()}.
      * Use {@code toTry().toOptional()} if you need exception-safe conversion.
      *
      * @return {@code Optional.of(value)}; never {@code Optional.empty()}
-     * @throws RuntimeException if the supplier throws (same semantics as {@link #get()})
+     * @throws RuntimeException if the supplier throws a {@code RuntimeException}
+     * @throws Error            if the supplier throws an {@code Error}
      */
     public Optional<T> toOptional() {
         return Optional.of(get());
