@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **`NonEmptySet`** — `fromOptional(Optional<Set<T>>)`, `collector()`, `toStream()`,
     `sequenceOption()`, `sequenceTry()`, `sequenceEither()`, `sequenceResult()` (#293).
 
+### Changed
+
+### Removed
+
 ### Fixed
 
 - **`Either` — null-safety and left-track symmetry (#434):**

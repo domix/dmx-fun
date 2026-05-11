@@ -254,10 +254,11 @@ implementation("codes.domix:fun-quarkus")
 ```
 
 Full Javadoc is available at [/dmx-fun/javadoc/](/dmx-fun/javadoc/index.html).
+The [Developer Guide](/dmx-fun/guide/) covers every type and integration module with real-world examples.
 
-The `spring-boot-sample` module in the repository is a production-like reference application
-with Flyway, PostgreSQL, JPA, Micrometer metrics, and Resilience4J patterns all working together —
-the best place to see the full ecosystem in action.
+The [`spring-boot-sample`](https://github.com/domix/dmx-fun/tree/main/samples/spring-boot-sample)
+module is a production-like reference application with Flyway, PostgreSQL, JPA, Micrometer metrics,
+and Resilience4J patterns all working together — the best place to see the full ecosystem in action.
 
 ---
 
