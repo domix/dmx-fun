@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-05-10
+
+### Added
+
+- **Interoperability audit — cross-type conversions for all core types:**
+  - **`Either`** — `toOptional()`, `stream()`, `toTry(leftMapper)`, `match(onLeft, onRight)` (#288);
+    `flatMapLeft(Function)` as the left-track counterpart to `flatMap`;
+    `getRightOrElse`, `getRightOrElseGet`, `getLeftOrElse`, `getLeftOrElseGet` fallback
+    extractors symmetric with `Option.getOrElse`; `streamLeft()` as the left-track
+    counterpart to `stream()` (#434).
+  - **`Option`** — `fromEither(Either<L,R>)` static factory (complement of `Either.toOption()`);
+    `toFuture()` — `Some(v)` → `completedFuture(v)`, `None` → `failedFuture(NoSuchElementException)` (#294).
+  - **`Result`** — `fromEither(Either<E,V>)` static factory; `toOptional()` — `Ok(v)` →
+    `Optional.ofNullable(v)`, `Err` → `Optional.empty()` (#296).
+  - **`Try`** — `fromEither(Either<L,R>, leftMapper)` static factory; `toOptional()` — `Success(v)` →
+    `Optional.of(v)`, `Failure` → `Optional.empty()`; `ofNullable(T)` factory;
+    `match(onSuccess, onFailure)` terminal void fold (#297).
+  - **`Lazy`** — `toOptional()`, `toEither()`, `toEither(errorMapper)` — safe conversions that
+    force evaluation and capture exceptions as `Left` (#290).
+  - **`Resource`** — `useAsEither(body, onError)` as the `Either`-integrated counterpart of
+    `useAsResult`; acquires, applies body returning `Either<E, R>`, and maps any infrastructure
+    `Throwable` through `onError`, eliminating `Try<Either<E, R>>` nesting (#295).
+  - **`Validated`** — `toOptional()`; `fromEither(Either<E,A>)` static factory; `fromOptional(Optional<A>, errorIfEmpty)` static factory symmetric with `fromOption` (#298).
+  - **`Accumulator`** — `toOptional()`, `stream()`, `toEither()`, `liftResult(result, okLog, errLog)`,
+    `liftEither(either, rightLog, leftLog)` — completes the `lift*` family alongside the existing
+    `liftOption` and `liftTry` (#287).
+  - **`Guard`** — `checkToEither(value)`, `checkToTry(value)`, `checkToOptional(value)` —
+    interop methods returning `Either`, `Try`, and `Optional` respectively (#289).
+  - **`NonEmptyList`** — `fromOptional(Optional<? extends T>)`, `sequenceTry()`, `sequenceEither()`,
+    `sequenceResult()` — fail-fast sequencing over the list elements (#291).
+  - **`NonEmptyMap`** — `fromOptional(Optional<Map<K,V>>)`, `collector(keyMapper, valueMapper)`,
+    `toStream()`, `mapValuesWithKey(BiFunction<K,V,R>)`, `sequenceOption()`, `sequenceTry()`,
+    `sequenceEither()`, `sequenceResult()` (#292).
+  - **`NonEmptySet`** — `fromOptional(Optional<Set<T>>)`, `collector()`, `toStream()`,
+    `sequenceOption()`, `sequenceTry()`, `sequenceEither()`, `sequenceResult()` (#293).
+
+### Changed
+
+### Removed
+
+### Fixed
+
+- **`Either` — null-safety and left-track symmetry (#434):**
+  - `map` and `mapLeft` now throw `NullPointerException` with message `"mapper returned null"` when
+    the mapper returns `null`, consistent with `flatMap`.
+  - Null-eager validation added to all new left-track methods.
+- **`Try` — API consistency and correctness (#384, #419):**
+  - `getOrThrow()` now rethrows `Error` subclasses directly instead of wrapping them in
+    `RuntimeException`.
+  - `filter(Predicate, Supplier)` eagerly validates both arguments with `requireNonNull`, matching
+    the contract of `filter(Predicate, Function)`.
+  - `fromResult` and `fromEither` signatures widened to covariant bounds
+    (`Result<? extends V, ? extends Throwable>`, `Either<? extends L, ? extends R>`) and
+    reimplemented with exhaustive switch pattern matching.
+- **`Option` — null-check gaps and type-safety (#432):**
+  - `map2`/`map3`/`map4` combiner null contract aligned with `map` and `flatMap` — a
+    null-returning combiner now throws `NullPointerException`.
+  - `ofNullable` misuse corrected; `sequenceCollector` type corrected; raw casts removed.
+- **`Result` — null-safety (#423):**
+  - `flatMap` now rejects a null mapper return value with `NullPointerException`.
+  - `filter` now rejects a null `errorIfFalse` argument eagerly.
+  - Additional null-check gaps closed; `toOptional()` contract documentation corrected.
+- **`Validated` — null-safety (#428):**
+  - Null-checks added on all function arguments; bounded wildcards tightened; NPE messages
+    made uniform across the type.
+- **`Guard` — nullable contract and API symmetry (#427):**
+  - `checkToOptional` now uses `Optional.ofNullable` to prevent NPE on null inputs.
+  - Nullable contract documented; API symmetry gaps filled.
+- **`Lazy` — correctness (#431):**
+  - Duplicated rethrow logic deduplicated; NPE messages aligned with the rest of the library.
+- **`Resource` — null contracts (#433):**
+  - Null contracts enforced throughout; NPE messages polished to be uniform.
+- **`NonEmptyMap` — sequencing correctness:**
+  - `sequenceOption` now uses `fromMapUnsafe` internally; collector null-guard branches covered.
+
 ## [0.0.15] - 2026-05-04
 
 ### Added
@@ -555,7 +630,9 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.0.14...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/domix/dmx-fun/compare/v0.0.15...v0.1.0
+[0.0.15]: https://github.com/domix/dmx-fun/compare/v0.0.14...v0.0.15
 [0.0.14]: https://github.com/domix/dmx-fun/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/domix/dmx-fun/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/domix/dmx-fun/compare/v0.0.11...v0.0.12
