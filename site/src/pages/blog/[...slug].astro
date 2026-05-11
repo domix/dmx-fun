@@ -336,6 +336,14 @@ const ogUrl = `${Astro.site}blog/${entry.id}`;
     color: var(--color-primary-hover);
   }
 
+  .post-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 2rem auto;
+    border-radius: 8px;
+  }
+
   /* ── Tables ──────────────────────────────────────────────────────────────── */
 
   .post-content :global(table) {
