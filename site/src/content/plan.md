@@ -14,7 +14,7 @@
 
 ### Practical topics
 
-11. How to write more predictable code with functional programming
+11. ~~How to write more predictable code with functional programming~~
 12. ~~Refactoring object-oriented code toward a functional style~~ [241]
 13. How to model data transformation pipelines
 14. Data validation with a functional approach
