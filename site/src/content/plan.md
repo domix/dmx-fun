@@ -8,7 +8,7 @@
 5. What referential transparency really means
 6. ~~Declarative vs imperative: how the mindset changes~~ [94]
 7. First steps with function composition
-8. Higher-order functions explained with real examples
+8. ~~Higher-order functions explained with real examples~~
 9. map, filter, and reduce beyond the basic tutorial
 10. ~~Why avoid mutable state?~~
 
