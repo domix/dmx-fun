@@ -5,17 +5,17 @@
   "private": true,
   "scripts": {
     "copy:javadocs": "cp -r ../build/reports/javadoc/ public/",
-    "predev": "npm run copy:javadocs",
+    "predev": "pnpm run copy:javadocs",
     "dev": "astro dev",
-    "prebuild": "npm run copy:javadocs",
+    "prebuild": "pnpm run copy:javadocs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.4",
-    "@astrojs/rss": "^4.0.15",
-    "astro": "^6.1.9",
+    "@astrojs/mdx": "^5.0.6",
+    "@astrojs/rss": "^4.0.18",
+    "astro": "^6.3.3",
     "astro-expressive-code": "^0.41.7"
   }
 }
