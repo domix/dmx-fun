@@ -218,7 +218,7 @@ controller → service → database via Testcontainers.
 **What it does**:
 1. Runs `./gradlew aggregateJavadoc` to generate the API reference
 2. Copies the Javadoc output into `site/public/javadoc/`
-3. Runs `npm run build` inside `site/`
+3. Runs `pnpm run build` inside `site/`
 4. Deploys the `dist/` directory to GitHub Pages
 
 **Secrets required**: none (uses `GITHUB_TOKEN` with `pages: write` permission).
@@ -226,6 +226,6 @@ controller → service → database via Testcontainers.
 **Local equivalent**:
 ```bash
 ./gradlew aggregateJavadoc
-cd site && npm run build
+cd site && pnpm run build
 # open dist/ in a local static server
 ```
