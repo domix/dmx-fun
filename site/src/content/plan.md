@@ -46,7 +46,7 @@
 34. ~~Event-driven architecture from a functional perspective~~ [101]
 35. Domain-driven design and functional programming: allies or rivals?
 36. How to design business flows with types instead of if statements
-37. Lazy evaluation: when it helps and when it complicates things
+37. ~~Lazy evaluation: when it helps and when it complicates things~~
 38. Streams, immutable collections, and efficient data processing
 39. Composing complex validations
 40. Sealed types and functional modeling in modern languages
