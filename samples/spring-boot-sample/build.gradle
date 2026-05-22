@@ -17,8 +17,11 @@ dependencies {
     implementation     platform("org.springframework.boot:spring-boot-dependencies:${sbVersion}")
     testImplementation platform("org.springframework.boot:spring-boot-dependencies:${sbVersion}")
 
-    constraints {
-        implementation "org.apache.tomcat.embed:tomcat-embed-core:11.0.22"
+    if (sbVersion.toString().startsWith('4.')) {
+        // Apply only this upgrade for Spring Boot 4
+        constraints {
+            implementation "org.apache.tomcat.embed:tomcat-embed-core:11.0.22"
+        }
     }
 
     // dmx-fun modules
