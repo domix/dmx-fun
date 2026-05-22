@@ -1,0 +1,101 @@
+---
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  baseUrl: string;
+}
+
+const { currentPage, totalPages, baseUrl } = Astro.props;
+
+function pageUrl(n: number): string {
+  return n === 1 ? baseUrl : `${baseUrl}/page/${n}`;
+}
+
+function getPages(): (number | null)[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const result: (number | null)[] = [1];
+  if (currentPage > 3) result.push(null);
+  const lo = Math.max(2, currentPage - 1);
+  const hi = Math.min(totalPages - 1, currentPage + 1);
+  for (let i = lo; i <= hi; i++) result.push(i);
+  if (currentPage < totalPages - 2) result.push(null);
+  result.push(totalPages);
+  return result;
+}
+---
+
+{totalPages > 1 && (
+  <nav class="pagination" aria-label="Pagination">
+    {currentPage > 1
+      ? <a href={pageUrl(currentPage - 1)} class="page-btn" aria-label="Previous page">←</a>
+      : <span class="page-btn disabled" aria-disabled="true">←</span>
+    }
+
+    {getPages().map(n =>
+      n === null
+        ? <span class="page-ellipsis">…</span>
+        : <a
+            href={pageUrl(n)}
+            class={`page-btn${n === currentPage ? ' active' : ''}`}
+            aria-current={n === currentPage ? 'page' : undefined}
+          >{n}</a>
+    )}
+
+    {currentPage < totalPages
+      ? <a href={pageUrl(currentPage + 1)} class="page-btn" aria-label="Next page">→</a>
+      : <span class="page-btn disabled" aria-disabled="true">→</span>
+    }
+  </nav>
+)}
+
+<style>
+  .pagination {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .page-btn:is(a):hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .page-btn.active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+  }
+
+  .page-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .page-ellipsis {
+    padding: 0 0.25rem;
+    color: var(--color-text-secondary);
+    line-height: 2.25rem;
+  }
+</style>
