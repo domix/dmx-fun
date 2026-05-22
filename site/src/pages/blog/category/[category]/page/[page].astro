@@ -1,31 +1,45 @@
 ---
 import { getCollection } from 'astro:content';
-import DocsLayout from '../../../layouts/DocsLayout.astro';
-import { calculateReadingTime, formatReadingTime } from '../../../utils/readingTime';
-const base = import.meta.env.BASE_URL;
+import DocsLayout from '../../../../../layouts/DocsLayout.astro';
+import { calculateReadingTime, formatReadingTime } from '../../../../../utils/readingTime';
+import Pagination from '../../../../../components/Pagination.astro';
 
 export async function getStaticPaths() {
+  const PAGE_SIZE = 9;
   const allPosts = await getCollection('blog');
-  const categories = [...new Set(allPosts.map(post => post.data.category))];
+  const allCategories = [...new Set(allPosts.map(p => p.data.category))];
 
-  return categories.map(category => {
-    const filteredPosts = allPosts.filter(post => post.data.category === category);
-    return {
-      params: { category: category.toLowerCase().replaceAll(' ', '-') },
-      props: {
-        posts: filteredPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()),
-        category
-      },
-    };
-  });
+  const paths = [];
+  for (const category of allCategories) {
+    const filtered = allPosts
+      .filter(p => p.data.category === category)
+      .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    for (let page = 2; page <= totalPages; page++) {
+      paths.push({
+        params: {
+          category: category.toLowerCase().replaceAll(' ', '-'),
+          page: String(page),
+        },
+        props: {
+          pagePosts: filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+          category,
+          currentPage: page,
+          totalPages,
+          allCategories,
+        },
+      });
+    }
+  }
+  return paths;
 }
 
-const { posts, category } = Astro.props;
-const allPosts = await getCollection('blog');
-const categories = [...new Set(allPosts.map(post => post.data.category))];
+const base = import.meta.env.BASE_URL;
+const { pagePosts, category, currentPage, totalPages, allCategories } = Astro.props;
+const categorySlug = category.toLowerCase().replaceAll(' ', '-');
 ---
 
-<DocsLayout title={`${category} - Blog`} description={`Articles about ${category}`}>
+<DocsLayout title={`${category} — Page ${currentPage} - Blog`} description={`Articles about ${category}`}>
   <div class="blog-header">
     <a href={`${base}blog`} class="back-link">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -35,13 +49,13 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     </a>
     <h1>{category}</h1>
     <p class="blog-subtitle">
-      {posts.length} {posts.length === 1 ? 'article' : 'articles'} in this category
+      Page {currentPage} of {totalPages}
     </p>
   </div>
 
   <div class="blog-filters">
     <a href={`${base}blog`} class="filter-btn">All Posts</a>
-    {categories.map(cat => (
+    {allCategories.map(cat => (
       <a
         href={`${base}blog/category/${cat.toLowerCase().replaceAll(' ', '-')}`}
         class={`filter-btn ${cat === category ? 'active' : ''}`}
@@ -52,7 +66,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   </div>
 
   <div class="posts-grid">
-      {posts.map((post: any) => {
+      {pagePosts.map((post: any) => {
           const readingTime = calculateReadingTime(post.body);
           const readingTimeText = formatReadingTime(readingTime);
           return (
@@ -94,6 +108,12 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       );
       })}
   </div>
+
+  <Pagination
+    currentPage={currentPage}
+    totalPages={totalPages}
+    baseUrl={`${base}blog/category/${categorySlug}`}
+  />
 </DocsLayout>
 
 <style>
@@ -181,6 +201,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     box-shadow: 0 8px 24px var(--color-shadow);
     border-color: var(--color-primary);
   }
+
   .post-image-link {
       display: block;
       width: 100%;
@@ -205,6 +226,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       flex-direction: column;
       flex: 1;
   }
+
   .post-category {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -252,6 +274,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     flex-wrap: wrap;
     gap: 0.5rem;
   }
+
   .meta-group {
       display: flex;
       align-items: center;
@@ -266,6 +289,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       display: inline-flex;
       align-items: center;
   }
+
   .post-author {
     font-weight: 500;
   }

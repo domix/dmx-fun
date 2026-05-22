@@ -1,21 +1,37 @@
 ---
 import { getCollection } from 'astro:content';
-import DocsLayout from '../../layouts/DocsLayout.astro';
-import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
-import Pagination from '../../components/Pagination.astro';
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import { calculateReadingTime, formatReadingTime } from '../../../utils/readingTime';
+import Pagination from '../../../components/Pagination.astro';
 
-const base = import.meta.env.BASE_URL;
 const PAGE_SIZE = 9;
 
-const allPosts = await getCollection('blog');
-const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-const totalPages = Math.ceil(sortedPosts.length / PAGE_SIZE);
-const pagePosts = sortedPosts.slice(0, PAGE_SIZE);
+export async function getStaticPaths() {
+  const PAGE_SIZE = 9;
+  const allPosts = await getCollection('blog');
+  const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+  const categories = [...new Set(allPosts.map(p => p.data.category))];
+  const totalPages = Math.ceil(sortedPosts.length / PAGE_SIZE);
 
-const categories = [...new Set(allPosts.map(post => post.data.category))];
+  return Array.from({ length: totalPages - 1 }, (_, i) => {
+    const page = i + 2;
+    return {
+      params: { page: String(page) },
+      props: {
+        pagePosts: sortedPosts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        currentPage: page,
+        totalPages,
+        categories,
+      },
+    };
+  });
+}
+
+const base = import.meta.env.BASE_URL;
+const { pagePosts, currentPage, totalPages, categories } = Astro.props;
 ---
 
-<DocsLayout title="Blog" description="Articles, tutorials, and insights about functional programming in Java">
+<DocsLayout title={`Blog — Page ${currentPage}`} description="Articles, tutorials, and insights about functional programming in Java">
   <div class="blog-header">
     <h1>Blog</h1>
     <p class="blog-subtitle">
@@ -41,7 +57,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   </div>
 
   <div class="posts-grid">
-      {pagePosts.map(post => {
+      {pagePosts.map((post: any) => {
           const readingTime = calculateReadingTime(post.body);
           const readingTimeText = formatReadingTime(readingTime);
           return (
@@ -73,7 +89,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
                       </div>
                       {post.data.tags.length > 0 && (
                           <div class="post-tags">
-                              {post.data.tags.map(tag => (
+                              {post.data.tags.map((tag: string) => (
                                   <span class="tag">{tag}</span>
                               ))}
                           </div>
@@ -84,7 +100,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       })}
   </div>
 
-  <Pagination currentPage={1} totalPages={totalPages} baseUrl={`${base}blog`} />
+  <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl={`${base}blog`} />
 </DocsLayout>
 
 <style>
@@ -186,6 +202,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     box-shadow: 0 8px 24px var(--color-shadow);
     border-color: var(--color-primary);
   }
+
   .post-image-link {
       display: block;
       width: 100%;
@@ -210,6 +227,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       flex-direction: column;
       flex: 1;
   }
+
   .post-category {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -257,6 +275,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     flex-wrap: wrap;
     gap: 0.5rem;
   }
+
   .meta-group {
       display: flex;
       align-items: center;
@@ -271,6 +290,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       display: inline-flex;
       align-items: center;
   }
+
   .post-author {
     font-weight: 500;
   }
