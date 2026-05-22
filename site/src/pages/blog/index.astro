@@ -3,13 +3,13 @@ import { getCollection } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import Pagination from '../../components/Pagination.astro';
+import { PAGE_SIZE, normalizeCategorySlug } from '../../utils/blog';
 
 const base = import.meta.env.BASE_URL;
-const PAGE_SIZE = 9;
 
 const allPosts = await getCollection('blog');
 const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-const totalPages = Math.ceil(sortedPosts.length / PAGE_SIZE);
+const totalPages = Math.max(1, Math.ceil(sortedPosts.length / PAGE_SIZE));
 const pagePosts = sortedPosts.slice(0, PAGE_SIZE);
 
 const categories = [...new Set(allPosts.map(post => post.data.category))];
@@ -34,7 +34,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   <div class="blog-filters">
     <a href={`${base}blog`} class="filter-btn active">All Posts</a>
     {categories.map(category => (
-      <a href={`${base}blog/category/${category.toLowerCase().replaceAll(' ', '-')}`} class="filter-btn">
+      <a href={`${base}blog/category/${normalizeCategorySlug(category)}`} class="filter-btn">
         {category}
       </a>
     ))}

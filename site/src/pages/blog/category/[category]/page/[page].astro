@@ -3,9 +3,10 @@ import { getCollection } from 'astro:content';
 import DocsLayout from '../../../../../layouts/DocsLayout.astro';
 import { calculateReadingTime, formatReadingTime } from '../../../../../utils/readingTime';
 import Pagination from '../../../../../components/Pagination.astro';
+import { PAGE_SIZE, normalizeCategorySlug } from '../../../../../utils/blog';
 
 export async function getStaticPaths() {
-  const PAGE_SIZE = 9;
+  const { PAGE_SIZE, normalizeCategorySlug } = await import('../../../../../utils/blog');
   const allPosts = await getCollection('blog');
   const allCategories = [...new Set(allPosts.map(p => p.data.category))];
 
@@ -18,7 +19,7 @@ export async function getStaticPaths() {
     for (let page = 2; page <= totalPages; page++) {
       paths.push({
         params: {
-          category: category.toLowerCase().replaceAll(' ', '-'),
+          category: normalizeCategorySlug(category),
           page: String(page),
         },
         props: {
@@ -36,7 +37,7 @@ export async function getStaticPaths() {
 
 const base = import.meta.env.BASE_URL;
 const { pagePosts, category, currentPage, totalPages, allCategories } = Astro.props;
-const categorySlug = category.toLowerCase().replaceAll(' ', '-');
+const categorySlug = normalizeCategorySlug(category);
 ---
 
 <DocsLayout title={`${category} — Page ${currentPage} - Blog`} description={`Articles about ${category}`}>
@@ -57,7 +58,7 @@ const categorySlug = category.toLowerCase().replaceAll(' ', '-');
     <a href={`${base}blog`} class="filter-btn">All Posts</a>
     {allCategories.map(cat => (
       <a
-        href={`${base}blog/category/${cat.toLowerCase().replaceAll(' ', '-')}`}
+        href={`${base}blog/category/${normalizeCategorySlug(cat)}`}
         class={`filter-btn ${cat === category ? 'active' : ''}`}
       >
         {cat}

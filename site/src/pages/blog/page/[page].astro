@@ -3,11 +3,10 @@ import { getCollection } from 'astro:content';
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import { calculateReadingTime, formatReadingTime } from '../../../utils/readingTime';
 import Pagination from '../../../components/Pagination.astro';
-
-const PAGE_SIZE = 9;
+import { PAGE_SIZE, normalizeCategorySlug } from '../../../utils/blog';
 
 export async function getStaticPaths() {
-  const PAGE_SIZE = 9;
+  const { PAGE_SIZE } = await import('../../../utils/blog');
   const allPosts = await getCollection('blog');
   const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
   const categories = [...new Set(allPosts.map(p => p.data.category))];
@@ -50,7 +49,7 @@ const { pagePosts, currentPage, totalPages, categories } = Astro.props;
   <div class="blog-filters">
     <a href={`${base}blog`} class="filter-btn active">All Posts</a>
     {categories.map(category => (
-      <a href={`${base}blog/category/${category.toLowerCase().replaceAll(' ', '-')}`} class="filter-btn">
+      <a href={`${base}blog/category/${normalizeCategorySlug(category)}`} class="filter-btn">
         {category}
       </a>
     ))}
