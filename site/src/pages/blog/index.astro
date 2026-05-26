@@ -3,14 +3,14 @@ import { getCollection } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import Pagination from '../../components/Pagination.astro';
-import { PAGE_SIZE, normalizeCategorySlug } from '../../utils/blog';
+import { PAGE_SIZE, FIRST_PAGE_SIZE, normalizeCategorySlug } from '../../utils/blog';
 
 const base = import.meta.env.BASE_URL;
 
 const allPosts = await getCollection('blog');
 const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-const totalPages = Math.max(1, Math.ceil(sortedPosts.length / PAGE_SIZE));
-const pagePosts = sortedPosts.slice(0, PAGE_SIZE);
+const totalPages = Math.max(1, 1 + Math.ceil(Math.max(0, sortedPosts.length - FIRST_PAGE_SIZE) / PAGE_SIZE));
+const pagePosts = sortedPosts.slice(0, FIRST_PAGE_SIZE);
 
 const heroPost = pagePosts[0];
 const gridPosts = pagePosts.slice(1);

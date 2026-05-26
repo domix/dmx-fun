@@ -1,7 +1,7 @@
 ---
 title: "How to Introduce Functional Programming into a Legacy Codebase"
 description: "Legacy systems do not need a rewrite to benefit from functional programming. The right approach is incremental: find the seams, wrap the dangerous parts, and grow functional islands outward. A practical guide for Java teams working with existing production code."
-pubDate: 2026-05-25
+pubDate: 2026-05-26
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Best Practices"
