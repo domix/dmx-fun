@@ -54,7 +54,7 @@
 ### Design and architecture topics
 
 41. Can functional programming coexist with OOP?
-42. How to introduce functional programming into a legacy codebase
+42. ~~How to introduce functional programming into a legacy codebase~~
 43. ~~Functional design of business rules~~ [265]
 44. Separating pure logic from infrastructure
 45. ~~Testing in functional programming: why it is often simpler~~ [160]

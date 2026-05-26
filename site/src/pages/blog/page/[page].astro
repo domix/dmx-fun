@@ -3,21 +3,22 @@ import { getCollection } from 'astro:content';
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import { calculateReadingTime, formatReadingTime } from '../../../utils/readingTime';
 import Pagination from '../../../components/Pagination.astro';
-import { PAGE_SIZE, normalizeCategorySlug } from '../../../utils/blog';
+import { PAGE_SIZE, FIRST_PAGE_SIZE, normalizeCategorySlug } from '../../../utils/blog';
 
 export async function getStaticPaths() {
-  const { PAGE_SIZE } = await import('../../../utils/blog');
+  const { PAGE_SIZE, FIRST_PAGE_SIZE } = await import('../../../utils/blog');
   const allPosts = await getCollection('blog');
   const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
   const categories = [...new Set(allPosts.map(p => p.data.category))];
-  const totalPages = Math.ceil(sortedPosts.length / PAGE_SIZE);
+  const totalPages = 1 + Math.ceil(Math.max(0, sortedPosts.length - FIRST_PAGE_SIZE) / PAGE_SIZE);
 
   return Array.from({ length: totalPages - 1 }, (_, i) => {
     const page = i + 2;
+    const start = FIRST_PAGE_SIZE + (page - 2) * PAGE_SIZE;
     return {
       params: { page: String(page) },
       props: {
-        pagePosts: sortedPosts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        pagePosts: sortedPosts.slice(start, start + PAGE_SIZE),
         currentPage: page,
         totalPages,
         categories,

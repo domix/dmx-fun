@@ -3,32 +3,38 @@ import { getCollection } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import Pagination from '../../components/Pagination.astro';
-import { PAGE_SIZE, normalizeCategorySlug } from '../../utils/blog';
+import { PAGE_SIZE, FIRST_PAGE_SIZE, normalizeCategorySlug } from '../../utils/blog';
 
 const base = import.meta.env.BASE_URL;
 
 const allPosts = await getCollection('blog');
 const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-const totalPages = Math.max(1, Math.ceil(sortedPosts.length / PAGE_SIZE));
-const pagePosts = sortedPosts.slice(0, PAGE_SIZE);
+const totalPages = Math.max(1, 1 + Math.ceil(Math.max(0, sortedPosts.length - FIRST_PAGE_SIZE) / PAGE_SIZE));
+const pagePosts = sortedPosts.slice(0, FIRST_PAGE_SIZE);
+
+const heroPost = pagePosts[0];
+const gridPosts = pagePosts.slice(1);
+
+const heroReadingTime = heroPost ? formatReadingTime(calculateReadingTime(heroPost.body)) : '';
 
 const categories = [...new Set(allPosts.map(post => post.data.category))];
 ---
 
 <DocsLayout title="Blog" description="Articles, tutorials, and insights about functional programming in Java">
+
   <div class="blog-header">
-    <h1>Blog</h1>
-    <p class="blog-subtitle">
-      Articles, tutorials, and insights about functional programming in Java
-    </p>
-      <a href={`${base}rss.xml`} class="rss-link" target="_blank" rel="noopener" title="Subscribe to RSS feed">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 11a9 9 0 0 1 9 9"></path>
-              <path d="M4 4a16 16 0 0 1 16 16"></path>
-              <circle cx="5" cy="19" r="1"></circle>
-          </svg>
-          Subscribe via RSS
-      </a>
+    <div class="blog-header-text">
+      <h1>Blog</h1>
+      <p class="blog-subtitle">Articles, tutorials, and insights about functional programming in Java</p>
+    </div>
+    <a href={`${base}rss.xml`} class="rss-link" target="_blank" rel="noopener" title="Subscribe to RSS feed">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 11a9 9 0 0 1 9 9"></path>
+        <path d="M4 4a16 16 0 0 1 16 16"></path>
+        <circle cx="5" cy="19" r="1"></circle>
+      </svg>
+      Subscribe via RSS
+    </a>
   </div>
 
   <div class="blog-filters">
@@ -40,123 +46,150 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     ))}
   </div>
 
-  <div class="posts-grid">
-      {pagePosts.map(post => {
-          const readingTime = calculateReadingTime(post.body);
-          const readingTimeText = formatReadingTime(readingTime);
+  {heroPost && (
+    <a href={`${base}blog/${heroPost.id}`} class="hero-post">
+      {heroPost.data.image && (
+        <div class="hero-bg" style={`background-image: url('${heroPost.data.image}')`}></div>
+      )}
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-top">
+          <span class="hero-badge">{heroPost.data.category}</span>
+          <span class="hero-label">Latest Post</span>
+        </div>
+        <h2 class="hero-title">{heroPost.data.title}</h2>
+        <p class="hero-description">{heroPost.data.description}</p>
+        <div class="hero-footer">
+          <div class="hero-meta">
+            <time datetime={heroPost.data.pubDate.toISOString()}>
+              {heroPost.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </time>
+            <span class="hero-dot">·</span>
+            <span>{heroReadingTime}</span>
+          </div>
+          <span class="hero-cta">
+            Read Article
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </a>
+  )}
+
+  {gridPosts.length > 0 && (
+    <div class="posts-section">
+      <h2 class="section-title">Latest Articles</h2>
+      <div class="posts-grid">
+        {gridPosts.map(post => {
+          const readingTime = formatReadingTime(calculateReadingTime(post.body));
           return (
-              <article class="post-card">
-                  {post.data.image && (
-                      <a href={`${base}blog/${post.id}`} class="post-image-link">
-                          <img src={post.data.image} alt={post.data.title} class="post-image" loading="lazy" />
-                      </a>
-                  )}
-                  <div class="post-content">
-                      <div class="post-category">{post.data.category}</div>
-                      <h2 class="post-title">
-                          <a href={`${base}blog/${post.id}`}>{post.data.title}</a>
-                      </h2>
-                      <p class="post-description">{post.data.description}</p>
-                      <div class="post-meta">
-                          <div class="meta-group">
-                              <time datetime={post.data.pubDate.toISOString()}>
-                                  {post.data.pubDate.toLocaleDateString('en-US', {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric'
-                                  })}
-                              </time>
-                              <span class="meta-separator">•</span>
-                              <span class="reading-time">{readingTimeText}</span>
-                          </div>
-                          <span class="post-author">{post.data.author}</span>
-                      </div>
-                      {post.data.tags.length > 0 && (
-                          <div class="post-tags">
-                              {post.data.tags.map(tag => (
-                                  <span class="tag">{tag}</span>
-                              ))}
-                          </div>
-                      )}
+            <article class="post-card">
+              {post.data.image && (
+                <a href={`${base}blog/${post.id}`} class="post-image-link" tabindex="-1" aria-hidden="true">
+                  <img src={post.data.image} alt={post.data.title} class="post-image" loading="lazy" />
+                </a>
+              )}
+              <div class="post-content">
+                <span class="post-category">{post.data.category}</span>
+                <h3 class="post-title">
+                  <a href={`${base}blog/${post.id}`}>{post.data.title}</a>
+                </h3>
+                <p class="post-description">{post.data.description}</p>
+                <div class="post-meta">
+                  <div class="meta-left">
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </time>
+                    <span class="meta-sep">·</span>
+                    <span>{readingTime}</span>
                   </div>
-              </article>
+                </div>
+              </div>
+            </article>
           );
-      })}
-  </div>
+        })}
+      </div>
+    </div>
+  )}
 
   <Pagination currentPage={1} totalPages={totalPages} baseUrl={`${base}blog`} />
+
 </DocsLayout>
 
 <style>
+  /* ── Header ─────────────────────────────────────────── */
   .blog-header {
-    text-align: center;
-    margin-bottom: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
   }
 
-  .blog-header h1 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+  .blog-header-text h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
     background: linear-gradient(135deg, var(--color-primary), #6366f1);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
   }
 
   .blog-subtitle {
-    font-size: 1.25rem;
+    font-size: 0.95rem;
     color: var(--color-text-secondary);
-      margin-bottom: 1rem;
   }
 
   .rss-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      background-color: var(--color-primary);
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .rss-link:hover {
-      background-color: var(--color-primary-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(3, 102, 214, 0.3);
+    background-color: var(--color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(3, 102, 214, 0.35);
   }
 
-  .rss-link svg {
-      flex-shrink: 0;
-  }
-
+  /* ── Category Filters ───────────────────────────────── */
   .blog-filters {
     display: flex;
-    gap: 0.75rem;
-    margin-bottom: 3rem;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
     flex-wrap: wrap;
-    justify-content: center;
   }
 
   .filter-btn {
-    padding: 0.5rem 1.25rem;
+    padding: 0.375rem 1rem;
     border: 1px solid var(--color-border);
     border-radius: 20px;
     text-decoration: none;
-    color: var(--color-text);
-    background-color: var(--color-bg);
-    transition: all 0.2s ease;
+    color: var(--color-text-secondary);
+    background-color: transparent;
+    transition: border-color 0.15s, color 0.15s, background-color 0.15s;
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
   }
 
   .filter-btn:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
-    transform: translateY(-2px);
   }
 
   .filter-btn.active {
@@ -165,74 +198,233 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     border-color: var(--color-primary);
   }
 
-  .posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 2rem;
+  /* ── Hero Post ──────────────────────────────────────── */
+  .hero-post {
+    position: relative;
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: white;
+    min-height: 480px;
+    margin-bottom: 3.5rem;
+    border: 1px solid var(--color-border);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
+  .hero-post:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.5s ease;
+  }
+
+  .hero-post:hover .hero-bg {
+    transform: scale(1.03);
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.15) 0%,
+      rgba(0, 0, 0, 0.45) 40%,
+      rgba(0, 0, 0, 0.85) 100%
+    );
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    min-height: 480px;
+    padding: 2.5rem;
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: var(--color-primary);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .hero-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .hero-title {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 0.875rem;
+    color: #fff;
+    max-width: 800px;
+  }
+
+  .hero-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 680px;
+    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .hero-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  .hero-dot {
+    opacity: 0.5;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.375rem;
+    background-color: white;
+    color: #0d1117;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: background-color 0.2s, gap 0.2s;
+    white-space: nowrap;
+  }
+
+  .hero-post:hover .hero-cta {
+    background-color: var(--color-primary);
+    color: white;
+    gap: 0.75rem;
+  }
+
+  /* ── Posts Section ──────────────────────────────────── */
+  .posts-section {
+    margin-bottom: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  /* ── Post Card ──────────────────────────────────────── */
   .post-card {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 12px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     display: flex;
     flex-direction: column;
   }
 
   .post-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px var(--color-shadow);
+    box-shadow: 0 10px 30px var(--color-shadow);
     border-color: var(--color-primary);
   }
+
   .post-image-link {
-      display: block;
-      width: 100%;
-      overflow: hidden;
-      aspect-ratio: 16 / 9;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
   }
 
   .post-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s ease;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
   }
 
   .post-card:hover .post-image {
-      transform: scale(1.05);
+    transform: scale(1.06);
   }
 
   .post-content {
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
+
   .post-category {
     display: inline-block;
-    padding: 0.25rem 0.75rem;
+    padding: 0.2rem 0.625rem;
     background-color: var(--color-primary);
     color: white;
     border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.68rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     align-self: flex-start;
   }
 
   .post-title {
-    margin: 0 0 1rem;
-    font-size: 1.5rem;
+    margin: 0 0 0.625rem;
+    font-size: 1.05rem;
+    line-height: 1.4;
+    font-weight: 700;
   }
 
   .post-title a {
     text-decoration: none;
     color: var(--color-text);
-    transition: color 0.2s ease;
+    transition: color 0.15s ease;
   }
 
   .post-title a:hover {
@@ -241,63 +433,138 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
 
   .post-description {
     color: var(--color-text-secondary);
+    font-size: 0.875rem;
     line-height: 1.6;
-    margin-bottom: 1.5rem;
-    flex: 1;
+    margin-bottom: auto;
+    padding-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .post-meta {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    font-size: 0.875rem;
+    justify-content: space-between;
+    font-size: 0.8rem;
     color: var(--color-text-secondary);
-    padding-top: 1rem;
+    padding-top: 0.875rem;
     border-top: 1px solid var(--color-border);
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .meta-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+    margin-top: auto;
   }
 
-  .meta-separator {
-      opacity: 0.5;
-  }
-
-  .reading-time {
-      display: inline-flex;
-      align-items: center;
-  }
-  .post-author {
-    font-weight: 500;
-  }
-
-  .post-tags {
+  .meta-left {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1rem;
+    align-items: center;
+    gap: 0.4rem;
   }
 
-  .tag {
-    padding: 0.25rem 0.75rem;
-    background-color: var(--color-code-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    font-size: 0.75rem;
-    color: var(--color-text-secondary);
+  .meta-sep {
+    opacity: 0.4;
+  }
+
+  /* ── Responsive ─────────────────────────────────────── */
+  @media (max-width: 1024px) {
+    .posts-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hero-title {
+      font-size: 1.75rem;
+    }
   }
 
   @media (max-width: 768px) {
-    .blog-header h1 {
-      font-size: 2rem;
+    .blog-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .rss-link {
+      align-self: flex-start;
+    }
+
+    .blog-header-text h1 {
+      font-size: 1.875rem;
+    }
+
+    .hero-post {
+      min-height: 0;
+      border-radius: 12px;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-content {
+      min-height: 0;
+      padding: 1.5rem;
+    }
+
+    /* On mobile: stack image + text panel */
+    .hero-bg {
+      position: relative;
+      height: 220px;
+    }
+
+    .hero-overlay {
+      display: none;
+    }
+
+    .hero-post {
+      display: flex;
+      flex-direction: column;
+      color: var(--color-text);
+      background-color: var(--color-surface);
+    }
+
+    .hero-content {
+      justify-content: flex-start;
+      background-color: var(--color-surface);
+      border-top: none;
+    }
+
+    .hero-title {
+      font-size: 1.25rem;
+      color: var(--color-text);
+    }
+
+    .hero-description {
+      color: var(--color-text-secondary);
+      -webkit-line-clamp: 3;
+    }
+
+    .hero-meta {
+      color: var(--color-text-secondary);
+    }
+
+    .hero-label {
+      color: var(--color-text-secondary);
+    }
+
+    .hero-cta {
+      background-color: var(--color-primary);
+      color: white;
+    }
+
+    .hero-post:hover {
+      transform: none;
     }
 
     .posts-grid {
       grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .hero-post {
+      min-height: 380px;
+    }
+
+    .hero-content {
+      min-height: 380px;
+      padding: 2rem;
     }
   }
 </style>
