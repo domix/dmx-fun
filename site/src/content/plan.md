@@ -70,7 +70,7 @@
 52. Functional libraries worth knowing
 53. ~~JDK-first functional programming: how far can you go without dependencies?~~ [311]
 54. Vavr, Arrow, Cats, fp-ts: what problems do they solve?
-55. Do you need a functional library or just better habits?
+55. ~~Do you need a functional library or just better habits?~~
 
 ### Critical and opinionated topics
 
