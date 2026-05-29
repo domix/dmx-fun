@@ -191,7 +191,7 @@ const decisions = [
   <section class="section">
     <h2 class="section-heading">
       <span class="section-icon">🛠</span>
-      Contributing &amp; Maintainer
+      Contributing &amp; Maintainers
     </h2>
     <div class="contrib-grid">
       {contributing.map(c => (
@@ -435,6 +435,9 @@ const decisions = [
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--color-primary);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .card-tag {
