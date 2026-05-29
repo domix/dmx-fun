@@ -7,499 +7,637 @@ import {Content as InstallMaven} from '../data/code/home/install-maven.mdx';
 
 const base = import.meta.env.BASE_URL;
 
+const tagColor: Record<string, string> = {
+    'Nullability':          'blue',
+    'Error handling':       'amber',
+    'Exception handling':   'red',
+    'Validation':           'green',
+    'Disjoint union':       'purple',
+    'Deferred computation': 'teal',
+    'Product types':        'cyan',
+    'Collections':          'violet',
+    'JSON':                 'gray',
+    'Testing':              'gray',
+    'Spring':               'gray',
+};
+
 const types = [
-    {
-        name: 'Option<T>',
-        href: `${base}guide/option`,
-        summary: 'A value that may or may not be present. The null-safe alternative.',
-        tag: 'Nullability',
-    },
-    {
-        name: 'Result<V, E>',
-        href: `${base}guide/result`,
-        summary: 'Either a success value or a typed error. Models domain failures explicitly.',
-        tag: 'Error handling',
-    },
-    {
-        name: 'Try<V>',
-        href: `${base}guide/try`,
-        summary: 'Wraps a computation that may throw. Turns exceptions into values.',
-        tag: 'Exception handling',
-    },
-    {
-        name: 'Validated<E, A>',
-        href: `${base}guide/validated`,
-        summary: 'Like Result but accumulates multiple errors instead of failing fast.',
-        tag: 'Validation',
-    },
-    {
-        name: 'Either<L, R>',
-        href: `${base}guide/either`,
-        summary: 'A neutral disjoint union with no success/failure semantics.',
-        tag: 'Disjoint union',
-    },
-    {
-        name: 'Lazy<T>',
-        href: `${base}guide/lazy`,
-        summary: 'A value computed at most once, on first access. Thread-safe memoization.',
-        tag: 'Deferred computation',
-    },
-    {
-        name: 'Tuple2/3/4',
-        href: `${base}guide/tuples`,
-        summary: 'Typed heterogeneous tuples. Named fields without a dedicated class.',
-        tag: 'Product types',
-    },
-    {
-        name: 'NonEmptyList<T>',
-        href: `${base}guide/non-empty-list`,
-        summary: 'A list guaranteed to have at least one element at compile time.',
-        tag: 'Collections',
-    },
+    { name: 'Option<T>',       href: `${base}guide/option`,         summary: 'A value that may or may not be present. The null-safe alternative.',                      tag: 'Nullability' },
+    { name: 'Result<V, E>',    href: `${base}guide/result`,         summary: 'Either a success value or a typed error. Models domain failures explicitly.',              tag: 'Error handling' },
+    { name: 'Try<V>',          href: `${base}guide/try`,            summary: 'Wraps a computation that may throw. Turns exceptions into values.',                         tag: 'Exception handling' },
+    { name: 'Validated<E, A>', href: `${base}guide/validated`,      summary: 'Like Result but accumulates multiple errors instead of failing fast.',                      tag: 'Validation' },
+    { name: 'Either<L, R>',    href: `${base}guide/either`,         summary: 'A neutral disjoint union with no success/failure semantics.',                               tag: 'Disjoint union' },
+    { name: 'Lazy<T>',         href: `${base}guide/lazy`,           summary: 'A value computed at most once, on first access. Thread-safe memoization.',                  tag: 'Deferred computation' },
+    { name: 'Tuple2/3/4',      href: `${base}guide/tuples`,         summary: 'Typed heterogeneous tuples. Named fields without a dedicated class.',                       tag: 'Product types' },
+    { name: 'NonEmptyList<T>', href: `${base}guide/non-empty-list`, summary: 'A list guaranteed to have at least one element at compile time.',                           tag: 'Collections' },
 ];
 
 const modules = [
+    { name: 'fun-jackson', href: `${base}guide/jackson`, summary: 'Serializers and deserializers for all dmx-fun types via Jackson.', tag: 'JSON',    coords: 'codes.domix:fun-jackson' },
+    { name: 'fun-assertj', href: `${base}guide/assertj`, summary: 'Fluent AssertJ custom assertions for all dmx-fun types.',           tag: 'Testing', coords: 'codes.domix:fun-assertj' },
+    { name: 'fun-spring',  href: `${base}guide/spring`,  summary: 'Transactional support for Result and Try — rolls back on error without throwing exceptions.', tag: 'Spring', coords: 'codes.domix:fun-spring' },
+];
+
+const features = [
     {
-        name: 'fun-jackson',
-        href: `${base}guide/jackson`,
-        summary: 'Serializers and deserializers for all dmx-fun types via Jackson.',
-        tag: 'JSON',
-        coords: 'codes.domix:fun-jackson',
+        icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        title: 'Eliminate NullPointerException',
+        body: '<code>Option&lt;T&gt;</code> makes absence explicit in the type system. Callers cannot forget the empty case — the compiler enforces it.',
     },
     {
-        name: 'fun-assertj',
-        href: `${base}guide/assertj`,
-        summary: 'Fluent AssertJ custom assertions for all dmx-fun types.',
-        tag: 'Testing',
-        coords: 'codes.domix:fun-assertj',
+        icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+        title: 'Typed failures, not exceptions',
+        body: '<code>Result&lt;V,&nbsp;E&gt;</code> returns both the happy path and the domain error as values. No more swallowed catch blocks or undocumented throws.',
     },
     {
-        name: 'fun-spring',
-        href: `${base}guide/spring`,
-        summary: 'Transaction support for Result, Try, and Validated. Rolls back on error without throwing exceptions.',
-        tag: 'Spring',
-        coords: 'codes.domix:fun-spring',
+        icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+        title: 'Compose with map and flatMap',
+        body: 'Every type — <code>Option</code>, <code>Result</code>, <code>Try</code>, <code>Validated</code> — exposes the same composable API. Learn once, apply everywhere.',
     },
 ];
 ---
 
 <DocsLayout title="Home" description={`${site.slug} - ${site.description}`}>
-    <div class="hero">
-        <h1 class="hero-title">
-            <span class="lambda">λ</span> {site.slug}
-        </h1>
-        <p class="hero-description">
-            Explicit types for failures, absence, and validation in Java.
-        </p>
-        <div class="hero-actions">
-            <a href={`${base}getting-started`} class="btn btn-primary">Get Started</a>
-            <a href={`${base}guide`} class="btn btn-secondary">Developer Guide</a>
-            <a href={site.github} target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
-                View on GitHub
-            </a>
-        </div>
+
+  <!-- ── Hero ───────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-badge">Java 25+ · Maven Central · JSpecify</span>
     </div>
-
-    <section class="section intro-section">
-        <div class="intro-card">
-            <p class="intro-text">
-                dmx-fun is a Java library that makes failures, absence, and validation
-                <strong>explicit in the type system</strong>. Instead of throwing exceptions or returning
-                <code>null</code>, operations return values that encode both the happy path and the error
-                case — composable via <code>map</code> and <code>flatMap</code>, pattern-matchable via
-                sealed interfaces, and testable without mocks.
-            </p>
-            <p class="intro-text">
-                The core library has a single mandatory dependency:
-                <a href="https://github.com/jspecify/jspecify" target="_blank" rel="noopener noreferrer">JSpecify</a>
-                for null-safety annotations. Everything else is optional.
-            </p>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2 class="section-title">Types</h2>
-        <p class="section-desc">
-            Eight composable types — each with a clear purpose, a consistent API, and a guide page.
-        </p>
-        <div class="type-grid">
-            {types.map(t => (
-                <a href={t.href} class="type-card">
-                    <div class="type-card-header">
-                        <code class="type-name">{t.name}</code>
-                        <span class="type-tag">{t.tag}</span>
-                    </div>
-                    <p class="type-summary">{t.summary}</p>
-                </a>
-            ))}
-        </div>
-    </section>
-
-    <section class="section">
-        <h2 class="section-title">Optional modules</h2>
-        <p class="section-desc">
-            Independent dependencies — add only what you need.
-        </p>
-        <div class="module-grid">
-            {modules.map(m => (
-                <a href={m.href} class="module-card">
-                    <div class="type-card-header">
-                        <code class="type-name">{m.name}</code>
-                        <span class="type-tag">{m.tag}</span>
-                    </div>
-                    <p class="type-summary">{m.summary}</p>
-                    <code class="module-coords">{m.coords}</code>
-                </a>
-            ))}
-        </div>
-    </section>
-
-    <section class="section">
-        <h2 class="section-title">Installation</h2>
-        <p class="section-desc">
-            Available on Maven Central.
-            See the <a href={`${base}getting-started`}>Getting Started</a> page for full coordinates.
-        </p>
-        <p class="install-badge-row">
-            <a href="https://central.sonatype.com/artifact/codes.domix/fun" target="_blank" rel="noopener noreferrer">
-                <img src="https://img.shields.io/maven-central/v/codes.domix/fun" alt="Maven Central" />
-            </a>
-        </p>
-        <div class="install-grid">
-            <div class="install-block">
-                <span class="install-label">Gradle</span>
-                <InstallGradle/>
-            </div>
-            <div class="install-block">
-                <span class="install-label">Maven</span>
-                <InstallMaven/>
-            </div>
-        </div>
-    </section>
-
-    <div class="quick-example">
-        <h2>Quick example</h2>
-        <QuickExample/>
+    <h1 class="hero-title">
+      <span class="lambda">λ</span>{site.slug}
+    </h1>
+    <p class="hero-desc">
+      Explicit types for failures, absence, and validation in Java.<br/>
+      Composable via <code>map</code> and <code>flatMap</code>. Pattern-matchable via sealed interfaces.
+    </p>
+    <div class="hero-actions">
+      <a href={`${base}getting-started`} class="btn-hero-primary">
+        Get Started
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href={`${base}guide`} class="btn-hero-secondary">
+        Developer Guide
+      </a>
+      <a href={site.github} target="_blank" rel="noopener noreferrer" class="btn-hero-github">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
     </div>
-
-    <div class="cta-section">
-        <h2>Ready to dive in?</h2>
-        <p>The Developer Guide covers every type in depth — design rationale, every combinator, composition patterns, and pitfalls to avoid.</p>
-        <div class="cta-actions">
-            <a href={`${base}guide`} class="btn btn-primary btn-large">Developer Guide</a>
-            <a href={`${base}getting-started`} class="btn btn-secondary btn-large">Getting Started</a>
-        </div>
+    <div class="hero-badges">
+      <a href="https://central.sonatype.com/artifact/codes.domix/fun" target="_blank" rel="noopener noreferrer">
+        <img src="https://img.shields.io/maven-central/v/codes.domix/fun" alt="Maven Central" height="20"/>
+      </a>
     </div>
+  </div>
+
+  <!-- ── Value props ────────────────────────────────────── -->
+  <section class="features">
+    {features.map(f => (
+      <div class="feature-card">
+        <div class="feature-icon" set:html={f.icon} />
+        <h3 class="feature-title">{f.title}</h3>
+        <p class="feature-body" set:html={f.body} />
+      </div>
+    ))}
+  </section>
+
+  <!-- ── Types ──────────────────────────────────────────── -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Core types</h2>
+      <a href={`${base}guide`} class="section-link">Full reference →</a>
+    </div>
+    <p class="section-desc">Eight composable types — each with a clear purpose and a consistent API.</p>
+    <div class="type-grid">
+      {types.map(t => (
+        <a href={t.href} class={`type-card accent-${tagColor[t.tag]}`}>
+          <div class="card-header">
+            <code class="card-name">{t.name}</code>
+            <span class={`card-tag color-${tagColor[t.tag]}`}>{t.tag}</span>
+          </div>
+          <p class="card-summary">{t.summary}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ── Quick example ──────────────────────────────────── -->
+  <section class="example-section">
+    <div class="section-header">
+      <h2 class="section-title">Quick example</h2>
+      <a href={`${base}guide/combining-types`} class="section-link">Combining types →</a>
+    </div>
+    <div class="example-body">
+      <QuickExample/>
+    </div>
+  </section>
+
+  <!-- ── Modules ────────────────────────────────────────── -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Optional modules</h2>
+      <a href={`${base}guide#integration-modules`} class="section-link">All modules →</a>
+    </div>
+    <p class="section-desc">Independent artifacts — add only what you need.</p>
+    <div class="module-grid">
+      {modules.map(m => (
+        <a href={m.href} class={`type-card accent-${tagColor[m.tag]}`}>
+          <div class="card-header">
+            <code class="card-name">{m.name}</code>
+            <span class={`card-tag color-${tagColor[m.tag]}`}>{m.tag}</span>
+          </div>
+          <p class="card-summary">{m.summary}</p>
+          <code class="module-coords">{m.coords}</code>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ── Installation ───────────────────────────────────── -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Installation</h2>
+      <a href={`${base}getting-started`} class="section-link">Full setup →</a>
+    </div>
+    <p class="section-desc">Available on Maven Central. Add a single dependency to get started.</p>
+    <div class="install-grid">
+      <div class="install-block">
+        <span class="install-label">Gradle</span>
+        <InstallGradle/>
+      </div>
+      <div class="install-block">
+        <span class="install-label">Maven</span>
+        <InstallMaven/>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ────────────────────────────────────────────── -->
+  <div class="cta">
+    <h2 class="cta-title">Ready to dive in?</h2>
+    <p class="cta-desc">
+      The Developer Guide covers every type in depth — design rationale, every combinator,
+      composition patterns, and pitfalls to avoid.
+    </p>
+    <div class="cta-actions">
+      <a href={`${base}guide`} class="btn-primary btn-lg">Developer Guide</a>
+      <a href={`${base}getting-started`} class="btn-outline btn-lg">Getting Started</a>
+    </div>
+  </div>
+
 </DocsLayout>
 
 <style>
-    /* ── Intro ────────────────────────────────────────── */
-    .intro-section {
-        margin: 2rem 0 3rem;
-    }
+  /* ── Hero ─────────────────────────────────────────────── */
+  .hero {
+    text-align: center;
+    padding: 3rem 0 2.5rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 0;
+  }
 
-    .intro-card {
-        background-color: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-left: 4px solid var(--color-primary);
-        border-radius: 8px;
-        padding: 1.75rem 2rem;
-        max-width: 820px;
-        margin: 0 auto;
-    }
+  .hero-eyebrow {
+    margin-bottom: 1rem;
+  }
 
-    .intro-text {
-        font-size: 1.05rem;
-        line-height: 1.8;
-        color: var(--color-text-secondary);
-        margin: 0 0 0.85rem;
-        text-align: center;
-    }
+  .eyebrow-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    padding: 0.3rem 0.875rem;
+  }
 
-    .intro-text strong {
-        color: var(--color-text);
-    }
+  .hero-title {
+    font-size: 3.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0 0 1rem;
+    background: linear-gradient(135deg, var(--color-primary), #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-    .intro-text:last-child {
-        margin-bottom: 0;
-    }
+  .lambda {
+    margin-right: 0.3rem;
+  }
 
-    /* ── Hero ─────────────────────────────────────────── */
-    .hero {
-        text-align: center;
-        padding: 4rem 0 3rem;
-    }
+  .hero-desc {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin: 0 auto 1.75rem;
+    max-width: 560px;
+  }
 
-    .hero-title {
-        font-size: 4rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        background: linear-gradient(135deg, var(--color-primary), #6366f1);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+  .hero-desc code {
+    font-size: 0.95em;
+    color: var(--color-primary);
+  }
 
-    .lambda {
-        font-size: 4.5rem;
-        display: inline-block;
-        margin-right: 0.5rem;
-    }
+  .hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
 
-    .hero-description {
-        font-size: 1.5rem;
-        color: var(--color-text-secondary);
-        margin-bottom: 2rem;
-    }
+  .hero-badges {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
 
-    .hero-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
+  /* ── Hero buttons ─────────────────────────────────────── */
+  .btn-hero-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    background: linear-gradient(135deg, var(--color-primary), #6366f1);
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.925rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 0 0 0 rgba(88, 166, 255, 0);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  }
 
-    /* ── Buttons ──────────────────────────────────────── */
-    .btn {
-        display: inline-block;
-        padding: 0.75rem 2rem;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        border: 2px solid transparent;
-    }
+  .btn-hero-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 6px 24px rgba(88, 166, 255, 0.4);
+  }
 
-    .btn-primary {
-        background-color: var(--color-primary);
-        color: white;
-    }
+  .btn-hero-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.75rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--color-text);
+    font-size: 0.925rem;
+    font-weight: 600;
+    background: transparent;
+    border: 1.5px solid var(--color-border);
+    transition: border-color 0.2s, color 0.2s, background-color 0.2s, transform 0.2s;
+  }
 
-    .btn-primary:hover {
-        background-color: var(--color-primary-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px var(--color-shadow);
-    }
+  .btn-hero-secondary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgba(88, 166, 255, 0.06);
+    transform: translateY(-2px);
+  }
 
-    .btn-secondary {
-        background-color: transparent;
-        color: var(--color-text);
-        border-color: var(--color-border);
-    }
+  .btn-hero-github {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    font-size: 0.925rem;
+    font-weight: 600;
+    background: transparent;
+    border: 1.5px solid transparent;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s, transform 0.2s;
+  }
 
-    .btn-secondary:hover {
-        border-color: var(--color-primary);
-        color: var(--color-primary);
-        transform: translateY(-2px);
-    }
+  .btn-hero-github:hover {
+    color: var(--color-text);
+    border-color: var(--color-border);
+    background-color: var(--color-surface);
+    transform: translateY(-2px);
+  }
 
-    .btn-ghost {
-        background-color: transparent;
-        color: var(--color-text-secondary);
-        border-color: transparent;
-    }
+  /* ── Other buttons ────────────────────────────────────── */
+  .btn-lg { padding: 0.8rem 2rem; font-size: 0.95rem; }
 
-    .btn-ghost:hover {
-        color: var(--color-text);
-        transform: translateY(-2px);
-    }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.5rem;
+    background-color: var(--color-primary);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 0.15s, transform 0.15s;
+  }
+  .btn-primary:hover { background-color: var(--color-primary-hover); transform: translateY(-1px); }
 
-    .btn-large {
-        padding: 1rem 2.5rem;
-        font-size: 1.125rem;
-    }
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.8rem 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-outline:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
-    /* ── Sections ─────────────────────────────────────── */
-    .section {
-        margin: 4rem 0;
-    }
+  /* ── Feature cards ────────────────────────────────────── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background-color: var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 3rem;
+  }
 
-    .section-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin: 0 0 0.5rem;
-        border-bottom: 1px solid var(--color-border);
-        padding-bottom: 0.5rem;
-    }
+  .feature-card {
+    background-color: var(--color-bg);
+    padding: 2rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
 
-    .section-desc {
-        color: var(--color-text-secondary);
-        margin: 0 0 1.5rem;
-        font-size: 1rem;
-    }
+  .feature-icon {
+    color: var(--color-primary);
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
 
-    /* ── Type grid ────────────────────────────────────── */
-    .type-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-        gap: 1rem;
-    }
+  .feature-title {
+    font-size: 0.975rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text);
+  }
 
-    .type-card,
-    .module-card {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 1.1rem 1.25rem;
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        text-decoration: none;
-        color: inherit;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
+  .feature-body {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
 
-    .type-card:hover,
-    .module-card:hover {
-        border-color: var(--color-primary);
-        box-shadow: 0 2px 8px var(--color-shadow);
-    }
+  .feature-body code {
+    font-size: 0.85em;
+    color: var(--color-primary);
+  }
 
-    .type-card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
+  /* ── Sections ─────────────────────────────────────────── */
+  .section {
+    margin-bottom: 3rem;
+  }
 
-    .type-name {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: var(--color-primary);
-    }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.375rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid var(--color-border);
+  }
 
-    .type-tag {
-        font-size: 0.65rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        padding: 0.15rem 0.45rem;
-        border-radius: 4px;
-        background-color: var(--color-surface);
-        color: var(--color-text-secondary);
-        border: 1px solid var(--color-border);
-        white-space: nowrap;
-    }
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text);
+  }
 
-    .type-summary {
-        margin: 0;
-        font-size: 0.85rem;
-        line-height: 1.5;
-        color: var(--color-text-secondary);
-    }
+  .section-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-    /* ── Module grid ──────────────────────────────────── */
-    .module-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-        gap: 1rem;
-    }
+  .section-link:hover { text-decoration: underline; }
 
-    .module-coords {
-        font-size: 0.75rem;
-        color: var(--color-text-secondary);
-        margin-top: 0.25rem;
-    }
+  .section-desc {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0.5rem 0 1.25rem;
+    line-height: 1.6;
+  }
 
-    /* ── Install ──────────────────────────────────────── */
-    .install-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
+  /* ── Type grid ────────────────────────────────────────── */
+  .type-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.875rem;
+  }
 
-    .install-block {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-        padding: 1rem 1.25rem;
-        background-color: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        min-width: 0;
-    }
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.875rem;
+  }
 
-    .install-label {
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--color-text-secondary);
-        margin-bottom: 0.25rem;
-    }
+  .type-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 1.125rem;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    background-color: var(--color-surface);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
 
-    .install-badge-row {
-        margin: 0;
-    }
+  .type-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 10px 0 0 10px;
+  }
 
-    .install-badge-row img {
-        height: 20px;
-    }
+  .type-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--color-shadow); }
+  .type-card:hover::before { opacity: 1; }
 
-    /* ── Quick example ────────────────────────────────── */
-    .quick-example {
-        background-color: var(--color-surface);
-        padding: 2rem;
-        border-radius: 12px;
-        border: 1px solid var(--color-border);
-        margin: 4rem 0;
-    }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
 
-    .quick-example h2 {
-        margin-top: 0;
-    }
+  .card-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
 
-    /* ── CTA ──────────────────────────────────────────── */
-    .cta-section {
-        text-align: center;
-        padding: 4rem 2rem;
-        margin: 4rem 0;
-        background-color: var(--color-surface);
-        border-radius: 12px;
-        border: 1px solid var(--color-border);
-    }
+  .card-tag {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-    .cta-section h2 {
-        margin-top: 0;
-    }
+  .card-summary {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
 
-    .cta-section p {
-        font-size: 1.1rem;
-        color: var(--color-text-secondary);
-        margin-bottom: 2rem;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-    }
+  .module-coords {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.25rem;
+    opacity: 0.7;
+  }
 
-    .cta-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
+  /* ── Example ──────────────────────────────────────────── */
+  .example-section {
+    margin-bottom: 3rem;
+  }
 
-    /* ── Responsive ───────────────────────────────────── */
-    @media (max-width: 768px) {
-        .hero-title {
-            font-size: 2.5rem;
-        }
+  .example-body {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    overflow: auto;
+  }
 
-        .lambda {
-            font-size: 3rem;
-        }
+  /* ── Install ──────────────────────────────────────────── */
+  .install-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
 
-        .hero-description {
-            font-size: 1.25rem;
-        }
+  .install-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem 1.25rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    min-width: 0;
+  }
 
-        .type-grid,
-        .module-grid {
-            grid-template-columns: 1fr;
-        }
+  .install-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.2rem;
+  }
 
-        .install-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+  /* ── CTA ──────────────────────────────────────────────── */
+  .cta {
+    text-align: center;
+    padding: 3.5rem 2rem;
+    margin: 1rem 0 2rem;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(88,166,255,.05) 0%, rgba(99,102,241,.05) 100%);
+  }
+
+  .cta-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+    background: linear-gradient(135deg, var(--color-primary), #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cta-desc {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    margin: 0 auto 2rem;
+    max-width: 520px;
+    line-height: 1.7;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── Color system ─────────────────────────────────────── */
+  .color-blue   { background: rgba(88,166,255,.12);  color: #58a6ff; border-color: rgba(88,166,255,.3); }
+  .color-amber  { background: rgba(251,191,36,.12);  color: #f59e0b; border-color: rgba(251,191,36,.3); }
+  .color-red    { background: rgba(239,68,68,.12);   color: #ef4444; border-color: rgba(239,68,68,.3); }
+  .color-green  { background: rgba(34,197,94,.12);   color: #22c55e; border-color: rgba(34,197,94,.3); }
+  .color-purple { background: rgba(168,85,247,.12);  color: #a855f7; border-color: rgba(168,85,247,.3); }
+  .color-teal   { background: rgba(20,184,166,.12);  color: #14b8a6; border-color: rgba(20,184,166,.3); }
+  .color-cyan   { background: rgba(6,182,212,.12);   color: #06b6d4; border-color: rgba(6,182,212,.3); }
+  .color-violet { background: rgba(139,92,246,.12);  color: #8b5cf6; border-color: rgba(139,92,246,.3); }
+  .color-gray   { background: var(--color-surface);  color: var(--color-text-secondary); border-color: var(--color-border); }
+
+  .accent-blue:hover   { border-color: #58a6ff; } .accent-blue::before   { background: #58a6ff; }
+  .accent-amber:hover  { border-color: #f59e0b; } .accent-amber::before  { background: #f59e0b; }
+  .accent-red:hover    { border-color: #ef4444; } .accent-red::before    { background: #ef4444; }
+  .accent-green:hover  { border-color: #22c55e; } .accent-green::before  { background: #22c55e; }
+  .accent-purple:hover { border-color: #a855f7; } .accent-purple::before { background: #a855f7; }
+  .accent-teal:hover   { border-color: #14b8a6; } .accent-teal::before   { background: #14b8a6; }
+  .accent-cyan:hover   { border-color: #06b6d4; } .accent-cyan::before   { background: #06b6d4; }
+  .accent-violet:hover { border-color: #8b5cf6; } .accent-violet::before { background: #8b5cf6; }
+  .accent-gray:hover   { border-color: var(--color-primary); } .accent-gray::before { background: var(--color-primary); }
+
+  /* ── Responsive ───────────────────────────────────────── */
+  @media (max-width: 1024px) {
+    .type-grid   { grid-template-columns: repeat(2, 1fr); }
+    .module-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .hero { padding: 2rem 0 2rem; }
+    .hero-title { font-size: 2.5rem; }
+    .hero-desc { font-size: 1rem; }
+
+    .features { grid-template-columns: 1fr; }
+    .feature-card { padding: 1.5rem; }
+
+    .type-grid   { grid-template-columns: 1fr; }
+    .module-grid { grid-template-columns: 1fr; }
+    .install-grid { grid-template-columns: 1fr; }
+
+    .cta { padding: 2.5rem 1.25rem; }
+    .cta-title { font-size: 1.5rem; }
+  }
+
+  @media (max-width: 480px) {
+    .hero-actions { flex-direction: column; align-items: center; }
+    .hero-actions > * { width: 100%; text-align: center; justify-content: center; }
+  }
 </style>
