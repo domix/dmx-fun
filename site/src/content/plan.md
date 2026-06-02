@@ -19,7 +19,7 @@
 13. How to model data transformation pipelines
 14. Data validation with a functional approach
 15. Error handling without overusing exceptions
-16. Designing more expressive APIs with functional types
+16. ~~Designing more expressive APIs with functional types~~
 17. How immutability helps reduce bugs
 18. Real-world cases where functional programming actually adds value
 19. When to use functional programming and when not to
