@@ -33,7 +33,7 @@
 24. Try: capturing operations that may fail
 25. Validated: accumulating errors in a functional way
 26. Function composition in real applications
-27. Currying and partial application in practice
+27. ~~Currying and partial application in practice~~
 28. ~~Pattern matching and domain modeling~~
 29. Algebraic Data Types explained for business software developers
 30. Fold and recursion patterns in data processing
