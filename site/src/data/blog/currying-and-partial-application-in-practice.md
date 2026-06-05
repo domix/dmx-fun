@@ -1,6 +1,6 @@
 ---
 title: "Currying and Partial Application in Practice"
-description: "Currying sounds like academic theory. Partial application is something Java developers already do every day — they just don't name it. This post names it, distinguishes the two concepts, and shows the four situations where partial application makes real production code cleaner."
+description: "Currying sounds like academic theory. Partial application is something Java developers already do every day — they just don't name it. This post names it, distinguishes the two concepts, and shows five situations where partial application makes real production code cleaner."
 pubDate: 2026-06-05
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
