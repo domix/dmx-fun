@@ -16,7 +16,7 @@
 
 11. ~~How to write more predictable code with functional programming~~
 12. ~~Refactoring object-oriented code toward a functional style~~
-13. How to model data transformation pipelines
+13. ~~How to model data transformation pipelines~~
 14. Data validation with a functional approach
 15. Error handling without overusing exceptions
 16. ~~Designing more expressive APIs with functional types~~
