@@ -4,7 +4,7 @@
 1. What is functional programming and why is it still relevant?
 2. Imperative programming vs functional programming
 3. ~~Immutability: the foundation of functional programming~~
-4. Pure functions and side effects
+4. ~~Pure functions and side effects~~
 5. What referential transparency really means
 6. ~~Declarative vs imperative: how the mindset changes~~
 7. First steps with function composition
@@ -35,7 +35,7 @@
 26. Function composition in real applications
 27. ~~Currying and partial application in practice~~
 28. ~~Pattern matching and domain modeling~~
-29. Algebraic Data Types explained for business software developers
+29. ~~Algebraic Data Types explained for business software developers~~
 30. Fold and recursion patterns in data processing
 
 ### Advanced topics
