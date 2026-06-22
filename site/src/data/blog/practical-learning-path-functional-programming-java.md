@@ -20,7 +20,7 @@ They read a monad tutorial first. They bounce off the burrito analogies, conclud
 
 This post lays out a learning path that starts where the practical payoff is largest and the prerequisites are smallest, then builds upward. Each stage uses only Java — no new language, no heavy library — and each one produces code you can ship the same week you learn it.
 
-The path has five stages. You should feel comfortable at each one before moving to the next. Resist the urge to skip ahead; the later stages only make sense once the earlier habits are automatic.
+The path has six stages. You should feel comfortable at each one before moving to the next. Resist the urge to skip ahead; the later stages only make sense once the earlier habits are automatic.
 
 ---
 
@@ -239,7 +239,7 @@ New features mostly add pure functions and new sealed-type variants. Your tests 
 
 ## Common Mistakes Along the Way
 
-**Skipping to Stage 4.** Learning `flatMap` before you are comfortable with pure functions and typed outcomes is exactly the "monad tutorial" trap. The composition only makes sense once you have types worth composing.
+**Skipping to Stage 4.** Learning `flatMap` before you are comfortable with pure functions and typed outcomes is precisely the "monad tutorial" trap. The composition only makes sense once you have types worth composing.
 
 **Treating it as all-or-nothing.** You do not convert a codebase overnight. Each stage produces shippable improvements. A team can sit comfortably at Stage 3 for a year and be far better off than when it started.
 
