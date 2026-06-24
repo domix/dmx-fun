@@ -1,7 +1,7 @@
 ---
 title: "A Practical Learning Path for Functional Programming in Java"
 description: "Most developers learn functional programming in the wrong order — starting with monads and category theory instead of the habits that actually change their code. This is a staged path that starts with pure functions and immutability, then adds types, then composition, building each skill on the one before it."
-pubDate: 2026-06-22
+pubDate: 2026-06-19
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Guide"
