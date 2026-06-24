@@ -80,7 +80,7 @@ static Policy retry(int maxAttempts) {
 }
 ```
 
-Notice what this does *not* do. It does not sleep. It does not impose a timeout. It does not decide which failures are worth retrying. It does one thing — repeat on failure — and it returns a new `Operation` that you can wrap further. That single responsibility is what makes it composable.
+Notice what this does *not* do: sleep, impose a timeout, or decide which failures are retryable. It does one thing — repeat on failure — and it returns a new `Operation` that you can wrap further. That single responsibility is what makes it composable.
 
 A real retry should not blindly retry everything, though. A `404 Not Found` will be a `404` on every attempt; retrying it just wastes time. So the next refinement takes a predicate that decides whether a given failure is retryable:
 
