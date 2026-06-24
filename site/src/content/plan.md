@@ -106,7 +106,7 @@
 
 77. Replacing if/else and switch sprawl with maps of functions
 78. Memoization: caching pure functions safely
-79. Retry, timeout, and backoff as composable functions
+79. ~~Retry, timeout, and backoff as composable functions~~
 80. The Reader pattern: passing dependencies without a framework
 81. Building a small rules engine with composable predicates
 82. Parsing and decoding input the functional way
