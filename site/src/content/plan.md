@@ -87,7 +87,7 @@
 
 ### Core concepts, deeper
 
-66. Closures and variable capture explained for Java developers
+66. ~~Closures and variable capture explained for Java developers~~
 67. Expressions over statements: why functional code avoids `void`
 68. Recursion vs iteration: tail calls, stack safety, and the JVM
 69. The substitution model: evaluating code in your head
