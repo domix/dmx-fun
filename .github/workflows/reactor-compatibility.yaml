@@ -18,6 +18,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Read-only token: this job only checks out and runs tests, never writes.
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +36,9 @@ jobs:
     name: Reactor ${{ matrix.reactor-version }}
     steps:
       - uses: actions/checkout@v6.0.2
+        with:
+          # Do not leave the GITHUB_TOKEN in .git/config for the Gradle build to reach.
+          persist-credentials: false
       - uses: actions/setup-java@v5.2.0
         with:
           java-version: '25'

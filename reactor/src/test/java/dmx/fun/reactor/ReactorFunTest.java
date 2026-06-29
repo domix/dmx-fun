@@ -5,12 +5,21 @@ import dmx.fun.Result;
 import dmx.fun.Try;
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class ReactorFunTest {
 
@@ -50,8 +59,13 @@ class ReactorFunTest {
 
     @Test
     void toMonoResult_empty_isErrWithNoSuchElement() {
-        StepVerifier.create(ReactorFun.toMonoResult(Mono.empty()))
-            .assertNext(r -> assertThat(r).isErr())
+        StepVerifier.create(ReactorFun.toMonoResult(Mono.<String>empty()))
+            .assertNext(r -> {
+                assertThat(r).isErr();
+                org.assertj.core.api.Assertions
+                    .assertThat(((Result.Err<String, Throwable>) r).error())
+                    .isInstanceOf(NoSuchElementException.class);
+            })
             .verifyComplete();
     }
 
@@ -134,10 +148,13 @@ class ReactorFunTest {
 
     @Test
     void toMonoTry_honorsCancellation() {
-        StepVerifier.create(ReactorFun.toMonoTry(Mono.never()))
+        AtomicBoolean upstreamCancelled = new AtomicBoolean(false);
+        StepVerifier.create(
+                ReactorFun.toMonoTry(Mono.never().doOnCancel(() -> upstreamCancelled.set(true))))
             .expectSubscription()
             .thenCancel()
             .verify();
+        org.assertj.core.api.Assertions.assertThat(upstreamCancelled).isTrue();
     }
 
     // ── blocking extractors ────────────────────────────────────────────────────
@@ -229,19 +246,58 @@ class ReactorFunTest {
             .verifyError(IllegalStateException.class);
     }
 
-    // ── null guards ────────────────────────────────────────────────────────────
-
     @Test
-    void toMonoTry_null_throws() {
-        assertThatThrownBy(() -> ReactorFun.toMonoTry(null))
-            .isInstanceOf(NullPointerException.class)
-            .hasMessageContaining("mono");
+    void toMono_err_mapperThrows_flowsAsOnError() {
+        // The mapper runs at subscription, so its exception is an onError signal,
+        // not something thrown during assembly of the Mono.
+        Mono<String> mono = ReactorFun.toMono(
+            Result.<String, String>err("bad"),
+            e -> { throw new IllegalStateException("mapper-boom"); });
+        StepVerifier.create(mono)
+            .verifyErrorMatches(t -> t instanceof IllegalStateException
+                && "mapper-boom".equals(t.getMessage()));
     }
 
     @Test
-    void toMono_nullOption_throws() {
-        assertThatThrownBy(() -> ReactorFun.toMono((Option<String>) null))
+    void toMono_err_mapperReturnsNull_flowsAsOnError() {
+        Mono<String> mono = ReactorFun.toMono(Result.<String, String>err("bad"), e -> null);
+        StepVerifier.create(mono).verifyError(NullPointerException.class);
+    }
+
+    // ── null guards ────────────────────────────────────────────────────────────
+
+    static Stream<Arguments> nullGuards() {
+        Mono<String> ok = Mono.just("x");
+        Function<Throwable, String> errorMapper = Throwable::getMessage;
+        Function<String, Throwable> errorToThrowable = IllegalStateException::new;
+        Supplier<String> onEmpty = () -> "empty";
+        return Stream.of(
+            arguments("toMonoTry(null)", (Executable) () -> ReactorFun.toMonoTry(null), "mono"),
+            arguments("toMonoResult(null)", (Executable) () -> ReactorFun.toMonoResult(null), "mono"),
+            arguments("toMonoResult(null, errorMapper)", (Executable) () -> ReactorFun.toMonoResult(null, errorMapper), "mono"),
+            arguments("toMonoResult(ok, null)", (Executable) () -> ReactorFun.toMonoResult(ok, null), "errorMapper"),
+            arguments("toMonoResult(null, errorMapper, onEmpty)", (Executable) () -> ReactorFun.toMonoResult(null, errorMapper, onEmpty), "mono"),
+            arguments("toMonoResult(ok, null, onEmpty)", (Executable) () -> ReactorFun.toMonoResult(ok, null, onEmpty), "errorMapper"),
+            arguments("toMonoResult(ok, errorMapper, null)", (Executable) () -> ReactorFun.toMonoResult(ok, errorMapper, null), "onEmpty"),
+            arguments("toMonoOption(null)", (Executable) () -> ReactorFun.toMonoOption(null), "mono"),
+            arguments("toTry(null)", (Executable) () -> ReactorFun.toTry(null), "mono"),
+            arguments("toResult(null)", (Executable) () -> ReactorFun.toResult(null), "mono"),
+            arguments("toResult(ok, null)", (Executable) () -> ReactorFun.toResult(ok, null), "errorMapper"),
+            arguments("toResult(ok, errorMapper, null)", (Executable) () -> ReactorFun.toResult(ok, errorMapper, null), "onEmpty"),
+            arguments("toOption(null)", (Executable) () -> ReactorFun.toOption(null), "mono"),
+            arguments("toMono((Option) null)", (Executable) () -> ReactorFun.toMono((Option<String>) null), "option"),
+            arguments("toMono((Try) null)", (Executable) () -> ReactorFun.toMono((Try<String>) null), "aTry"),
+            arguments("toMono((Result) null)", (Executable) () -> ReactorFun.toMono((Result<String, IllegalStateException>) null), "result"),
+            arguments("toMono((Result) null, errorMapper)", (Executable) () -> ReactorFun.toMono((Result<String, String>) null, errorToThrowable), "result"),
+            arguments("toMono(ok-result, null)", (Executable) () -> ReactorFun.toMono(Result.<String, String>ok("x"), null), "errorMapper")
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("nullGuards")
+    void publicAdapters_rejectNull(String name, Executable call, String parameter) {
+        assertThatThrownBy(call::execute)
             .isInstanceOf(NullPointerException.class)
-            .hasMessageContaining("option");
+            .hasMessageContaining(parameter);
     }
 }

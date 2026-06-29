@@ -287,7 +287,11 @@ public final class ReactorFun {
         Objects.requireNonNull(errorMapper, "errorMapper");
         return switch (result) {
             case Result.Ok<V, E> ok -> Mono.just(ok.value());
-            case Result.Err<V, E> err -> Mono.error(errorMapper.apply(err.error()));
+            // Defer the mapper to subscription time (Supplier overload) so a mapper
+            // exception flows as an onError signal instead of escaping at assembly;
+            // a null mapping is rejected lazily for the same reason.
+            case Result.Err<V, E> err -> Mono.error(
+                () -> Objects.requireNonNull(errorMapper.apply(err.error()), "errorMapper returned null"));
         };
     }
 

@@ -41,9 +41,11 @@ Every conversion lives on `ReactorFun` and falls into three groups.
 
 ## Reactor → dmx-fun (stay reactive)
 
-The `toMono*` variants absorb the empty and error signals into the value channel,
-so the resulting `Mono` never errors for a *modeled* failure. Prefer these inside
-reactive pipelines:
+The `toMonoTry` and `toMonoResult` variants absorb the empty and error signals into
+the value channel, so the resulting `Mono` never errors for a *modeled* failure.
+(`toMonoOption` is the exception: it maps empty to `None`, but since `Option` has no
+error channel it lets a Reactor error propagate.) Prefer these inside reactive
+pipelines:
 
 ```java
 // A flaky lookup that may error or complete empty
