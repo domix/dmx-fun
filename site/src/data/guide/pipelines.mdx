@@ -16,7 +16,7 @@ All CI/CD is handled by GitHub Actions. The workflows live in `.github/workflows
 | `gradle.yml`                 | push / PR to `main` (code paths)       | Full build, tests, coverage, Javadoc, dependency graph submission       |
 | `publish.yml`                | push to `main` — stable version only   | Publish all modules to Maven Central, create git tag and GitHub Release |
 | `publish-snapshot.yml`       | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central                             |
-| `jackson-compatibility.yaml` | PR touching `jackson/**`               | Matrix test against Jackson 2.13.x – 2.21.x                             |
+| `jackson-compatibility.yaml` | PR touching `jackson/**`               | Matrix test against Jackson 2.14.x – 2.22.x                             |
 | `assertj-compatibility.yaml`             | PR touching `assertj/**`                           | Matrix test against AssertJ 3.21.x – 3.27.x                              |
 | `spring-boot-compatibility.yaml`         | PR touching `spring-boot/**` or `spring/**`        | Matrix test of `fun-spring-boot` against Spring Boot 3.3.x – 4.0.x       |
 | `spring-boot-sample-compatibility.yaml`  | PR touching `spring-boot-sample/**` or `spring/**` | Matrix test of the Spring Boot sample app against Boot 3.4.x – 4.0.x     |
@@ -106,15 +106,15 @@ Runs only on pull requests — not on push to `main`.
 
 | Jackson version | Status |
 |-----------------|--------|
-| 2.13.5          | tested |
 | 2.14.3          | tested |
 | 2.15.4          | tested |
 | 2.16.2          | tested |
 | 2.17.3          | tested |
-| 2.18.2          | tested |
+| 2.18.7          | tested |
 | 2.19.4          | tested |
 | 2.20.2          | tested |
-| 2.21.2          | tested |
+| 2.21.4          | tested |
+| 2.22.0          | tested |
 
 **Local equivalent**:
 ```bash
