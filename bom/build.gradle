@@ -26,6 +26,7 @@ dependencies {
         api project(':observability:tracing')
         api project(':resilience:resilience4j')
         api project(':protocols:http')
+        api project(':reactor')
         api project(':frameworks:spring')
         api project(':frameworks:spring-boot')
         api project(':frameworks:quarkus:runtime')
