@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # Generated javadocs
 public/javadoc
+
+# Use pnpm — no npm lockfile
+package-lock.json
