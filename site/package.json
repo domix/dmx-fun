@@ -3,19 +3,20 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@11.1.3",
   "scripts": {
     "copy:javadocs": "cp -r ../build/reports/javadoc/ public/",
-    "predev": "npm run copy:javadocs",
+    "predev": "pnpm run copy:javadocs",
     "dev": "astro dev",
-    "prebuild": "npm run copy:javadocs",
+    "prebuild": "pnpm run copy:javadocs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.4",
-    "@astrojs/rss": "^4.0.15",
-    "astro": "^6.1.9",
-    "astro-expressive-code": "^0.41.7"
+    "@astrojs/mdx": "^6.0.3",
+    "@astrojs/rss": "^4.0.18",
+    "astro": "^6.4.8",
+    "astro-expressive-code": "^0.42.0"
   }
 }

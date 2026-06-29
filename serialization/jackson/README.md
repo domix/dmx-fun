@@ -20,7 +20,7 @@ implementation("codes.domix:fun-jackson:${dmxFunVersion}")
 
 Jackson itself is declared `compileOnly` in this module — you must provide
 `com.fasterxml.jackson.core:jackson-databind` on your own classpath.
-Compatible versions: **2.13.x – 2.21.x**.
+Compatible versions: **2.14.x – 2.22.x**.
 
 ## Registration
 
@@ -93,7 +93,6 @@ The module is tested against the following Jackson versions in CI:
 
 | Version | Status |
 |---------|--------|
-| 2.13.x  | tested |
 | 2.14.x  | tested |
 | 2.15.x  | tested |
 | 2.16.x  | tested |
@@ -102,6 +101,7 @@ The module is tested against the following Jackson versions in CI:
 | 2.19.x  | tested |
 | 2.20.x  | tested |
 | 2.21.x  | tested |
+| 2.22.x  | tested |
 
 To run the tests locally against a specific version:
 

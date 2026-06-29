@@ -21,7 +21,7 @@ This page covers everything you need to go from a fresh clone to a passing build
 | Java    | 25+                   | Use the Gradle toolchain — no manual install needed if you have a JDK provider |
 | Gradle  | wrapper (`./gradlew`) | Never install Gradle globally; always use the wrapper                          |
 | Node.js | 18+                   | Only needed to run or build the documentation site                             |
-| npm     | bundled with Node.js  | Run from the `site/` directory                                                 |
+| pnpm    | 11.1.3+               | Run from the `site/` directory — enable with `corepack enable`                 |
 
 No other global tools are required.
 
@@ -49,7 +49,7 @@ To see the full test report after a run, open `build/reports/tests/testAggregate
 The dev server watches for changes in `site/src/` and reloads automatically.
 The site is served under the `/dmx-fun/` base path to match GitHub Pages.
 
-> **Note**: `npm run build` in `site/` copies the Javadoc from `build/reports/javadoc/` into the
+> **Note**: `pnpm run build` in `site/` copies the Javadoc from `build/reports/javadoc/` into the
 > site's `public/` directory. Run `./gradlew aggregateJavadoc` first if you need the full build.
 
 ## Code conventions
@@ -197,14 +197,14 @@ Triggered on push to `main` when `site/**`, any `build.gradle`, or source files 
 
 Steps:
 1. `./gradlew aggregateJavadoc` — builds multi-module Javadoc into `build/reports/javadoc/`
-2. `npm run build` (in `site/`) — copies the Javadoc into `site/public/` and produces `site/dist/`
+2. `pnpm run build` (in `site/`) — copies the Javadoc into `site/public/` and produces `site/dist/`
 3. Uploads `site/dist/` as a Pages artifact and deploys via `actions/deploy-pages`
 
 To preview the site locally without triggering CI:
 
 ```bash
 ./gradlew aggregateJavadoc
-cd site && npm run dev
+cd site && pnpm run dev
 ```
 
 ### Compatibility matrix workflows
@@ -216,7 +216,7 @@ the version catalog entry when the property is absent (safe for local developmen
 | Workflow                         | Gradle property      | Tested range            |
 |----------------------------------|----------------------|-------------------------|
 | `assertj-compatibility.yaml`     | `-PassertjVersion`   | `3.21.0` – `3.27.7`    |
-| `jackson-compatibility.yaml`     | `-PjacksonVersion`   | `2.13.5` – `2.21.2`    |
+| `jackson-compatibility.yaml`     | `-PjacksonVersion`   | `2.14.3` – `2.22.0`    |
 | `spring-compatibility.yaml`      | `-PspringVersion`    | `6.0.23` – `7.0.6`     |
 
 To run a specific version locally:

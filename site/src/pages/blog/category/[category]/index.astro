@@ -1,28 +1,34 @@
 ---
 import { getCollection } from 'astro:content';
-import DocsLayout from '../../../layouts/DocsLayout.astro';
-import { calculateReadingTime, formatReadingTime } from '../../../utils/readingTime';
-const base = import.meta.env.BASE_URL;
+import DocsLayout from '../../../../layouts/DocsLayout.astro';
+import { calculateReadingTime, formatReadingTime } from '../../../../utils/readingTime';
+import Pagination from '../../../../components/Pagination.astro';
+import { PAGE_SIZE, normalizeCategorySlug } from '../../../../utils/blog';
 
 export async function getStaticPaths() {
+  const { PAGE_SIZE, normalizeCategorySlug } = await import('../../../../utils/blog');
   const allPosts = await getCollection('blog');
   const categories = [...new Set(allPosts.map(post => post.data.category))];
 
   return categories.map(category => {
-    const filteredPosts = allPosts.filter(post => post.data.category === category);
+    const filtered = allPosts
+      .filter(post => post.data.category === category)
+      .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
     return {
-      params: { category: category.toLowerCase().replaceAll(' ', '-') },
+      params: { category: normalizeCategorySlug(category) },
       props: {
-        posts: filteredPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()),
-        category
+        pagePosts: filtered.slice(0, PAGE_SIZE),
+        category,
+        totalPages: Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)),
+        allCategories: categories,
       },
     };
   });
 }
 
-const { posts, category } = Astro.props;
-const allPosts = await getCollection('blog');
-const categories = [...new Set(allPosts.map(post => post.data.category))];
+const base = import.meta.env.BASE_URL;
+const { pagePosts, category, totalPages, allCategories } = Astro.props;
+const categorySlug = normalizeCategorySlug(category);
 ---
 
 <DocsLayout title={`${category} - Blog`} description={`Articles about ${category}`}>
@@ -35,15 +41,15 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     </a>
     <h1>{category}</h1>
     <p class="blog-subtitle">
-      {posts.length} {posts.length === 1 ? 'article' : 'articles'} in this category
+      Page 1 of {totalPages}
     </p>
   </div>
 
   <div class="blog-filters">
     <a href={`${base}blog`} class="filter-btn">All Posts</a>
-    {categories.map(cat => (
+    {allCategories.map(cat => (
       <a
-        href={`${base}blog/category/${cat.toLowerCase().replaceAll(' ', '-')}`}
+        href={`${base}blog/category/${normalizeCategorySlug(cat)}`}
         class={`filter-btn ${cat === category ? 'active' : ''}`}
       >
         {cat}
@@ -52,7 +58,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   </div>
 
   <div class="posts-grid">
-      {posts.map((post: any) => {
+      {pagePosts.map((post: any) => {
           const readingTime = calculateReadingTime(post.body);
           const readingTimeText = formatReadingTime(readingTime);
           return (
@@ -94,6 +100,12 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       );
       })}
   </div>
+
+  <Pagination
+    currentPage={1}
+    totalPages={totalPages}
+    baseUrl={`${base}blog/category/${categorySlug}`}
+  />
 </DocsLayout>
 
 <style>
@@ -181,6 +193,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     box-shadow: 0 8px 24px var(--color-shadow);
     border-color: var(--color-primary);
   }
+
   .post-image-link {
       display: block;
       width: 100%;
@@ -205,6 +218,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       flex-direction: column;
       flex: 1;
   }
+
   .post-category {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -252,6 +266,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     flex-wrap: wrap;
     gap: 0.5rem;
   }
+
   .meta-group {
       display: flex;
       align-items: center;
@@ -266,6 +281,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
       display: inline-flex;
       align-items: center;
   }
+
   .post-author {
     font-weight: 500;
   }

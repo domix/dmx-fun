@@ -89,6 +89,14 @@ Each module guide has a copy-ready snippet in its **Adding the dependency** sect
 Each integration is a separate artifact with the peer dependency declared `compileOnly` —
 the rationale is documented in <a href={`${base}adr/adr-022-integration-modules`}>ADR-022 — Integration modules as optional peer dependencies</a>.
 
+<div style="text-align: center; margin: 1.5rem 0;">
+  <img
+    src={`${base}dmx-fun-modules.png`}
+    alt="dmx-fun module ecosystem — core library at the center surrounded by integration modules for Spring, Quarkus, Jackson, Jakarta, Micrometer, Resilience4j, HTTP, and more"
+    style="max-width: 100%; height: auto; border-radius: 8px;"
+  />
+</div>
+
 | Artifact | What it adds |
 |---|---|
 | `codes.domix:fun` | Core library — always required |
