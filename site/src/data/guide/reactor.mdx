@@ -1,0 +1,168 @@
+---
+title: "Project Reactor Integration — Developer Guide"
+description: "How to use the optional fun-reactor module: idiomatic conversions between Reactor's Mono and dmx-fun's Option, Result, and Try, with explicit empty/error semantics via ReactorFun."
+order: 23
+h1: "Project Reactor Integration"
+---
+
+import {Content as Dependency} from '../code/guide/reactor/dependency.mdx';
+
+The `fun-reactor` module bridges dmx-fun's `Option`, `Result`, and `Try` with
+[Project Reactor](https://projectreactor.io/)'s `Mono`, so absence, failure, and
+exceptions are modeled as **values** at reactive boundaries instead of being
+reconstructed with ad-hoc conversion code in every service.
+
+It is an **optional** module. `reactor-core` is declared `compileOnly` — your
+application already brings Reactor (directly or through Spring WebFlux), so the
+adapter never forces a version, and the core `fun` library keeps no dependency on
+Reactor.
+
+## Adding the dependency
+
+<Dependency/>
+
+## The `ReactorFun` adapters
+
+Every conversion lives on `ReactorFun` and falls into three groups.
+
+| Direction | Method | Behavior |
+|---|---|---|
+| `Mono` → reactive | `toMonoTry(mono)` | value → `Success`, error → `Failure(cause)`, empty → `Failure(NoSuchElementException)` |
+| `Mono` → reactive | `toMonoResult(mono)` | value → `Ok`, error → `Err(cause)`, empty → `Err(NoSuchElementException)` |
+| `Mono` → reactive | `toMonoResult(mono, errorMapper)` | maps error / empty (via `NoSuchElementException`) through `errorMapper` to a typed `Err` |
+| `Mono` → reactive | `toMonoResult(mono, errorMapper, onEmpty)` | as above, but empty produces `onEmpty.get()` instead of the default error |
+| `Mono` → reactive | `toMonoOption(mono)` | value → `Some`, empty → `None`, error **propagates** |
+| `Mono` → blocking | `toTry` / `toResult` / `toOption` | same as the `toMono*` variant, but blocks and returns the value directly |
+| dmx-fun → `Mono` | `toMono(option)` | `Some` → `Mono.just`, `None` → `Mono.empty` |
+| dmx-fun → `Mono` | `toMono(aTry)` | `Success` → `Mono.just`, `Failure` → `Mono.error(cause)` |
+| dmx-fun → `Mono` | `toMono(result)` *(error is a `Throwable`)* | `Ok` → `Mono.just`, `Err` → `Mono.error(e)` |
+| dmx-fun → `Mono` | `toMono(result, errorMapper)` | `Ok` → `Mono.just`, `Err` → `Mono.error(errorMapper(e))` |
+| context | `ReactorContext.getOrNone(ctx, key)` | present → `Some`, absent → `None` (requires Reactor 3.4+) |
+
+## Reactor → dmx-fun (stay reactive)
+
+The `toMonoTry` and `toMonoResult` variants absorb the empty and error signals into
+the value channel, so the resulting `Mono` never errors for a *modeled* failure.
+(`toMonoOption` is the exception: it maps empty to `None`, but since `Option` has no
+error channel it lets a Reactor error propagate.) Prefer these inside reactive
+pipelines:
+
+```java
+// A flaky lookup that may error or complete empty
+Mono<User> lookup = userClient.findById(id);
+
+// Result on the value channel — the pipeline never short-circuits on failure
+Mono<Result<User, ApiError>> result =
+    ReactorFun.toMonoResult(lookup, ApiError::fromThrowable);
+
+// 404 vs found, without exceptions
+Mono<Option<User>> maybeUser = ReactorFun.toMonoOption(lookup);
+```
+
+### Empty-Mono policy
+
+A `Mono` that completes without a value is treated as a missing value:
+
+- `toMonoOption` → `Option.none()`
+- `toMonoTry` / `toMonoResult` → a failure carrying `NoSuchElementException`
+  (mapped through your `errorMapper` when you supply one)
+
+`toMonoOption` is the one conversion that does **not** absorb errors — since
+`Option` has no error channel, an error signal propagates as a Reactor error.
+
+## dmx-fun → Reactor
+
+Going the other way turns a domain outcome back into a `Mono`:
+
+```java
+Mono<User> m1 = ReactorFun.toMono(Option.some(user));           // Mono.just(user)
+Mono<User> m2 = ReactorFun.toMono(Option.<User>none());         // Mono.empty()
+Mono<User> m3 = ReactorFun.toMono(Try.success(user));           // Mono.just(user)
+Mono<User> m4 = ReactorFun.toMono(Result.<User, ApiError>err(e),
+                                  ApiError::toException);         // Mono.error(...)
+```
+
+Because `Result`'s error channel is an arbitrary domain type — not necessarily a
+`Throwable` — `toMono(result, errorMapper)` asks you to say explicitly how a domain
+error becomes a Reactor error signal. When the error channel is *already* a
+`Throwable`, use the single-argument overload, which sends it straight to
+`Mono.error`:
+
+```java
+Mono<User> m = ReactorFun.toMono(Result.<User, IllegalStateException>err(ex));
+```
+
+## Reading the Reactor context
+
+`ReactorContext.getOrNone` reads a key from a Reactor `ContextView` as an `Option`,
+so a missing key is `None` instead of a thrown exception. The `ContextView` is
+always passed in — there is no hidden global state:
+
+```java
+Mono<String> tenantAware = Mono.deferContextual(ctx ->
+    ReactorFun.toMono(ReactorContext.<String>getOrNone(ctx, "tenantId")
+        .map(tenant -> resolveFor(tenant)))
+);
+```
+
+> `ContextView` was introduced in Reactor 3.4, so the context helpers require
+> Reactor 3.4 or later. The `ReactorFun` conversions themselves work on any
+> supported 3.x release.
+
+## Migrating from manual conversion code
+
+Hand-rolled `Mono` → outcome conversions usually look like this — a `map`, an
+`onErrorResume` that rebuilds the error case, and a `defaultIfEmpty` for the empty
+case, repeated at every call site:
+
+```java
+// Before: bespoke, easy to get subtly wrong (empty vs error handling)
+Mono<Result<User, ApiError>> result = userClient.findById(id)
+    .map(Result::<User, ApiError>ok)
+    .onErrorResume(ex -> Mono.just(Result.err(ApiError.fromThrowable(ex))))
+    .defaultIfEmpty(Result.err(ApiError.notFound(id)));
+```
+
+The same behavior is one call with `fun-reactor`, with the empty policy stated
+explicitly:
+
+```java
+// After: the empty and error policies are named, not reconstructed
+Mono<Result<User, ApiError>> result = ReactorFun.toMonoResult(
+    userClient.findById(id),
+    ApiError::fromThrowable,
+    () -> ApiError.notFound(id));
+```
+
+## Blocking vs reactive
+
+`toTry`, `toResult`, and `toOption` are **blocking** extractors: they subscribe and
+wait for the terminal signal via `Mono.block()`, returning the dmx-fun value
+directly. They are convenient for bridging into non-reactive code and tests, but
+must never run on a non-blocking (event-loop) thread:
+
+```java
+// Fine in a test or a blocking adapter; never on a Reactor scheduler thread
+Result<User, Throwable> result = ReactorFun.toResult(userClient.findById(id));
+```
+
+Inside a reactive pipeline, always prefer the `toMono*` variants.
+
+## Version compatibility
+
+Tested in CI against the following Reactor versions on every pull request that
+touches the `reactor/` module:
+
+| Reactor version | Status |
+|---|---|
+| 3.4.x | tested |
+| 3.5.x | tested |
+| 3.6.x | tested |
+| 3.7.x | tested |
+| 3.8.x | tested |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :reactor:test -PreactorVersion=3.7.0
+```

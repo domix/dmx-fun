@@ -25,6 +25,7 @@ jaxbImpl = "4.0.8"
 jakartaJsonApi = "2.1.3"
 parsson = "1.1.7"
 quarkus = "3.37.0"
+reactor = "3.8.6"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
@@ -60,6 +61,8 @@ yasson = { module = "org.eclipse:yasson", version.ref = "yasson" }
 jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version.ref = "jaxbImpl" }
 jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version.ref = "jakartaJsonApi" }
 parsson = { module = "org.eclipse.parsson:parsson", version.ref = "parsson" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
+reactor-test = { module = "io.projectreactor:reactor-test", version.ref = "reactor" }
 
 [plugins]
 quarkus = { id = "io.quarkus", version.ref = "quarkus" }

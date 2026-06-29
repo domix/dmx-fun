@@ -1,0 +1,28 @@
+---
+fileName: 'build.gradle / pom.xml'
+---
+
+```groovy
+// Gradle
+implementation("codes.domix:fun-reactor:LATEST_VERSION")
+// Project Reactor — bring your own version (3.4.x – 3.8.x)
+implementation("io.projectreactor:reactor-core:3.8.6")
+```
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-reactor</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- Project Reactor — bring your own version (3.4.x – 3.8.x) -->
+<dependency>
+    <groupId>io.projectreactor</groupId>
+    <artifactId>reactor-core</artifactId>
+    <version>3.8.6</version>
+</dependency>
+```
+
+> `fun-reactor` declares `reactor-core` as `compileOnly`. Your application already
+> brings Reactor (directly or via Spring WebFlux), so the adapter never forces a version.

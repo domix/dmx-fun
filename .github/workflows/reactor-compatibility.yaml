@@ -1,0 +1,49 @@
+# Verifies that the fun-reactor module remains compatible with multiple Project
+# Reactor versions. reactor-core is declared compileOnly so users bring their own
+# version; this matrix catches regressions before they reach main.
+#
+# Triggered only on pull requests that touch reactor/** or this workflow file.
+# To run a specific version locally:
+#   ./gradlew :reactor:test -PreactorVersion=3.7.0
+name: Reactor compatibility
+
+on:
+  pull_request:
+    # Run when the reactor module or this workflow file is modified.
+    paths:
+      - 'gradle/libs.versions.toml'
+      - 'reactor/**'
+      - '.github/workflows/reactor-compatibility.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Read-only token: this job only checks out and runs tests, never writes.
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # Covers the recent Reactor 3.x release lines. Floor is 3.4: the
+        # ReactorContext helpers use ContextView, introduced in Reactor 3.4.
+        # Update this list when a new minor is released or an old one is EOL.
+        reactor-version:
+          - '3.8.6'
+          - '3.7.19'
+          - '3.6.18'
+          - '3.5.20'
+          - '3.4.29'
+    name: Reactor ${{ matrix.reactor-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          # Do not leave the GITHUB_TOKEN in .git/config for the Gradle build to reach.
+          persist-credentials: false
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      # Pass the matrix version as a Gradle property; the build falls back to
+      # the catalog version when the property is absent (local development).
+      - run: ./gradlew :reactor:test -PreactorVersion=${{ matrix.reactor-version }}

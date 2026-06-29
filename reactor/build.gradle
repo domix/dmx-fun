@@ -1,0 +1,35 @@
+// ── Project Reactor adapter module ─────────────────────────────────────────────
+// Bridges dmx-fun's Option, Result, and Try with Project Reactor's Mono so teams
+// can model absence, failure, and exceptions explicitly at reactive boundaries.
+// reactor-core is declared compileOnly — users bring their own Reactor version.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+// Reactor version: overridable for the CI compatibility matrix.
+//   ./gradlew :reactor:test -PreactorVersion=3.7.0
+def reactorVersion = findProperty('reactorVersion') ?: libs.versions.reactor.get()
+
+dependencies {
+    api project(':core:lib')
+
+    compileOnly "io.projectreactor:reactor-core:${reactorVersion}"
+
+    testImplementation "io.projectreactor:reactor-core:${reactorVersion}"
+    testImplementation "io.projectreactor:reactor-test:${reactorVersion}"
+
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+jpmsTest {
+    moduleName = 'dmx.fun.reactor'
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-reactor", "${project.version}")
+    pom {
+        name = 'dmx-fun Project Reactor integration'
+        description = 'Project Reactor adapter for dmx-fun: idiomatic interop between Mono and Option, Result, and Try at reactive boundaries.'
+    }
+}
