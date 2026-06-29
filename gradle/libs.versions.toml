@@ -24,7 +24,7 @@ yasson = "3.0.4"
 jaxbImpl = "4.0.8"
 jakartaJsonApi = "2.1.3"
 parsson = "1.1.7"
-quarkus = "3.35.1"
+quarkus = "3.37.0"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
