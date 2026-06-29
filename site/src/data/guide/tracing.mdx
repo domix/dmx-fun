@@ -18,7 +18,7 @@ without requiring manual `Span.start()` / `Span.end()` management at call sites.
 
 `fun-tracing` declares `micrometer-tracing` as `compileOnly`. You bring your own version
 and bridge (OpenTelemetry or Brave), following the same pattern as `fun-micrometer` and
-`fun-resilience4j`. Any version from **1.2.x through 1.6.x** is supported
+`fun-resilience4j`. Any version from **1.2.x through 1.7.x** is supported
 (see [version compatibility](#version-compatibility) below).
 
 ## Adding the dependency
@@ -178,6 +178,7 @@ pull request that touches the `tracing/` module:
 
 | Micrometer Tracing | Spring Boot | Status  |
 |--------------------|-------------|---------|
+| 1.7.x              | —           | tested  |
 | 1.6.x              | 3.5.x       | tested  |
 | 1.5.x              | 3.4.x       | tested  |
 | 1.4.x              | 3.3.x       | tested  |

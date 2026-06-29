@@ -21,9 +21,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Covers all supported minor release lines from 1.5.x to 1.16.x.
+        # Covers all supported minor release lines from 1.5.x to 1.17.x.
         # Update this list when a new minor is released or an old one is EOL.
         micrometer-version:
+          - '1.17.0'
           - '1.16.5'
           - '1.15.9'
           - '1.14.14'

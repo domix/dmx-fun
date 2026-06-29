@@ -18,7 +18,7 @@ runtime dependency on Micrometer.
 `fun-micrometer` declares `micrometer-core` as `compileOnly`. You bring your own version
 and backend (Prometheus, Datadog, CloudWatch, etc.), following the same pattern as
 `fun-jackson` and `fun-resilience4j`. Any version from
-**1.5.x through 1.16.x** is supported (see [version compatibility](#version-compatibility) below).
+**1.5.x through 1.17.x** is supported (see [version compatibility](#version-compatibility) below).
 
 ## Adding the dependency
 
@@ -136,6 +136,7 @@ request that touches the `micrometer/` module:
 
 | Micrometer version | Spring Boot | Status  |
 |--------------------|-------------|---------|
+| 1.17.x             | —           | tested  |
 | 1.16.x             | 3.5.x       | tested  |
 | 1.15.x             | —           | tested  |
 | 1.14.x             | 3.4.x       | tested  |
