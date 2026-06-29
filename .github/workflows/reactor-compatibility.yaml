@@ -21,7 +21,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Covers the recent Reactor 3.x release lines.
+        # Covers the recent Reactor 3.x release lines. Floor is 3.4: the
+        # ReactorContext helpers use ContextView, introduced in Reactor 3.4.
         # Update this list when a new minor is released or an old one is EOL.
         reactor-version:
           - '3.8.6'
@@ -29,7 +30,6 @@ jobs:
           - '3.6.18'
           - '3.5.20'
           - '3.4.29'
-          - '3.3.9.RELEASE'
     name: Reactor ${{ matrix.reactor-version }}
     steps:
       - uses: actions/checkout@v6.0.2

@@ -3,6 +3,7 @@ package dmx.fun.reactor;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Try;
+import java.io.IOException;
 import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
@@ -72,6 +73,38 @@ class ReactorFunTest {
     void toMonoResult_withMapper_mapsEmptyThroughNoSuchElement() {
         StepVerifier.create(ReactorFun.toMonoResult(Mono.<String>empty(), Throwable::getClass))
             .assertNext(r -> assertThat(r).isErr().containsError(NoSuchElementException.class))
+            .verifyComplete();
+    }
+
+    @Test
+    void toMonoResult_withCustomEmptyMapper_usesOnEmpty() {
+        StepVerifier.create(
+                ReactorFun.toMonoResult(Mono.<String>empty(), Throwable::getMessage, () -> "was-empty"))
+            .assertNext(r -> assertThat(r).isErr().containsError("was-empty"))
+            .verifyComplete();
+    }
+
+    @Test
+    void toMonoResult_withCustomEmptyMapper_stillMapsError() {
+        StepVerifier.create(
+                ReactorFun.toMonoResult(Mono.<String>error(BOOM), Throwable::getMessage, () -> "was-empty"))
+            .assertNext(r -> assertThat(r).isErr().containsError("boom"))
+            .verifyComplete();
+    }
+
+    @Test
+    void toMonoTry_checkedException_isFailureWithCause() {
+        IOException io = new IOException("disk");
+        StepVerifier.create(ReactorFun.toMonoTry(Mono.error(io)))
+            .assertNext(t -> assertThat(t).isFailure().failsWith(IOException.class))
+            .verifyComplete();
+    }
+
+    @Test
+    void toMonoResult_checkedException_isErrWithCause() {
+        IOException io = new IOException("disk");
+        StepVerifier.create(ReactorFun.toMonoResult(Mono.error(io)))
+            .assertNext(r -> assertThat(r).isErr().containsError(io))
             .verifyComplete();
     }
 
@@ -175,6 +208,19 @@ class ReactorFunTest {
         StepVerifier.create(ReactorFun.toMono(Result.<String, String>ok("x"), IllegalStateException::new))
             .expectNext("x")
             .verifyComplete();
+    }
+
+    @Test
+    void toMono_okThrowableError_emitsValue() {
+        StepVerifier.create(ReactorFun.toMono(Result.<String, IllegalStateException>ok("x")))
+            .expectNext("x")
+            .verifyComplete();
+    }
+
+    @Test
+    void toMono_errThrowableError_errorsWithError() {
+        StepVerifier.create(ReactorFun.toMono(Result.<String, IllegalStateException>err(BOOM)))
+            .verifyErrorMatches(t -> t == BOOM);
     }
 
     @Test

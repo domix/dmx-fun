@@ -6,6 +6,7 @@ import dmx.fun.Try;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import org.jspecify.annotations.NullMarked;
 import reactor.core.publisher.Mono;
 
@@ -100,6 +101,32 @@ public final class ReactorFun {
     }
 
     /**
+     * Converts a {@code Mono<V>} into a {@code Mono<Result<V, E>>} with full control
+     * over both channels: errors are mapped through {@code errorMapper}, and an empty
+     * completion produces the error from {@code onEmpty} instead of the default
+     * {@link NoSuchElementException}.
+     *
+     * @param mono        the source publisher
+     * @param errorMapper maps a {@link Throwable} error signal to the error type
+     * @param onEmpty     supplies the error value used when the source completes empty
+     * @param <V>         the value type
+     * @param <E>         the typed error type
+     * @return a {@code Mono} that always emits a {@link Result}
+     */
+    public static <V, E> Mono<Result<V, E>> toMonoResult(
+        Mono<V> mono,
+        Function<? super Throwable, E> errorMapper,
+        Supplier<E> onEmpty
+    ) {
+        Objects.requireNonNull(mono, "mono");
+        Objects.requireNonNull(errorMapper, "errorMapper");
+        Objects.requireNonNull(onEmpty, "onEmpty");
+        return mono.<Result<V, E>>map(Result::ok)
+            .onErrorResume(throwable -> Mono.just(Result.err(errorMapper.apply(throwable))))
+            .switchIfEmpty(Mono.fromSupplier(() -> Result.err(onEmpty.get())));
+    }
+
+    /**
      * Converts a {@code Mono<V>} into a {@code Mono<Option<V>>}: a value becomes
      * {@link Option#some(Object)} and an empty completion becomes
      * {@link Option#none()}. An error signal is <em>not</em> absorbed — it
@@ -160,6 +187,25 @@ public final class ReactorFun {
     }
 
     /**
+     * Blocking variant of {@link #toMonoResult(Mono, Function, Supplier)}: subscribes
+     * and waits, returning the typed {@link Result} directly. Blocks the calling thread.
+     *
+     * @param mono        the source publisher
+     * @param errorMapper maps a {@link Throwable} error signal to the error type
+     * @param onEmpty     supplies the error value used when the source completes empty
+     * @param <V>         the value type
+     * @param <E>         the typed error type
+     * @return the resulting {@link Result}
+     */
+    public static <V, E> Result<V, E> toResult(
+        Mono<V> mono,
+        Function<? super Throwable, E> errorMapper,
+        Supplier<E> onEmpty
+    ) {
+        return Objects.requireNonNull(toMonoResult(mono, errorMapper, onEmpty).block());
+    }
+
+    /**
      * Blocking variant of {@link #toMonoOption(Mono)}: subscribes and waits,
      * returning the {@link Option} directly. Blocks the calling thread, and a
      * Reactor error signal is rethrown by {@link Mono#block()}.
@@ -199,6 +245,26 @@ public final class ReactorFun {
     public static <V> Mono<V> toMono(Try<V> aTry) {
         Objects.requireNonNull(aTry, "aTry");
         return aTry.fold(Mono::just, Mono::error);
+    }
+
+    /**
+     * Turns a {@link Result} whose error channel is already a {@link Throwable} into a
+     * {@code Mono}: {@code Ok} becomes {@link Mono#just(Object)} and {@code Err}
+     * becomes {@link Mono#error(Throwable)} carrying the error directly. Use the
+     * {@link #toMono(Result, Function)} overload when the error is a domain type that
+     * must be mapped to a {@code Throwable}.
+     *
+     * @param result the result to convert
+     * @param <V>    the value type
+     * @param <E>    the error type, which must be a {@link Throwable}
+     * @return a {@code Mono} that emits the value or errors with the error
+     */
+    public static <V, E extends Throwable> Mono<V> toMono(Result<V, E> result) {
+        Objects.requireNonNull(result, "result");
+        return switch (result) {
+            case Result.Ok<V, E> ok -> Mono.just(ok.value());
+            case Result.Err<V, E> err -> Mono.error(err.error());
+        };
     }
 
     /**
