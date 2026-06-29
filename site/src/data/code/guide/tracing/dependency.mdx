@@ -5,11 +5,11 @@ fileName: 'build.gradle / pom.xml'
 ```groovy
 // Gradle
 implementation("codes.domix:fun-tracing:LATEST_VERSION")
-// Micrometer Tracing — bring your own version (1.2.x – 1.6.x)
-implementation("io.micrometer:micrometer-tracing:1.6.5")
+// Micrometer Tracing — bring your own version (1.2.x – 1.7.x)
+implementation("io.micrometer:micrometer-tracing:1.7.0")
 // Add a bridge — OTel (recommended) or Brave:
-implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
-// implementation("io.micrometer:micrometer-tracing-bridge-brave:1.6.5")
+implementation("io.micrometer:micrometer-tracing-bridge-otel:1.7.0")
+// implementation("io.micrometer:micrometer-tracing-bridge-brave:1.7.0")
 ```
 
 ```xml
@@ -19,17 +19,17 @@ implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
     <artifactId>fun-tracing</artifactId>
     <version>LATEST_VERSION</version>
 </dependency>
-<!-- Micrometer Tracing — bring your own version (1.2.x – 1.6.x) -->
+<!-- Micrometer Tracing — bring your own version (1.2.x – 1.7.x) -->
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-tracing</artifactId>
-    <version>1.6.5</version>
+    <version>1.7.0</version>
 </dependency>
 <!-- Add a bridge — OTel (recommended) or Brave -->
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-tracing-bridge-otel</artifactId>
-    <version>1.6.5</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 

@@ -5,10 +5,10 @@ fileName: 'build.gradle / pom.xml'
 ```groovy
 // Gradle
 implementation("codes.domix:fun-micrometer:LATEST_VERSION")
-// Micrometer — bring your own version (1.5.x – 1.16.x)
-implementation("io.micrometer:micrometer-core:1.16.5")
+// Micrometer — bring your own version (1.5.x – 1.17.x)
+implementation("io.micrometer:micrometer-core:1.17.0")
 // Add your Micrometer backend, e.g. Prometheus:
-// implementation("io.micrometer:micrometer-registry-prometheus:1.16.5")
+// implementation("io.micrometer:micrometer-registry-prometheus:1.17.0")
 ```
 
 ```xml
@@ -18,11 +18,11 @@ implementation("io.micrometer:micrometer-core:1.16.5")
     <artifactId>fun-micrometer</artifactId>
     <version>LATEST_VERSION</version>
 </dependency>
-<!-- Micrometer — bring your own version (1.5.x – 1.16.x) -->
+<!-- Micrometer — bring your own version (1.5.x – 1.17.x) -->
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-core</artifactId>
-    <version>1.16.5</version>
+    <version>1.17.0</version>
 </dependency>
 ```
 

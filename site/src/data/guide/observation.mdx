@@ -20,7 +20,7 @@ required in your business logic.
 
 The module is **optional** — the core `fun` library has no runtime dependency on
 Micrometer. `fun-observation` declares `micrometer-core` as `compileOnly`; you
-bring your own version and backend. Any version from **1.10.x through 1.16.x**
+bring your own version and backend. Any version from **1.10.x through 1.17.x**
 is supported (see [version compatibility](#version-compatibility) below).
 
 > **`fun-observation` vs `fun-tracing`** — Both modules instrument `Try`/`Result`
@@ -199,6 +199,7 @@ pull request that touches the `observation/` module:
 
 | Micrometer Core | Spring Boot | Status  |
 |-----------------|-------------|---------|
+| 1.17.x          | —           | tested  |
 | 1.16.x          | 3.5.x       | tested  |
 | 1.15.x          | 3.4.x       | tested  |
 | 1.14.x          | 3.3.x       | tested  |

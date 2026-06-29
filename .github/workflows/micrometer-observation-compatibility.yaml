@@ -23,8 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         # Covers all supported minor lines from 1.10.x (when Observation API was
-        # introduced) through 1.16.x.
+        # introduced) through 1.17.x.
         micrometer-version:
+          - '1.17.0'
           - '1.16.5'
           - '1.15.9'
           - '1.14.14'
