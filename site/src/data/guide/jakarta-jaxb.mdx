@@ -24,13 +24,13 @@ JAXB. For tests and standalone applications, add the reference implementations
 implementation 'codes.domix:fun-jakarta-jaxb:VERSION'
 
 // JSON-B API + reference implementation (tests / standalone)
-implementation 'jakarta.json.bind:jakarta.json.bind-api:3.0.1'
+implementation 'jakarta.json.bind:jakarta.json.bind-api:3.0.2'
 implementation 'org.eclipse:yasson:3.0.4'
-runtimeOnly    'org.eclipse.parsson:parsson:1.1.7'
+runtimeOnly    'org.eclipse.parsson:parsson:1.1.9'
 
 // JAXB API + reference implementation (tests / standalone)
 implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
-runtimeOnly    'com.sun.xml.bind:jaxb-impl:4.0.8'
+runtimeOnly    'com.sun.xml.bind:jaxb-impl:4.0.9'
 ```
 
 **Maven:**
@@ -44,7 +44,7 @@ runtimeOnly    'com.sun.xml.bind:jaxb-impl:4.0.8'
 <dependency>
   <groupId>jakarta.json.bind</groupId>
   <artifactId>jakarta.json.bind-api</artifactId>
-  <version>3.0.1</version>
+  <version>3.0.2</version>
 </dependency>
 <dependency>
   <groupId>org.eclipse</groupId>
@@ -54,7 +54,7 @@ runtimeOnly    'com.sun.xml.bind:jaxb-impl:4.0.8'
 <dependency>
   <groupId>org.eclipse.parsson</groupId>
   <artifactId>parsson</artifactId>
-  <version>1.1.7</version>
+  <version>1.1.9</version>
   <scope>runtime</scope>
 </dependency>
 ```
@@ -141,7 +141,7 @@ request that touches the `jakarta-jaxb/` module:
 |---|---|---|---|
 | 2.0.0 | 2.0.4 | 3.0.1 | tested (EE 9) |
 | 3.0.0 | 3.0.3 | 4.0.0 | tested (EE 10) |
-| 3.0.1 | 3.0.4 | 4.0.2 | tested (latest) |
+| 3.0.2 | 3.0.4 | 4.0.2 | tested (latest) |
 
 To test locally against a specific combination:
 
