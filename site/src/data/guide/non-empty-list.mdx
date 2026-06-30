@@ -85,6 +85,26 @@ that may be empty (for singletons).
 All transformation methods (`map`, `append`, `prepend`, `concat`) return a **new
 `NonEmptyList`** — the original is unchanged.
 
+### Folding — `reduce` and `joinToString`
+
+Because a `NonEmptyList` always has at least one element, `reduce` combines them into a
+single `T` and returns it **directly** — no `Optional`, no emptiness check, unlike
+`Stream.reduce(BinaryOperator)`. For a single-element list the accumulator is never called.
+
+```java
+NonEmptyList.of(1, List.of(2, 3)).reduce(Integer::sum);   // 6
+```
+
+`joinToString` renders the elements into one `String` — handy for accumulated error
+messages. The no-arg overload defaults the delimiter to `", "`; overloads take a custom
+delimiter and an optional per-element transform:
+
+```java
+errors.joinToString();                 // "must not be blank, too short"
+errors.joinToString("; ");             // "must not be blank; too short"
+users.joinToString(", ", User::name);  // "alice, bob"
+```
+
 ## SequencedCollection integration (Java 21)
 
 `NonEmptyList<T>` implements `java.util.SequencedCollection<T>`, the Java 21

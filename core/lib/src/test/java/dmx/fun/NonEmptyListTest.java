@@ -179,6 +179,72 @@ class NonEmptyListTest {
     }
 
     // -------------------------------------------------------------------------
+    // reduce()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void reduce_shouldCombineAllElements() {
+        assertThat(NonEmptyList.of(1, List.of(2, 3)).reduce(Integer::sum)).isEqualTo(6);
+    }
+
+    @Test
+    void reduce_shouldFoldLeftToRight() {
+        // ((1 - 2) - 3) == -4 proves left-to-right order
+        assertThat(NonEmptyList.of(1, List.of(2, 3)).reduce((a, b) -> a - b)).isEqualTo(-4);
+    }
+
+    @Test
+    void reduce_onSingleton_shouldReturnHead_withoutInvokingAccumulator() {
+        NonEmptyList<Integer> nel = NonEmptyList.of(5, List.of());
+        assertThat(nel.reduce((a, b) -> {
+            throw new AssertionError("accumulator must not be called for a single element");
+        })).isEqualTo(5);
+    }
+
+    @Test
+    void reduce_shouldThrowNPE_whenAccumulatorIsNull() {
+        assertThatThrownBy(() -> NonEmptyList.of(1, List.of(2)).reduce(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // joinToString()
+    // -------------------------------------------------------------------------
+
+    @Test
+    void joinToString_noArg_shouldUseCommaSpace() {
+        assertThat(NonEmptyList.of("a", List.of("b", "c")).joinToString()).isEqualTo("a, b, c");
+    }
+
+    @Test
+    void joinToString_withDelimiter_shouldRenderWithValueOf() {
+        assertThat(NonEmptyList.of(1, List.of(2, 3)).joinToString("-")).isEqualTo("1-2-3");
+    }
+
+    @Test
+    void joinToString_singleton_shouldReturnHeadWithoutDelimiter() {
+        assertThat(NonEmptyList.of("only", List.of()).joinToString("; ")).isEqualTo("only");
+    }
+
+    @Test
+    void joinToString_withTransform_shouldRenderEachElement() {
+        assertThat(NonEmptyList.of("ab", List.of("cde")).joinToString(",", s -> String.valueOf(s.length())))
+            .isEqualTo("2,3");
+    }
+
+    @Test
+    void joinToString_shouldThrowNPE_whenDelimiterIsNull() {
+        assertThatThrownBy(() -> NonEmptyList.of("a", List.of("b")).joinToString(null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void joinToString_shouldThrowNPE_whenTransformIsNull() {
+        assertThatThrownBy(() -> NonEmptyList.of("a", List.of("b")).joinToString(",", null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    // -------------------------------------------------------------------------
     // append()
     // -------------------------------------------------------------------------
 

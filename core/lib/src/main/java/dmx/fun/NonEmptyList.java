@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SequencedCollection;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
@@ -264,6 +265,83 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
             newTail.add(Objects.requireNonNull(mapper.apply(element), "mapper must not return null"));
         }
         return new NonEmptyList<>(newHead, Collections.unmodifiableList(newTail));
+    }
+
+    /**
+     * Combines all elements into a single value using {@code accumulator}, left to right,
+     * starting from the head. Because a {@code NonEmptyList} always has at least one element,
+     * this returns a {@code T} directly — there is no {@code Optional} and no emptiness check,
+     * unlike {@link Stream#reduce(java.util.function.BinaryOperator)}.
+     *
+     * <p>For a single-element list the {@code accumulator} is never invoked and the head is
+     * returned as-is.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * NonEmptyList.of(1, List.of(2, 3)).reduce(Integer::sum);      // 6
+     * errors.reduce((a, b) -> a + "; " + b);                       // joined messages
+     * }</pre>
+     *
+     * @param accumulator an associative function combining two elements; must not be {@code null}
+     * @return the combined value
+     * @throws NullPointerException if {@code accumulator} is {@code null}
+     */
+    public T reduce(BinaryOperator<T> accumulator) {
+        Objects.requireNonNull(accumulator, "accumulator must not be null");
+        T result = head;
+        for (T element : tail) {
+            result = accumulator.apply(result, element);
+        }
+        return result;
+    }
+
+    /**
+     * Joins the elements into a single {@link String}, separated by {@code ", "}.
+     *
+     * <p>Equivalent to {@code joinToString(", ")}.
+     *
+     * @return the joined string
+     */
+    public String joinToString() {
+        return joinToString(", ");
+    }
+
+    /**
+     * Joins the elements into a single {@link String}, separated by {@code delimiter}, using
+     * {@link String#valueOf(Object)} to render each element.
+     *
+     * @param delimiter the separator placed between elements; must not be {@code null}
+     * @return the joined string
+     * @throws NullPointerException if {@code delimiter} is {@code null}
+     */
+    public String joinToString(CharSequence delimiter) {
+        return joinToString(delimiter, String::valueOf);
+    }
+
+    /**
+     * Joins the elements into a single {@link String}, separated by {@code delimiter}, rendering
+     * each element with {@code transform}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * NonEmptyList.of("must not be blank", List.of("too short")).joinToString("; ");
+     * // "must not be blank; too short"
+     * users.joinToString(",", User::name);
+     * }</pre>
+     *
+     * @param delimiter the separator placed between elements; must not be {@code null}
+     * @param transform renders each element as a {@link CharSequence}; must not be {@code null}
+     * @return the joined string
+     * @throws NullPointerException if {@code delimiter} or {@code transform} is {@code null}
+     */
+    public String joinToString(CharSequence delimiter, Function<? super T, ? extends CharSequence> transform) {
+        Objects.requireNonNull(delimiter, "delimiter must not be null");
+        Objects.requireNonNull(transform, "transform must not be null");
+        StringBuilder sb = new StringBuilder().append(transform.apply(head));
+        for (T element : tail) {
+            sb.append(delimiter).append(transform.apply(element));
+        }
+        return sb.toString();
     }
 
     /**
