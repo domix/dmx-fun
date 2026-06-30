@@ -1,0 +1,42 @@
+# Verifies that the fun-spring-webflux module remains compatible with multiple Spring
+# Framework versions. spring-webflux is declared compileOnly so users bring their own
+# version; this matrix catches regressions against older (but still supported) lines
+# before they reach main.
+#
+# To run a specific version locally:
+#   ./gradlew :frameworks:spring-webflux:test -PspringVersion=6.1.14
+name: Spring WebFlux compatibility
+
+on:
+  pull_request:
+    # Read-only token: this job only checks out and runs tests, never writes.
+    paths:
+      - 'frameworks/spring-webflux/**'
+      - 'reactor/**'
+      - 'gradle/libs.versions.toml'
+      - '.github/workflows/spring-webflux-compatibility.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Covers all actively supported Spring Framework minor release lines.
+        spring-version: ['6.0.23', '6.1.21', '6.2.9', '7.0.8']
+    name: Spring WebFlux ${{ matrix.spring-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      # Pass the matrix version as a Gradle property; the build falls back to the
+      # catalog version when the property is absent (local development).
+      - run: ./gradlew :frameworks:spring-webflux:test -PspringVersion=${{ matrix.spring-version }}

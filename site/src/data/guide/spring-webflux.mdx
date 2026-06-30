@@ -1,0 +1,105 @@
+---
+title: "Spring WebFlux Integration — Developer Guide"
+description: "How to use the optional fun-spring-webflux module: map Option, Result, Try, and Validated to a ServerResponse in functional endpoints, with documented, overridable HTTP conventions and Flux aggregation via WebfluxFun."
+order: 24
+h1: "Spring WebFlux Integration"
+---
+
+import {Content as Dependency} from '../code/guide/spring-webflux/dependency.mdx';
+
+The `fun-spring-webflux` module maps dmx-fun outcomes — `Option`, `Result`, `Try`, and
+`Validated` — to Spring WebFlux `ServerResponse` for functional endpoints, so a handler
+returns a domain outcome instead of re-implementing status/body conventions per service.
+
+It is an **optional** module. `spring-webflux` is declared `compileOnly` (your app
+already brings Spring), and it builds on [`fun-reactor`](/dmx-fun/guide/reactor). The
+core `fun` library keeps no dependency on Spring.
+
+## Adding the dependency
+
+<Dependency/>
+
+## The `WebfluxFun` adapters
+
+Each adapter takes the upstream reactive outcome and returns a `Mono<ServerResponse>`.
+
+| Adapter | Behavior |
+|---|---|
+| `fromResult(mono, errorMapper)` | `Ok` → `200` + body; `Err` → `errorMapper`; empty → `404` |
+| `fromOption(mono)` | `Some` → `200` + body; `None` or empty → `404` |
+| `fromTry(mono, failureMapper)` | `Success` → `200` + body; `Failure` → `failureMapper`; empty → `404` |
+| `fromValidated(mono)` | `Valid` → `200` + body; `Invalid` → `400` with all errors; empty → `404` |
+| `fromResultStream(flux, errorMapper)` | aggregate a `Flux<Result>` (fail-fast); all `Ok` → `200` + list; first `Err` → `errorMapper` |
+
+```java
+RouterFunction<ServerResponse> routes() {
+    return RouterFunctions.route()
+        .GET("/users/{id}", request ->
+            WebfluxFun.fromResult(
+                userService.findById(request.pathVariable("id")),   // Mono<Result<User, ApiError>>
+                error -> ServerResponse.status(error.status()).bodyValue(error.detail())))
+        .GET("/profiles/{id}", request ->
+            WebfluxFun.fromOption(profileService.find(request.pathVariable("id")))) // Mono<Option<Profile>>
+        .build();
+}
+```
+
+## HTTP mapping defaults
+
+- `Result.Ok(v)` / `Try.Success(v)` / `Option.Some(v)` / `Validated.Valid(v)` → `200 OK`
+  with `v` as the body
+- `Option.None` → `404 Not Found`
+- `Validated.Invalid(errors)` → `400 Bad Request` with the accumulated errors as the body
+- `Result.Err(e)` → your `ErrorHttpMapper<E>`; `Try.Failure(t)` → your `ThrowableHttpMapper`
+- an **empty** source `Mono` (it completes without emitting an outcome) → `404 Not Found`
+
+The success body is written with `ServerResponse.ok().bodyValue(v)`, so the value must be
+encodable by your WebFlux codecs.
+
+## Validating a request body → `400` with every error
+
+`Validated` accumulates errors, and `fromValidated` turns an `Invalid` into a single
+`400` carrying all of them — no submit-three-times round-trips:
+
+```java
+.POST("/signup", request ->
+    request.bodyToMono(SignupForm.class)
+        .map(form -> validate(form))                 // Validated<NonEmptyList<String>, User>
+        .flatMap(validated -> WebfluxFun.fromValidated(Mono.just(validated))))
+```
+
+## Aggregating a stream
+
+`fromResultStream` sequences a `Flux<Result<V, E>>` fail-fast (via `fun-reactor`'s
+`ReactorFlux.sequence`) into one response: all `Ok` become a `200` with the list, and the
+first `Err` is rendered by your `errorMapper`.
+
+```java
+.GET("/orders", request ->
+    WebfluxFun.fromResultStream(orderService.findAll(query),   // Flux<Result<Order, ApiError>>
+        error -> ServerResponse.status(error.status()).bodyValue(error.detail())))
+```
+
+## Composing before responding
+
+When the upstream is a `Mono<Result<V, E>>`, use `fun-reactor`'s `ReactorResult`
+operators (`mapOk`, `flatMapOk`, `mapErr`, `recover`) to stay on the Result track, then
+hand the result to `fromResult` for the HTTP mapping.
+
+## Version compatibility
+
+Tested in CI against the following Spring Framework versions on every pull request that
+touches the `spring-webflux` module:
+
+| Spring version | Status |
+|---|---|
+| 6.0.x | tested |
+| 6.1.x | tested |
+| 6.2.x | tested |
+| 7.0.x | tested |
+
+To test locally against a specific version:
+
+```bash
+./gradlew :frameworks:spring-webflux:test -PspringVersion=7.0.8
+```

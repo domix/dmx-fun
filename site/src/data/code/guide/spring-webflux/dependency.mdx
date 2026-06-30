@@ -1,0 +1,29 @@
+---
+fileName: 'build.gradle / pom.xml'
+---
+
+```groovy
+// Gradle
+implementation("codes.domix:fun-spring-webflux:LATEST_VERSION")
+// Spring WebFlux — bring your own version (6.0.x – 7.0.x)
+implementation("org.springframework:spring-webflux:7.0.8")
+```
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-spring-webflux</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<!-- Spring WebFlux — bring your own version (6.0.x – 7.0.x) -->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webflux</artifactId>
+    <version>7.0.8</version>
+</dependency>
+```
+
+> `fun-spring-webflux` declares `spring-webflux` as `compileOnly` and depends on
+> `fun-reactor`. Your WebFlux application already brings Spring on the classpath, so the
+> adapter never forces a version.

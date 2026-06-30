@@ -1,0 +1,43 @@
+// ── Spring WebFlux adapter module ──────────────────────────────────────────────
+// Maps dmx-fun outcomes (Option, Result, Try, Validated) to Spring WebFlux
+// ServerResponse for functional endpoints. Builds on fun-reactor. spring-webflux
+// is declared compileOnly — users bring their own Spring version.
+plugins {
+    id 'dmx-fun.java-module'
+}
+
+// Spring version: overridable for the CI compatibility matrix.
+//   ./gradlew :frameworks:spring-webflux:test -PspringVersion=7.0.0
+def springVersion = findProperty('springVersion') ?: libs.versions.spring.get()
+
+dependencies {
+    api project(':core:lib')
+    api project(':reactor')
+
+    compileOnly "org.springframework:spring-webflux:${springVersion}"
+    compileOnly libs.reactor.core
+
+    testImplementation "org.springframework:spring-webflux:${springVersion}"
+    testImplementation "org.springframework:spring-test:${springVersion}"
+    testImplementation "org.springframework:spring-context:${springVersion}"
+    testImplementation libs.reactor.core
+    testImplementation libs.reactor.test
+    // WebTestClient encodes the response body (e.g. a List of validation errors) via the
+    // default codecs; Jackson provides the JSON encoder used by the end-to-end route tests.
+    testImplementation libs.jackson.databind
+
+    compileOnly        project(':core:assertj')
+    testImplementation project(':core:assertj')
+}
+
+jpmsTest {
+    moduleName = 'dmx.fun.spring.webflux'
+}
+
+mavenPublishing {
+    coordinates("codes.domix", "fun-spring-webflux", "${project.version}")
+    pom {
+        name = 'dmx-fun Spring WebFlux integration'
+        description = 'Spring WebFlux adapters for dmx-fun: map Option, Result, Try, and Validated to ServerResponse for functional endpoints.'
+    }
+}
