@@ -56,6 +56,16 @@ class ReactorFluxTest {
             .verifyError(IllegalStateException.class);
     }
 
+    @Test
+    void sequence_valuesThenSourceError_propagatesAndDiscardsPartials() {
+        Flux<Result<Integer, String>> src =
+            Flux.just(Result.<Integer, String>ok(1), Result.<Integer, String>ok(2))
+                .concatWith(Flux.error(BOOM));
+        // No Ok(list) is emitted — the partial values are discarded, only the error surfaces.
+        StepVerifier.create(ReactorFlux.sequence(src))
+            .verifyError(IllegalStateException.class);
+    }
+
     // ── collectResult ──────────────────────────────────────────────────────────
 
     @Test
@@ -75,6 +85,15 @@ class ReactorFluxTest {
     @Test
     void collectResult_sourceError_isErrWithCause() {
         StepVerifier.create(ReactorFlux.collectResult(Flux.<String>error(BOOM)))
+            .assertNext(r -> assertThat(r).isErr().containsError(BOOM))
+            .verifyComplete();
+    }
+
+    @Test
+    void collectResult_valuesThenError_isErrAndDiscardsPartials() {
+        Flux<String> src = Flux.just("a", "b").concatWith(Flux.error(BOOM));
+        // Partial values are discarded: the result is Err(cause), not a partial Ok list.
+        StepVerifier.create(ReactorFlux.collectResult(src))
             .assertNext(r -> assertThat(r).isErr().containsError(BOOM))
             .verifyComplete();
     }
