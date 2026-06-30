@@ -355,7 +355,7 @@ implementation("org.hibernate.validator:hibernate-validator:9.1.1.Final")
 <dependency>
     <groupId>jakarta.json.bind</groupId>
     <artifactId>jakarta.json.bind-api</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.2</version>
 </dependency>
 <dependency>
     <groupId>org.eclipse</groupId>
@@ -368,9 +368,9 @@ implementation("org.hibernate.validator:hibernate-validator:9.1.1.Final")
 ```groovy
 implementation("codes.domix:fun-jakarta-jaxb:LATEST_VERSION")
 // JSON-B RI (tests / standalone):
-implementation("jakarta.json.bind:jakarta.json.bind-api:3.0.1")
+implementation("jakarta.json.bind:jakarta.json.bind-api:3.0.2")
 implementation("org.eclipse:yasson:3.0.4")
-runtimeOnly("org.eclipse.parsson:parsson:1.1.7")
+runtimeOnly("org.eclipse.parsson:parsson:1.1.9")
 ```
 
 ### Resilience4J integration (optional)
