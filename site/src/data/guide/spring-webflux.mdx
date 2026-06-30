@@ -30,6 +30,8 @@ Each adapter takes the upstream reactive outcome and returns a `Mono<ServerRespo
 | `fromTry(mono, failureMapper)` | `Success` → `200` + body; `Failure` → `failureMapper`; empty → `404` |
 | `fromValidated(mono)` | `Valid` → `200` + body; `Invalid` → `400` with all errors; empty → `404` |
 | `fromResultStream(flux, errorMapper)` | aggregate a `Flux<Result>` (fail-fast); all `Ok` → `200` + list; first `Err` → `errorMapper` |
+| `fromResultStreamAccumulating(flux)` | aggregate a `Flux<Result>` accumulating; all `Ok` → `200` + list; any `Err` → `400` with **every** error |
+| `stream(flux, mediaType, type)` | stream a `Flux<V>` as the body (NDJSON / SSE); `200`, each element encoded as it arrives |
 
 ```java
 RouterFunction<ServerResponse> routes() {
@@ -78,6 +80,34 @@ first `Err` is rendered by your `errorMapper`.
 .GET("/orders", request ->
     WebfluxFun.fromResultStream(orderService.findAll(query),   // Flux<Result<Order, ApiError>>
         error -> ServerResponse.status(error.status()).bodyValue(error.detail())))
+```
+
+To report **every** failure instead of stopping at the first, use the accumulating
+variant — all `Ok` become a `200` with the list, any `Err` makes a `400` carrying all the
+accumulated errors (backed by `fun-reactor`'s `ReactorFlux.collectValidated`):
+
+```java
+.GET("/orders", request ->
+    WebfluxFun.fromResultStreamAccumulating(orderService.findAll(query)))  // Flux<Result<Order, ApiError>>
+```
+
+## Streaming a response body
+
+When the response should stream element-by-element rather than collect first, `stream`
+renders a `Flux<V>` as the body with a chosen content type (NDJSON or SSE):
+
+```java
+.GET("/orders/stream", request ->
+    WebfluxFun.stream(orderService.findAll(), MediaType.APPLICATION_NDJSON, Order.class))
+```
+
+Because the `200` status and headers are sent before the body streams, a terminal error
+cannot change the status. The four-argument overload appends a typed fallback element on
+error instead of abruptly closing the connection:
+
+```java
+WebfluxFun.stream(orders, MediaType.APPLICATION_NDJSON, Order.class,
+    throwable -> Order.unavailable());   // graceful last element on failure
 ```
 
 ## Composing before responding

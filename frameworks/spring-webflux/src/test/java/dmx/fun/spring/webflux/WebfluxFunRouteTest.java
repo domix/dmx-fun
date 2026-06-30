@@ -6,10 +6,12 @@ import dmx.fun.Result;
 import dmx.fun.Validated;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +29,13 @@ class WebfluxFunRouteTest {
             .GET("/missing", request -> WebfluxFun.fromOption(Mono.just(Option.<String>none())))
             .GET("/invalid", request -> WebfluxFun.fromValidated(
                 Mono.just(Validated.invalid(NonEmptyList.of("must not be blank", List.of("too short"))))))
+            .GET("/accumulate", request -> WebfluxFun.fromResultStreamAccumulating(
+                Flux.just(Result.<Integer, String>ok(1), Result.err("e1"), Result.err("e2"))))
+            .GET("/stream", request -> WebfluxFun.stream(
+                Flux.just("a", "b", "c"), MediaType.APPLICATION_NDJSON, String.class))
+            .GET("/stream-error", request -> WebfluxFun.stream(
+                Flux.just("a").concatWith(Flux.error(new IllegalStateException("boom"))),
+                MediaType.APPLICATION_NDJSON, String.class, throwable -> "FALLBACK"))
             .build();
     }
 
@@ -49,5 +58,30 @@ class WebfluxFunRouteTest {
             .expectStatus().isBadRequest()
             .expectBody(String.class).returnResult().getResponseBody();
         assertThat(body).contains("must not be blank", "too short");
+    }
+
+    @Test
+    void accumulate_returns400WithEveryError() {
+        String body = client.get().uri("/accumulate").exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(String.class).returnResult().getResponseBody();
+        assertThat(body).contains("e1", "e2");
+    }
+
+    @Test
+    void stream_returns200WithNdjsonBody() {
+        String body = client.get().uri("/stream").exchange()
+            .expectStatus().isOk()
+            .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_NDJSON)
+            .expectBody(String.class).returnResult().getResponseBody();
+        assertThat(body).contains("a", "b", "c");
+    }
+
+    @Test
+    void stream_onError_appendsFallbackElement() {
+        String body = client.get().uri("/stream-error").exchange()
+            .expectStatus().isOk()
+            .expectBody(String.class).returnResult().getResponseBody();
+        assertThat(body).contains("a", "FALLBACK");
     }
 }

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -109,6 +110,30 @@ class WebfluxFunTest {
     void fromResultStream_firstErr_usesErrorMapper() {
         Flux<Result<Integer, String>> stream = Flux.just(Result.ok(1), Result.err("bad"));
         assertThat(status(WebfluxFun.fromResultStream(stream, ERROR_400))).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    // ── fromResultStreamAccumulating ───────────────────────────────────────────
+
+    @Test
+    void fromResultStreamAccumulating_allOk_is200() {
+        Flux<Result<Integer, String>> stream = Flux.just(Result.ok(1), Result.ok(2));
+        assertThat(status(WebfluxFun.fromResultStreamAccumulating(stream))).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void fromResultStreamAccumulating_withErrors_is400() {
+        Flux<Result<Integer, String>> stream = Flux.just(Result.ok(1), Result.err("e1"), Result.err("e2"));
+        assertThat(status(WebfluxFun.fromResultStreamAccumulating(stream))).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    // ── stream ─────────────────────────────────────────────────────────────────
+
+    @Test
+    void stream_setsOkStatusAndContentType() {
+        ServerResponse response =
+            WebfluxFun.stream(Flux.just("a", "b"), MediaType.APPLICATION_NDJSON, String.class).block();
+        assertThat(HttpStatus.valueOf(response.statusCode().value())).isEqualTo(HttpStatus.OK);
+        assertThat(response.headers().getContentType()).isEqualTo(MediaType.APPLICATION_NDJSON);
     }
 
     // ── null guards ────────────────────────────────────────────────────────────
