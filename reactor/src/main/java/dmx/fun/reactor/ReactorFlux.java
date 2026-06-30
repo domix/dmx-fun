@@ -114,7 +114,10 @@ public final class ReactorFlux {
         Flux<Result<T, E>> results
     ) {
         Objects.requireNonNull(results, "results");
-        return results.collectList().map(ReactorFlux::accumulate);
+        // Stream straight into the value/error buffers instead of materializing the
+        // whole Flux into a List<Result> and re-walking it.
+        return results.collect(Accumulator<T, E>::new, Accumulator::add)
+            .map(Accumulator::toValidated);
     }
 
     // ── Per-element helpers ────────────────────────────────────────────────────
@@ -214,18 +217,23 @@ public final class ReactorFlux {
 
     // ── internals ──────────────────────────────────────────────────────────────
 
-    private static <T, E> Validated<NonEmptyList<E>, List<T>> accumulate(List<Result<T, E>> results) {
-        List<T> values = new ArrayList<>();
-        List<E> errors = new ArrayList<>();
-        for (Result<T, E> result : results) {
+    /** Aggregates a stream of {@code Result} into value and error buffers as it is consumed. */
+    private static final class Accumulator<T, E> {
+        private final List<T> values = new ArrayList<>();
+        private final List<E> errors = new ArrayList<>();
+
+        void add(Result<T, E> result) {
             switch (result) {
                 case Result.Ok<T, E> ok -> values.add(ok.value());
                 case Result.Err<T, E> err -> errors.add(err.error());
             }
         }
-        return NonEmptyList.fromList(errors).fold(
-            () -> Validated.valid(values),
-            Validated::invalid);
+
+        Validated<NonEmptyList<E>, List<T>> toValidated() {
+            return NonEmptyList.fromList(errors).fold(
+                () -> Validated.valid(values),
+                Validated::invalid);
+        }
     }
 
     /** Carries a typed {@code Result.Err} value through Reactor's error channel for {@link #sequence}. */
