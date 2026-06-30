@@ -271,6 +271,57 @@ public sealed interface Result<Value, Error> extends Bicontainer<Value, Error> p
     }
 
     /**
+     * Maps the value of a successful {@code Result} with a function that <em>may throw</em>,
+     * folding any thrown {@link Throwable} into the error channel via {@code exceptionToError}.
+     * If the instance is an error, the error is propagated and {@code mapper} is never invoked.
+     *
+     * <p>Unlike {@link #map(Function) map}, whose mapper must not throw (an exception would
+     * escape the call), {@code mapCatching} runs the mapper inside a try/catch and converts a
+     * throw into {@code Err}. Unlike {@link #flatMap(Function) flatMap}, the mapper returns a
+     * plain value rather than another {@code Result} — it is the convenience for
+     * {@code flatMap(v -> Try.of(() -> mapper.apply(v)).toResult().mapError(exceptionToError))}.
+     *
+     * <p>The mapper is a {@link CheckedFunction}, so it may declare <em>checked</em>
+     * exceptions (e.g. a parser or I/O call) and still be passed as a lambda or method
+     * reference. {@link Throwable} is caught (matching {@code Try.of}). Because
+     * {@code Ok} rejects a {@code null} value, a {@code mapper} that returns {@code null}
+     * surfaces as a caught {@link NullPointerException} and is mapped through
+     * {@code exceptionToError} like any other failure.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Result<Config, AppError> loaded = pathResult
+     *     .mapCatching(path -> parseConfig(path),   // parseConfig may throw IOException
+     *                  AppError::fromThrowable);
+     * }</pre>
+     *
+     * @param <NewValue>       the type of the value after applying the mapping function
+     * @param mapper           the function to apply to the success value; may throw, including
+     *                         checked exceptions
+     * @param exceptionToError function mapping a thrown {@link Throwable} to the error type
+     * @return {@code Ok(mapper(value))} on success, {@code Err(exceptionToError(t))} if the
+     * mapper throws, or the original error if this instance is an error
+     * @throws NullPointerException if {@code mapper} or {@code exceptionToError} is {@code null}
+     */
+    default <NewValue> Result<NewValue, Error> mapCatching(
+        CheckedFunction<Value, NewValue> mapper,
+        Function<Throwable, Error> exceptionToError
+    ) {
+        Objects.requireNonNull(mapper, "mapper");
+        Objects.requireNonNull(exceptionToError, "exceptionToError");
+        return switch (this) {
+            case Ok<Value, Error> ok -> {
+                try {
+                    yield Result.ok(mapper.apply(ok.value()));
+                } catch (Throwable t) {
+                    yield Result.err(exceptionToError.apply(t));
+                }
+            }
+            case Err<Value, Error> err -> Result.err(err.error());
+        };
+    }
+
+    /**
      * Executes the given action if the current {@code Result} instance represents a successful result.
      * If the instance is of type {@code Ok}, the provided action is applied to the contained value.
      * In both cases, the original {@code Result} instance is returned unchanged.
