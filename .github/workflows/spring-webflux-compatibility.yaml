@@ -16,12 +16,18 @@ on:
       - 'gradle/libs.versions.toml'
       - '.github/workflows/spring-webflux-compatibility.yaml'
 
+# Cancel superseded runs when a new push updates the same PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
