@@ -70,6 +70,31 @@ A `Mono` that completes without a value is treated as a missing value:
 `toMonoOption` is the one conversion that does **not** absorb errors — since
 `Option` has no error channel, an error signal propagates as a Reactor error.
 
+### Composing on the `Result` track
+
+Once you have a `Mono<Result<V, E>>`, `ReactorResult` lets you keep composing
+without unwrapping at every step — `Err` is threaded through untouched:
+
+| Operator | Behavior |
+|---|---|
+| `mapOk(mono, fn)` | transform the `Ok` value |
+| `flatMapOk(mono, fn)` | chain a dependent reactive step on the `Ok` value (`fn` returns `Mono<Result<W,E>>`) |
+| `mapErr(mono, fn)` | transform the error channel |
+| `recover(mono, fn)` | turn an `Err` into an `Ok` via a fallback |
+
+```java
+Mono<Result<Receipt, ApiError>> receipt =
+    ReactorResult.flatMapOk(
+        ReactorResult.mapOk(
+            ReactorFun.toMonoResult(userClient.findById(id), ApiError::fromThrowable),
+            User::accountId),                          // Mono<Result<AccountId, ApiError>>
+        accountId -> ReactorFun.toMonoResult(          // dependent reactive step
+            billingClient.charge(accountId), ApiError::fromThrowable));
+```
+
+`flatMapOk` only invokes its mapper on the `Ok` path; a failure short-circuits the
+rest of the chain, exactly like a synchronous `Result.flatMap`.
+
 ## dmx-fun → Reactor
 
 Going the other way turns a domain outcome back into a `Mono`:
@@ -109,6 +134,37 @@ Mono<String> tenantAware = Mono.deferContextual(ctx ->
 > Reactor 3.4 or later. The `ReactorFun` conversions themselves work on any
 > supported 3.x release.
 
+## Streaming with `Flux`
+
+Where `ReactorFun` handles a single value, `ReactorFlux` handles a stream. Its
+centerpiece folds a `Flux` of outcomes into one `Mono<Result<List<…>, …>>` — the
+reactive equivalent of `Result.sequence`.
+
+| Method | Behavior |
+|---|---|
+| `sequence(flux)` | `Flux<Result<T,E>>` → `Mono<Result<List<T>,E>>`, fail-fast (first `Err` short-circuits and cancels upstream) |
+| `collectResult(flux[, errorMapper])` | `Flux<T>` → `Mono<Result<List<T>,…>>`; a source error becomes `Err` |
+| `collectValidated(flux)` | `Flux<Result<T,E>>` → `Mono<Validated<NonEmptyList<E>, List<T>>>`, accumulating **all** errors |
+| `flattenOption(flux)` | `Flux<Option<T>>` → `Flux<T>`, dropping `None` |
+| `toFlux(...)` | emit a `NonEmptyList`, `Option`, `Result`, or `Try` as a `Flux` |
+
+```java
+// Fail-fast: stop at the first failure
+Mono<Result<List<Order>, Failure>> all = ReactorFlux.sequence(orderResultsFlux);
+
+// Accumulate: report every failure at once
+Mono<Validated<NonEmptyList<Failure>, List<Order>>> validated =
+    ReactorFlux.collectValidated(orderResultsFlux);
+
+// Collect a raw stream, folding a Reactor error into the typed channel
+Mono<Result<List<Order>, Failure>> collected =
+    ReactorFlux.collectResult(orderFlux, Failure::fromThrowable);
+```
+
+`sequence` and `collectResult` treat an empty stream as `Ok([])`; only `sequence`
+short-circuits, cancelling the upstream as soon as it sees an `Err`. Backpressure
+and cancellation are preserved throughout.
+
 ## Migrating from manual conversion code
 
 Hand-rolled `Mono` → outcome conversions usually look like this — a `map`, an
@@ -132,6 +188,25 @@ Mono<Result<User, ApiError>> result = ReactorFun.toMonoResult(
     userClient.findById(id),
     ApiError::fromThrowable,
     () -> ApiError.notFound(id));
+```
+
+Streaming aggregation collapses the same way. The manual `collectList` plus
+error handling:
+
+```java
+// Before: collect, then rebuild the error case by hand
+Mono<Result<List<Order>, ApiError>> orders = orderClient.findAll(query)
+    .collectList()
+    .map(Result::<List<Order>, ApiError>ok)
+    .onErrorResume(ex -> Mono.just(Result.err(ApiError.fromThrowable(ex))));
+```
+
+becomes a single `collectResult`:
+
+```java
+// After
+Mono<Result<List<Order>, ApiError>> orders =
+    ReactorFlux.collectResult(orderClient.findAll(query), ApiError::fromThrowable);
 ```
 
 ## Blocking vs reactive
