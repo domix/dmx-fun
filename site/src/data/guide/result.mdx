@@ -97,6 +97,19 @@ Use this to chain fallible operations without nesting.
 
 <TransformingFlatMap/>
 
+### `mapCatching(mapper, exceptionToError)`
+
+Like `map`, but the mapper **may throw** — any `Throwable` is caught and folded into
+the error channel via `exceptionToError`, so you stay in `Result<R, E>` instead of
+letting the exception escape (as plain `map` would) or hand-writing a `Try` bridge.
+An `Err` is passed through and the mapper is never invoked.
+
+```java
+Result<Config, AppError> loaded = pathResult
+    .mapCatching(path -> parseConfig(path),   // parseConfig may throw
+                 AppError::fromThrowable);
+```
+
 ### `filter(predicate, error)`
 
 Converts an `Ok` to `Err` when the predicate fails.

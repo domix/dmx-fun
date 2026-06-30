@@ -148,6 +148,63 @@ class ResultTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    // ---------- mapCatching ----------
+
+    @Test
+    void mapCatching_shouldTransformOkValue() {
+        var result = Result.<String, String>ok("hello")
+            .mapCatching(String::length, Throwable::getMessage);
+        assertThat(result.get()).isEqualTo(5);
+    }
+
+    @Test
+    void mapCatching_shouldFoldThrownExceptionIntoErr() {
+        var result = Result.<String, String>ok("x")
+            .mapCatching(
+                _ -> { throw new IllegalStateException("boom"); },
+                Throwable::getMessage
+            );
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("boom");
+    }
+
+    @Test
+    void mapCatching_shouldPropagateErr_withoutInvokingMapper() {
+        AtomicBoolean called = new AtomicBoolean(false);
+        var result = Result.<String, String>err("orig")
+            .mapCatching(
+                s -> {
+                    called.set(true);
+                    return s.length();
+                },
+                Throwable::getMessage
+            );
+        assertThat(result.getError()).isEqualTo("orig");
+        assertThat(called).isFalse();
+    }
+
+    @Test
+    void mapCatching_shouldFoldNullMapperReturnAsCaughtNpe() {
+        var result = Result.<String, String>ok("x")
+            .mapCatching(_ -> null, t -> t.getClass().getSimpleName());
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("NullPointerException");
+    }
+
+    @Test
+    void mapCatching_shouldThrowNPE_whenMapperIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>ok("v")
+            .mapCatching(null, Throwable::getMessage))
+            .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void mapCatching_shouldThrowNPE_whenExceptionToErrorIsNull() {
+        assertThatThrownBy(() -> Result.<String, String>ok("v")
+            .mapCatching(Function.identity(), null))
+            .isInstanceOf(NullPointerException.class);
+    }
+
     // ---------- flatMap ----------
 
     @Test
