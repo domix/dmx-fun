@@ -8,7 +8,9 @@ import dmx.fun.Validated;
 import dmx.fun.reactor.ReactorFlux;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -112,11 +114,7 @@ public final class WebfluxFun {
         Mono<Validated<NonEmptyList<E>, V>> source
     ) {
         Objects.requireNonNull(source, "source");
-        return source.<ServerResponse>flatMap(validated -> switch (validated) {
-            case Validated.Valid<NonEmptyList<E>, V> valid -> okBody(valid.value());
-            case Validated.Invalid<NonEmptyList<E>, V> invalid ->
-                ServerResponse.badRequest().bodyValue(invalid.error().toList());
-        }).switchIfEmpty(notFound());
+        return source.flatMap(WebfluxFun::validatedToResponse).switchIfEmpty(notFound());
     }
 
     /**
@@ -140,6 +138,82 @@ public final class WebfluxFun {
             case Result.Ok<List<V>, E> ok -> okBody(ok.value());
             case Result.Err<List<V>, E> err -> errorMapper.apply(err.error());
         });
+    }
+
+    /**
+     * Aggregates a {@code Flux<Result<V, E>>} into a single response by accumulating it (via
+     * {@code fun-reactor}'s {@code ReactorFlux.collectValidated}): all {@code Ok} → {@code 200}
+     * with the list of values, any {@code Err} → {@code 400} with <em>every</em> accumulated
+     * error as the body. Unlike {@link #fromResultStream}, this does not short-circuit on the
+     * first failure — it reports them all.
+     *
+     * @param source the stream of outcomes
+     * @param <V>    the success value type
+     * @param <E>    the error type
+     * @return the HTTP response
+     */
+    public static <V, E> Mono<ServerResponse> fromResultStreamAccumulating(Flux<Result<V, E>> source) {
+        Objects.requireNonNull(source, "source");
+        return ReactorFlux.collectValidated(source).flatMap(WebfluxFun::validatedToResponse);
+    }
+
+    /**
+     * Streams a {@code Flux<V>} as the response body with the given {@code mediaType} (for
+     * example {@link MediaType#APPLICATION_NDJSON} or {@link MediaType#TEXT_EVENT_STREAM}),
+     * encoding each element as it arrives instead of collecting first.
+     *
+     * <p><strong>HTTP note:</strong> the {@code 200} status and headers are sent before the body
+     * streams, so a terminal error cannot change the status. Use {@link #stream(Flux, MediaType,
+     * Class, java.util.function.Function)} to append a typed fallback element on error, or collect
+     * first with {@link #fromResultStream} / {@link #fromResultStreamAccumulating} when the
+     * outcome must drive the status code.
+     *
+     * @param source      the stream of elements
+     * @param mediaType   the response content type (e.g. NDJSON or SSE)
+     * @param elementType the element class, required by the WebFlux encoder
+     * @param <V>         the element type
+     * @return the streaming HTTP response
+     */
+    public static <V> Mono<ServerResponse> stream(Flux<V> source, MediaType mediaType, Class<V> elementType) {
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(mediaType, "mediaType");
+        Objects.requireNonNull(elementType, "elementType");
+        return ServerResponse.ok().contentType(mediaType).body(source, elementType);
+    }
+
+    /**
+     * Streams a {@code Flux<V>} as the response body, appending a typed fallback element produced
+     * by {@code onError} if the stream terminates with an error — a graceful degradation that
+     * keeps the (already-sent) {@code 200} status instead of abruptly closing the connection.
+     *
+     * @param source      the stream of elements
+     * @param mediaType   the response content type (e.g. NDJSON or SSE)
+     * @param elementType the element class, required by the WebFlux encoder
+     * @param onError     maps a terminal error to a final fallback element
+     * @param <V>         the element type
+     * @return the streaming HTTP response
+     */
+    public static <V> Mono<ServerResponse> stream(
+        Flux<V> source,
+        MediaType mediaType,
+        Class<V> elementType,
+        Function<? super Throwable, V> onError
+    ) {
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(mediaType, "mediaType");
+        Objects.requireNonNull(elementType, "elementType");
+        Objects.requireNonNull(onError, "onError");
+        Flux<V> withFallback = source.onErrorResume(throwable -> Mono.just(onError.apply(throwable)));
+        return ServerResponse.ok().contentType(mediaType).body(withFallback, elementType);
+    }
+
+    /** Maps a {@code Validated} to {@code 200} with the valid value, or {@code 400} with the accumulated errors. */
+    private static <E, A> Mono<ServerResponse> validatedToResponse(Validated<NonEmptyList<E>, A> validated) {
+        return switch (validated) {
+            case Validated.Valid<NonEmptyList<E>, A> valid -> okBody(valid.value());
+            case Validated.Invalid<NonEmptyList<E>, A> invalid ->
+                ServerResponse.badRequest().bodyValue(invalid.error().toList());
+        };
     }
 
     private static Mono<ServerResponse> okBody(Object value) {
