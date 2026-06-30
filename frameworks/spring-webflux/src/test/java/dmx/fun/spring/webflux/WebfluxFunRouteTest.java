@@ -31,6 +31,8 @@ class WebfluxFunRouteTest {
                 Mono.just(Validated.invalid(NonEmptyList.of("must not be blank", List.of("too short"))))))
             .GET("/accumulate", request -> WebfluxFun.fromResultStreamAccumulating(
                 Flux.just(Result.<Integer, String>ok(1), Result.err("e1"), Result.err("e2"))))
+            .GET("/accumulate-ok", request -> WebfluxFun.fromResultStreamAccumulating(
+                Flux.just(Result.<Integer, String>ok(1), Result.ok(2))))
             .GET("/stream", request -> WebfluxFun.stream(
                 Flux.just("a", "b", "c"), MediaType.APPLICATION_NDJSON, String.class))
             .GET("/stream-error", request -> WebfluxFun.stream(
@@ -66,6 +68,14 @@ class WebfluxFunRouteTest {
             .expectStatus().isBadRequest()
             .expectBody(String.class).returnResult().getResponseBody();
         assertThat(body).contains("e1", "e2");
+    }
+
+    @Test
+    void accumulate_allOk_returns200WithList() {
+        String body = client.get().uri("/accumulate-ok").exchange()
+            .expectStatus().isOk()
+            .expectBody(String.class).returnResult().getResponseBody();
+        assertThat(body).contains("1", "2");
     }
 
     @Test

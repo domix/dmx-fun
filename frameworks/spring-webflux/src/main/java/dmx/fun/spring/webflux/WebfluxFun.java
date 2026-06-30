@@ -114,11 +114,7 @@ public final class WebfluxFun {
         Mono<Validated<NonEmptyList<E>, V>> source
     ) {
         Objects.requireNonNull(source, "source");
-        return source.<ServerResponse>flatMap(validated -> switch (validated) {
-            case Validated.Valid<NonEmptyList<E>, V> valid -> okBody(valid.value());
-            case Validated.Invalid<NonEmptyList<E>, V> invalid ->
-                ServerResponse.badRequest().bodyValue(invalid.error().toList());
-        }).switchIfEmpty(notFound());
+        return source.flatMap(WebfluxFun::validatedToResponse).switchIfEmpty(notFound());
     }
 
     /**
@@ -158,11 +154,7 @@ public final class WebfluxFun {
      */
     public static <V, E> Mono<ServerResponse> fromResultStreamAccumulating(Flux<Result<V, E>> source) {
         Objects.requireNonNull(source, "source");
-        return ReactorFlux.collectValidated(source).flatMap(validated -> switch (validated) {
-            case Validated.Valid<NonEmptyList<E>, List<V>> valid -> okBody(valid.value());
-            case Validated.Invalid<NonEmptyList<E>, List<V>> invalid ->
-                ServerResponse.badRequest().bodyValue(invalid.error().toList());
-        });
+        return ReactorFlux.collectValidated(source).flatMap(WebfluxFun::validatedToResponse);
     }
 
     /**
@@ -213,6 +205,15 @@ public final class WebfluxFun {
         Objects.requireNonNull(onError, "onError");
         Flux<V> withFallback = source.onErrorResume(throwable -> Mono.just(onError.apply(throwable)));
         return ServerResponse.ok().contentType(mediaType).body(withFallback, elementType);
+    }
+
+    /** Maps a {@code Validated} to {@code 200} with the valid value, or {@code 400} with the accumulated errors. */
+    private static <E, A> Mono<ServerResponse> validatedToResponse(Validated<NonEmptyList<E>, A> validated) {
+        return switch (validated) {
+            case Validated.Valid<NonEmptyList<E>, A> valid -> okBody(valid.value());
+            case Validated.Invalid<NonEmptyList<E>, A> invalid ->
+                ServerResponse.badRequest().bodyValue(invalid.error().toList());
+        };
     }
 
     private static Mono<ServerResponse> okBody(Object value) {
