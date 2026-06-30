@@ -238,6 +238,8 @@ public final class ReactorFlux {
 
     /** Carries a typed {@code Result.Err} value through Reactor's error channel for {@link #sequence}. */
     private static final class ResultError extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
         private final transient Object error;
 
         ResultError(Object error) {

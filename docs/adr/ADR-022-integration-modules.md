@@ -39,6 +39,7 @@ resilience/
   resilience4j/      → codes.domix:fun-resilience4j
 protocols/
   http/              → codes.domix:fun-http
+reactor/             → codes.domix:fun-reactor
 frameworks/
   spring/            → codes.domix:fun-spring
   spring-boot/       → codes.domix:fun-spring-boot
@@ -115,7 +116,7 @@ do not need a compatibility matrix because they have no peer dependency.
 
 **Negative / tradeoffs:**
 
-- 13 integration subprojects (as of this writing) to maintain; each new module
+- 14 integration subprojects (as of this writing) to maintain; each new module
   needs its own directory, `build.gradle`, `module-info.java`, guide page, and
   CI compatibility workflow.
 - Users must discover and add the correct integration artifact for their framework;
