@@ -43,6 +43,7 @@ reactor/             → codes.domix:fun-reactor
 frameworks/
   spring/            → codes.domix:fun-spring
   spring-boot/       → codes.domix:fun-spring-boot
+  spring-webflux/    → codes.domix:fun-spring-webflux
   quarkus/runtime/   → codes.domix:fun-quarkus
 bom/                 → codes.domix:fun-bom
 ```
@@ -116,7 +117,7 @@ do not need a compatibility matrix because they have no peer dependency.
 
 **Negative / tradeoffs:**
 
-- 14 integration subprojects (as of this writing) to maintain; each new module
+- 15 integration subprojects (as of this writing) to maintain; each new module
   needs its own directory, `build.gradle`, `module-info.java`, guide page, and
   CI compatibility workflow.
 - Users must discover and add the correct integration artifact for their framework;

@@ -20,6 +20,7 @@ All modules are published to Maven Central. Add only what you need.
 | `fun-assertj`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)           | Fluent AssertJ assertions for all dmx-fun types. Use in `test` scope.                         |
 | `fun-spring`       | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)             | `@Transactional` support for `Result`, `Try`, `Option`, and `Validated`.                      |
 | `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   | Spring Boot auto-configuration for dmx-fun. Registers `TxResult`/`TxTry`/`TxValidated`, `DmxFunModule` (Jackson), `DmxTracing`, `DmxObservation`, and MVC handlers automatically when the corresponding dependencies are on the classpath. |
+| `fun-spring-webflux` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-webflux)](https://central.sonatype.com/artifact/codes.domix/fun-spring-webflux) | Spring WebFlux adapters — map `Option`, `Result`, `Try`, and `Validated` to `ServerResponse` in functional endpoints, with `Flux` aggregation. Builds on `fun-reactor`. |
 | `fun-quarkus`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-quarkus)](https://central.sonatype.com/artifact/codes.domix/fun-quarkus)           | Quarkus CDI transaction support for `Result` and `Try` — programmatic (`TxResult`, `TxTry`) and declarative (`@TransactionalResult`, `@TransactionalTry`). Rolls back on error/failure without relying on exceptions. |
 | `fun-resilience4j` | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-resilience4j)](https://central.sonatype.com/artifact/codes.domix/fun-resilience4j) | Resilience4J adapters (Retry, CircuitBreaker, RateLimiter, Bulkhead) that return `Try`/`Result` instead of throwing. |
 | `fun-micrometer`   | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-micrometer)](https://central.sonatype.com/artifact/codes.domix/fun-micrometer)     | Counters, timers, and failure metrics for `Try` and `Result` via Micrometer.                  |
@@ -126,9 +127,57 @@ Transaction support for `Result`, `Try`, `Option`, and `Validated` — use dmx-f
 implementation("codes.domix:fun-spring:LATEST_VERSION")
 ```
 
+### Project Reactor integration (optional)
+
+Convert `Option`, `Result`, and `Try` to/from `Mono`/`Flux`, with railway operators (`ReactorResult`) and `sequence`/`collectValidated` aggregation (`ReactorFlux`). `reactor-core` is declared as `compileOnly`; bring your own version (tested: 3.4.x – 3.8.x).
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-reactor</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<dependency>
+    <groupId>io.projectreactor</groupId>
+    <artifactId>reactor-core</artifactId>
+    <version>3.8.6</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-reactor:LATEST_VERSION")
+implementation("io.projectreactor:reactor-core:3.8.6")
+```
+
+### Spring WebFlux integration (optional)
+
+Map `Option`, `Result`, `Try`, and `Validated` to a `ServerResponse` in functional endpoints via `WebfluxFun`, with `Flux` aggregation. Builds on `fun-reactor`. `spring-webflux` is declared as `compileOnly`; bring your own version (tested: 6.0.x – 7.0.x).
+
+**Maven**
+```xml
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-spring-webflux</artifactId>
+    <version>LATEST_VERSION</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webflux</artifactId>
+    <version>7.0.8</version>
+</dependency>
+```
+
+**Gradle**
+```groovy
+implementation("codes.domix:fun-spring-webflux:LATEST_VERSION")
+implementation("org.springframework:spring-webflux:7.0.8")
+```
+
 ### Quarkus integration (optional)
 
-CDI-based transaction support for `Result` and `Try` — programmatic (`TxResult`, `TxTry`) and declarative (`@TransactionalResult`, `@TransactionalTry`). Quarkus is declared as `compileOnly`; bring your own version (tested: 3.11.x – 3.35.x). The runtime JAR ships `META-INF/quarkus-extension.properties` so Quarkus build tools add the deployment artifact automatically.
+CDI-based transaction support for `Result` and `Try` — programmatic (`TxResult`, `TxTry`) and declarative (`@TransactionalResult`, `@TransactionalTry`). Quarkus is declared as `compileOnly`; bring your own version (tested: 3.11.x – 3.37.x). The runtime JAR ships `META-INF/quarkus-extension.properties` so Quarkus build tools add the deployment artifact automatically.
 
 **Maven**
 ```xml
@@ -165,7 +214,7 @@ testImplementation("codes.domix:fun-assertj:LATEST_VERSION")
 
 ### Micrometer integration (optional)
 
-Automatic counters, timers, and failure metrics for `Try` and `Result` operations. Micrometer is declared as `compileOnly`; bring your own version (1.5.x – 1.16.x) and backend.
+Automatic counters, timers, and failure metrics for `Try` and `Result` operations. Micrometer is declared as `compileOnly`; bring your own version (1.5.x – 1.17.x) and backend.
 
 **Maven**
 ```xml
@@ -177,20 +226,20 @@ Automatic counters, timers, and failure metrics for `Try` and `Result` operation
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-core</artifactId>
-    <version>1.16.5</version>
+    <version>1.17.0</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
 implementation("codes.domix:fun-micrometer:LATEST_VERSION")
-implementation("io.micrometer:micrometer-core:1.16.5")
+implementation("io.micrometer:micrometer-core:1.17.0")
 ```
 
 ### Micrometer Tracing integration (optional)
 
 Instruments `Try` and `Result` executions with distributed tracing spans automatically.
-Micrometer Tracing is declared as `compileOnly`; bring your own version (1.2.x – 1.6.x) and bridge.
+Micrometer Tracing is declared as `compileOnly`; bring your own version (1.2.x – 1.7.x) and bridge.
 When `fun-spring-boot` is also on the classpath, a `DmxTracing` bean is registered automatically
 whenever a `Tracer` bean is present (Spring Boot provides one when a bridge is on the classpath).
 
@@ -204,29 +253,29 @@ whenever a `Tracer` bean is present (Spring Boot provides one when a bridge is o
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-tracing</artifactId>
-    <version>1.6.5</version>
+    <version>1.7.0</version>
 </dependency>
 <!-- A Micrometer Tracing bridge, e.g. OpenTelemetry: -->
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-tracing-bridge-otel</artifactId>
-    <version>1.6.5</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
 implementation("codes.domix:fun-tracing:LATEST_VERSION")
-implementation("io.micrometer:micrometer-tracing:1.6.5")
+implementation("io.micrometer:micrometer-tracing:1.7.0")
 // A Micrometer Tracing bridge, e.g. OpenTelemetry:
-implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
+implementation("io.micrometer:micrometer-tracing-bridge-otel:1.7.0")
 ```
 
 ### Micrometer Observation integration (optional)
 
 Instruments `Try` and `Result` executions using the Micrometer Observation API — a single call
 produces **both** metrics and distributed tracing spans through whatever `ObservationHandler`s are
-registered. `micrometer-core` is declared as `compileOnly`; bring your own version (1.10.x – 1.16.x).
+registered. `micrometer-core` is declared as `compileOnly`; bring your own version (1.10.x – 1.17.x).
 When `fun-spring-boot` is also on the classpath, a `DmxObservation` bean is registered automatically
 whenever an `ObservationRegistry` bean is present (Spring Boot provides one via `ObservationAutoConfiguration`).
 
@@ -240,14 +289,14 @@ whenever an `ObservationRegistry` bean is present (Spring Boot provides one via 
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-core</artifactId>
-    <version>1.16.5</version>
+    <version>1.17.0</version>
 </dependency>
 <!-- Optional: add a tracing bridge to also get distributed tracing spans -->
 <!--
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-tracing-bridge-otel</artifactId>
-    <version>1.6.5</version>
+    <version>1.7.0</version>
 </dependency>
 -->
 ```
@@ -255,9 +304,9 @@ whenever an `ObservationRegistry` bean is present (Spring Boot provides one via 
 **Gradle**
 ```groovy
 implementation("codes.domix:fun-observation:LATEST_VERSION")
-implementation("io.micrometer:micrometer-core:1.16.5")
+implementation("io.micrometer:micrometer-core:1.17.0")
 // Optional: add a tracing bridge to also get distributed tracing spans
-// implementation("io.micrometer:micrometer-tracing-bridge-otel:1.6.5")
+// implementation("io.micrometer:micrometer-tracing-bridge-otel:1.7.0")
 ```
 
 ### Jakarta Validation integration (optional)
