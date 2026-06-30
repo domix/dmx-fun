@@ -18,8 +18,8 @@ All CI/CD is handled by GitHub Actions. The workflows live in `.github/workflows
 | `publish-snapshot.yml`       | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central                             |
 | `jackson-compatibility.yaml` | PR touching `jackson/**`               | Matrix test against Jackson 2.14.x – 2.22.x                             |
 | `assertj-compatibility.yaml`             | PR touching `assertj/**`                           | Matrix test against AssertJ 3.21.x – 3.27.x                              |
-| `spring-boot-compatibility.yaml`         | PR touching `spring-boot/**` or `spring/**`        | Matrix test of `fun-spring-boot` against Spring Boot 3.3.x – 4.0.x       |
-| `spring-boot-sample-compatibility.yaml`  | PR touching `spring-boot-sample/**` or `spring/**` | Matrix test of the Spring Boot sample app against Boot 3.4.x – 4.0.x     |
+| `spring-boot-compatibility.yaml`         | PR touching `spring-boot/**` or `spring/**`        | Matrix test of `fun-spring-boot` against Spring Boot 3.3.x – 4.1.x       |
+| `spring-boot-sample-compatibility.yaml`  | PR touching `spring-boot-sample/**` or `spring/**` | Matrix test of the Spring Boot sample app against Boot 3.4.x – 4.1.x     |
 | `pages.yml`                              | push to `main`                                     | Build and deploy the documentation site to GitHub Pages                   |
 
 ---
@@ -170,11 +170,11 @@ Boot 4.x aligns with Spring Framework 7.x, which is the baseline this project ta
 | 3.3.13              | tested |
 | 3.4.13              | tested |
 | 3.5.13              | tested |
-| 4.0.7               | tested |
+| 4.1.0               | tested |
 
 **Local equivalent**:
 ```bash
-./gradlew :spring-boot:test -PspringBootVersion=4.0.7
+./gradlew :spring-boot:test -PspringBootVersion=4.1.0
 ```
 
 **Secrets required**: none.
@@ -200,7 +200,7 @@ controller → service → database via Testcontainers.
 |---------------------|--------|
 | 3.4.13              | tested |
 | 3.5.13              | tested |
-| 4.0.7               | tested |
+| 4.1.0               | tested |
 
 **Local equivalent**:
 ```bash
