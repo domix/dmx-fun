@@ -26,9 +26,9 @@ jobs:
           - jakarta-validation-version: '3.1.1'
             hibernate-validator-version: '9.0.1.Final'
           - jakarta-validation-version: '3.0.2'
-            hibernate-validator-version: '9.1.0.Final'
+            hibernate-validator-version: '9.1.1.Final'
           - jakarta-validation-version: '3.1.1'
-            hibernate-validator-version: '9.1.0.Final'
+            hibernate-validator-version: '9.1.1.Final'
     name: JV ${{ matrix.jakarta-validation-version }} / HV ${{ matrix.hibernate-validator-version }}
     steps:
       - uses: actions/checkout@v6.0.2

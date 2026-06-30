@@ -329,7 +329,7 @@ Validates objects and returns `Validated<NonEmptyList<E>, A>` instead of throwin
 <dependency>
     <groupId>org.hibernate.validator</groupId>
     <artifactId>hibernate-validator</artifactId>
-    <version>9.1.0.Final</version>
+    <version>9.1.1.Final</version>
 </dependency>
 ```
 
@@ -337,7 +337,7 @@ Validates objects and returns `Validated<NonEmptyList<E>, A>` instead of throwin
 ```groovy
 implementation("codes.domix:fun-jakarta-validation:LATEST_VERSION")
 implementation("jakarta.validation:jakarta.validation-api:3.1.1")
-implementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
+implementation("org.hibernate.validator:hibernate-validator:9.1.1.Final")
 ```
 
 ### Jakarta JSON-B + JAXB integration (optional)
