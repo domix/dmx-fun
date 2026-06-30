@@ -201,8 +201,18 @@ class ResultTest {
     @Test
     void mapCatching_shouldThrowNPE_whenExceptionToErrorIsNull() {
         assertThatThrownBy(() -> Result.<String, String>ok("v")
-            .mapCatching(Function.identity(), null))
+            .mapCatching(s -> s, null))
             .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void mapCatching_shouldCatchCheckedException() {
+        var result = Result.<String, String>ok("x")
+            .mapCatching(_ -> {
+                throw new IOException("disk");
+            }, Throwable::getMessage);
+        assertThat(result.isError()).isTrue();
+        assertThat(result.getError()).isEqualTo("disk");
     }
 
     // ---------- flatMap ----------
