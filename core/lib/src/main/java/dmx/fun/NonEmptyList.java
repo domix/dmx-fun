@@ -331,15 +331,19 @@ public final class NonEmptyList<T> implements SequencedCollection<T> {
      *
      * @param delimiter the separator placed between elements; must not be {@code null}
      * @param transform renders each element as a {@link CharSequence}; must not be {@code null}
+     *                  and must not return {@code null}
      * @return the joined string
-     * @throws NullPointerException if {@code delimiter} or {@code transform} is {@code null}
+     * @throws NullPointerException if {@code delimiter} or {@code transform} is {@code null},
+     *                              or if {@code transform} returns {@code null} for any element
      */
     public String joinToString(CharSequence delimiter, Function<? super T, ? extends CharSequence> transform) {
         Objects.requireNonNull(delimiter, "delimiter must not be null");
         Objects.requireNonNull(transform, "transform must not be null");
-        StringBuilder sb = new StringBuilder().append(transform.apply(head));
+        StringBuilder sb = new StringBuilder()
+            .append(Objects.requireNonNull(transform.apply(head), "transform must not return null"));
         for (T element : tail) {
-            sb.append(delimiter).append(transform.apply(element));
+            sb.append(delimiter)
+                .append(Objects.requireNonNull(transform.apply(element), "transform must not return null"));
         }
         return sb.toString();
     }

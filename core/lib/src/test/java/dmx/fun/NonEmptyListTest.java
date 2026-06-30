@@ -244,6 +244,13 @@ class NonEmptyListTest {
             .isInstanceOf(NullPointerException.class);
     }
 
+    @Test
+    void joinToString_shouldThrowNPE_whenTransformReturnsNull() {
+        assertThatThrownBy(() -> NonEmptyList.of("a", List.of("b")).joinToString(",", s -> null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("transform must not return null");
+    }
+
     // -------------------------------------------------------------------------
     // append()
     // -------------------------------------------------------------------------
