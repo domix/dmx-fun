@@ -54,7 +54,7 @@ public final class WebfluxProblem {
      */
     public static ThrowableHttpMapper problemDetail(HttpStatus status) {
         Objects.requireNonNull(status, "status");
-        return cause -> problemResponse(ProblemDetail.forStatusAndDetail(status, String.valueOf(cause.getMessage())));
+        return cause -> problemResponse(ProblemDetail.forStatusAndDetail(status, cause.getMessage()));
     }
 
     /**

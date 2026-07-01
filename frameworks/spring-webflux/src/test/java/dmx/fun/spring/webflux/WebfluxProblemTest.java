@@ -30,6 +30,9 @@ class WebfluxProblemTest {
             .GET("/try-fail", request -> WebfluxFun.fromTry(
                 Mono.just(Try.<String>failure(new IllegalStateException("boom"))),
                 WebfluxProblem.problemDetail(HttpStatus.INTERNAL_SERVER_ERROR)))
+            .GET("/try-fail-nomsg", request -> WebfluxFun.fromTry(
+                Mono.just(Try.<String>failure(new IllegalStateException())),
+                WebfluxProblem.problemDetail(HttpStatus.INTERNAL_SERVER_ERROR)))
             .GET("/validated-invalid", request -> WebfluxProblem.fromValidated(
                 Mono.just(Validated.invalid(NonEmptyList.of("must not be blank", List.of("too short"))))))
             .GET("/validated-valid", request -> WebfluxProblem.fromValidated(
@@ -71,6 +74,14 @@ class WebfluxProblemTest {
             .expectBody(String.class).isEqualTo("ok");
     }
 
+    @Test
+    void tryFailure_nullMessage_doesNotRenderLiteralNull() {
+        String body = client.get().uri("/try-fail-nomsg").exchange()
+            .expectStatus().is5xxServerError()
+            .expectBody(String.class).returnResult().getResponseBody();
+        assertThat(body).doesNotContain("\"detail\":\"null\"");
+    }
+
     // ── null guards ────────────────────────────────────────────────────────────
 
     @Test
@@ -85,6 +96,13 @@ class WebfluxProblemTest {
         assertThatThrownBy(() -> WebfluxProblem.<String>problemDetail(HttpStatus.BAD_REQUEST, null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("detail");
+    }
+
+    @Test
+    void problemDetailFromThrowable_nullStatus_throws() {
+        assertThatThrownBy(() -> WebfluxProblem.problemDetail((HttpStatus) null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("status");
     }
 
     @Test

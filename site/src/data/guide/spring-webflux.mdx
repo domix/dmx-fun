@@ -119,9 +119,8 @@ problem whose `errors` property lists every violation:
 
 ```java
 .POST("/signup", request ->
-    request.bodyToMono(SignupForm.class)
-        .map(form -> validate(form))
-        .flatMap(validated -> WebfluxProblem.fromValidated(Mono.just(validated))))
+    WebfluxProblem.fromValidated(
+        request.bodyToMono(SignupForm.class).map(form -> validate(form))))  // Mono<Validated<…>>
 // 400 application/problem+json — {"status":400,"detail":"Validation failed","errors":[...]}
 ```
 
