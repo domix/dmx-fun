@@ -73,6 +73,7 @@ explicit `@Bean` declarations required:
 | `DmxTracing` | `micrometer-tracing` **and** `fun-tracing` on classpath **and** a `Tracer` bean is present |
 | `optionReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
 | `resultReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
+| `dmxFunProblemDetailMapper` (a `ThrowableHttpMapper`) | `fun-spring-webflux` + WebFlux on classpath — a default RFC 7807 problem renderer for reactive handlers to inject |
 
 `PlatformTransactionManager` is auto-configured by Spring Boot for every registered `DataSource`; if you add a `DataSource` (e.g. via `spring-boot-starter-data-jpa` or `spring-boot-starter-jdbc`), no explicit transaction manager declaration is needed.
 
@@ -120,6 +121,8 @@ dmx.fun.aspect.enabled=false             # disable DmxTransactionalAspect
 dmx.fun.tracing.enabled=false            # disable DmxTracing (requires fun-tracing on classpath)
 dmx.fun.mvc.option-handler.enabled=false # disable Option MVC handler
 dmx.fun.mvc.result-handler.enabled=false # disable Result/Try/Validated MVC handler
+dmx.fun.webflux.problem.enabled=false    # disable the default WebFlux ProblemDetail ThrowableHttpMapper
+dmx.fun.webflux.problem.status=422       # status for the default WebFlux ProblemDetail mapper (default 500)
 ```
 
 All properties default to `true`, so existing applications are not affected.

@@ -124,6 +124,25 @@ problem whose `errors` property lists every violation:
 // 400 application/problem+json — {"status":400,"detail":"Validation failed","errors":[...]}
 ```
 
+### Spring Boot auto-configuration
+
+With `fun-spring-boot` on the classpath, a default `ThrowableHttpMapper` bean
+(`dmxFunProblemDetailMapper`) is auto-configured — a ready-made RFC 7807 renderer you can
+inject and reuse instead of building one per handler:
+
+```java
+RouterFunction<ServerResponse> routes(ThrowableHttpMapper problems) {   // injected
+    return RouterFunctions.route()
+        .POST("/orders", request -> WebfluxFun.fromTry(orderService.place(request), problems))
+        .build();
+}
+```
+
+The status defaults to `500` (set `dmx.fun.webflux.problem.status`), the bean backs off if
+you declare your own `ThrowableHttpMapper`, and it can be disabled with
+`dmx.fun.webflux.problem.enabled=false`. The adapters themselves stay static — this only
+provides the default bean.
+
 ## Aggregating a stream
 
 `fromResultStream` sequences a `Flux<Result<V, E>>` fail-fast (via `fun-reactor`'s

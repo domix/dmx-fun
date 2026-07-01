@@ -47,6 +47,18 @@
       "type": "java.lang.Boolean",
       "defaultValue": true,
       "description": "Whether to auto-configure a DmxObservation bean. When enabled, registers Micrometer Observation instrumentation for Try and Result operations (timers and low-cardinality tags are always recorded; distributed tracing spans are emitted only if a tracing bridge and matching ObservationHandler are configured). Set to false to disable this instrumentation entirely."
+    },
+    {
+      "name": "dmx.fun.webflux.problem.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure a default WebFlux ThrowableHttpMapper that renders failures as an RFC 7807 application/problem+json response. Set to false to skip registering the default; a user-declared ThrowableHttpMapper bean also disables it."
+    },
+    {
+      "name": "dmx.fun.webflux.problem.status",
+      "type": "java.lang.Integer",
+      "defaultValue": 500,
+      "description": "HTTP status code for the auto-configured default WebFlux ProblemDetail ThrowableHttpMapper. Must be a valid HTTP status code; an unknown value fails startup with a clear message."
     }
   ]
 }
