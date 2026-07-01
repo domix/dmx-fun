@@ -22,7 +22,9 @@ def moduleMap = [
     ':observability:tracing'            : 'dmx.fun.tracing',
     ':resilience:resilience4j'          : 'dmx.fun.resilience4j',
     ':protocols:http'                   : 'dmx.fun.http',
+    ':reactor'                          : 'dmx.fun.reactor',
     ':frameworks:spring'                : 'dmx.fun.spring',
+    ':frameworks:spring-webflux'        : 'dmx.fun.spring.webflux',
     ':frameworks:spring-boot'           : 'dmx.fun.spring.boot',
     ':frameworks:quarkus:runtime'       : 'dmx.fun.quarkus'
 ]
