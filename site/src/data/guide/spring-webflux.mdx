@@ -95,6 +95,36 @@ success value to any `Mono<ServerResponse>` you build.
         .flatMap(validated -> WebfluxFun.fromValidated(Mono.just(validated))))
 ```
 
+## RFC 7807 problem responses
+
+To render failures as standard [RFC 7807](https://www.rfc-editor.org/rfc/rfc7807)
+`ProblemDetail` documents (`application/problem+json`) instead of an ad-hoc body, use
+`WebfluxProblem`. Its `problemDetail` factories return an `ErrorHttpMapper` /
+`ThrowableHttpMapper` you hand to the regular adapters:
+
+```java
+// Result.Err -> problem+json with a status and a detail derived from the error
+.GET("/users/{id}", request ->
+    WebfluxFun.fromResult(userService.findById(request.pathVariable("id")),
+        WebfluxProblem.problemDetail(HttpStatus.NOT_FOUND, ApiError::message)))
+
+// Try.Failure -> problem+json with the exception message as the detail
+.POST("/orders", request ->
+    WebfluxFun.fromTry(orderService.place(request),
+        WebfluxProblem.problemDetail(HttpStatus.INTERNAL_SERVER_ERROR)))
+```
+
+For accumulated validation, `WebfluxProblem.fromValidated` renders an `Invalid` as a `400`
+problem whose `errors` property lists every violation:
+
+```java
+.POST("/signup", request ->
+    request.bodyToMono(SignupForm.class)
+        .map(form -> validate(form))
+        .flatMap(validated -> WebfluxProblem.fromValidated(Mono.just(validated))))
+// 400 application/problem+json — {"status":400,"detail":"Validation failed","errors":[...]}
+```
+
 ## Aggregating a stream
 
 `fromResultStream` sequences a `Flux<Result<V, E>>` fail-fast (via `fun-reactor`'s
