@@ -6,6 +6,7 @@ import dmx.fun.Result;
 import dmx.fun.Try;
 import dmx.fun.Validated;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,8 @@ class WebfluxFunTest {
         e -> ServerResponse.badRequest().bodyValue(e);
     private static final ThrowableHttpMapper FAILURE_500 =
         t -> ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue(String.valueOf(t.getMessage()));
+    private static final SuccessHttpMapper<String> CREATED =
+        v -> ServerResponse.created(URI.create("/things/" + v)).build();
 
     private static HttpStatus status(Mono<ServerResponse> response) {
         return HttpStatus.valueOf(response.block().statusCode().value());
@@ -136,6 +139,48 @@ class WebfluxFunTest {
         assertThat(response.headers().getContentType()).isEqualTo(MediaType.APPLICATION_NDJSON);
     }
 
+    // ── success mappers (custom status/headers) ────────────────────────────────
+
+    @Test
+    void fromResult_ok_usesSuccessMapper() {
+        Mono<Result<String, String>> source = Mono.just(Result.ok("x"));
+        assertThat(status(WebfluxFun.fromResult(source, CREATED, ERROR_400))).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    void fromResult_err_stillUsesErrorMapper_withSuccessMapper() {
+        Mono<Result<String, String>> source = Mono.just(Result.err("bad"));
+        assertThat(status(WebfluxFun.fromResult(source, CREATED, ERROR_400))).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void fromOption_some_usesSuccessMapper() {
+        assertThat(status(WebfluxFun.fromOption(Mono.just(Option.some("x")), CREATED))).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    void fromOption_none_withSuccessMapper_is404() {
+        assertThat(status(WebfluxFun.fromOption(Mono.just(Option.<String>none()), CREATED))).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void fromTry_success_usesSuccessMapper() {
+        assertThat(status(WebfluxFun.fromTry(Mono.just(Try.success("x")), CREATED, FAILURE_500))).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    void fromValidated_valid_usesSuccessMapper() {
+        Mono<Validated<NonEmptyList<String>, String>> valid = Mono.just(Validated.valid("x"));
+        assertThat(status(WebfluxFun.fromValidated(valid, CREATED))).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    void fromValidated_invalid_withSuccessMapper_is400() {
+        Mono<Validated<NonEmptyList<String>, String>> invalid =
+            Mono.just(Validated.invalid(NonEmptyList.of("bad", List.of())));
+        assertThat(status(WebfluxFun.fromValidated(invalid, CREATED))).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
     // ── null guards ────────────────────────────────────────────────────────────
 
     @Test
@@ -150,5 +195,34 @@ class WebfluxFunTest {
         assertThatThrownBy(() -> WebfluxFun.fromResult(Mono.just(Result.<String, String>ok("x")), null))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("errorMapper");
+    }
+
+    @Test
+    void fromResult_nullSuccessMapper_throws() {
+        assertThatThrownBy(() -> WebfluxFun.fromResult(Mono.just(Result.<String, String>ok("x")), null, ERROR_400))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
+    }
+
+    @Test
+    void fromOption_nullSuccessMapper_throws() {
+        assertThatThrownBy(() -> WebfluxFun.fromOption(Mono.just(Option.some("x")), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
+    }
+
+    @Test
+    void fromTry_nullSuccessMapper_throws() {
+        assertThatThrownBy(() -> WebfluxFun.fromTry(Mono.just(Try.success("x")), null, FAILURE_500))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
+    }
+
+    @Test
+    void fromValidated_nullSuccessMapper_throws() {
+        Mono<Validated<NonEmptyList<String>, String>> valid = Mono.just(Validated.valid("x"));
+        assertThatThrownBy(() -> WebfluxFun.fromValidated(valid, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
     }
 }

@@ -68,6 +68,32 @@ public final class WebfluxFun {
     }
 
     /**
+     * Maps a {@code Mono<Result<V, E>>} to a response with full control over the success
+     * branch: {@code Ok} → {@code successMapper} (e.g. {@code 201 Created} with a
+     * {@code Location} header), {@code Err} → {@code errorMapper}, empty → {@code 404}.
+     *
+     * @param source        the upstream outcome
+     * @param successMapper renders a {@code Result.Ok} value as a response
+     * @param errorMapper   renders a {@code Result.Err} value as a response
+     * @param <V>           the success value type
+     * @param <E>           the error type
+     * @return the HTTP response
+     */
+    public static <V, E> Mono<ServerResponse> fromResult(
+        Mono<Result<V, E>> source,
+        SuccessHttpMapper<V> successMapper,
+        ErrorHttpMapper<E> errorMapper
+    ) {
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(successMapper, "successMapper");
+        Objects.requireNonNull(errorMapper, "errorMapper");
+        return source.flatMap(result -> switch (result) {
+            case Result.Ok<V, E> ok -> successMapper.apply(ok.value());
+            case Result.Err<V, E> err -> errorMapper.apply(err.error());
+        }).switchIfEmpty(notFound());
+    }
+
+    /**
      * Maps a {@code Mono<Option<V>>} to a response: {@code Some} → {@code 200} with the
      * value, {@code None} (or empty) → {@code 404}.
      *
@@ -78,6 +104,22 @@ public final class WebfluxFun {
     public static <V> Mono<ServerResponse> fromOption(Mono<Option<V>> source) {
         Objects.requireNonNull(source, "source");
         return source.<ServerResponse>flatMap(option -> option.fold(WebfluxFun::notFound, WebfluxFun::okBody))
+            .switchIfEmpty(notFound());
+    }
+
+    /**
+     * Maps a {@code Mono<Option<V>>} to a response with full control over the present branch:
+     * {@code Some} → {@code successMapper}, {@code None} (or empty) → {@code 404}.
+     *
+     * @param source        the upstream option
+     * @param successMapper renders the present value as a response
+     * @param <V>           the value type
+     * @return the HTTP response
+     */
+    public static <V> Mono<ServerResponse> fromOption(Mono<Option<V>> source, SuccessHttpMapper<V> successMapper) {
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(successMapper, "successMapper");
+        return source.<ServerResponse>flatMap(option -> option.fold(WebfluxFun::notFound, successMapper::apply))
             .switchIfEmpty(notFound());
     }
 
@@ -101,6 +143,29 @@ public final class WebfluxFun {
     }
 
     /**
+     * Maps a {@code Mono<Try<V>>} to a response with full control over the success branch:
+     * {@code Success} → {@code successMapper}, {@code Failure} → {@code failureMapper},
+     * empty → {@code 404}.
+     *
+     * @param source        the upstream try
+     * @param successMapper renders a {@code Try.Success} value as a response
+     * @param failureMapper renders a {@code Try.Failure} cause as a response
+     * @param <V>           the value type
+     * @return the HTTP response
+     */
+    public static <V> Mono<ServerResponse> fromTry(
+        Mono<Try<V>> source,
+        SuccessHttpMapper<V> successMapper,
+        ThrowableHttpMapper failureMapper
+    ) {
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(successMapper, "successMapper");
+        Objects.requireNonNull(failureMapper, "failureMapper");
+        return source.<ServerResponse>flatMap(aTry -> aTry.fold(successMapper::apply, failureMapper::apply))
+            .switchIfEmpty(notFound());
+    }
+
+    /**
      * Maps a {@code Mono<Validated<NonEmptyList<E>, V>>} to a response: {@code Valid} →
      * {@code 200} with the value, {@code Invalid} → {@code 400} with the accumulated errors
      * as the body, empty → {@code 404}.
@@ -115,6 +180,27 @@ public final class WebfluxFun {
     ) {
         Objects.requireNonNull(source, "source");
         return source.flatMap(WebfluxFun::validatedToResponse).switchIfEmpty(notFound());
+    }
+
+    /**
+     * Maps a {@code Mono<Validated<NonEmptyList<E>, V>>} to a response with full control over the
+     * valid branch: {@code Valid} → {@code successMapper}, {@code Invalid} → {@code 400} with the
+     * accumulated errors as the body, empty → {@code 404}.
+     *
+     * @param source        the upstream validated value
+     * @param successMapper renders a {@code Valid} value as a response
+     * @param <V>           the value type
+     * @param <E>           the element type of the accumulated errors
+     * @return the HTTP response
+     */
+    public static <V, E> Mono<ServerResponse> fromValidated(
+        Mono<Validated<NonEmptyList<E>, V>> source,
+        SuccessHttpMapper<V> successMapper
+    ) {
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(successMapper, "successMapper");
+        return source.flatMap(validated -> validatedToResponse(validated, successMapper))
+            .switchIfEmpty(notFound());
     }
 
     /**
@@ -209,8 +295,16 @@ public final class WebfluxFun {
 
     /** Maps a {@code Validated} to {@code 200} with the valid value, or {@code 400} with the accumulated errors. */
     private static <E, A> Mono<ServerResponse> validatedToResponse(Validated<NonEmptyList<E>, A> validated) {
+        return validatedToResponse(validated, WebfluxFun::okBody);
+    }
+
+    /** Maps a {@code Validated} to {@code successMapper} on valid, or {@code 400} with the accumulated errors. */
+    private static <E, A> Mono<ServerResponse> validatedToResponse(
+        Validated<NonEmptyList<E>, A> validated,
+        SuccessHttpMapper<A> successMapper
+    ) {
         return switch (validated) {
-            case Validated.Valid<NonEmptyList<E>, A> valid -> okBody(valid.value());
+            case Validated.Valid<NonEmptyList<E>, A> valid -> successMapper.apply(valid.value());
             case Validated.Invalid<NonEmptyList<E>, A> invalid ->
                 ServerResponse.badRequest().bodyValue(invalid.error().toList());
         };

@@ -33,6 +33,11 @@ Each adapter takes the upstream reactive outcome and returns a `Mono<ServerRespo
 | `fromResultStreamAccumulating(flux)` | aggregate a `Flux<Result>` accumulating; all `Ok` → `200` + list; any `Err` → `400` with **every** error |
 | `stream(flux, mediaType, type)` | stream a `Flux<V>` as the body (NDJSON / SSE); `200`, each element encoded as it arrives |
 
+The success branch defaults to `200 OK`. To return a different status or headers (e.g.
+`201 Created` + `Location`), `fromResult`, `fromOption`, `fromTry`, and `fromValidated` each
+have an overload taking a `SuccessHttpMapper<V>` — see
+[Customizing the success response](#customizing-the-success-response-201-created-headers).
+
 ```java
 RouterFunction<ServerResponse> routes() {
     return RouterFunctions.route()
@@ -57,6 +62,26 @@ RouterFunction<ServerResponse> routes() {
 
 The success body is written with `ServerResponse.ok().bodyValue(v)`, so the value must be
 encodable by your WebFlux codecs.
+
+## Customizing the success response (`201 Created`, headers)
+
+The default success branch is `200 OK` with the value as the body. When you need a
+different status or headers — `201 Created` with a `Location` on a `POST`, `202 Accepted`,
+caching headers — pass a `SuccessHttpMapper<V>` to the overload of `fromResult`,
+`fromOption`, `fromTry`, or `fromValidated`. It controls the `Ok`/`Some`/`Success`/`Valid`
+branch; the failure branches are unchanged.
+
+```java
+.POST("/orders", request ->
+    WebfluxFun.fromResult(
+        orderService.place(request),                    // Mono<Result<Order, ApiError>>
+        order -> ServerResponse.created(location(order))    // Ok -> 201 Created + Location
+                     .bodyValue(order),
+        error -> ServerResponse.status(error.status()).bodyValue(error.detail())))
+```
+
+`SuccessHttpMapper<V>` mirrors `ErrorHttpMapper<E>` and `ThrowableHttpMapper` — it maps a
+success value to any `Mono<ServerResponse>` you build.
 
 ## Validating a request body → `400` with every error
 

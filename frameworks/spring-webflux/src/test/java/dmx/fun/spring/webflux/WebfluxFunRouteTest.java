@@ -4,6 +4,7 @@ import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Validated;
+import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -38,6 +39,10 @@ class WebfluxFunRouteTest {
             .GET("/stream-error", request -> WebfluxFun.stream(
                 Flux.just("a").concatWith(Flux.error(new IllegalStateException("boom"))),
                 MediaType.APPLICATION_NDJSON, String.class, throwable -> "FALLBACK"))
+            .POST("/things", request -> WebfluxFun.fromResult(
+                Mono.just(Result.<String, String>ok("42")),
+                id -> ServerResponse.created(URI.create("/things/" + id)).build(),
+                error -> ServerResponse.badRequest().bodyValue(error)))
             .build();
     }
 
@@ -93,5 +98,12 @@ class WebfluxFunRouteTest {
             .expectStatus().isOk()
             .expectBody(String.class).returnResult().getResponseBody();
         assertThat(body).contains("a", "FALLBACK");
+    }
+
+    @Test
+    void successMapper_returns201WithLocationHeader() {
+        client.post().uri("/things").exchange()
+            .expectStatus().isCreated()
+            .expectHeader().valueEquals("Location", "/things/42");
     }
 }
