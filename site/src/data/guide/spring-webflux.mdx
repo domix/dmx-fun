@@ -1,6 +1,6 @@
 ---
 title: "Spring WebFlux Integration — Developer Guide"
-description: "How to use the optional fun-spring-webflux module: map Option, Result, Try, and Validated to a ServerResponse in functional endpoints, with documented, overridable HTTP conventions, Flux aggregation, custom success status/headers, and RFC 7807 problem responses via WebfluxFun and WebfluxProblem."
+description: "How to use the optional fun-spring-webflux module: map Option, Result, Try, and Validated to a ServerResponse in functional endpoints (WebfluxFun) or a ResponseEntity in annotation controllers (WebfluxEntity), with documented, overridable HTTP conventions, Flux aggregation, custom success status/headers, and RFC 7807 problem responses."
 order: 24
 h1: "Spring WebFlux Integration"
 ---
@@ -8,8 +8,10 @@ h1: "Spring WebFlux Integration"
 import {Content as Dependency} from '../code/guide/spring-webflux/dependency.mdx';
 
 The `fun-spring-webflux` module maps dmx-fun outcomes — `Option`, `Result`, `Try`, and
-`Validated` — to Spring WebFlux `ServerResponse` for functional endpoints, so a handler
-returns a domain outcome instead of re-implementing status/body conventions per service.
+`Validated` — to Spring WebFlux responses, so a handler returns a domain outcome instead
+of re-implementing status/body conventions per service. Use `WebfluxFun` for functional
+endpoints (`ServerResponse`) or `WebfluxEntity` for annotation controllers
+(`ResponseEntity`).
 
 It is an **optional** module. `spring-webflux` is declared `compileOnly` (your app
 already brings Spring), and it builds on [`fun-reactor`](/dmx-fun/guide/reactor). The
@@ -82,6 +84,38 @@ branch; the failure branches are unchanged.
 
 `SuccessHttpMapper<V>` mirrors `ErrorHttpMapper<E>` and `ThrowableHttpMapper` — it maps a
 success value to any `Mono<ServerResponse>` you build.
+
+## Annotation controllers (`WebfluxEntity` / `ResponseEntity`)
+
+`WebfluxFun` targets functional endpoints (`ServerResponse`). For `@RestController`
+methods, `WebfluxEntity` is the counterpart: each adapter returns a
+`Mono<ResponseEntity<…>>` you return straight from the handler, applying the same HTTP
+conventions.
+
+```java
+@GetMapping("/users/{id}")
+Mono<ResponseEntity<User>> user(@PathVariable String id) {
+    return WebfluxEntity.fromOption(userService.find(id));   // Some -> 200, None/empty -> 404
+}
+
+@GetMapping("/orders/{id}")
+Mono<ResponseEntity<?>> order(@PathVariable String id) {
+    return WebfluxEntity.fromResult(orderService.findById(id),   // Mono<Result<Order, ApiError>>
+        error -> ResponseEntity.status(error.status()).body(error.detail()));
+}
+```
+
+| Adapter | Behavior |
+|---|---|
+| `fromOption(mono)` | `Some` → `200` + body; `None` or empty → `404` |
+| `fromResult(mono, onError)` | `Ok` → `200` + body; `Err` → `onError`; empty → `404` |
+| `fromTry(mono, onFailure)` | `Success` → `200` + body; `Failure` → `onFailure`; empty → `404` |
+| `fromValidated(mono)` | `Valid` → `200` + body; `Invalid` → `400` with all errors; empty → `404` |
+
+`fromOption` preserves the body type (`Mono<ResponseEntity<V>>`); the others return
+`Mono<ResponseEntity<?>>` because the success and error branches carry different body
+types. The error/failure mapper builds any `ResponseEntity` you like (status, headers,
+body).
 
 ## Validating a request body → `400` with every error
 
