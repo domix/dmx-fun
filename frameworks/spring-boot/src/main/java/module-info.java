@@ -26,6 +26,9 @@ module dmx.fun.spring.boot {
     requires static micrometer.core;
     requires org.jspecify;
     requires static micrometer.observation;
+    requires static dmx.fun.spring.webflux;
+    requires static spring.webflux;
+    requires static reactor.core;
 
     exports dmx.fun.spring.boot;
     exports dmx.fun.spring.boot.web;

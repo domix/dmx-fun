@@ -28,6 +28,9 @@ dependencies {
     compileOnly "io.micrometer:micrometer-tracing:${micrometerTracingVersion}" // Tracer (for @ConditionalOnClass guard)
     compileOnly project(':observability:observation')                                        // DmxObservation (for @ConditionalOnClass guard)
     compileOnly "io.micrometer:micrometer-core:${micrometerVersion}"           // ObservationRegistry (for @ConditionalOnClass guard)
+    compileOnly project(':frameworks:spring-webflux')  // WebfluxProblem, ThrowableHttpMapper (for the WebFlux auto-config)
+    compileOnly libs.spring.webflux                    // ServerResponse (for @ConditionalOnClass guard)
+    compileOnly libs.reactor.core                      // Mono (referenced by ThrowableHttpMapper)
 
     // Tests run against the version passed via -PspringBootVersion=X.Y.Z,
     // falling back to the catalog version locally.
@@ -46,6 +49,9 @@ dependencies {
     testImplementation project(':observability:observation')
     testImplementation "io.micrometer:micrometer-core:${micrometerVersion}"
     testImplementation "io.micrometer:micrometer-observation-test:${micrometerVersion}"
+    testImplementation project(':frameworks:spring-webflux')
+    testImplementation libs.spring.webflux
+    testImplementation libs.reactor.core
 
     // Integration tests — real transaction commit/rollback against H2 embedded database.
     testImplementation libs.h2
@@ -56,8 +62,8 @@ dependencies {
 // explicitly so the JVM resolves it into the module graph during tests.
 jpmsTest {
     moduleName   = 'dmx.fun.spring.boot'
-    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet', 'dmx.fun.jackson', 'com.fasterxml.jackson.databind', 'micrometer.tracing', 'dmx.fun.tracing', 'micrometer.core', 'dmx.fun.observation']
-    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop', 'spring.boot.autoconfigure', 'spring.webmvc', 'spring.web', 'com.fasterxml.jackson.databind']
+    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet', 'dmx.fun.jackson', 'com.fasterxml.jackson.databind', 'micrometer.tracing', 'dmx.fun.tracing', 'micrometer.core', 'dmx.fun.observation', 'dmx.fun.spring.webflux', 'spring.webflux', 'reactor.core']
+    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop', 'spring.boot.autoconfigure', 'spring.webmvc', 'spring.web', 'spring.webflux', 'com.fasterxml.jackson.databind']
 }
 
 mavenPublishing {
