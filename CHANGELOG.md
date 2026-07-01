@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-01
+
+First-anniversary release. The headline additions are two new reactive modules —
+`fun-reactor` (Project Reactor interop) and `fun-spring-webflux` (Spring WebFlux
+adapters) — extending dmx-fun's railway-oriented style to `Mono`/`Flux` and HTTP.
+
+### Added
+
+- **`fun-reactor` — Project Reactor interop (new module):**
+  - `Mono` interop — convert `Option`, `Result`, and `Try` to/from `Mono`, plus
+    railway operators to stay on the Result/Try track inside reactive pipelines (#274).
+  - `Flux` interop and Result railway operators — `sequence` (fail-fast) and
+    `collectValidated` (error-accumulating) aggregation over a `Flux<Result>` (#473, #475).
+- **`fun-spring-webflux` — Spring WebFlux adapters (new module):**
+  - `WebfluxFun` maps `Option`, `Result`, `Try`, and `Validated` to a
+    `Mono<ServerResponse>` for functional endpoints, with documented, overridable HTTP
+    conventions (#275).
+  - Accumulating and streaming `Flux` responses — `fromResultStream`,
+    `fromResultStreamAccumulating`, and `stream` (NDJSON/SSE) (#482).
+  - Customizable success responses via `SuccessHttpMapper` — e.g. `201 Created` with a
+    `Location` header (#483).
+  - `WebfluxProblem` renders failures as RFC 7807 `application/problem+json`
+    `ProblemDetail` documents (#484).
+  - `WebfluxEntity` maps outcomes to `Mono<ResponseEntity<…>>` for annotation
+    controllers (`@RestController`) (#486).
+- **`fun-spring-boot`** — auto-configures a default WebFlux `ProblemDetail`
+  `ThrowableHttpMapper` bean, configurable and conditional (#485).
+- **`Result`** — `mapCatching(CheckedFunction)`, a `map` variant that captures thrown
+  checked exceptions as an `Err` (#476).
+- **`NonEmptyList`** — `reduce(BinaryOperator)` and `joinToString(...)` (#477).
+
+### Changed
+
+- Dependency bumps: Spring Boot 4.1.0 (#490), Jackson 2.22.0 (#463), JUnit BOM 6.1.1
+  (#468), Micrometer 1.17.0 and Micrometer Tracing 1.7.0 (#470), Quarkus 3.37.0 (#471),
+  Hibernate Validator 9.1.1.Final (#487), PostgreSQL JDBC 42.7.12 (#491), jakarta-jaxb
+  runtime patches (#489), Gradle wrapper 9.6.1 (#469).
+
+### Removed
+
+### Fixed
+
+- **Build** — the aggregated Javadoc (`aggregateJavadoc`) now includes the `fun-reactor`
+  and `fun-spring-webflux` modules; previously it failed to resolve modules because
+  `fun-spring-boot`'s `module-info` requires `dmx.fun.spring.webflux` (#497).
+
 ## [0.1.0] - 2026-05-10
 
 ### Added
@@ -630,7 +676,8 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/domix/dmx-fun/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/domix/dmx-fun/compare/v0.0.15...v0.1.0
 [0.0.15]: https://github.com/domix/dmx-fun/compare/v0.0.14...v0.0.15
 [0.0.14]: https://github.com/domix/dmx-fun/compare/v0.0.13...v0.0.14
