@@ -33,6 +33,11 @@ Each adapter takes the upstream reactive outcome and returns a `Mono<ServerRespo
 | `fromResultStreamAccumulating(flux)` | aggregate a `Flux<Result>` accumulating; all `Ok` → `200` + list; any `Err` → `400` with **every** error |
 | `stream(flux, mediaType, type)` | stream a `Flux<V>` as the body (NDJSON / SSE); `200`, each element encoded as it arrives |
 
+The success branch defaults to `200 OK`. To return a different status or headers (e.g.
+`201 Created` + `Location`), `fromResult`, `fromOption`, `fromTry`, and `fromValidated` each
+have an overload taking a `SuccessHttpMapper<V>` — see
+[Customizing the success response](#customizing-the-success-response-201-created-headers).
+
 ```java
 RouterFunction<ServerResponse> routes() {
     return RouterFunctions.route()

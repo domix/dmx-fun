@@ -196,4 +196,33 @@ class WebfluxFunTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("errorMapper");
     }
+
+    @Test
+    void fromResult_nullSuccessMapper_throws() {
+        assertThatThrownBy(() -> WebfluxFun.fromResult(Mono.just(Result.<String, String>ok("x")), null, ERROR_400))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
+    }
+
+    @Test
+    void fromOption_nullSuccessMapper_throws() {
+        assertThatThrownBy(() -> WebfluxFun.fromOption(Mono.just(Option.some("x")), null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
+    }
+
+    @Test
+    void fromTry_nullSuccessMapper_throws() {
+        assertThatThrownBy(() -> WebfluxFun.fromTry(Mono.just(Try.success("x")), null, FAILURE_500))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
+    }
+
+    @Test
+    void fromValidated_nullSuccessMapper_throws() {
+        Mono<Validated<NonEmptyList<String>, String>> valid = Mono.just(Validated.valid("x"));
+        assertThatThrownBy(() -> WebfluxFun.fromValidated(valid, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("successMapper");
+    }
 }
