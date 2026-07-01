@@ -58,7 +58,7 @@
       "name": "dmx.fun.webflux.problem.status",
       "type": "java.lang.Integer",
       "defaultValue": 500,
-      "description": "HTTP status code for the auto-configured default WebFlux ProblemDetail ThrowableHttpMapper."
+      "description": "HTTP status code for the auto-configured default WebFlux ProblemDetail ThrowableHttpMapper. Must be a valid HTTP status code; an unknown value fails startup with a clear message."
     }
   ]
 }

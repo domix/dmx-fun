@@ -3,6 +3,7 @@ package dmx.fun.spring.boot.web;
 import dmx.fun.spring.webflux.ThrowableHttpMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,6 +52,21 @@ class DmxFunWebFluxAutoConfigurationTest {
         runner.withUserConfiguration(CustomMapperConfig.class).run(ctx -> {
             assertThat(ctx).hasSingleBean(ThrowableHttpMapper.class).hasBean("customMapper");
             assertThat(ctx).doesNotHaveBean("dmxFunProblemDetailMapper");
+        });
+    }
+
+    @Test
+    void backsOff_whenWebFluxClassesAbsent() {
+        runner.withClassLoader(new FilteredClassLoader(ServerResponse.class))
+            .run(ctx -> assertThat(ctx).doesNotHaveBean(ThrowableHttpMapper.class));
+    }
+
+    @Test
+    void invalidStatus_failsStartupWithClearMessage() {
+        runner.withPropertyValues("dmx.fun.webflux.problem.status=999").run(ctx -> {
+            assertThat(ctx).hasFailed();
+            assertThat(ctx).getFailure().rootCause()
+                .hasMessageContaining("dmx.fun.webflux.problem.status");
         });
     }
 

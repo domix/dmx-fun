@@ -39,7 +39,8 @@ public class DmxFunWebFluxAutoConfiguration {
      * Registers a default {@link ThrowableHttpMapper} rendering failures as an RFC 7807 problem
      * response with the configured status (default {@code 500}).
      *
-     * @param status the HTTP status code for the problem, from {@code dmx.fun.webflux.problem.status}
+     * @param status the HTTP status code for the problem, from {@code dmx.fun.webflux.problem.status};
+     *               must be a valid HTTP status code or startup fails with a clear message
      * @return the default problem-detail throwable mapper
      */
     @Bean
@@ -48,6 +49,11 @@ public class DmxFunWebFluxAutoConfiguration {
     ThrowableHttpMapper dmxFunProblemDetailMapper(
         @Value("${dmx.fun.webflux.problem.status:500}") int status
     ) {
-        return WebfluxProblem.problemDetail(HttpStatus.valueOf(status));
+        HttpStatus resolved = HttpStatus.resolve(status);
+        if (resolved == null) {
+            throw new IllegalStateException(
+                "Invalid dmx.fun.webflux.problem.status: " + status + " — must be a valid HTTP status code");
+        }
+        return WebfluxProblem.problemDetail(resolved);
     }
 }
