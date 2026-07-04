@@ -61,7 +61,7 @@
 46. How functional programming improves maintainability
 47. Coupling and cohesion from a functional perspective
 48. Functional programming for microservices
-49. Functional thinking for backend engineers
+49. ~~Functional thinking for backend engineers~~
 50. How to document functional flows in complex systems
 
 ### Language and ecosystem topics
