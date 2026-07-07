@@ -153,7 +153,7 @@
 ### More reflective and opinionated topics
 
 107. The monad tutorial fallacy: why the analogies keep failing
-108. Why "just use exceptions" persists, and when it is actually right
+108. ~~Why "just use exceptions" persists, and when it is actually right~~
 109. The hidden cost of cleverness in functional code
 110. What survived the functional programming hype
 
