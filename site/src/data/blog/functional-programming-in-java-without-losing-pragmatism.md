@@ -29,7 +29,7 @@ just as importantly, which to leave. This post is about staying on the pragmatic
 ## Work with the language, not against it
 
 Java in 2026 is not the language the "Java can't do FP" complaints were written about. Records give
-you immutable value types in one line. Sealed interfaces plus pattern matching give you closed sets
+you shallowly immutable value carriers in one line. Sealed interfaces plus pattern matching give you closed sets
 with exhaustive `switch`. These are functional tools shipped in the JDK, and they read like normal
 Java because they *are* normal Java.
 
@@ -60,7 +60,7 @@ already on the classpath and already familiar.
 
 The second pragmatic reflex is to check what the standard library already gives you. `Optional`,
 `Stream`, and `CompletableFuture` are functional types — values that model absence, sequences, and
-async results, composable with `map` and `flatMap`. If a `stream().filter().map().toList()` reads
+async results, composable with `map`/`flatMap` (and `thenApply`/`thenCompose` for futures). If a `stream().filter().map().toList()` reads
 better than a loop, use it. You do not need anything beyond the JDK to think functionally about
 collections and optional values.
 
@@ -69,7 +69,7 @@ backend work, and they are the reason a library like dmx-fun exists at all:
 
 - **Typed errors.** `Optional` models absence but has no error channel — it cannot tell you *why*
   something is missing. Exceptions can, but they vanish from the type signature. `Result<V, E>`
-  fills the gap: a return value that carries a typed failure the compiler makes the caller handle.
+  fills the gap: a return value that makes the typed failure visible in the signature and to the caller.
 - **Accumulating validation.** Nothing in the JDK collects multiple failures into one answer.
   `Validated` does, so a form with three bad fields comes back with all three, not just the first.
 
