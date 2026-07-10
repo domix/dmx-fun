@@ -163,7 +163,7 @@
 * **Immutability in real systems: fewer bugs, fewer surprises**
 * **Error handling without exceptions: a functional approach**
 * **Option, Result, and Try explained pragmatically**
-* **Functional programming in Java without losing pragmatism**
+* ~~**Functional programming in Java without losing pragmatism**~~
 * **Functional core, imperative shell applied to a real service**
 * **The day a NullPointerException taught me to use Option**
 * **Rewriting a tangled service method into a pure pipeline**
