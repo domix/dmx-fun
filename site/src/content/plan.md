@@ -139,7 +139,7 @@
 
 98. Functional event sourcing: folding events into state
 99. Typed error taxonomies for HTTP APIs
-100. Where to put validation: at the boundary, not in the core
+100. ~~Where to put validation: at the boundary, not in the core~~
 101. Functional approaches to idempotency in distributed systems
 102. CQRS through a functional lens
 
