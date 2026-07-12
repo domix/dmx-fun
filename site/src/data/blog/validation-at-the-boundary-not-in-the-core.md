@@ -64,11 +64,21 @@ exist if the rules passed. Validation stops being a yes/no inspection and become
 
 ```java
 public record EmailAddress(String value) {
-    public static Result<EmailAddress, String> parse(String raw) {
-        if (raw == null || !raw.contains("@")) {
-            return Result.err("invalid email address");
+    public EmailAddress {   // every construction path enforces the invariant
+        if (!isWellFormed(value)) {
+            throw new IllegalArgumentException("invalid email address");
         }
-        return Result.ok(new EmailAddress(raw));
+    }
+
+    public static Result<EmailAddress, String> parse(String raw) {
+        return raw != null && isWellFormed(raw)
+            ? Result.ok(new EmailAddress(raw))
+            : Result.err("invalid email address");
+    }
+
+    private static boolean isWellFormed(String s) {
+        int at = s.indexOf('@');
+        return at > 0 && at < s.length() - 1;   // non-empty local and domain parts
     }
 }
 ```
@@ -137,9 +147,13 @@ policy* — and they belong in the core, because only the core has the context t
 ```java
 // Core. Not "is the data valid" — it is. This is "does the business allow it."
 Result<Order, OrderError> confirm(Order order) {
-    if (order.status() != PENDING)  return Result.err(new OrderError.NotPending());
-    if (order.items().isEmpty())    return Result.err(new OrderError.Empty());
-    return Result.ok(order.withStatus(CONFIRMED));
+    if (order.status() != Order.Status.PENDING) {
+        return Result.err(new OrderError.NotPending());
+    }
+    if (order.items().isEmpty()) {
+        return Result.err(new OrderError.Empty());
+    }
+    return Result.ok(order.withStatus(Order.Status.CONFIRMED));
 }
 ```
 
