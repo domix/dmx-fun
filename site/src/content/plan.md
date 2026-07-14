@@ -116,7 +116,7 @@
 
 84. Modeling side effects as values: a gentle intro to effect types
 85. Virtual threads and functional code: what changes and what does not
-86. Functional concurrency: structuring parallel work without shared state
+86. ~~Functional concurrency: structuring parallel work without shared state~~
 87. Laziness and streaming: processing large data without loading it all
 88. The performance cost of immutability, and when it actually matters
 
