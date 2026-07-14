@@ -61,7 +61,9 @@ Virtual threads (standard since Java 21) removed the old excuse for not structur
 — tasks are now cheap enough to fork one per item:
 
 ```java
-List<CustomerId> ids = ...;                       // immutable input
+// CustomerId is a record; List.copyOf makes the list itself unmodifiable —
+// genuinely immutable input, safe to hand to every task.
+List<CustomerId> ids = List.copyOf(requestedIds);
 
 try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
     List<Future<Profile>> futures = ids.stream()
@@ -72,10 +74,19 @@ try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 ```
 
 Notice what is absent: no shared collection the tasks add to, no counter they increment, no
-`synchronized`. Each task's entire effect is its return value. And for CPU-bound work over a
-collection, the degenerate form of the same pattern is a one-liner — `parallelStream()` is
-scatter/gather with the fork and join hidden, and it is exactly as safe as the function you map
-is pure:
+`synchronized`. Each task's effect on the *rest of the program* is its return value.
+
+Two honest notes on this shape. First, `fetchProfile` is not a pure function — it performs
+network I/O. That is fine: the pattern eliminates **shared mutable state**, not all effects. A
+task may talk to the outside world; what it must not do is write anything another task reads.
+Second, virtual threads make forking cheap — they do not make the downstream service infinite.
+One task per item is the right *structure*, but for large inputs, bound the in-flight calls
+explicitly (a `Semaphore`, or a Bulkhead/RateLimiter from
+[fun-resilience4j](/dmx-fun/guide/resilience4j)).
+
+For CPU-bound work over a collection, the degenerate form of the same pattern is a one-liner —
+`parallelStream()` is scatter/gather with the fork and join hidden, and it is exactly as safe as
+the function you map is pure:
 
 ```java
 List<Invoice> invoices = orders.parallelStream()
@@ -190,8 +201,9 @@ an explicit join — is identical.
 Structuring parallel work functionally comes down to four rules:
 
 1. **Inputs are immutable.** What you hand a task, nobody mutates — starting with the task itself.
-2. **Tasks are functions.** Input in, value out, no effects on anything shared. Purity is what
-   makes the parallelism safe rather than lucky.
+2. **Tasks are isolated.** Input in, value out, no effects on anything *shared* — external I/O
+   is fine; writes another task can see are not. Isolation is what makes the parallelism safe
+   rather than lucky.
 3. **Outcomes are values.** `Try` or `Result` captured inside the task, so failure crosses the
    thread boundary as data, not as a delayed explosion.
 4. **The join is explicit.** One place gathers the values and decides: fail fast, accumulate
@@ -199,8 +211,9 @@ Structuring parallel work functionally comes down to four rules:
 
 This is the functional core / imperative shell idea applied to *time*: the coordination — forking,
 awaiting, joining — is a thin shell you can read in one screen, and everything that runs in
-parallel is pure and therefore cannot interfere. (Java's structured concurrency API, still in
-preview as of Java 25, is pushing the platform the same direction: explicit fork/join scopes whose
+parallel is isolated — a function of its own input, sharing nothing mutable — and therefore
+cannot interfere. (Java's structured concurrency API, still in
+preview as of Java 26, is pushing the platform the same direction: explicit fork/join scopes whose
 natural inhabitants are value-returning tasks.) The threads were never the problem. Give them
 nothing to fight over, and they have nothing to fight with.
 
