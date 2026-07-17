@@ -123,7 +123,7 @@
 ### Java platform and language evolution
 
 89. What records and sealed types changed for functional Java
-90. Stream gatherers: custom intermediate operations in modern Java
+90. ~~Stream gatherers: custom intermediate operations in modern Java~~
 91. Pattern matching in Java: from instanceof to record deconstruction
 92. Project Valhalla and value classes: the functional payoff
 93. Optional done right: the dos and don'ts the JDK does not enforce
