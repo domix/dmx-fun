@@ -3,7 +3,7 @@
 [versions]
 java = "25"
 assertj = "3.27.7"
-jackson = "2.22.0"
+jackson = "2.22.1"
 aspectj = "1.9.25.1"
 spring = "7.0.8"
 springBoot = "4.1.0"
