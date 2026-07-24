@@ -67,9 +67,10 @@ BigDecimal price(Order order, RateTable rates)   // same dependency, now visible
 ```
 
 That is the general move, and it is worth stating as a rule: **functional style does not remove
-coupling — it converts hidden coupling into visible data coupling.** A pure function is coupled
-to exactly its parameter types and its return type. You can read its entire dependency surface
-without opening the body.
+coupling — it converts hidden coupling into visible data coupling.** A pure function's value
+dependencies and effects are explicit in its parameter and return types. What stays implicit is
+the ordinary kind — the helpers it calls, the immutable context it may capture — which couples it
+to code, not to anyone's mutable state.
 
 Two more forms dissolve the same way — the first a rung of the ladder, the second the everyday
 hazard the ladder never named:
@@ -80,9 +81,10 @@ hazard the ladder never named:
   `process(order, validator)`. The caller decides, the callee composes.
 - **Temporal coupling** — "call `init()` before `execute()`, or else" — is a protocol that lives
   in Javadoc and tribal memory. When steps are functions that *return values consumed by the next
-  step*, the order is not a convention; it is the only way the code compiles. A
-  `flatMap` chain is sequencing made structural: you cannot confirm an order you have not yet
-  parsed, because the unparsed thing has the wrong type.
+  step*, the order stops being a convention: within the chain it is explicit in the structure,
+  and each step's data dependency on the previous one is enforced by types. A `flatMap` chain
+  makes sequencing structural: you cannot confirm an order you have not yet parsed, because the
+  unparsed thing has the wrong type.
 
 ---
 
