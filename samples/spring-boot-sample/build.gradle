@@ -22,6 +22,12 @@ dependencies {
         constraints {
             implementation "org.apache.tomcat.embed:tomcat-embed-core:11.0.22"
         }
+        // Boot 4.1.0 manages jackson-bom 3.1.4, which is vulnerable to the @JsonView /
+        // @JsonUnwrapped deserialization bypass (Dependabot alert #90, fixed in 3.1.5).
+        // Gradle picks the highest version among platforms, so this wins over the Boot BOM.
+        // Remove once Spring Boot manages jackson-bom >= 3.1.5. See issue #517.
+        implementation     platform("tools.jackson:jackson-bom:3.1.5")
+        testImplementation platform("tools.jackson:jackson-bom:3.1.5")
     }
 
     // dmx-fun modules
