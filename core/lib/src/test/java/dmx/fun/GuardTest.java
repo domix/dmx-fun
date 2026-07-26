@@ -692,4 +692,219 @@ class GuardTest {
         assertThat(combined.getError().toList())
             .containsExactly("must not be blank", "email must contain @");
     }
+
+    // -------------------------------------------------------------------------
+    // combinator variance — Guard<? super T>
+    // -------------------------------------------------------------------------
+
+    Guard<CharSequence> notEmptyCs = Guard.of(cs -> !cs.isEmpty(), "must not be empty");
+
+    @Test
+    void and_acceptsGuardOfSupertype() {
+        Guard<String> minLength3 = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+
+        Guard<String> username = minLength3.and(notEmptyCs);
+
+        assertThat(username.check("alice").isValid()).isTrue();
+        assertThat(username.check("").getError().toList())
+            .containsExactly("must be at least 3 chars", "must not be empty");
+    }
+
+    @Test
+    void or_acceptsGuardOfSupertype_andRewrapsOriginalValue() {
+        Guard<String> digits = Guard.of(s -> s.matches("\\d+"), "must be digits");
+
+        Guard<String> contact = digits.or(notEmptyCs);
+
+        var valid = contact.check("hello");   // digits fails, notEmptyCs passes
+        assertThat(valid.isValid()).isTrue();
+        assertThat(valid.get()).isEqualTo("hello");
+
+        assertThat(contact.check("").getError().toList())
+            .containsExactly("must be digits", "must not be empty");
+    }
+
+    @Test
+    void andThen_acceptsGuardOfSupertype_andShortCircuits() {
+        var evaluated = new AtomicInteger();
+        Guard<CharSequence> counting = value -> {
+            evaluated.incrementAndGet();
+            return Validated.valid(value);
+        };
+
+        Guard<String> guarded = notBeBlank.andThen(counting);
+
+        assertThat(guarded.check("  ").isValid()).isFalse();
+        assertThat(evaluated.get()).isZero();          // short-circuit preserved
+
+        var valid = guarded.check("alice");
+        assertThat(valid.get()).isEqualTo("alice");    // original value re-wrapped
+        assertThat(evaluated.get()).isEqualTo(1);
+    }
+
+    // -------------------------------------------------------------------------
+    // allOf / anyOf
+    // -------------------------------------------------------------------------
+
+    @Test
+    void allOf_accumulatesErrorsFromAllFailingGuards() {
+        Guard<String> minLength3 = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+        Guard<String> alphanumeric = Guard.of(s -> s.matches("\\w+"), "must be alphanumeric");
+
+        Guard<String> username = Guard.allOf(notBeBlank, minLength3, alphanumeric);
+
+        assertThat(username.check("alice").isValid()).isTrue();
+        assertThat(username.check("a?").getError().toList())
+            .containsExactly("must be at least 3 chars", "must be alphanumeric");
+    }
+
+    @Test
+    void allOf_singleGuard_behavesLikeThatGuard() {
+        Guard<String> only = Guard.allOf(notBeBlank);
+
+        assertThat(only.check("alice").isValid()).isTrue();
+        assertThat(only.check("  ").getError().toList()).containsExactly("must not be blank");
+    }
+
+    @Test
+    void allOf_shouldThrowNPE_whenAnyGuardIsNull() {
+        assertThatThrownBy(() -> Guard.allOf(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("first");
+        assertThatThrownBy(() -> Guard.allOf(notBeBlank, (Guard<String>) null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("rest");
+    }
+
+    @Test
+    void anyOf_shortCircuitsOnFirstPass_andAccumulatesWhenAllFail() {
+        var evaluated = new AtomicInteger();
+        Guard<String> counting = value -> {
+            evaluated.incrementAndGet();
+            return Validated.valid(value);
+        };
+
+        Guard<String> contact = Guard.anyOf(email, counting);
+        assertThat(contact.check("alice@example.com").isValid()).isTrue();
+        assertThat(evaluated.get()).isZero();          // short-circuit preserved
+
+        Guard<String> strict = Guard.anyOf(email, phone);
+        assertThat(strict.check("hello").getError().toList())
+            .containsExactly("must contain @", "must be digits");
+    }
+
+    @Test
+    void anyOf_acceptsGuardsOfSupertype() {
+        Guard<String> contact = Guard.anyOf(notEmptyCs, email);
+
+        var valid = contact.check("hello");
+        assertThat(valid.isValid()).isTrue();
+        assertThat(valid.get()).isEqualTo("hello");
+    }
+
+    // -------------------------------------------------------------------------
+    // contramap with field context
+    // -------------------------------------------------------------------------
+
+    record Account(String username, String email) {}
+
+    @Test
+    void contramap_withFieldName_prefixesEveryError() {
+        Guard<String> minLength3 = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+
+        Guard<Account> accountGuard = Guard.allOf(
+            notBeBlank.and(minLength3).contramap(Account::username, "username"),
+            email.contramap(Account::email, "email"));
+
+        var invalid = accountGuard.check(new Account("  ", "not-an-email"));
+        assertThat(invalid.getError().toList()).containsExactly(
+            "username: must not be blank",
+            "username: must be at least 3 chars",
+            "email: must contain @");
+
+        var valid = accountGuard.check(new Account("alice", "alice@example.com"));
+        assertThat(valid.isValid()).isTrue();
+        assertThat(valid.get()).isEqualTo(new Account("alice", "alice@example.com"));
+    }
+
+    @Test
+    void contramap_withFieldName_shouldThrowNPE_whenFieldNameIsNull() {
+        assertThatThrownBy(() -> notBeBlank.contramap(Account::username, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("fieldName");
+    }
+
+    // -------------------------------------------------------------------------
+    // mapMessages
+    // -------------------------------------------------------------------------
+
+    @Test
+    void mapMessages_rewritesEachAccumulatedError() {
+        Guard<String> minLength3 = Guard.of(s -> s.length() >= 3, "must be at least 3 chars");
+
+        Guard<String> username = notBeBlank.and(minLength3)
+            .mapMessages(m -> "user.name: " + m);
+
+        assertThat(username.check("  ").getError().toList()).containsExactly(
+            "user.name: must not be blank",
+            "user.name: must be at least 3 chars");
+        assertThat(username.check("alice").isValid()).isTrue();
+    }
+
+    @Test
+    void mapMessages_shouldThrowNPE_whenTransformIsNull() {
+        assertThatThrownBy(() -> notBeBlank.mapMessages(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("transform");
+    }
+
+    // -------------------------------------------------------------------------
+    // ofCatching
+    // -------------------------------------------------------------------------
+
+    @Test
+    void ofCatching_foldsThrownRuntimeExceptionIntoInvalid() {
+        Guard<String> numeric = Guard.ofCatching(
+            s -> Integer.parseInt(s) >= 0,
+            "must be a non-negative number");
+
+        assertThat(numeric.check("42").isValid()).isTrue();
+        assertThat(numeric.check("-1").getError().toList())
+            .containsExactly("must be a non-negative number");
+        assertThat(numeric.check("abc").getError().toList())
+            .containsExactly("must be a non-negative number");   // parseInt threw
+    }
+
+    @Test
+    void ofCatching_shouldThrowNPE_whenArgumentsAreNull() {
+        assertThatThrownBy(() -> Guard.ofCatching(null, "msg"))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("predicate");
+        assertThatThrownBy(() -> Guard.ofCatching(s -> true, null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("errorMessage");
+    }
+
+    // -------------------------------------------------------------------------
+    // narrow
+    // -------------------------------------------------------------------------
+
+    @Test
+    void narrow_adaptsSupertypeGuard_preservingValueAndErrors() {
+        Guard<String> forStrings = Guard.narrow(notEmptyCs);
+
+        var valid = forStrings.check("hello");
+        assertThat(valid.isValid()).isTrue();
+        assertThat(valid.get()).isEqualTo("hello");
+
+        assertThat(forStrings.check("").getError().toList())
+            .containsExactly("must not be empty");
+    }
+
+    @Test
+    void narrow_shouldThrowNPE_whenGuardIsNull() {
+        assertThatThrownBy(() -> Guard.narrow(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("guard");
+    }
 }
