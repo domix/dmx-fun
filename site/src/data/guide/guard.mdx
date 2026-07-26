@@ -23,8 +23,11 @@ a predicate over `T` with an associated error message.
 Applying a guard via `check(value)` returns a
 `Validated<NonEmptyList<String>, T>` — `Valid(value)` when the rule passes,
 or `Invalid(errors)` when it fails.
-All composition operators (`and`, `or`, `negate`, `andThen`, `contramap`) are `default` methods
-on the interface, so guards can be defined as lambdas and composed without inheritance.
+All composition operators (`and`, `or`, `negate`, `andThen`, `contramap`, `withMessage`,
+`mapMessages`) are `default` methods on the interface, so guards can be defined as lambdas and
+composed without inheritance; the static factories `allOf` and `anyOf` compose several guards
+at once. The binary combinators accept `Guard<? super T>`, mirroring `Predicate.and`/`or`, so
+a guard written against a supertype composes into a narrower guard.
 This design decision is documented in <a href={`${base}adr/adr-011-guard-functional-interface`}>ADR-011 — Guard&lt;T&gt; as a @FunctionalInterface with default methods</a>.
 
 The error type is fixed as `NonEmptyList<String>` — this keeps composition simple (no external
@@ -40,6 +43,19 @@ rule once as a `Guard` and compose them with `and`, `or`, and `negate`.
 <CreatingGuards/>
 
 Both factory overloads throw `NullPointerException` for `null` predicate or message arguments.
+The predicate itself must not throw — any exception escapes `check()` unwrapped. For a
+predicate that may throw on malformed input (parsing, regex), use
+`Guard.ofCatching(predicate, message)`, which folds a thrown `RuntimeException` into
+`Invalid([message])`:
+
+```java
+Guard<String> numeric = Guard.ofCatching(
+    s -> Integer.parseInt(s) >= 0,        // parseInt throws on non-numeric input
+    "must be a non-negative number");
+
+numeric.check("42");   // Valid("42")
+numeric.check("abc");  // Invalid(["must be a non-negative number"]) — exception folded
+```
 
 ## Built-in guards
 
@@ -89,6 +105,22 @@ If all guards fail, errors from all of them are accumulated.
 Use `or` when a value is allowed to satisfy any one of several alternative formats
 (e.g., email or phone number, UUID or slug).
 
+## `allOf(...)` / `anyOf(...)` — compose several guards at once
+
+Instead of chaining `.and()` or `.or()` calls, the varargs factories compose a set of rules in
+one expression. The first guard is a mandatory parameter, so an empty composition does not
+compile. `allOf` evaluates every guard and accumulates errors from all that fail (same
+semantics as chained `and`, in a single pass); `anyOf` short-circuits on the first pass and
+accumulates every error when all fail (same as chained `or`):
+
+```java
+Guard<String> username = Guard.allOf(notBlank, minLength3, alphanumeric);
+Guard<String> contact  = Guard.anyOf(email, phone);
+
+username.check("a?");             // Invalid(["must be at least 3 chars", "must be alphanumeric"])
+contact.check("alice@acme.com");  // Valid — phone never evaluated
+```
+
 ## `negate()` / `negate(message)` / `negate(messageFromValue)`
 
 Inverts the predicate. Three overloads are available:
@@ -116,6 +148,34 @@ username.check("a");   // Invalid(["invalid username"]) — not "min 3 chars"
 username.check("alice"); // Valid("alice")
 ```
 
+## `mapMessages(transform)`
+
+Rewrites each accumulated error message individually — the general form behind field
+prefixing. Where `withMessage` collapses everything into one fixed message, `mapMessages`
+keeps every error and transforms it:
+
+```java
+Guard<String> username = notBlank.and(minLength3)
+    .mapMessages(m -> "user.name: " + m);
+
+username.check("");  // Invalid(["user.name: must not be blank", "user.name: must be at least 3 chars"])
+```
+
+## `contramap(fn)` and `contramap(fn, fieldName)`
+
+`contramap` adapts a field-level guard to validate the enclosing object. The `fieldName`
+overload additionally prefixes each error with the field name, so accumulated messages stay
+unambiguous when several field guards are combined on one object:
+
+```java
+Guard<Account> accountGuard = Guard.allOf(
+    notBlank.contramap(Account::username, "username"),
+    email.contramap(Account::email, "email"));
+
+accountGuard.check(new Account(" ", "oops"));
+// Invalid(["username: must not be blank", "email: must contain @"])
+```
+
 ## Integrating with `Validated.combine`
 
 Guards produce `Validated<NonEmptyList<String>, T>` values, which compose naturally with
@@ -136,8 +196,11 @@ Validated<NonEmptyList<String>, Form> form =
 | Method                             | Returns                           | Use case                                                                |
 |------------------------------------|-----------------------------------|-------------------------------------------------------------------------|
 | `withMessage(message)`             | `Guard<T>`                        | Replace all errors with one fixed message (hides internal rule details) |
+| `mapMessages(transform)`           | `Guard<T>`                        | Rewrite each error message (prefixes, i18n keys, structured formats)    |
 | `asPredicate()`                    | `Predicate<T>`                    | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
 | `contramap(fn)`                    | `Guard<U>`                        | Adapt a field guard to validate the enclosing object type               |
+| `contramap(fn, fieldName)`         | `Guard<U>`                        | Same, prefixing each error with the field name                          |
+| `Guard.narrow(guard)`              | `Guard<T>`                        | Adapt a `Guard<? super T>` where a `Guard<T>` is required               |
 | `checkToResult(value)`             | `Result<T, NonEmptyList<String>>` | Direct integration into Result-based domain logic                       |
 | `checkToResult(value, mapper)`     | `Result<T, E>`                    | Map errors to a domain-specific error type at service boundaries        |
 | `checkToEither(value)`             | `Either<NonEmptyList<String>, T>` | Integrate with Either-based pipelines (left = errors, right = value)    |

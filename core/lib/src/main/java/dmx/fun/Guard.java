@@ -1,5 +1,7 @@
 package dmx.fun;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -15,8 +17,9 @@ import org.jspecify.annotations.Nullable;
  * {@code Validated<NonEmptyList<String>, T>}: {@code Valid(value)} when the predicate passes,
  * or {@code Invalid(errors)} when it fails.
  * All composition operators ({@link #and}, {@link #or}, {@link #negate()}, {@link #andThen},
- * {@link #contramap}) are {@code default} methods, so guards can be defined as lambdas and
- * composed without inheritance. The choice to use {@code @FunctionalInterface} with
+ * {@link #contramap}, {@link #withMessage}) are {@code default} methods, so guards can be
+ * defined as lambdas and composed without inheritance; {@link #allOf} and {@link #anyOf}
+ * compose several guards at once. The choice to use {@code @FunctionalInterface} with
  * {@code default} methods rather than an abstract class is documented in
  * <a href="https://domix.github.io/dmx-fun/adr/adr-011-guard-functional-interface/">
  * ADR-011 — Guard&lt;T&gt; as a @FunctionalInterface with default methods</a>.
@@ -68,6 +71,14 @@ public interface Guard<T> {
     /**
      * Applies this guard to {@code value}.
      *
+     * <p><strong>Contract:</strong> a guard is a validator, not a transformer — an
+     * implementation must return {@code Valid} of the checked value itself, never a
+     * substituted or normalized one. The composition operators rely on this: they re-wrap the
+     * original input, so any value produced by a contract-violating guard is discarded during
+     * composition. Note also that {@code Valid} rejects {@code null}, so a guard over a
+     * nullable type can never <em>pass</em> a {@code null} value — it must reject it (see
+     * {@link #nonNull()}).
+     *
      * @param value the value to validate
      * @return {@code Valid(value)} if the predicate passes, or
      *         {@code Invalid(errors)} if it fails
@@ -86,8 +97,15 @@ public interface Guard<T> {
      * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
      * }</pre>
      *
+     * <p>The predicate must not throw: any exception it raises escapes {@link #check(Object)}
+     * unwrapped, breaking the contract that a guard always returns a {@link Validated}. For
+     * predicates that would throw on {@code null} input, compose with
+     * {@link #nonNull()}{@code .andThen(...)} so the null check short-circuits first; for
+     * predicates that may throw on other inputs (parsing, regex on malformed data), use
+     * {@link #ofCatching(Predicate, String)}.
+     *
      * @param <T>          the value type
-     * @param predicate    the condition that must hold for the value to be valid
+     * @param predicate    the condition that must hold for the value to be valid; must not throw
      * @param errorMessage the error message produced when the predicate fails
      * @return a new {@code Guard<T>}
      * @throws NullPointerException if {@code predicate} or {@code errorMessage} is {@code null}
@@ -114,8 +132,16 @@ public interface Guard<T> {
      * );
      * }</pre>
      *
+     * <p>The predicate must not throw: any exception it raises escapes {@link #check(Object)}
+     * unwrapped, breaking the contract that a guard always returns a {@link Validated}. For
+     * predicates that would throw on {@code null} input, compose with
+     * {@link #nonNull()}{@code .andThen(...)} so the null check short-circuits first; for
+     * predicates that may throw on other inputs (parsing, regex on malformed data), use
+     * {@link #ofCatching(Predicate, String)}.
+     *
      * @param <T>            the value type
-     * @param predicate      the condition that must hold for the value to be valid
+     * @param predicate      the condition that must hold for the value to be valid; must not
+     *                       throw
      * @param errorMessageFn function that produces an error message from the failing value
      * @return a new {@code Guard<T>}
      * @throws NullPointerException if {@code predicate} or {@code errorMessageFn} is {@code null}
@@ -129,6 +155,182 @@ public interface Guard<T> {
         return value -> predicate.test(value)
             ? Validated.valid(value)
             : Validated.invalidNel(errorMessageFn.apply(value));
+    }
+
+    /**
+     * Creates a {@code Guard<T>} from a predicate that may throw, treating a thrown
+     * {@link RuntimeException} as a failed check.
+     *
+     * <p>Unlike {@link #of(Predicate, String)}, whose predicate must not throw, this factory
+     * preserves the contract that a guard always returns a {@link Validated}: if the predicate
+     * throws a {@code RuntimeException}, the guard returns {@code Invalid([errorMessage])}
+     * exactly as if the predicate had returned {@code false}. {@link Error}s and other
+     * {@link Throwable}s still propagate.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> numeric = Guard.ofCatching(
+     *     s -> Integer.parseInt(s) >= 0,       // parseInt throws on non-numeric input
+     *     "must be a non-negative number");
+     *
+     * numeric.check("42");   // Valid("42")
+     * numeric.check("abc");  // Invalid(["must be a non-negative number"]) — exception folded
+     * }</pre>
+     *
+     * @param <T>          the value type
+     * @param predicate    the condition to evaluate; a thrown {@code RuntimeException} counts
+     *                     as a failure
+     * @param errorMessage the error message produced when the predicate fails or throws
+     * @return a new {@code Guard<T>}
+     * @throws NullPointerException if {@code predicate} or {@code errorMessage} is {@code null}
+     */
+    static <T> Guard<T> ofCatching(Predicate<? super T> predicate, String errorMessage) {
+        Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(errorMessage, "errorMessage");
+        return value -> {
+            try {
+                return predicate.test(value)
+                    ? Validated.valid(value)
+                    : Validated.invalidNel(errorMessage);
+            } catch (RuntimeException _) {
+                return Validated.invalidNel(errorMessage);
+            }
+        };
+    }
+
+    /**
+     * Creates and returns a Guard instance that ensures a value is non-null.
+     *
+     * @param <T> the type of the value to be guarded
+     * @return a Guard that validates the value is not null
+     */
+    static <T extends @Nullable Object> Guard<T> nonNull() {
+        return Guard.of(Objects::nonNull, "must not be null");
+    }
+
+    /**
+     * Returns a guard that passes only when <em>all</em> of the given guards pass.
+     *
+     * <p>Same semantics as chaining {@link #and(Guard) and}: every guard is always evaluated
+     * and errors from all failing guards are accumulated in order — not fail-fast. The first
+     * parameter is mandatory, so the composition is never empty. Unlike a manual {@code and}
+     * chain, the guards are evaluated in a single pass with one error list.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> username = Guard.allOf(notBlank, minLength3, alphanumeric);
+     *
+     * username.check("a?");   // Invalid(["must be at least 3 chars", "must be alphanumeric"])
+     * username.check("alice"); // Valid("alice")
+     * }</pre>
+     *
+     * @param <T>   the value type
+     * @param first the first guard; must not be {@code null}
+     * @param rest  the remaining guards; must not be {@code null} or contain {@code null}
+     * @return a composed {@code Guard<T>} requiring every guard to pass
+     * @throws NullPointerException if {@code first}, {@code rest}, or any element is {@code null}
+     */
+    @SafeVarargs
+    static <T> Guard<T> allOf(Guard<? super T> first, Guard<? super T>... rest) {
+        List<Guard<? super T>> guards = collectGuards(first, rest);
+        return value -> {
+            List<String> errors = null;
+            for (Guard<? super T> guard : guards) {
+                var result = guard.check(value);
+                if (result.isInvalid()) {
+                    if (errors == null) {
+                        errors = new ArrayList<>();
+                    }
+                    errors.addAll(result.getError().toList());
+                }
+            }
+            return errors == null ? Validated.valid(value) : Validated.invalid(nel(errors));
+        };
+    }
+
+    /**
+     * Returns a guard that passes when <em>at least one</em> of the given guards passes.
+     *
+     * <p>Same semantics as chaining {@link #or(Guard) or}: evaluation short-circuits on the
+     * first passing guard; if every guard fails, errors from all of them are accumulated in
+     * order. The first parameter is mandatory, so the composition is never empty.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> contact = Guard.anyOf(email, phone);
+     *
+     * contact.check("alice@example.com"); // Valid — phone never evaluated
+     * contact.check("hello");             // Invalid(["must contain @", "must be digits"])
+     * }</pre>
+     *
+     * @param <T>   the value type
+     * @param first the first guard; must not be {@code null}
+     * @param rest  the remaining guards; must not be {@code null} or contain {@code null}
+     * @return a composed {@code Guard<T>} requiring at least one guard to pass
+     * @throws NullPointerException if {@code first}, {@code rest}, or any element is {@code null}
+     */
+    @SafeVarargs
+    static <T> Guard<T> anyOf(Guard<? super T> first, Guard<? super T>... rest) {
+        List<Guard<? super T>> guards = collectGuards(first, rest);
+        return value -> {
+            List<String> errors = new ArrayList<>();
+            for (Guard<? super T> guard : guards) {
+                var result = guard.check(value);
+                if (result.isValid()) {
+                    return Validated.valid(value);
+                }
+                errors.addAll(result.getError().toList());
+            }
+            return Validated.invalid(nel(errors));
+        };
+    }
+
+    /**
+     * Validates and copies the varargs guards into one list at composition time.
+     */
+    @SafeVarargs
+    private static <T> List<Guard<? super T>> collectGuards(
+        Guard<? super T> first,
+        Guard<? super T>... rest
+    ) {
+        Objects.requireNonNull(first, "first");
+        Objects.requireNonNull(rest, "rest");
+        List<Guard<? super T>> guards = new ArrayList<>(rest.length + 1);
+        guards.add(first);
+        for (Guard<? super T> guard : rest) {
+            guards.add(Objects.requireNonNull(guard, "rest must not contain null"));
+        }
+        return guards;
+    }
+
+    /**
+     * Builds a {@code NonEmptyList} from a non-empty accumulation list.
+     */
+    private static NonEmptyList<String> nel(List<String> errors) {
+        return NonEmptyList.of(errors.getFirst(), errors.subList(1, errors.size()));
+    }
+
+    /**
+     * Adapts a {@code Guard<? super T>} to a {@code Guard<T>} by re-wrapping the checked value,
+     * preserving the accumulated errors on failure.
+     *
+     * <p>Use this when assigning or passing a guard written against a supertype where a
+     * {@code Guard<T>} is required outside the variance-aware combinators — the adaptation
+     * cannot be written as a plain lambda because the {@code Validated} value types differ:
+     *
+     * <pre>{@code
+     * Guard<CharSequence> notEmpty = Guard.of(cs -> !cs.isEmpty(), "must not be empty");
+     * Guard<String> forStrings = Guard.narrow(notEmpty);
+     * }</pre>
+     *
+     * @param <T>   the narrower value type
+     * @param guard the guard written against a supertype; must not be {@code null}
+     * @return a {@code Guard<T>} delegating to {@code guard}
+     * @throws NullPointerException if {@code guard} is {@code null}
+     */
+    static <T> Guard<T> narrow(Guard<? super T> guard) {
+        Objects.requireNonNull(guard, "guard");
+        return value -> guard.check(value).map(_ -> value);
     }
 
     // -------------------------------------------------------------------------
@@ -154,11 +356,15 @@ public interface Guard<T> {
      *                          //  — both guards evaluated, both errors collected
      * }</pre>
      *
+     * <p>The parameter is contravariant ({@code Guard<? super T>}), mirroring
+     * {@link Predicate#and(Predicate) Predicate.and}, so a guard written against a supertype
+     * (e.g. {@code Guard<CharSequence>}) can be composed into a {@code Guard<String>}.
+     *
      * @param other the guard that must also pass; must not be {@code null}
      * @return a composed {@code Guard<T>}
      * @throws NullPointerException if {@code other} is {@code null}
      */
-    default Guard<T> and(Guard<T> other) {
+    default Guard<T> and(Guard<? super T> other) {
         Objects.requireNonNull(other, "other");
         return value -> this.check(value)
             .combine(other.check(value), NonEmptyList::concat, (v1, _) -> v1);
@@ -188,15 +394,19 @@ public interface Guard<T> {
      * first result (error accumulation). Use {@code andThen} when the second guard must not
      * run until the first has passed.
      *
+     * <p>The parameter is contravariant ({@code Guard<? super T>}); the composed guard
+     * re-wraps the original value, so the result type stays {@code Guard<T>}.
+     *
      * @param next the guard to evaluate when this guard passes; must not be {@code null}
      * @return a composed {@code Guard<T>}
      * @throws NullPointerException if {@code next} is {@code null}
      */
-    default Guard<T> andThen(Guard<T> next) {
+    default Guard<T> andThen(Guard<? super T> next) {
         Objects.requireNonNull(next, "next");
+        Guard<T> narrowed = narrow(next);
         return value -> {
             var first = this.check(value);
-            return first.isValid() ? next.check(value) : first;
+            return first.isInvalid() ? first : narrowed.check(value);
         };
     }
 
@@ -218,18 +428,23 @@ public interface Guard<T> {
      * contact.check("hello");             // Invalid(["must contain @", "must be digits"])
      * }</pre>
      *
+     * <p>The parameter is contravariant ({@code Guard<? super T>}), mirroring
+     * {@link Predicate#or(Predicate) Predicate.or}; the composed guard re-wraps the original
+     * value, so the result type stays {@code Guard<T>}.
+     *
      * @param other the alternative guard; must not be {@code null}
      * @return a composed {@code Guard<T>}
      * @throws NullPointerException if {@code other} is {@code null}
      */
-    default Guard<T> or(Guard<T> other) {
+    default Guard<T> or(Guard<? super T> other) {
         Objects.requireNonNull(other, "other");
+        Guard<T> narrowed = narrow(other);
         return value -> {
             var left = this.check(value);
             if (left.isValid()) {
                 return left;
             }
-            var right = other.check(value);
+            var right = narrowed.check(value);
             if (right.isValid()) {
                 return right;
             }
@@ -382,10 +597,70 @@ public interface Guard<T> {
      */
     default <U> Guard<U> contramap(Function<? super U, ? extends T> mapper) {
         Objects.requireNonNull(mapper, "mapper");
-        return u -> {
-            var result = this.check(mapper.apply(u));
-            return result.isValid() ? Validated.valid(u) : Validated.invalid(result.getError());
-        };
+        return u -> this.check(mapper.apply(u)).map(_ -> u);
+    }
+
+    /**
+     * Returns a {@code Guard<U>} that applies {@code mapper} to its input before checking,
+     * prefixing every error message with {@code fieldName}.
+     *
+     * <p>Like {@link #contramap(Function)}, but each accumulated error is rewritten as
+     * {@code "fieldName: originalMessage"}, so messages stay unambiguous when several
+     * field-level guards are combined on the same object.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> notBlank = Guard.of(s -> !s.isBlank(), "must not be blank");
+     *
+     * Guard<User> userGuard = Guard.allOf(
+     *     notBlank.contramap(User::username, "username"),
+     *     notBlank.contramap(User::email,    "email"));
+     *
+     * userGuard.check(new User(" ", " "));
+     * // Invalid(["username: must not be blank", "email: must not be blank"])
+     * }</pre>
+     *
+     * @param <U>       the input type of the returned guard
+     * @param mapper    function that extracts the {@code T} value from a {@code U}; must not be
+     *                  {@code null}
+     * @param fieldName prefix identifying the projected field in error messages; must not be
+     *                  {@code null}
+     * @return a new {@code Guard<U>} that projects {@code U → T} before checking and prefixes
+     *         errors with {@code fieldName}
+     * @throws NullPointerException if {@code mapper} or {@code fieldName} is {@code null}
+     */
+    default <U> Guard<U> contramap(Function<? super U, ? extends T> mapper, String fieldName) {
+        Objects.requireNonNull(fieldName, "fieldName");
+        return this.<U>contramap(mapper).mapMessages(message -> fieldName + ": " + message);
+    }
+
+    /**
+     * Returns a guard that rewrites every error message produced by this guard with
+     * {@code transform}, leaving valid results untouched.
+     *
+     * <p>This is the general form behind {@link #contramap(Function, String)}'s field
+     * prefixing — use it directly for any other message convention: nested paths, i18n keys,
+     * suffixes, or structured formats.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> username = notBlank.and(minLength3)
+     *     .mapMessages(m -> "user.name: " + m);
+     *
+     * username.check("");  // Invalid(["user.name: must not be blank", ...])
+     * }</pre>
+     *
+     * <p>Unlike {@link #withMessage(String)}, which collapses all errors into one fixed
+     * message, {@code mapMessages} transforms each accumulated message individually.
+     *
+     * @param transform function applied to each error message; must not be {@code null} and
+     *                  must not return {@code null}
+     * @return a new {@code Guard<T>} with rewritten error messages
+     * @throws NullPointerException if {@code transform} is {@code null}
+     */
+    default Guard<T> mapMessages(Function<? super String, String> transform) {
+        Objects.requireNonNull(transform, "transform");
+        return value -> this.check(value).mapError(errors -> errors.map(transform));
     }
 
     /**
@@ -427,11 +702,13 @@ public interface Guard<T> {
      *         failure
      * @throws NullPointerException if {@code toError} is {@code null}
      */
-    default <E> Result<T, E> checkToResult(T value, Function<NonEmptyList<String>, E> toError) {
+    default <E> Result<T, E> checkToResult(
+        T value,
+        Function<? super NonEmptyList<String>, ? extends E> toError
+    ) {
         Objects.requireNonNull(toError, "toError");
-        return this.check(value)
-            .mapError(toError)
-            .toResult();
+        Validated<E, T> mapped = this.check(value).mapError(toError);
+        return mapped.toResult();
     }
 
     /**
@@ -451,6 +728,10 @@ public interface Guard<T> {
      *     .toList();
      * // ["alice", "bob"]
      * }</pre>
+     *
+     * <p>A guard can never produce {@code Valid(null)} — {@code Validated.Valid} rejects
+     * {@code null} at construction — so the returned {@code Option} never wraps {@code null};
+     * a guard over a nullable type must reject {@code null} (see {@link #check(Object)}).
      *
      * @param value the value to validate
      * @return {@code Option.some(value)} if the guard passes, or {@code Option.none()} if it
@@ -548,7 +829,7 @@ public interface Guard<T> {
      */
     default <X extends Throwable> Try<T> checkToTry(
         T value,
-        Function<NonEmptyList<String>, X> toThrowable
+        Function<? super NonEmptyList<String>, ? extends X> toThrowable
     ) {
         Objects.requireNonNull(toThrowable, "toThrowable");
         var result = this.check(value);
@@ -572,15 +853,12 @@ public interface Guard<T> {
      * Optional<String> empty   = notBlank.checkToOptional("   ");   // Optional.empty()
      * }</pre>
      *
-     * <p><strong>Not suitable when {@code null} is a valid success value.</strong>
-     * This method calls {@link Optional#of(Object) Optional.of(value)} on the validated value,
-     * which throws {@link NullPointerException} if {@code value} is {@code null}.
-     * Under {@code @NullMarked}, {@code T} is non-null by default, so this is safe for ordinary
-     * guards. However, if {@code T} is a nullable type (e.g., {@code Guard<@Nullable String>})
-     * and the guard can return {@code Valid(null)}, calling this method will throw
-     * {@code NullPointerException}. In that case, use {@link #check(Object) check(value)} and
-     * work with the resulting {@link Validated} directly, applying
-     * {@link Optional#ofNullable(Object)} to the extracted value when needed.
+     * <p>A guard can never produce {@code Valid(null)} — {@code Validated.Valid} rejects
+     * {@code null} at construction — so this method never passes {@code null} to
+     * {@link Optional#of(Object)}; a guard over a nullable type must reject {@code null}
+     * (see {@link #check(Object)}). Note that {@code Optional.of(value)} wraps the
+     * <em>input</em>: for a {@code Guard<@Nullable T>} checking a {@code null} input, the
+     * guard must return {@code Invalid}, which yields {@link Optional#empty()} here.
      *
      * @param value the value to validate
      * @return {@code Optional.of(value)} if the guard passes,
@@ -588,15 +866,5 @@ public interface Guard<T> {
      */
     default Optional<T> checkToOptional(T value) {
         return this.check(value).isValid() ? Optional.of(value) : Optional.empty();
-    }
-
-    /**
-     * Creates and returns a Guard instance that ensures a value is non-null.
-     *
-     * @param <T> the type of the value to be guarded
-     * @return a Guard that validates the value is not null
-     */
-    static <T extends @Nullable Object> Guard<T> nonNull() {
-        return Guard.of(Objects::nonNull, "must not be null");
     }
 }
