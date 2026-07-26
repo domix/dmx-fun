@@ -46,10 +46,12 @@ pipeline already has.
 
 **Determinism.** A golden test is only as good as the promise that the same input produces the
 same output. A [pure pipeline](/dmx-fun/blog/pure-functions-and-side-effects) — data in, data
-out, effects at the edges — gives you this for free. No hidden clock, no random IDs, no
-iteration order of a mutable cache leaking into the report. When a pipeline is *not* pure, the
-golden test tells you immediately: it flakes, and every flake points at a nondeterminism you
-probably wanted to know about anyway.
+out, effects at the edges — supplies the hard half of that promise: no hidden clock, no random
+IDs, no mutable cache leaking state into the report. Purity is not the whole of it, though —
+stable input fixtures and a deterministic representation (collection ordering, number
+formatting) are still yours to enforce, which is what the render step below is for. When a
+pipeline is *not* pure, the golden test tells you immediately: it flakes, and every flake
+points at a nondeterminism you probably wanted to know about anyway.
 
 **Output as a value.** The technique needs the whole result reified as one comparable thing.
 Imperative code that writes rows, logs, and mutations as it goes has no such value to capture.
@@ -86,7 +88,10 @@ final class Golden {
     /** Compares {@code actual} against the golden file; re-stamps it in approve mode. */
     static void verify(String actual, Path golden) throws IOException {
         if (Boolean.getBoolean("approve")) {
-            Files.createDirectories(golden.getParent());
+            Path parent = golden.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             Files.writeString(golden, actual);
             return;
         }
@@ -127,8 +132,11 @@ void settlementReport_matchesApprovedGolden() throws IOException {
 The first run fails with a pointed message (no golden yet); you re-run in approve mode,
 *read the file*, commit it.
 Every run after that is a full-output regression test. When a legitimate change alters the
-output, the failure diff is the review artifact: you see precisely what changed, approve again,
-and the commit carries both the code change and the golden change — reviewable side by side.
+output, the failure is the review artifact — though how readable it is depends on the runner:
+IDEs render `assertEquals` string mismatches as a proper expected/actual diff, while a bare
+CLI report prints the two strings, so on CI you may prefer a diff-reporting tool. Either way,
+re-approving updates the golden, and the commit carries both the code change and the golden
+change — reviewable side by side.
 
 If you would rather not own even that much, [ApprovalTests.Java](https://github.com/approvals/ApprovalTests.Java)
 packages the same idea with reporters that open your diff tool on failure, and most JVM
