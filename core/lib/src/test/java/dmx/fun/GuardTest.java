@@ -907,4 +907,105 @@ class GuardTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining("guard");
     }
+
+    // -------------------------------------------------------------------------
+    // name / named
+    // -------------------------------------------------------------------------
+
+    @Test
+    void name_isAnonymousByDefault() {
+        assertThat(notBeBlank.name()).isEqualTo(Guard.ANONYMOUS);
+        assertThat(notBeBlank.isNamed()).isFalse();
+    }
+
+    @Test
+    void named_attachesName_withoutChangingCheckBehavior() {
+        var shorterThan10 = Guard.<String>of(s -> s.length() < 10, "must be shorter than 10");
+        Guard<String> username = notBeBlank.and(shorterThan10).named("username");
+
+        assertThat(username.name()).isEqualTo("username");
+        assertThat(username.isNamed()).isTrue();
+        assertThat(username.check("alice").isValid()).isTrue();
+        assertThat(username.check("  ").getError().toList())
+            .containsExactly("must not be blank");
+    }
+
+    @Test
+    void named_lastApplicationWins() {
+        Guard<String> guard = notBeBlank.named("first").named("second");
+
+        assertThat(guard.name()).isEqualTo("second");
+    }
+
+    @Test
+    void named_isNotPropagatedByCompositionOperators() {
+        Guard<String> named = notBeBlank.named("notBlank");
+
+        assertThat(named.and(email).name()).isEqualTo(Guard.ANONYMOUS);
+        assertThat(named.or(email).name()).isEqualTo(Guard.ANONYMOUS);
+        assertThat(named.andThen(email).name()).isEqualTo(Guard.ANONYMOUS);
+        assertThat(Guard.allOf(named, email).name()).isEqualTo(Guard.ANONYMOUS);
+        assertThat(Guard.anyOf(named, email).name()).isEqualTo(Guard.ANONYMOUS);
+    }
+
+    @Test
+    void named_isPreservedByUnaryDecorators() {
+        Guard<String> named = notBeBlank.named("notBlank");
+
+        assertThat(named.withMessage("bad").name()).isEqualTo("notBlank");
+        assertThat(named.mapMessages(m -> "x: " + m).name()).isEqualTo("notBlank");
+        assertThat(named.negate().name()).isEqualTo("notBlank");
+        assertThat(named.negate("must be blank").name()).isEqualTo("notBlank");
+        assertThat(named.contramap(User::name).name()).isEqualTo("notBlank");
+        assertThat(named.contramap(User::name, "name").name()).isEqualTo("notBlank");
+        assertThat(Guard.<String>narrow(named).name()).isEqualTo("notBlank");
+
+        // decorators on an anonymous guard stay anonymous
+        assertThat(notBeBlank.withMessage("bad").name()).isEqualTo(Guard.ANONYMOUS);
+    }
+
+    @Test
+    void named_preservedDecorator_keepsDecoratedBehavior() {
+        Guard<String> named = notBeBlank.mapMessages(m -> "user.name: " + m).named("username");
+        Guard<String> decorated = named.withMessage("invalid username");
+
+        assertThat(decorated.name()).isEqualTo("username");
+        assertThat(decorated.check("  ").getError().toList())
+            .containsExactly("invalid username");
+    }
+
+    @Test
+    void named_shouldThrowNPE_whenNameIsNull() {
+        assertThatThrownBy(() -> notBeBlank.named(null))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("name");
+    }
+
+    @Test
+    void named_shouldThrowIAE_whenNameIsBlank() {
+        assertThatThrownBy(() -> notBeBlank.named("   "))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("blank");
+    }
+
+    @Test
+    void named_shouldThrowIAE_whenNameIsTheAnonymousSentinel() {
+        assertThatThrownBy(() -> notBeBlank.named(Guard.ANONYMOUS))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("anonymous");
+    }
+
+    @Test
+    void checkToTry_includesGuardNameInDefaultException_whenNamed() {
+        Guard<String> named = notBeBlank.named("username");
+
+        var failure = named.checkToTry("  ");
+        assertThat(failure.isFailure()).isTrue();
+        assertThat(failure.getCause().getMessage())
+            .isEqualTo("guard 'username': must not be blank");
+
+        var anonymousFailure = notBeBlank.checkToTry("  ");
+        assertThat(anonymousFailure.getCause().getMessage())
+            .isEqualTo("must not be blank");
+    }
 }
