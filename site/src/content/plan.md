@@ -104,7 +104,7 @@
 
 ### Functional patterns in practice
 
-77. Replacing if/else and switch sprawl with maps of functions
+77. ~~Replacing if/else and switch sprawl with maps of functions~~
 78. Memoization: caching pure functions safely
 79. ~~Retry, timeout, and backoff as composable functions~~
 80. The Reader pattern: passing dependencies without a framework
