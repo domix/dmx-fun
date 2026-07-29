@@ -134,9 +134,10 @@ static <A, B> Function<A, B> timed(String name, Metrics metrics, Function<A, B> 
     };
 }
 
-// at wiring time: decorate every entry, then freeze — same discipline as any other table
+// at wiring time: decorate the fully composed table (registered modules included),
+// then freeze — same discipline as any other table
 Map<String, Function<Event, Result<Ack, EventError>>> decorated = new HashMap<>();
-HANDLERS.forEach((key, handler) -> decorated.put(key, timed(key, metrics, handler)));
+handlers.forEach((key, handler) -> decorated.put(key, timed(key, metrics, handler)));
 this.handlers = Map.copyOf(decorated);
 ```
 
@@ -181,8 +182,15 @@ homogeneous tables go in maps. Domain states, error cases, and anything you woul
 There is a middle ground the binary hides: a *closed* key set whose handler *bindings* are
 chosen at runtime — per-tenant wiring, feature-flagged handlers over a fixed enum. A `switch`
 cannot express that; the right tool is an `EnumMap`, which keeps near-switch lookup cost and
-lets a one-line wiring-time check (`table.keySet().containsAll(EnumSet.allOf(EventKind.class))`)
-recover the completeness guarantee the plain map gave up.
+lets a wiring-time check fail fast before any request arrives —
+
+```java
+if (!table.keySet().containsAll(EnumSet.allOf(EventKind.class))) {
+    throw new IllegalStateException("unhandled event kinds: missing handlers at wiring time");
+}
+```
+
+— recovering the completeness guarantee the plain map gave up.
 
 And below both thresholds: an `if` with two arms is fine. Replacing it with a map is
 ceremony, not design — the same judgment call as
