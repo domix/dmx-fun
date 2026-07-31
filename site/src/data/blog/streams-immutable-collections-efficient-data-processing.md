@@ -44,12 +44,13 @@ List<Invoice> overdue = invoices.stream()
 
 The runtime builds one. Intermediate operations are **lazy**: `filter` and `map` do not run
 when declared — they compose a chain of operations, and only the terminal `toList()` pulls
-elements through it. Each invoice traverses the *whole* chain before the next starts, so the
-"filtered list" and the "mapped list" are never materialized. Operation fusion is the quiet
-engine of stream efficiency: for stateless stages like these, a five-stage pipeline allocates
-one result, same as a hand-written loop. (The exceptions are the *stateful* stages — `sorted()`
-buffers the entire upstream before emitting anything, `distinct()` carries a seen-set — so a
-pipeline containing one pays for that stage's buffer like any loop would.)
+elements through it. Each invoice traverses the *whole* chain before the next starts, so no
+intermediate collection is ever *required* — the "filtered list" and the "mapped list" simply
+never need to exist. In practice (this is how current JDK implementations behave, not a
+spec-level allocation guarantee), a stateless pipeline like this does its work in a single
+traversal, much like a hand-written loop. (The exceptions are the *stateful* stages —
+`sorted()` buffers the entire upstream before emitting anything, `distinct()` carries a
+seen-set — so a pipeline containing one pays for that stage's buffer like any loop would.)
 
 Laziness also buys **short-circuiting**. When the answer does not need the whole source, the
 pipeline stops pulling:
@@ -64,14 +65,18 @@ Option<Invoice> firstBig = Option.fromOptional(
 ```
 
 `findFirst`, `anyMatch`, `limit`, `takeWhile` — on a large or lazily generated source
-(`Stream.iterate`, `Stream.generate`), the unprocessed tail costs nothing. And when the middle of the pipeline needs an operation the JDK does not ship —
-windowing, dedup-by-key, running totals —
-[gatherers](/dmx-fun/blog/stream-gatherers-custom-intermediate-operations) extend the same
-fused, lazy machinery instead of forcing an exit into loops.
+(`Stream.iterate`, `Stream.generate`), the unprocessed tail costs nothing. And when the middle
+of the pipeline needs an operation the JDK does not ship — windowing, dedup-by-key, running
+totals — [gatherers](/dmx-fun/blog/stream-gatherers-custom-intermediate-operations) stay
+inside the lazy pipeline instead of forcing an exit into loops: short-circuiting still flows
+through them, and the one-pass shape is preserved as long as the gatherer itself does not
+buffer (a windowing gatherer holds its window, just as `sorted()` holds its buffer).
 
 For CPU-bound work over big in-memory collections, the same pipeline parallelizes by changing
-one word (`parallelStream()`) — safe when the functions are pure and, for `reduce`/`collect`,
-the combining functions associative; the
+one word (`parallelStream()`) — safe when the functions are pure (*non-interfering* and
+*stateless*, in the Stream javadoc's terms) and, for `reduce`/`collect`, the combining
+functions associative — with a valid identity for the identity-taking `reduce` overloads, and
+accumulator/combiner agreeing for custom collectors; the
 [shared-state story](/dmx-fun/blog/functional-concurrency-parallel-work-without-shared-state)
 covers the rest. And when boxing shows up in a profile, the primitive specializations
 (`IntStream`, `LongStream`, `mapToInt`) run the same fused pipelines over unboxed values.
@@ -88,10 +93,13 @@ data nobody ever modifies, made out of fear.
 
 An immutable list needs none of that. Handing the same reference to ten consumers — or ten
 threads — is safe *by construction*, so sharing becomes free where copying used to be
-mandatory. (This is whole-instance sharing; the per-*update* structural sharing of persistent
-collections is a different mechanism the JDK still lacks —
-[the immutability post](/dmx-fun/blog/immutability-in-java-an-oop-foundation) covers that
-half.)
+mandatory. Two precisions keep that claim honest. First, an unmodifiable list freezes the
+*structure* only — sharing is fully safe when the elements are immutable too, which is why
+the pattern pairs with records like the `Charge` below; an unmodifiable list of mutable
+objects just shares the mutability more efficiently. Second, this is whole-instance sharing;
+the per-*update* structural sharing of persistent collections is a different mechanism the
+JDK still lacks — [the immutability post](/dmx-fun/blog/immutability-in-java-an-oop-foundation)
+covers that half.
 
 ```java
 public record Statement(NonEmptyList<Charge> charges) {
@@ -100,10 +108,11 @@ public record Statement(NonEmptyList<Charge> charges) {
 ```
 
 The JDK's factories are engineered around this — with one sharp edge worth knowing exactly.
-`List.copyOf` skips the copy and returns its argument *only* when that argument is one of the
-JDK's own null-rejecting immutable lists: anything from the `List.of` family, `List.copyOf`
-itself, or `Collectors.toUnmodifiableList`. Passing *those* through layers that each "seal"
-their input costs one copy total, not one per layer:
+In current OpenJDK (this is observed implementation behavior; the spec's only *promise* is an
+unmodifiable result), `List.copyOf` skips the copy and returns its argument only when that
+argument is one of the JDK's own null-rejecting immutable lists: the `List.of` family,
+`List.copyOf` itself, or `Collectors.toUnmodifiableList`. Passing *those* through layers that
+each "seal" their input costs one copy total, not one per layer:
 
 ```java
 List<Charge> charges = raw.stream()
@@ -113,25 +122,27 @@ List<Charge> charges = raw.stream()
 return List.copyOf(charges);   // no-op here: copyOf recognizes its own immutable lists
 ```
 
-The sharp edge: `Stream.toList()` also returns an unmodifiable list, but a *null-tolerant*
-one — and since `List.copyOf` must reject nulls, it cannot trust that list and copies it in
-full. The same goes for `Collections.unmodifiableList` wrappers: unmodifiable to callers,
-opaque to `copyOf`, fully copied. So `toList()` is the right default terminal — just do not
-follow it with `copyOf` expecting a free seal; it is already unmodifiable, and re-sealing it
-is a real O(n) copy.
+The sharp edge: `Stream.toList()` guarantees only an unmodifiable list, and today's
+implementation returns a *null-tolerant* one — since `List.copyOf` must reject nulls, it
+cannot trust that list and copies it in full. The same goes for
+`Collections.unmodifiableList` wrappers: unmodifiable to callers, opaque to `copyOf`, fully
+copied. These reuse behaviors are implementation details that could shift in a future JDK —
+the durable takeaway is the shape: `toList()` is the right default terminal, and following it
+with `copyOf` expecting a free seal buys a real O(n) copy today, not a no-op.
 
 The [dmx-fun](/dmx-fun/) collections follow the same discipline —
 [`NonEmptyList`](/dmx-fun/guide/non-empty-list) is immutable and its operations return new
 instances — and the container types (`Result`, `Option`, `Try`) are immutable values, which
 is precisely why they can flow through streams and across threads without ceremony. The
-library also ships the terminal half for typed-outcome pipelines: single-pass collectors like
-`Result.toList()` and `Result.partitioningBy()`, so a stream of outcomes materializes once,
-without a hand-rolled two-pass split:
+library also ships the terminal half for typed-outcome pipelines: collectors like
+`Result.toList()` and `Result.partitioningBy()` that materialize a stream of outcomes in one
+traversal, without a hand-rolled two-pass split:
 
 ```java
 Result<List<Charge>, ChargeError> all = raw.stream()
     .map(this::toCharge)          // Stream<Result<Charge, ChargeError>>
-    .collect(Result.toList());    // one pass — Ok(all charges) or the first Err
+    .collect(Result.toList());    // consumes the stream, then Ok(all charges)
+                                  // or the first Err in encounter order
 ```
 
 What these types cost — and where they vanish into JIT noise — is documented in the library's
@@ -142,9 +153,11 @@ own [performance guide](/dmx-fun/guide/performance).
 ## Mutation as an implementation detail
 
 Here is the part dogma gets wrong: efficient functional code mutates *constantly* — inside
-boundaries nobody can observe. Every `Collectors.toList()` appends into a mutable
-`ArrayList` while the stream runs; a mutable `StringJoiner` powers `Collectors.joining`;
-sorting copies into an array and mutates it in place. The JDK's own functional machinery is
+boundaries nobody can observe. In current OpenJDK (accumulator types are implementation
+details, not public promises), `Collectors.toList()` appends into a mutable `ArrayList`
+while the stream runs; `Collectors.joining` builds through mutable buffers — a
+`StringBuilder` for the no-arg form, a `StringJoiner` for the delimiter overloads; sorting
+copies into an array and mutates it in place. The JDK's own functional machinery is
 imperative on the inside, and that is the design, not a compromise.
 
 The rule this implies for your own code: **immutability is a property of boundaries, not of
@@ -169,10 +182,11 @@ A checklist for the performance conversation, in the order the costs usually mat
 - **The final materialization is the honest cost.** One `toList()` per pipeline. If even that
   hurts, ask whether the consumer needs a collection at all — passing the `Stream` onward
   defers the cost to a consumer that might short-circuit it away.
-- **`copyOf` is free only for its own kind.** `List.of`-family and `toUnmodifiableList`
-  results pass through untouched; `Stream.toList()` results and `Collections.unmodifiableList`
-  wrappers get fully copied. `copyOf` of mutable input is always a real copy — the tax paid
-  once, at the boundary where trust begins, the same place
+- **`copyOf` is free only for its own kind — today.** In current OpenJDK, `List.of`-family
+  and `toUnmodifiableList` results pass through untouched, while `Stream.toList()` results
+  and `Collections.unmodifiableList` wrappers get fully copied (observed behavior, not spec).
+  `copyOf` of mutable input is always a real copy — the tax paid once, at the boundary where
+  trust begins, the same place
   [validation](/dmx-fun/blog/validation-at-the-boundary-not-in-the-core) already lives.
 - **Boxing is the silent one.** `Stream<Integer>` in a numeric hot loop allocates per
   element; `IntStream` does not. This is the most common "streams are slow" diagnosis.
