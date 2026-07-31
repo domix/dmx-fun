@@ -47,7 +47,7 @@
 35. ~~Domain-driven design and functional programming: allies or rivals?~~
 36. How to design business flows with types instead of if statements
 37. ~~Lazy evaluation: when it helps and when it complicates things~~
-38. Streams, immutable collections, and efficient data processing
+38. ~~Streams, immutable collections, and efficient data processing~~
 39. Composing complex validations
 40. Sealed types and functional modeling in modern languages
 
@@ -118,7 +118,7 @@
 85. Virtual threads and functional code: what changes and what does not
 86. ~~Functional concurrency: structuring parallel work without shared state~~
 87. Laziness and streaming: processing large data without loading it all
-88. The performance cost of immutability, and when it actually matters
+88. The performance cost of immutability, and when it actually matters *(largely covered by #38 — remaining angle: benchmarks and persistent data structures)*
 
 ### Java platform and language evolution
 
