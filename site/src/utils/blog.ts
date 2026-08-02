@@ -6,3 +6,12 @@ export const FIRST_PAGE_SIZE = PAGE_SIZE + 1;
 export function normalizeCategorySlug(category: string): string {
   return category.toLowerCase().replaceAll(' ', '-');
 }
+
+/** Post count per category, for the counters shown next to category names. */
+export function countByCategory(posts: { data: { category: string } }[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const post of posts) {
+    counts.set(post.data.category, (counts.get(post.data.category) ?? 0) + 1);
+  }
+  return counts;
+}
