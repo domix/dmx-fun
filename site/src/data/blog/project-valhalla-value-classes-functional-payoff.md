@@ -1,6 +1,6 @@
 ---
 title: "Project Valhalla and Value Classes: The Functional Payoff"
-description: "Functional Java has been writing checks that the JVM's object model charges a fee to cash: every Option, every Result, every small immutable record is a heap allocation with an identity nobody uses. Project Valhalla's value classes — previewing in JDK 28 — remove exactly that fee, and the code best positioned to collect is the code that was already immutable and identity-free. Here is what is actually coming, when, and why functional style is the natural beneficiary."
+description: "Functional Java has been writing checks that the JVM's object model charges a fee to cash: every Option, every Result, every small immutable record is typically a heap allocation carrying an identity nobody uses. Project Valhalla's value classes — previewing in JDK 28 — remove exactly that fee, and the code best positioned to collect is the code that was already immutable and identity-free. Here is what is actually coming, when, and why functional style is the natural beneficiary."
 pubDate: 2026-08-04
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
@@ -17,9 +17,11 @@ imageCredit:
 Every object in Java carries something most functional code never uses: an **identity**. The
 JVM guarantees that each `new` produces a distinct individual — one you can lock on, compare
 with `==`, hang a weak reference off, observe mutating over time. That guarantee is not free.
-It is why a `Point(3, 4)` lives in the heap with a header, why an `Option<Price>` is a pointer
-to somewhere else, why an array of a million small records is a million scattered allocations
-rather than one contiguous block.
+It is why a `Point(3, 4)` typically lives in the heap with a header, why an `Option<Price>` is
+usually a pointer to somewhere else, why an array of a million small records is a million
+scattered allocations rather than one contiguous block — *typically*, because the JIT's
+escape analysis already eliminates some of these allocations when a value provably never
+escapes; the identity contract is what forces the pessimistic shape everywhere else.
 
 Functional code pays this fee constantly and collects nothing for it. A value that is
 immutable, whose `equals` is structural, that nobody locks or mutates — its identity is dead
@@ -55,9 +57,10 @@ to represent them without object headers or pointers — flattened into containi
 arrays, scalar-replaced in registers, re-materialized at will.
 
 The two examples are chosen deliberately, because the payoff differs by shape. Small value
-classes flatten today: the JEP's own examples show `Integer[]` and `LocalDate[]` laid out as
-contiguous data in the preview — nulls included, via a flag bit encoded into the flattened
-element. Anything whose layout exceeds what the JVM can read and write atomically (roughly 64
+classes can flatten today: the JEP's own examples show `Integer[]` and `LocalDate[]` being
+laid out as contiguous data in the preview — an implementation decision the JVM is free to
+make, not a layout the spec promises — nulls included, via a flag bit encoded into the
+flattened element. Anything whose layout exceeds what the JVM can read and write atomically (roughly 64
 bits in mutable storage, null flag included) stays referenced for now — that is where the
 null-restricted and relaxed-atomicity work still in progress picks up, and it is why a
 `Range[]` may or may not flatten depending on that budget. And `Money` is still a fine value
@@ -119,14 +122,20 @@ value types — your domain records — in fields and arrays.
 **Nothing to rewrite — that is the point.** If your domain types are records, your absence is
 `Option`, your failures are [typed values](/dmx-fun/blog/designing-a-good-error-type), and
 your state lives in [immutable collections](/dmx-fun/blog/streams-immutable-collections-efficient-data-processing),
-your codebase is already *value-shaped*, and the migration for such types is largely one
-keyword per class.
+your codebase is already *value-shaped*, and for simple value-shaped records the migration is
+largely one keyword per class. "Largely" is doing honest work there: adding `value` is safe
+only for types that genuinely meet the constraints — final, fully immutable state, no
+identity-dependent semantics, no per-instance locking, constructors that fit the value-class
+initialization rules — so audit the identity-sensitive paths (`==` comparisons, locks, weak
+references) before flipping the keyword on anything less obviously value-shaped.
 
 The JDK itself is the proof, and it already happened: JEP 401 declares some thirty platform
 classes — `Optional`, `LocalDate`, `LocalDateTime`, `Duration`, `Integer`, and friends, the
 long-documented "value-based classes" whose contracts always forbade identity-dependence —
 as value classes *in the preview itself*. Run JDK 28 EA with `--enable-preview` and `==` on
-a `LocalDate` compares state, while synchronizing on one throws. (That is also the migration
+a `LocalDate` compares state; `synchronized` on a statically-typed `LocalDate` is rejected at
+compile time, and a value object that reaches a monitor through a general reference (an
+`Object`-typed lock) fails at runtime with `IdentityException`. (That is also the migration
 hazard in miniature: code that leaned on those classes' identity breaks — which is why their
 docs warned against it for a decade.)
 
@@ -143,8 +152,9 @@ Meanwhile, the practical guidance inverts the usual performance conversation:
 - **Do not contort code today to dodge small-object allocation** — the workarounds (primitive
   unpacking, parallel arrays, hand-rolled flyweights) are exactly the code Valhalla obsoletes,
   and they trade away the clarity that made the functional version worth having.
-- **Do keep identity out of your value types' contracts** — no `==` semantics, no locking on
-  domain values, no mutable "value" objects. Every such leak is a future migration blocker.
+- **Do keep identity out of your value types' contracts** — no reliance on *identity*-`==`
+  (structural `==` is exactly what value classes give you), no locking on domain values, no
+  mutable "value" objects. Every such leak is a future migration blocker.
 - **Treat it as preview.** Experiment on the EA builds, follow the
   [project page](https://openjdk.org/projects/valhalla/value-objects), and let the model
   stabilize before betting production code on flattening behavior.
