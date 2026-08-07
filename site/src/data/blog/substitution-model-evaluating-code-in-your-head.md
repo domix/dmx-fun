@@ -32,7 +32,9 @@ cosmetic. It is a property you either protect or lose.
 
 ## The model in action: reduction as reading
 
-Take a small pure pricing calculation:
+Take a small pure pricing calculation — with `prices` an immutable snapshot
+(`List.of`-style), stable for the duration of the evaluation, since a list someone else can
+mutate mid-reduction would smuggle time back in:
 
 ```java
 static BigDecimal subtotal(List<BigDecimal> prices) {
@@ -115,10 +117,13 @@ refactorings are substitution-model moves:
 - **Inline variable** replaces a name with its defining expression.
 - **Extract variable** replaces repeated expressions with a name bound once.
 
-Both claim to preserve behavior. Both actually *do* preserve behavior only when the
-expression is pure. Inline a variable bound to `subtotalCounted(prices)` used twice, and the
-counter now increments twice — the IDE performed a textually correct, semantically wrong
-transformation, because the code stepped outside the region where substitution is valid.
+Both claim to preserve behavior, and both actually do so exactly when the transformation
+leaves evaluation *count, order, and timing* unchanged — which purity makes unconditionally
+true, and impurity makes a case-by-case gamble. Inlining a variable used once can be safe
+even for an impure expression (one evaluation before, one after); inline a variable bound to
+`subtotalCounted(prices)` used *twice*, and the counter now increments twice — the IDE
+performed a textually correct, semantically wrong transformation, because the evaluation
+count changed and the code had stepped outside the region where substitution is valid.
 Some IDEs flag the obvious cases, but the machine cannot warn you *reliably* — purity is
 undecidable in general — so the model is ultimately in your head.
 
@@ -129,10 +134,13 @@ and it is safe on exactly the functions where the model applies. Equational reas
 a proof technique you deploy on special occasions; it is the invisible license behind every
 refactoring you do on autopilot.
 
-Testing makes the same claim: asserting `total([10,10], 0.16)` equals `23.20` *is* a
-substitution claim — that the call and the value are interchangeable. It holds for the pure
-version and silently fails to mean that for the counted one, whose call is not equivalent to
-any value.
+Testing is adjacent, with a precision worth keeping: asserting `total([10,10], 0.16)`
+equals `23.20` verifies one observed result — it does not by itself prove the call and the
+value are interchangeable. For the pure version, that one observation *extends* to
+interchangeability, because nothing about the call varies between evaluations. For the
+counted version the same assertion passes just as green — while saying nothing about the
+mutation of `calls`; establishing substitutability there would require checking repeated
+evaluation and effects, which is exactly the extra work purity spares your test suite.
 
 ---
 
