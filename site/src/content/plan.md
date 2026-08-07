@@ -90,7 +90,7 @@
 66. ~~Closures and variable capture explained for Java developers~~
 67. Expressions over statements: why functional code avoids `void`
 68. Recursion vs iteration: tail calls, stack safety, and the JVM
-69. The substitution model: evaluating code in your head
+69. ~~The substitution model: evaluating code in your head~~
 70. Total vs partial functions: making every input return a value
 
 ### Working with the core types
