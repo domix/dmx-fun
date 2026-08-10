@@ -39,7 +39,9 @@ long countRejected(Path file) throws IOException {
 
 `Files.lines` does not read the file when called — it hands the pipeline a lazy source, and
 each line is read, examined, and becomes garbage as the terminal operation pulls the next.
-Heap usage is one line plus pipeline overhead, whether the file is a megabyte or a terabyte.
+Heap usage is bounded by the line currently in flight (a pathological ten-megabyte line
+costs ten megabytes) plus whatever the pipeline's stages allocate per element — never by the
+dataset, whether the file is a megabyte or a terabyte.
 This post — item by item, with the sharp edges included — is about that discipline:
 processing data whose size is none of your heap's business.
 
@@ -56,17 +58,21 @@ Streaming starts at the source; everything downstream inherits its laziness:
   acquire-use-release discipline as a value, if you prefer it over the block) — and read
   failures after opening surface as `UncheckedIOException` from inside the pipeline, not
   from the `Files.lines` call itself.
-- **`Stream.iterate` / `Stream.generate`** — computed sources: unbounded sequences of pages,
-  IDs, retries-with-timestamps. Infinite by construction, usable because
+- **`Stream.iterate(seed, next)` / `Stream.generate`** — computed sources: unbounded
+  sequences of pages, IDs, retries-with-timestamps. Infinite by construction (the three-arg
+  `iterate(seed, hasNext, next)` overload is the self-terminating variant), usable because
   [short-circuiting](/dmx-fun/blog/streams-immutable-collections-efficient-data-processing)
   (`limit`, `takeWhile`, `findFirst`) stops the pull.
 - **Your own sources** — anything that can produce elements on demand (a paginated API, a
   cursor, a message poll) becomes a stream via an `Iterator` or `Spliterator` handed to
-  `StreamSupport.stream(...)`. The database counterpart is driver-level: a forward-only
-  `ResultSet` with a bounded `fetchSize`, wrapped the same way, streams rows a batch at a
-  time — *when the driver honors it*: `fetchSize` is a JDBC hint, and the common drivers
-  need convincing (PostgreSQL streams only with autocommit off; MySQL needs its streaming
-  mode). Verify with your driver before betting the heap on it.
+  `StreamSupport.stream(...)` — with the lifecycle wired up: register `onClose` on the
+  stream to close the underlying cursor, and keep the `Statement`/`Connection` in an
+  enclosing try-with-resources, so early termination (`limit`, an exception) releases
+  everything. The database counterpart is driver-level: a forward-only `ResultSet` with a
+  bounded `fetchSize`, wrapped the same way, streams rows a batch at a time — *when the
+  driver honors it*: `fetchSize` is a JDBC hint, and the common drivers need convincing
+  (PostgreSQL streams only with autocommit off; MySQL needs its streaming mode). Verify
+  with your driver before betting the heap on it.
 
 The unifying property: the source answers "give me the next one," never "give me everything."
 
@@ -78,10 +84,13 @@ A lazy source buys nothing if a downstream stage rebuilds the reservoir. The sta
 cleanly:
 
 **Flow-preserving** — hold one element (or one bounded window) at a time: `filter`, `map`,
-`flatMap`, `takeWhile`, `limit`, and bounded
+`takeWhile`, `limit`, and bounded
 [gatherers](/dmx-fun/blog/stream-gatherers-custom-intermediate-operations). Aggregating
-terminals that fold without retaining — `count`, `reduce`, `sum`, a running statistics
-collector — also keep the flow.
+terminals whose accumulator has a *fixed size* — `count`, `sum`, a max, a running statistics
+object — also keep the flow. Two need a second look: `flatMap` preserves the flow only as
+far as its mapper does (a mapper that materializes a large collection per element pays that
+cost per element), and `reduce` is flow-preserving only while its accumulator stays bounded —
+reducing into a growing `List` is `toList()` wearing a disguise.
 
 **Reservoir-building** — `sorted()` buffers the entire upstream before emitting anything
 (sorting a terabyte through a stream is still sorting a terabyte), and `distinct()` carries
@@ -142,8 +151,10 @@ stays per-element.
 One honest boundary on the abort-proofing itself: `Try.of` wraps *your parse*, not the
 source. The `UncheckedIOException` edge from the sources section lives upstream of it — a
 single malformed byte in a UTF-8 file aborts the pull from inside `Files.lines`, before any
-`Try` sees it. If the input's encoding is untrusted, read bytes and decode per line, so the
-decode failure becomes one more per-element outcome.
+`Try` sees it. If the input's encoding is untrusted, read bytes and decode per line with a
+`CharsetDecoder` configured with `CodingErrorAction.REPORT` — the `String` constructor
+silently *replaces* malformed bytes rather than failing — so each decode failure surfaces
+as one more per-element outcome instead of corrupted-but-green data.
 
 ---
 
@@ -158,7 +169,9 @@ decode failure becomes one more per-element outcome.
   *blocking* IO runs on the shared `ForkJoinPool.commonPool`, starving every other parallel
   stream in the JVM while threads sit in waits. For concurrent per-element IO inside a
   streaming pipeline, `Gatherers.mapConcurrent(n, ...)` bounds the fan-out on virtual
-  threads while preserving the flow — the
+  threads while preserving the flow — wrap the mapper in `Try.of` there too, since an
+  exception from one call cancels the remaining in-flight work, while a `Try` keeps it a
+  per-element outcome — the
   [gatherers post](/dmx-fun/blog/stream-gatherers-custom-intermediate-operations) has the
   fuller `mapConcurrent` story, and the
   [concurrency post](/dmx-fun/blog/functional-concurrency-parallel-work-without-shared-state)
@@ -166,8 +179,10 @@ decode failure becomes one more per-element outcome.
 - **Backpressure is the async version of this discipline.** When the producer is a network
   peer rather than a file you pull from, reactive streams (`Flux`, with
   [`fun-reactor`](/dmx-fun/guide/reactor) for typed outcomes) make "don't send more than I
-  can hold" an explicit protocol; the pull-based `Stream` gets the same effect for free by
-  only ever asking for the next element.
+  can hold" an explicit protocol. A pull-based `Stream` sidesteps the problem differently:
+  it consumes the source at its own pace, in pipeline order — nothing pushes — but bounded
+  demand or prefetch against an async producer exists only where an adapter explicitly
+  enforces it.
 - **Laziness here is about sequences.** Its sibling — deferring and memoizing a single
   expensive *value* with `Lazy<T>` — is the
   [lazy-evaluation post's](/dmx-fun/blog/lazy-evaluation-when-it-helps) territory. (Do not
