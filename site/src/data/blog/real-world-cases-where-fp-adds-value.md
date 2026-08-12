@@ -145,9 +145,10 @@ behind `synchronized` and produced intermittently wrong totals under load — th
 that passes every test that does not race.
 
 **The move.** Make the per-segment computation a pure function over immutable inputs, run the
-segments in parallel, and aggregate with a single sequential fold over the collected results
-after the tasks join — the combining step runs once, on one thread, so it needs no special
-algebraic properties. Parallelism stops being a correctness question —
+segments in parallel, and aggregate with a single sequential fold after the tasks join — over
+results kept in segment order, not completion order, so the fold's input never depends on
+scheduling. The combining step runs once, on one thread, so it needs no special algebraic
+properties. Parallelism stops being a correctness question —
 [parallel work without shared state](/dmx-fun/blog/functional-concurrency-parallel-work-without-shared-state)
 covers the structured tools — because when no task writes anything another task reads, there
 is nothing to race on and nothing to lock.
