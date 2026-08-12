@@ -79,11 +79,15 @@ sealed interface ChargeError {
     record FraudSuspected(String caseId)         implements ChargeError {}
 }
 
-Result<Receipt, ChargeError> charge(Order order) { /* gateway call */ }
+interface PaymentGateway {
+    Result<Receipt, ChargeError> charge(Order order);
+}
 ```
 
+Given a `PaymentGateway gateway`, the caller decides per case:
+
 ```java
-return switch (charge(order)) {
+return switch (gateway.charge(order)) {
     case Result.Ok<Receipt, ChargeError> ok -> confirm(ok.value());
     case Result.Err<Receipt, ChargeError> err -> switch (err.error()) {
         case ChargeError.Declined d           -> failOrder(d.reason());   // terminal: never retried
@@ -95,9 +99,12 @@ return switch (charge(order)) {
 
 **What changed.** The decline-vs-retry decision moved from a comment nobody read to an
 exhaustive `switch` with no default. When the gateway later grows a new failure mode, adding
-its case to the sealed interface turns every unprepared call site into a *compile error* —
-the incident class "new failure mode handled like an old one" now fails the build instead of
-paging someone. The [railway shape](/dmx-fun/blog/railway-oriented-programming-in-java) keeps
+its case to the sealed interface turns every call site shaped like the one above — each
+subtype enumerated, no `default` — into a *compile error*: the incident class "new failure
+mode handled like an old one" now fails the build instead of paging someone. That protection
+is opt-in per switch, to be precise — a `default` branch, or a total pattern like
+`case ChargeError e`, stays exhaustive when the hierarchy grows and keeps compiling, which is
+why the discipline is to spell the cases out wherever the distinction matters. The [railway shape](/dmx-fun/blog/railway-oriented-programming-in-java) keeps
 the happy path linear in between, and the reasons teams
 [default to exceptions anyway](/dmx-fun/blog/why-just-use-exceptions-persists) are worth
 reading against this case.
@@ -137,8 +144,10 @@ sequential version was too slow; the first parallel version shared a mutable acc
 behind `synchronized` and produced intermittently wrong totals under load — the classic race
 that passes every test that does not race.
 
-**The move.** Make the per-segment computation a pure function over immutable inputs, and let
-the aggregation be a fold over its results. Parallelism stops being a correctness question —
+**The move.** Make the per-segment computation a pure function over immutable inputs, run the
+segments in parallel, and aggregate with a single sequential fold over the collected results
+after the tasks join — the combining step runs once, on one thread, so it needs no special
+algebraic properties. Parallelism stops being a correctness question —
 [parallel work without shared state](/dmx-fun/blog/functional-concurrency-parallel-work-without-shared-state)
 covers the structured tools — because when no task writes anything another task reads, there
 is nothing to race on and nothing to lock.
