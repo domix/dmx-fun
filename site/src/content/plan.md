@@ -147,7 +147,7 @@
 
 103. ~~A practical learning path for functional programming in Java~~
 104. Onboarding a developer to a functional codebase
-105. Selling functional programming to skeptical stakeholders
+105. ~~Selling functional programming to skeptical stakeholders~~
 106. Functional thinking as a career skill, not a language feature
 
 ### More reflective and opinionated topics
