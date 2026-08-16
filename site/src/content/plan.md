@@ -108,7 +108,7 @@
 78. Memoization: caching pure functions safely
 79. ~~Retry, timeout, and backoff as composable functions~~
 80. The Reader pattern: passing dependencies without a framework
-81. Building a small rules engine with composable predicates
+81. ~~Building a small rules engine with composable predicates~~
 82. Parsing and decoding input the functional way
 83. Modeling finite state machines with sealed types and transitions
 
