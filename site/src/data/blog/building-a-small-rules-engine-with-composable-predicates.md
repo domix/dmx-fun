@@ -5,7 +5,7 @@ pubDate: 2026-08-16
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Article"
-tags: ["Rules Engine", "Predicates", "Composition", "Guard", "Java", "Functional Programming", "Design Patterns"]
+tags: ["Rules Engine", "Business Rules", "Composition", "Guard", "Java", "Functional Programming", "Design Patterns"]
 image: "https://images.pexels.com/photos/3785926/pexels-photo-3785926.jpeg?auto=compress&cs=tinysrgb&w=1200"
 imageCredit:
     author: "Miguel Á. Padriñán"
@@ -85,9 +85,13 @@ minimum" — is the difference between one support interaction and three. This i
 insight that [accumulating validation](/dmx-fun/blog/validated-accumulating-errors) is
 built on, applied to policy instead of input shape.
 
-And because rules are values in a `List`, the policy is *data*: it can be logged as a
-checklist, rendered in documentation, diffed in code review. Adding a rule is appending an
-entry with its own unit tests — the property that made
+And because rules are values in a `List`, the policy is inspectable: the checklist of
+rule names can be logged straight off the list, and the policy reads — and diffs in code
+review — as declarative source instead of control flow. (Inspectability stops at each
+rule's name: the predicate inside is opaque at runtime, so anything richer — rendering
+the full structure for documentation — works from the source that builds the rules, not
+from the objects.) Adding a rule is appending an entry with its own unit tests — the
+property that made
 [case 5 of the real-world post](/dmx-fun/blog/real-world-cases-where-fp-adds-value) a
 schedule-visible win.
 
@@ -100,32 +104,42 @@ because a composite rule is just another `Rule`, they nest arbitrarily:
 
 ```java
 static <T> Rule<T> anyOf(String name, List<Rule<T>> alternatives) {
+    List<Rule<T>> options = List.copyOf(alternatives);   // snapshot: later list edits change nothing
     return new Rule<>(name, subject ->
-        alternatives.stream().anyMatch(rule -> rule.passes().test(subject)));
+        options.stream().anyMatch(rule -> rule.passes().test(subject)));
 }
 
 static <T> Rule<T> atLeast(String name, int n, List<Rule<T>> rules) {
+    List<Rule<T>> checks = List.copyOf(rules);
     return new Rule<>(name, subject ->
-        rules.stream().filter(rule -> rule.passes().test(subject)).count() >= n);
+        checks.stream().filter(rule -> rule.passes().test(subject)).count() >= n);
 }
 ```
 
 `anyOf` models alternative qualification paths ("salaried income *or* two years of
 invoices"). `atLeast` models scorecards ("any three of these five signals") — a shape that
 turns into remarkably tangled boolean logic when written by hand, and stays one readable
-line here. The tree of composites is your policy's actual structure, written down instead
+line here. (One asymmetry to know: `anyOf` stops at the first passing alternative —
+`anyMatch` short-circuits — while `atLeast` as written evaluates every rule; if the rules
+are expensive, `.filter(...).limit(n).count() == n` is the short-circuiting form.) The
+tree of composites is your policy's actual structure, written down in source instead
 of implied by nesting depth — the same shift as
 [replacing branch sprawl with data](/dmx-fun/blog/replacing-if-else-sprawl-with-maps-of-functions).
 
-Three honest caveats before you ship these combinators, because sharp edges in a rules
+Four honest caveats before you ship these combinators, because sharp edges in a rules
 engine reject real people. First, a failing composite reports only *its own* name — which
 inner alternative was the near-miss is discarded, the same one-bit answer this post held
-against plain `Predicate`. Name composites by what the user must fix ("proof of income"),
-or have `evaluate` report leaf failures too. Second, `anyOf` of an *empty* list always
+against plain `Predicate`; the remedy within this design is to name composites by what
+the user must fix ("proof of income"). Second, `anyOf` of an *empty* list always
 fails (`anyMatch` on nothing is `false`) — deadly when alternatives are filtered
 dynamically by product or region. Third, `atLeast` accepts thresholds that make it vacuous
 (`n <= 0` passes everyone) or unsatisfiable (`n` greater than the rule count rejects
 everyone), both silently; validate `n` where the threshold is computed or configured.
+Fourth, a rule that *throws* — `SOLVENT` on an application whose `income` is `null`, say —
+aborts the entire evaluation from inside the stream, producing no `Evaluation` at all: a
+stack trace where the caller was promised a list of reasons, strictly worse than the
+one-bit `false`. Either establish non-null inputs at the boundary before rules run, or
+fold the exception into a failure the way `Guard.ofCatching` does below.
 
 Two disciplines keep the engine honest at a higher level. Rules should be **pure** — a
 rule that queries a repository mid-evaluation reintroduces ordering, latency, and partial
@@ -175,11 +189,15 @@ String response = switch (outcome) {
 `Guard` also ships the engine niceties you would otherwise hand-roll next sprint —
 including fixes for the caveats above. Its `anyOf`, when every alternative fails,
 accumulates the messages from *all* of them (the near-miss stays visible), and its
-mandatory first argument makes the empty composition unrepresentable. Beyond that: `or`
+mandatory first argument makes the empty composition unrepresentable. For throwing
+predicates there is `Guard.ofCatching`, which folds a thrown `RuntimeException` into the
+guard's failure message instead of letting it abort the evaluation. Beyond that: `or`
 and `negate(message)` on individual guards, `withMessage` to rename a composite, and
 `contramap` with a field label to aim a small reusable guard at part of a bigger object —
-`notBlank.contramap(User::email, "email")` reports failures as `email: must not be
-blank`. Small gears, machined once, meshing across every policy in the codebase.
+given a guard of your own like `notBlank = Guard.of(s -> !s.isBlank(), "must not be blank")`,
+the composition `notBlank.contramap(User::email, "email")` reports failures as
+`email: must not be blank`. Small gears, machined once, meshing across every policy in
+the codebase.
 
 ---
 
