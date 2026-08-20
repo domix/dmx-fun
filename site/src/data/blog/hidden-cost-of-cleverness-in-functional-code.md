@@ -1,11 +1,11 @@
 ---
 title: "The Hidden Cost of Cleverness in Functional Code"
-description: "A sailor who wraps a line in an elaborate, admirable knot has optimized for the wrong moment: knots are judged when they must be untied, at night, in weather. Clever code has the same economics — its price is invisible while you write it and comes due when someone must read, debug, or change it. Functional style, because it composes so willingly, invites this cleverness more than most. An opinionated argument for spending your ingenuity where it pays."
+description: "Clever code is priced at write time and paid for at read time — by the reviewer, the on-call engineer, the next hire, never the author. Functional style, because it composes so willingly, invites that spending more than most. Kernighan's law, three specimens from real codebases, and an opinionated argument for putting your ingenuity where the reader profits."
 pubDate: 2026-08-18
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Article"
-tags: ["Cleverness", "Readability", "Code Review", "Functional Programming", "Java", "Opinion", "Maintainability"]
+tags: ["Cleverness", "Readability", "Code Quality", "Design Philosophy", "Functional Programming", "Java"]
 image: "https://images.pexels.com/photos/2347466/pexels-photo-2347466.jpeg?auto=compress&cs=tinysrgb&w=1200"
 imageCredit:
     author: "Tom Swinnen"
@@ -64,15 +64,21 @@ BigDecimal sum = orders.stream().map(Order::total).reduce(BigDecimal.ZERO, BigDe
 Optional<BigDecimal> max = orders.stream().map(Order::total).max(Comparator.naturalOrder());
 ```
 
-Two passes over an in-memory list cost nothing worth discussing, `ZERO` is a true
-identity for `add`, and the empty case surfaces as an honest `Optional` instead of a
-fabricated zero. The clever version optimized a machine cost nobody measured by adding a
-human cost everybody pays — and a wrong answer nobody would spot in review. (When one
-pass genuinely matters — a stream you cannot replay — a small named accumulator record
-with an explicit empty case states its meaning; the array never does.)
+Two passes over an in-memory list cost nothing worth discussing at the scale most
+services meet, `ZERO` is a true identity for `add`, and `max`'s empty case surfaces as an
+honest `Optional` — while for the sum, zero really *is* the sum of nothing. The clever
+version optimized a machine cost nobody had measured by adding a human cost everybody
+pays — and a wrong answer nobody would spot in review. When one pass genuinely earns its
+keep — the list is huge, `Order::total` is expensive, the stream cannot be replayed — the
+answer is still not the array: a small record with an explicit empty case states its
+meaning, or, for a genuinely anonymous pair inside one private step, the library's
+[tuples guide](/dmx-fun/guide/tuples) blesses a `Tuple2`. The named record earns its
+letters *here* because sum and max share a type and will be confused; the guide's
+decision table draws exactly that line.
 
 **The domain fact encoded as a type pun.** The type system *can* express "not yet
-evaluated" versus "evaluated, nothing applies" by nesting:
+evaluated" versus "evaluated, nothing applies" by nesting — here with the library's
+[`Option`](/dmx-fun/guide/option), though `java.util.Optional` invites the identical pun:
 
 ```java
 Option<Option<Discount>> quote;   // none = not evaluated; some(none) = no discount applies
@@ -98,7 +104,10 @@ types; the boring version [made the API say what it means](/dmx-fun/blog/express
 step is small but the *whole* has no name anywhere — combinator golf. Each link is
 defensible; the chain, read at 2am, requires the reader to run
 [the substitution model](/dmx-fun/blog/substitution-model-evaluating-code-in-your-head)
-in their head for eight steps while holding three type parameters. The fix costs one
+in their head for eight steps while holding three type parameters. The
+[worse post](/dmx-fun/blog/when-making-it-functional-makes-it-worse) already draws the
+concrete line — a chain of more than three steps benefits from named intermediates — and
+this specimen is what ignoring that line looks like at expert speed. The fix costs one
 `private` method with a domain name per conceptual step — the pipeline shape survives,
 the archaeology doesn't.
 
@@ -122,16 +131,19 @@ There is also a social engine underneath, worth naming because naming it weakens
 terse functional code *signals membership*. Point-free style, the maximally general
 combinator, the one-expression method — these read as fluency to insiders and as a wall
 to everyone else. When the signal matters more than the reader, the codebase is paying
-for someone's identity — the same fuel behind
+for someone's identity. It is kin to
 [purism losing to pragmatism](/dmx-fun/blog/pragmatic-fp-vs-academic-purism) in teams
-that ship.
+that ship — though that post makes the case on technical trade-offs; the social column
+is this one's addition.
 
 To be precise about the boundary: this is not the cost of functional *abstraction* —
 learning what a fold is, reading `Result` pipelines — which is a real but different
 ledger, one this blog will take up on its own. Cleverness is the spending you do *after*
 fluency, and it is entirely optional. The
-[antipatterns post](/dmx-fun/blog/fp-antipatterns-in-java) catalogs what beginners do by
-accident; this post is about what experts do on purpose.
+[antipatterns post](/dmx-fun/blog/fp-antipatterns-in-java) catalogs the shapes that slip
+into otherwise careful code by accident; this post is about the narrower subset written
+on purpose — cleverness as a choice, made at the keyboard, with the better version in
+plain view.
 
 ---
 
@@ -158,28 +170,32 @@ working heuristics, offered with opinions attached:
   opposite sign; the difference is whether the reader ends up smarter about the problem
   or about you.
 
-Kernighan's law has a constructive contrapositive: write at half your cleverness and you
+Kernighan's law has a constructive corollary: write at half your cleverness and you
 retain a margin for debugging — and for every future reader who meets the code without
-you standing next to it. The knot in the photo holds the rail beautifully. The test it
-will actually face is whether it unties in the dark, in weather, under someone else's
-cold hands. Tie for that moment.
+you standing next to it. A sailor's knot is judged at the wrong moment to impress: not
+when it is tied, admired, and photographed, but when it must be untied — in the dark, in
+weather, under someone else's cold hands. The rope in the photo above holds its rail
+beautifully; the only test that counts is the untying. Tie your code for that moment.
 
 ---
 
 ## Further reading
 
 - [The Elements of Programming Style](https://en.wikipedia.org/wiki/The_Elements_of_Programming_Style)
-  by Brian Kernighan and P. J. Plauger — the source of the law, still sharp fifty years on.
+  by Brian Kernighan and P. J. Plauger — the source of the law, still sharp nearly fifty
+  years on.
 - [A Philosophy of Software Design](https://web.stanford.edu/~ouster/cgi-bin/book.php) by
   John Ousterhout — complexity as the enemy, and "obvious" as a design goal.
 - [Simple Made Easy](https://www.infoq.com/presentations/Simple-Made-Easy/) by Rich
   Hickey — the canonical talk on simplicity as an objective property, not a feeling.
 - [When "Making It Functional" Actually Makes the Code Worse](/dmx-fun/blog/when-making-it-functional-makes-it-worse)
-  — the failure modes when cleverness arrives wearing this blog's own techniques.
+  — the failure modes in full, including the three-step threshold this post's third
+  specimen keeps violating.
 - [Common Anti-Patterns When Writing Functional Code in Java](/dmx-fun/blog/fp-antipatterns-in-java)
-  — the accidental version of what this post describes doing on purpose.
+  — the shapes that slip into careful code by accident; this post covers the deliberate
+  subset.
 - [Pragmatic Functional Programming vs Academic Purism](/dmx-fun/blog/pragmatic-fp-vs-academic-purism)
-  — the adjacent social failure: style loyalty over shipped clarity.
+  — the technical case for pragmatism over purism; this post adds the social column.
 
 ---
 
