@@ -113,17 +113,22 @@ happened," which is the difference between a
 ## The two classic mistakes
 
 **Mapping too early.** The reflex is to translate a failure the instant it appears —
-inside the helper, inside the retry loop. But `recover(IOException.class, ...)` can no
-longer target the real cause once an eager `mapFailure` has flattened it into a generic
-wrapper; retry logic that asks "was this transient?" cannot ask a `ConfigException`
-that swallowed a `SocketTimeoutException` without keeping the cause chain. The working
-rule: **transform at boundaries, not at birth.** Within a layer, keep the failure in
+inside the helper, inside the retry loop. But typed recovery matches the *top-level*
+failure only: `recover(IOException.class, ...)` tests the `Failure`'s own cause with an
+`instanceof`, so once an eager `mapFailure` has wrapped the `SocketTimeoutException` in
+a `ConfigException`, the match fails even though the original sits right there in the
+cause chain. Preserving the cause (as the enrichment move above does) keeps the
+*evidence* for logs; it does not restore the *dispatch* — retry logic that asks "was
+this transient?" must either run before the wrapping or dig through `getCause()` by
+hand. The working rule: **transform at boundaries, not at birth.** Within a layer, keep the failure in
 that layer's native type — precision is capability, and every early translation spends
 it.
 
 **Mapping into strings.** `mapError(Throwable::getMessage)` type-checks, reads tidy,
 and destroys the channel: strings cannot be pattern matched, carry no cause, and turn
-every downstream decision into substring inspection. A string is the *last* shape a
+every downstream decision into substring inspection — and since `getMessage()` is
+nullable (many JDK exceptions carry no message), the tidy one-liner smuggles the
+`null` problem into the error channel too. A string is the *last* shape a
 failure should take — at the log line, at the response body — after every decision has
 been made on typed cases. If the error type you are mapping *into* is `String`, the
 pipeline has decided to stop deciding. (The disciplined exception is validation, where
