@@ -96,7 +96,7 @@
 ### Working with the core types
 
 71. Traverse and sequence: turning a `List<Result>` into a `Result<List>`
-72. Mapping the error channel: when and how to transform failures
+72. ~~Mapping the error channel: when and how to transform failures~~
 73. Combining independent computations with zip and applicative style
 74. ~~From Optional to Option: migrating null-handling in an existing codebase~~
 75. ~~Designing a good error type: sealed hierarchies callers can act on~~
