@@ -5,7 +5,7 @@ pubDate: 2026-08-25
 author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Article"
-tags: ["Error Handling", "Result", "Try", "Exceptions", "Core Types", "Java", "Functional Programming"]
+tags: ["Error Handling", "Result", "Try", "Option", "Exceptions", "Core Types", "Java", "Functional Programming"]
 image: "https://images.pexels.com/photos/14823461/pexels-photo-14823461.jpeg?auto=compress&cs=tinysrgb&w=800"
 imageCredit:
     author: "Connor Scott McManus"
@@ -173,26 +173,29 @@ sealed interface CustomerLookupError {
 }
 
 Result<Customer, CustomerLookupError> byId(CustomerId id) {
-    Result<Customer, CustomerLookupError> fetched =
-        Try.of(() -> repository.fetchCustomer(id))      // SQLException captured here
+    Result<Option<Customer>, CustomerLookupError> fetched =
+        Try.of(() -> Option.ofNullable(repository.fetchCustomer(id)))  // SQLException captured here
            .toResult(CustomerLookupError.StoreUnavailable::new);
-    return fetched.flatMap(found -> found != null
-        ? Result.ok(found)
-        : Result.err(new CustomerLookupError.NotFound(id)));
+    return fetched.flatMap(found -> found.toResult(new CustomerLookupError.NotFound(id)));
 }
 ```
 
-Two details in that snippet are load-bearing. The `null` check is not
-decoration: a `Try` will happily carry a `null` success, but `Result.ok`
-rejects `null` outright — and a repository that returns `null` for a missing
-row is the most common lookup shape in Java, so the border must convert that
-absence into its own named case before it reaches `Result`, or the method
-advertised as the exception border throws a `NullPointerException` of its own.
-And `Try.of` captures `Throwable` — *everything*, including the
-`OutOfMemoryError` the next section will tell you not to handle — so a strict
-border rethrows `Error`s rather than naming them, and restores the interrupt
-flag if it finds an `InterruptedException` in the failure. Capture is a
-scalpel; point it at the failures you mean to own.
+Two details in that snippet are load-bearing. First, the possible absence is
+wrapped in [`Option`](/dmx-fun/guide/option) before it can reach `Result`: a
+`Try` will happily carry a `null` success, but the conversion inside `toResult`
+finishes at `Result.ok`, which rejects `null` outright — and a repository that
+returns `null` for a missing row is the most common lookup shape in Java.
+Wrapping first (in the capture as here, or in a `map(Option::ofNullable)` step —
+anywhere before the conversion) is what lets the last line name the absence
+`NotFound` instead of the border throwing a `NullPointerException` of its own.
+Second, `Try.of` captures `Throwable` — *everything*, including the
+`OutOfMemoryError` the next section will tell you not to handle, and
+interruptions whose flag deserves restoring (often arriving wrapped as another
+exception's cause). The capture is indiscriminate by design; discriminating is
+your job, and it happens at the conversion. A border that must stay strict
+about disasters handles them in an explicit `catch` rather than burying the
+policy in a mapper — the shape the [HTTP guide](/dmx-fun/guide/http) uses for
+exactly this reason. Conversion, not capture, is the scalpel.
 
 Inside the border, failures are typed values; outside it, the throwing world
 carries on unoffended. The exception did not disappear — it got *named*, at the
