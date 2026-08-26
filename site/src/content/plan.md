@@ -18,7 +18,7 @@
 12. ~~Refactoring object-oriented code toward a functional style~~
 13. ~~How to model data transformation pipelines~~
 14. Data validation with a functional approach
-15. Error handling without overusing exceptions
+15. Error handling without overusing exceptions *(largely covered by the "Error handling without exceptions" post and #108 — remaining angle: living with both styles in one codebase)*
 16. ~~Designing more expressive APIs with functional types~~
 17. How immutability helps reduce bugs
 18. ~~Real-world cases where functional programming actually adds value~~
@@ -29,8 +29,8 @@
 
 21. ~~Monads without the smoke and mirrors: a pragmatic explanation~~
 22. Option/Maybe: modeling absence without null
-23. Result/Either: explicit error handling
-24. Try: capturing operations that may fail
+23. Result/Either: explicit error handling *(motivation covered by the "Error handling without exceptions" post — remaining angle: full type walkthrough, Result vs Either)*
+24. Try: capturing operations that may fail *(border role covered by the "Error handling without exceptions" post — remaining angle: full API walkthrough)*
 25. ~~Validated: accumulating errors in a functional way~~
 26. Function composition in real applications
 27. ~~Currying and partial application in practice~~
@@ -161,7 +161,7 @@
 
 * ~~**What functional programming means for a backend engineer**~~
 * **Immutability in real systems: fewer bugs, fewer surprises**
-* **Error handling without exceptions: a functional approach**
+* ~~**Error handling without exceptions: a functional approach**~~
 * **Option, Result, and Try explained pragmatically**
 * ~~**Functional programming in Java without losing pragmatism**~~
 * **Functional core, imperative shell applied to a real service**
