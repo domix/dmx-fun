@@ -568,48 +568,29 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *    .toResult(StoreUnavailable::new);
      * }</pre>
      *
-     * <p>The cause chain is inspected with {@link NonFatal} (up to 64 links, guarding
-     * against cause cycles), because interruption often arrives wrapped as another
-     * exception's cause. If any link is an {@link InterruptedException}, the current
-     * thread's interrupt flag is restored before rethrowing. A fatal {@link Error}
-     * anywhere in the chain takes priority and is rethrown as-is; otherwise an
-     * interruption is rethrown wrapped in a
-     * {@link java.util.concurrent.CompletionException} whose cause is this failure's
-     * original cause (a cause that already is a {@code CompletionException} is rethrown
-     * unwrapped).
+     * <p>Delegates to {@link NonFatal#rethrowIfFatal(Throwable)}, which inspects the
+     * failure's cause chain and suppressed exceptions (where {@link Resource} parks a
+     * release failure alongside the body's) — see that method for the exact rethrow
+     * contract: Error priority, interrupt-flag propagation, wrapping rules, and the
+     * traversal bound.
+     *
+     * <p><strong>Only effective at an outermost call site.</strong> The combinators
+     * that re-capture what their lambdas throw — {@code map}, {@code flatMap},
+     * {@code recover}, {@code recoverWith} — also re-capture what {@code rethrowFatal()}
+     * rethrows. Calling it <em>inside</em> one, e.g.
+     * {@code loadA().flatMap(a -> Try.of(() -> fetchB(a)).rethrowFatal())}, silently
+     * converts the rethrown fatal back into a {@code Failure}. Call it on the
+     * pipeline's result instead, outside any lambda.
      *
      * @return this instance, if it is a {@code Success} or a non-fatal {@code Failure}
-     * @throws Error               if the failure or any of its causes is a fatal {@code Error}
-     * @throws CompletionException if the failure or any of its causes is an
-     *                             {@link InterruptedException} and no fatal {@code Error}
-     *                             is present
-     * @see NonFatal
+     * @throws Error               if a fatal {@code Error} is reachable from the failure
+     * @throws CompletionException if an {@link InterruptedException} is reachable from
+     *                             the failure and no fatal {@code Error} is present
+     * @see NonFatal#rethrowIfFatal(Throwable)
      */
     default Try<Value> rethrowFatal() {
         if (this instanceof Failure<Value> f) {
-            Error fatalError = null;
-            var interrupted = false;
-            var t = f.cause();
-            for (var i = 0; t != null && i < 64; i++) {  // hop cap guards against cause cycles
-                if (t instanceof InterruptedException) {
-                    interrupted = true;
-                }
-                if (fatalError == null && t instanceof Error error && !NonFatal.check(error)) {
-                    fatalError = error;
-                }
-                t = t.getCause();
-            }
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-            if (fatalError != null) {
-                throw fatalError;
-            }
-            if (interrupted) {
-                throw f.cause() instanceof CompletionException ce
-                    ? ce
-                    : new CompletionException(f.cause());
-            }
+            NonFatal.rethrowIfFatal(f.cause());
         }
         return this;
     }

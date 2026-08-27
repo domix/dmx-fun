@@ -27,6 +27,7 @@
  *   <li>{@link dmx.fun.Results}      — collector facade for {@code Stream<Result<V,E>>}</li>
  *   <li>{@link dmx.fun.Options}      — collector facade for {@code Stream<Option<T>>}</li>
  *   <li>{@link dmx.fun.Tries}        — collector facade for {@code Stream<Try<V>>}</li>
+ *   <li>{@link dmx.fun.NonFatal}     — fatal-throwable policy for strict capture borders</li>
  * </ul>
  *
  * <p>The entire module is {@code @NullMarked}: all API types are non-null by default.
