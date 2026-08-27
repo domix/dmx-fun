@@ -554,6 +554,67 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Rethrows the failure if it is fatal, otherwise returns this instance unchanged.
+     *
+     * <p>{@link #of(CheckedSupplier) Try.of} captures every {@code Throwable}, so fatal
+     * conditions ({@link OutOfMemoryError}, {@link InterruptedException}, …) become
+     * ordinary {@code Failure} values that {@code recover}/{@code recoverWith} will
+     * happily swallow. Placing {@code rethrowFatal()} right after the capture makes a
+     * border strict: fatal failures propagate, domain failures stay on the track.
+     *
+     * <pre>{@code
+     * Try.of(() -> repository.fetch(id))
+     *    .rethrowFatal()
+     *    .toResult(StoreUnavailable::new);
+     * }</pre>
+     *
+     * <p>The cause chain is inspected with {@link NonFatal} (up to 64 links, guarding
+     * against cause cycles), because interruption often arrives wrapped as another
+     * exception's cause. If any link is an {@link InterruptedException}, the current
+     * thread's interrupt flag is restored before rethrowing. A fatal {@link Error}
+     * anywhere in the chain takes priority and is rethrown as-is; otherwise an
+     * interruption is rethrown wrapped in a
+     * {@link java.util.concurrent.CompletionException} whose cause is this failure's
+     * original cause (a cause that already is a {@code CompletionException} is rethrown
+     * unwrapped).
+     *
+     * @return this instance, if it is a {@code Success} or a non-fatal {@code Failure}
+     * @throws Error               if the failure or any of its causes is a fatal {@code Error}
+     * @throws CompletionException if the failure or any of its causes is an
+     *                             {@link InterruptedException} and no fatal {@code Error}
+     *                             is present
+     * @see NonFatal
+     */
+    default Try<Value> rethrowFatal() {
+        if (this instanceof Failure<Value> f) {
+            Error fatalError = null;
+            var interrupted = false;
+            var t = f.cause();
+            for (var i = 0; t != null && i < 64; i++) {  // hop cap guards against cause cycles
+                if (t instanceof InterruptedException) {
+                    interrupted = true;
+                }
+                if (fatalError == null && t instanceof Error error && !NonFatal.check(error)) {
+                    fatalError = error;
+                }
+                t = t.getCause();
+            }
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+            if (fatalError != null) {
+                throw fatalError;
+            }
+            if (interrupted) {
+                throw f.cause() instanceof CompletionException ce
+                    ? ce
+                    : new CompletionException(f.cause());
+            }
+        }
+        return this;
+    }
+
+    /**
      * Returns the value if this instance is a {@code Success}, or the specified fallback value if it is a {@code Failure}.
      *
      * @param fallback the value to return if this instance is a {@code Failure}.

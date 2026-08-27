@@ -1503,4 +1503,101 @@ class TryTest {
         assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause()).isInstanceOf(InterruptedException.class);
     }
+
+    @Test
+    void rethrowFatal_shouldReturnSameInstanceOnSuccess() {
+        var t = Try.success(42);
+
+        assertThat(t.rethrowFatal()).isSameAs(t);
+    }
+
+    @Test
+    void rethrowFatal_shouldReturnSameInstanceOnNonFatalFailure() {
+        var t = Try.failure(new IOException("boom"));
+
+        assertThat(t.rethrowFatal()).isSameAs(t);
+    }
+
+    @Test
+    void rethrowFatal_shouldRethrowFatalErrorDirectly() {
+        var oom = new OutOfMemoryError("boom");
+        var t = Try.failure(oom);
+
+        assertThatThrownBy(t::rethrowFatal).isSameAs(oom);
+    }
+
+    @Test
+    void rethrowFatal_shouldRethrowFatalErrorFoundInCauseChain() {
+        var oom = new OutOfMemoryError("boom");
+        var t = Try.failure(new RuntimeException("wrapper", oom));
+
+        assertThatThrownBy(t::rethrowFatal).isSameAs(oom);
+    }
+
+    @Test
+    void rethrowFatal_shouldWrapInterruptionAndRestoreInterruptFlag() {
+        var t = Try.failure(new InterruptedException("cancelled"));
+
+        try {
+            assertThatThrownBy(t::rethrowFatal)
+                .isInstanceOf(java.util.concurrent.CompletionException.class)
+                .cause().isInstanceOf(InterruptedException.class);
+            assertThat(Thread.interrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // never leak the flag into other tests
+        }
+    }
+
+    @Test
+    void rethrowFatal_shouldDetectInterruptionWrappedAsCause() {
+        var wrapped = new IOException("query aborted", new InterruptedException("cancelled"));
+        var t = Try.failure(wrapped);
+
+        try {
+            assertThatThrownBy(t::rethrowFatal)
+                .isInstanceOf(java.util.concurrent.CompletionException.class)
+                .cause().isSameAs(wrapped);
+            assertThat(Thread.interrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // never leak the flag into other tests
+        }
+    }
+
+    @Test
+    void rethrowFatal_shouldPrioritizeFatalErrorOverInterruption() {
+        var oom = new OutOfMemoryError("boom");
+        var ie = new InterruptedException("cancelled");
+        ie.initCause(oom);
+        var t = Try.failure(ie);
+
+        try {
+            assertThatThrownBy(t::rethrowFatal).isSameAs(oom);
+            assertThat(Thread.interrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // never leak the flag into other tests
+        }
+    }
+
+    @Test
+    void rethrowFatal_shouldNotDoubleWrapCompletionException() {
+        var ce = new java.util.concurrent.CompletionException(new InterruptedException("cancelled"));
+        var t = Try.failure(ce);
+
+        try {
+            assertThatThrownBy(t::rethrowFatal).isSameAs(ce);
+            assertThat(Thread.interrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // never leak the flag into other tests
+        }
+    }
+
+    @Test
+    void rethrowFatal_shouldNotLoopOnCauseCycle() {
+        var a = new RuntimeException("a");
+        var b = new RuntimeException("b", a);
+        a.initCause(b);
+        var t = Try.failure(a);
+
+        assertThat(t.rethrowFatal()).isSameAs(t);
+    }
 }
