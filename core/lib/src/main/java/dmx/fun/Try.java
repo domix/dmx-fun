@@ -576,8 +576,9 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
      *
      * <p><strong>Only effective at an outermost call site.</strong> The combinators
      * that re-capture what their lambdas throw — {@code map}, {@code flatMap},
-     * {@code recover}, {@code recoverWith} — also re-capture what {@code rethrowFatal()}
-     * rethrows. Calling it <em>inside</em> one, e.g.
+     * {@code flatMapError}, {@code mapFailure}, {@code recover}, {@code recoverWith},
+     * and the fallible {@code filter} overloads — also re-capture what
+     * {@code rethrowFatal()} rethrows. Calling it <em>inside</em> one, e.g.
      * {@code loadA().flatMap(a -> Try.of(() -> fetchB(a)).rethrowFatal())}, silently
      * converts the rethrown fatal back into a {@code Failure}. Call it on the
      * pipeline's result instead, outside any lambda.

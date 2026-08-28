@@ -80,12 +80,24 @@ public final class NonFatal {
      * as {@code new CompletionException(throwable)} otherwise — the full original
      * graph stays reachable through the cause.
      *
+     * <p>{@code CompletionException} is also the transport wrapper the library's
+     * future borders deliberately strip ({@link Try#fromFuture(java.util.concurrent.CompletableFuture)
+     * Try.fromFuture} and friends), so a rethrown interruption that crosses a future
+     * boundary comes back as an ordinary {@code Failure} — with the
+     * {@code InterruptedException} intact as its cause. The rethrow therefore guards a
+     * <em>synchronous</em> border only: after a future round-trip, apply
+     * {@link Try#rethrowFatal()} again on the receiving side and the interruption is
+     * re-detected.
+     *
      * <p>Traversal is bounded at {@value #VISIT_CAP} throwables — a backstop against
-     * cause cycles and hostile {@code getCause()} overrides — so a fatal parked beyond
-     * that bound goes undetected. The dominant shapes — a plain cause chain, or one
-     * level of suppressed exceptions as parked by {@link Resource} — are traversed
-     * without allocating; a worklist is built only when a suppressed throwable
-     * carries a graph of its own.
+     * hostile {@code getCause()} overrides — so a fatal parked beyond that bound goes
+     * undetected. Cause cycles are detected without allocation (Floyd's algorithm) and
+     * abandoned, so a cycle neither loops nor starves the rest of the graph. The
+     * dominant shapes — a plain cause chain, or one level of suppressed exceptions as
+     * parked by {@link Resource} — are traversed without building auxiliary
+     * structures (though {@code getSuppressed()} itself clones its array when
+     * non-empty); a worklist is built only when a suppressed throwable carries a
+     * graph of its own.
      *
      * @param throwable the throwable to inspect; must not be {@code null}
      * @throws NullPointerException if {@code throwable} is {@code null}
@@ -104,6 +116,10 @@ public final class NonFatal {
         ArrayDeque<Throwable> pending = null;
         var visited = 0;
         var t = throwable;
+        // Tortoise for Floyd cycle detection on the current cause chain: a cause
+        // cycle would otherwise never yield the null that lets `pending` drain.
+        var slow = throwable;
+        var advanceSlow = false;
         while (t != null && visited < VISIT_CAP) {
             visited++;
             if (!check(t)) {
@@ -118,6 +134,9 @@ public final class NonFatal {
                 }
             }
             for (var suppressed : t.getSuppressed()) {
+                if (visited >= VISIT_CAP) {
+                    break;
+                }
                 if (suppressed.getCause() != null || suppressed.getSuppressed().length > 0) {
                     if (pending == null) {
                         pending = new ArrayDeque<>();
@@ -136,8 +155,21 @@ public final class NonFatal {
                 }
             }
             var next = t.getCause();
+            if (next != null) {
+                if (advanceSlow) {
+                    slow = slow.getCause();
+                }
+                advanceSlow = !advanceSlow;
+                if (next == slow) {
+                    next = null; // cause cycle closed — abandon this chain
+                }
+            }
             if (next == null && pending != null) {
                 next = pending.poll();
+                if (next != null) {
+                    slow = next; // fresh chain, fresh tortoise
+                    advanceSlow = false;
+                }
             }
             t = next;
         }

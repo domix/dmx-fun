@@ -137,9 +137,10 @@ chain-aware `rethrowIfFatal(Throwable)` helper are usable in your own catch bloc
 too. A fatal `Error` is rethrown as-is; an interruption sets the current thread's
 interrupt flag and is rethrown as a `CompletionException`.
 
-One rule: call `rethrowFatal()` **outside any combinator lambda**. `map`, `flatMap`,
-and `recover` re-capture whatever their lambdas throw, so a `rethrowFatal()` inside
-one is silently converted back into a `Failure`.
+One rule: call `rethrowFatal()` **outside any combinator lambda**. The combinators
+that re-capture whatever their lambdas throw — `map`, `flatMap`, `flatMapError`,
+`mapFailure`, `recover`, `recoverWith`, and the fallible `filter` overloads — will
+silently convert a `rethrowFatal()` inside one back into a `Failure`.
 
 ## sequence and traverse
 

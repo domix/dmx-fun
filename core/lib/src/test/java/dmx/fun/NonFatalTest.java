@@ -157,6 +157,17 @@ class NonFatalTest {
     }
 
     @Test
+    void rethrowIfFatal_shouldNotSeeFatalSuppressedBeyondTraversalBound() {
+        var root = new RuntimeException("root");
+        for (var i = 0; i < 999; i++) { // root + 999 suppressed exhaust the cap
+            root.addSuppressed(new IOException("suppressed " + i));
+        }
+        root.addSuppressed(new OutOfMemoryError("boom")); // node 1001 — past the cap
+
+        assertThatCode(() -> NonFatal.rethrowIfFatal(root)).doesNotThrowAnyException();
+    }
+
+    @Test
     @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void rethrowIfFatal_shouldNotLoopOnCauseCycle() {
         var a = new RuntimeException("a");
@@ -164,5 +175,17 @@ class NonFatalTest {
         a.initCause(b);
 
         assertThatCode(() -> NonFatal.rethrowIfFatal(a)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void rethrowIfFatal_shouldFindFatalSuppressedOnCauseCycle() {
+        var oom = new OutOfMemoryError("boom");
+        var a = new RuntimeException("a");
+        var b = new RuntimeException("b", a);
+        a.initCause(b); // cause cycle must not starve the suppressed graph
+        a.addSuppressed(new IOException("release failed", oom));
+
+        assertThatThrownBy(() -> NonFatal.rethrowIfFatal(a)).isSameAs(oom);
     }
 }
