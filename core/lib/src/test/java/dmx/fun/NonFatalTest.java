@@ -185,8 +185,11 @@ class NonFatalTest {
         a.addSuppressed(b);
         b.addSuppressed(a); // mutual suppression must not re-queue forever
         var root = new RuntimeException("root");
-        root.addSuppressed(a);
+        // fatal first, cycle second: the LIFO worklist then drains the cycle
+        // before the fatal — without identity dedup the cycle re-queues until
+        // the visit cap and the fatal is never reached
         root.addSuppressed(new IOException("release failed", new OutOfMemoryError("boom")));
+        root.addSuppressed(a);
 
         assertThatThrownBy(() -> NonFatal.rethrowIfFatal(root))
             .isInstanceOf(OutOfMemoryError.class);
