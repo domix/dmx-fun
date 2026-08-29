@@ -554,6 +554,49 @@ public sealed interface Try<Value> permits Try.Success, Try.Failure {
     }
 
     /**
+     * Rethrows the failure if it is fatal, otherwise returns this instance unchanged.
+     *
+     * <p>{@link #of(CheckedSupplier) Try.of} captures every {@code Throwable}, so fatal
+     * conditions ({@link OutOfMemoryError}, {@link InterruptedException}, …) become
+     * ordinary {@code Failure} values that {@code recover}/{@code recoverWith} will
+     * happily swallow. Placing {@code rethrowFatal()} right after the capture makes a
+     * border strict: fatal failures propagate, domain failures stay on the track.
+     *
+     * <pre>{@code
+     * Try.of(() -> repository.fetch(id))
+     *    .rethrowFatal()
+     *    .toResult(StoreUnavailable::new);
+     * }</pre>
+     *
+     * <p>Delegates to {@link NonFatal#rethrowIfFatal(Throwable)}, which inspects the
+     * failure's cause chain and suppressed exceptions (where {@link Resource} parks a
+     * release failure alongside the body's) — see that method for the exact rethrow
+     * contract: Error priority, interrupt-flag propagation, wrapping rules, and the
+     * traversal bound.
+     *
+     * <p><strong>Only effective at an outermost call site.</strong> The combinators
+     * that re-capture what their lambdas throw — {@code map}, {@code flatMap},
+     * {@code flatMapError}, {@code mapFailure}, {@code recover}, {@code recoverWith},
+     * and the fallible {@code filter} overloads — also re-capture what
+     * {@code rethrowFatal()} rethrows. Calling it <em>inside</em> one, e.g.
+     * {@code loadA().flatMap(a -> Try.of(() -> fetchB(a)).rethrowFatal())}, silently
+     * converts the rethrown fatal back into a {@code Failure}. Call it on the
+     * pipeline's result instead, outside any lambda.
+     *
+     * @return this instance, if it is a {@code Success} or a non-fatal {@code Failure}
+     * @throws Error               if a fatal {@code Error} is reachable from the failure
+     * @throws CompletionException if an {@link InterruptedException} is reachable from
+     *                             the failure and no fatal {@code Error} is present
+     * @see NonFatal#rethrowIfFatal(Throwable)
+     */
+    default Try<Value> rethrowFatal() {
+        if (this instanceof Failure<Value> f) {
+            NonFatal.rethrowIfFatal(f.cause());
+        }
+        return this;
+    }
+
+    /**
      * Returns the value if this instance is a {@code Success}, or the specified fallback value if it is a {@code Failure}.
      *
      * @param fallback the value to return if this instance is a {@code Failure}.

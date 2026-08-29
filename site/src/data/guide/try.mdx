@@ -48,8 +48,10 @@ when you own the error domain and need callers to branch on specific error subty
 
 <CreatingInstances/>
 
-`Try.of` catches **any** `Throwable` — not just `Exception`.
-`Try.run` is the void-safe variant: it yields `Success(null)` on success.
+`Try.of` catches **any** `Throwable` — not just `Exception`. That includes fatal
+conditions like `OutOfMemoryError` and `InterruptedException`; see
+[Fatal failures](#fatal-failures--rethrowfatal) for how to keep those from being
+swallowed. `Try.run` is the void-safe variant: it yields `Success(null)` on success.
 See the [Null handling](#null-handling) section for the implications.
 
 ## Checking state
@@ -112,6 +114,35 @@ Recovery operations convert a `Failure` back to a `Success` by inspecting the
 exception. Typed overloads match only a specific exception subtype.
 
 <Recovery/>
+
+## Fatal failures — `rethrowFatal`
+
+Because `Try.of` captures every `Throwable`, an `OutOfMemoryError` or an
+`InterruptedException` becomes an ordinary `Failure` — and `recover` will happily
+swallow it, running your fallback on a sick JVM or with a cancelled thread.
+`rethrowFatal()` makes a border strict: it rethrows the failure if it — or anything
+reachable through its cause chain and suppressed exceptions — is fatal, and returns
+the instance unchanged otherwise. Traversal is bounded at 1,000 visited throwables;
+a fatal parked beyond that bound is not detected and the instance is returned
+unchanged.
+
+```java
+Result<Customer, StoreUnavailable> fetched =
+    Try.of(() -> repository.fetchCustomer(id))
+       .rethrowFatal()
+       .toResult(StoreUnavailable::new);
+```
+
+The fatal set — `VirtualMachineError`, `LinkageError`, `InterruptedException` — is
+defined by the public `NonFatal` class, whose `check(Throwable)` predicate and
+chain-aware `rethrowIfFatal(Throwable)` helper are usable in your own catch blocks
+too. A fatal `Error` is rethrown as-is; an interruption sets the current thread's
+interrupt flag and is rethrown as a `CompletionException`.
+
+One rule: call `rethrowFatal()` **outside any combinator lambda**. The combinators
+that re-capture whatever their lambdas throw — `map`, `flatMap`, `flatMapError`,
+`mapFailure`, `recover`, `recoverWith`, and the fallible `filter` overloads — will
+silently convert a `rethrowFatal()` inside one back into a `Failure`.
 
 ## sequence and traverse
 
@@ -238,6 +269,13 @@ If you own the error type and callers need to branch on specific subtypes,
 use `Result`. Reserve `Try` for the boundary where third-party code throws.
 
 <PitfallsUseResult/>
+
+### Recovering a fatal failure
+
+`recover(e -> fallback)` does not distinguish an expected `IOException` from an
+`OutOfMemoryError` — both are `Failure` values. Put `rethrowFatal()` before any
+recovery at a strict border, or match specific exception types with the
+`recover(Class, fn)` overload instead of catch-all lambdas.
 
 ### Using `toOption()` after `Try.run()`
 

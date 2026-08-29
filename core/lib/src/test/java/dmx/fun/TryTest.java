@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1497,10 +1499,100 @@ class TryTest {
             return "never";
         });
 
-        // Clear the interrupt status set by withTimeout so the test harness is clean
-        Thread.interrupted();
-
         assertThat(result.isFailure()).isTrue();
         assertThat(result.getCause()).isInstanceOf(InterruptedException.class);
     }
+
+    @AfterEach
+    void clearInterruptFlag() {
+        Thread.interrupted(); // never leak the flag into other tests
+    }
+
+    @Test
+    void rethrowFatal_shouldReturnSameInstanceOnSuccess() {
+        var t = Try.success(42);
+
+        assertThat(t.rethrowFatal()).isSameAs(t);
+    }
+
+    @Test
+    void rethrowFatal_shouldReturnSameInstanceOnNonFatalFailure() {
+        var t = Try.failure(new IOException("boom"));
+
+        assertThat(t.rethrowFatal()).isSameAs(t);
+    }
+
+    @Test
+    void rethrowFatal_shouldRethrowFatalErrorDirectly() {
+        var oom = new OutOfMemoryError("boom");
+        var t = Try.failure(oom);
+
+        assertThatThrownBy(t::rethrowFatal).isSameAs(oom);
+    }
+
+    @Test
+    void rethrowFatal_shouldRethrowFatalErrorFoundInCauseChain() {
+        var oom = new OutOfMemoryError("boom");
+        var t = Try.failure(new RuntimeException("wrapper", oom));
+
+        assertThatThrownBy(t::rethrowFatal).isSameAs(oom);
+    }
+
+    @Test
+    void rethrowFatal_shouldPassNonFatalErrorThroughUntouched() {
+        var t = Try.failure(new AssertionError("expectation failed"));
+
+        assertThat(t.rethrowFatal()).isSameAs(t);
+    }
+
+    @Test
+    void rethrowFatal_shouldRethrowLinkageError() {
+        var linkage = new NoClassDefFoundError("gone");
+        var t = Try.failure(linkage);
+
+        assertThatThrownBy(t::rethrowFatal).isSameAs(linkage);
+    }
+
+    @Test
+    void rethrowFatal_shouldFindFatalErrorInSuppressedExceptions() {
+        var oom = new OutOfMemoryError("boom");
+        var body = new IOException("body failed");
+        body.addSuppressed(oom); // Resource.runBody parks the release failure this way
+        var t = Try.failure(body);
+
+        assertThatThrownBy(t::rethrowFatal).isSameAs(oom);
+    }
+
+    @Test
+    void rethrowFatal_shouldWrapInterruptionAndSetInterruptFlag() {
+        var t = Try.failure(new InterruptedException("cancelled"));
+
+        assertThatThrownBy(t::rethrowFatal)
+            .isInstanceOf(CompletionException.class)
+            .cause().isInstanceOf(InterruptedException.class);
+        assertThat(Thread.interrupted()).isTrue();
+    }
+
+    @Test
+    void rethrowFatal_shouldDetectInterruptionWrappedAsCause() {
+        var wrapped = new IOException("query aborted", new InterruptedException("cancelled"));
+        var t = Try.failure(wrapped);
+
+        assertThatThrownBy(t::rethrowFatal)
+            .isInstanceOf(CompletionException.class)
+            .cause().isSameAs(wrapped);
+        assertThat(Thread.interrupted()).isTrue();
+    }
+
+    @Test
+    void rethrowFatal_shouldPrioritizeFatalErrorOverInterruption() {
+        var oom = new OutOfMemoryError("boom");
+        var ie = new InterruptedException("cancelled");
+        ie.initCause(oom);
+        var t = Try.failure(ie);
+
+        assertThatThrownBy(t::rethrowFatal).isSameAs(oom);
+        assertThat(Thread.interrupted()).isTrue();
+    }
+
 }
