@@ -122,7 +122,9 @@ Because `Try.of` captures every `Throwable`, an `OutOfMemoryError` or an
 swallow it, running your fallback on a sick JVM or with a cancelled thread.
 `rethrowFatal()` makes a border strict: it rethrows the failure if it — or anything
 reachable through its cause chain and suppressed exceptions — is fatal, and returns
-the instance unchanged otherwise.
+the instance unchanged otherwise. Traversal is bounded at 1,000 visited throwables;
+a fatal parked beyond that bound is not detected and the instance is returned
+unchanged.
 
 ```java
 Result<Customer, StoreUnavailable> fetched =

@@ -179,6 +179,21 @@ class NonFatalTest {
 
     @Test
     @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void rethrowIfFatal_shouldFindFatalSiblingDespiteSuppressedCycle() {
+        var a = new RuntimeException("a");
+        var b = new RuntimeException("b");
+        a.addSuppressed(b);
+        b.addSuppressed(a); // mutual suppression must not re-queue forever
+        var root = new RuntimeException("root");
+        root.addSuppressed(a);
+        root.addSuppressed(new IOException("release failed", new OutOfMemoryError("boom")));
+
+        assertThatThrownBy(() -> NonFatal.rethrowIfFatal(root))
+            .isInstanceOf(OutOfMemoryError.class);
+    }
+
+    @Test
+    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void rethrowIfFatal_shouldFindFatalSuppressedOnCauseCycle() {
         var oom = new OutOfMemoryError("boom");
         var a = new RuntimeException("a");

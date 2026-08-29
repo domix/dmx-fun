@@ -1,7 +1,10 @@
 package dmx.fun;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletionException;
 import org.jspecify.annotations.NullMarked;
 
@@ -114,6 +117,7 @@ public final class NonFatal {
         // graph of its own — the plain cause chain and Resource's one-level
         // suppressed pattern stay allocation-free.
         ArrayDeque<Throwable> pending = null;
+        Set<Throwable> queued = null;
         var visited = 0;
         var t = throwable;
         // Tortoise for Floyd cycle detection on the current cause chain: a cause
@@ -140,8 +144,13 @@ public final class NonFatal {
                 if (suppressed.getCause() != null || suppressed.getSuppressed().length > 0) {
                     if (pending == null) {
                         pending = new ArrayDeque<>();
+                        queued = Collections.newSetFromMap(new IdentityHashMap<>());
                     }
-                    pending.push(suppressed);
+                    // identity dedup: mutual suppression (a.addSuppressed(b),
+                    // b.addSuppressed(a) is legal) must not re-queue forever
+                    if (queued.add(suppressed)) {
+                        pending.push(suppressed);
+                    }
                 } else {
                     visited++;
                     if (!check(suppressed)) {
