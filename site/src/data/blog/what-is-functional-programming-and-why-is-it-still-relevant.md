@@ -52,7 +52,7 @@ BigDecimal total = order.items().stream()
     .reduce(BigDecimal.ZERO, BigDecimal::add);
 ```
 
-Both work. The functional version has a property the loop does not: it is built from pieces (`filter`, `map`, `reduce`) that are each pure, each independently testable, and each reusable in any other pipeline. The loop is a single custom machine; the pipeline is an assembly of standard parts.
+Both work. The functional version has a property the loop does not: it is built from standard pieces (`filter`, `map`, `reduce`) that are each independently testable and reusable in any other pipeline — and the whole expression stays pure as long as the functions you plug in (the predicate, `Item::price`) are pure themselves. The loop is a single custom machine; the pipeline is an assembly of standard parts.
 
 ---
 
@@ -101,7 +101,7 @@ Watch what Java itself has shipped:
 | Release | Feature | Functional idea it adopts |
 |---|---|---|
 | Java 8 | Lambdas, streams, `Optional` | Functions as values; pipelines; modeled absence |
-| Java 16 | Records | Immutable data as the default |
+| Java 16 | Records | Shallowly immutable data carriers |
 | Java 17 | Sealed types | Closed sets of cases, checked by the compiler |
 | Java 21 | Pattern matching for `switch` | Decisions as expressions over data shapes |
 
@@ -118,7 +118,7 @@ Result<Order, OrderError> outcome =
         .flatMap(this::price);
 ```
 
-Nothing is thrown, nothing is hidden. The type tells every reader this can fail — and how.
+Expected failures travel in the return value instead of up the stack, so nothing is hidden. The type tells every reader this can fail — and how.
 
 ---
 
@@ -138,7 +138,7 @@ A few clarifications save a lot of early frustration:
 If this is your entry point, the path of least resistance in Java is:
 
 1. **Make your data immutable.** Reach for records. Stop writing setters.
-2. **Extract pure functions.** Any block of logic that could be `static`, make `static` — and pass in what it reads instead of reaching out for it.
+2. **Extract pure functions.** Pass in everything the logic reads instead of letting it reach out for fields, globals, or the clock — and keep observable effects out of it. (The `static` keyword is neither necessary nor sufficient: a static method can still do I/O, and an instance method that only reads immutable state can be perfectly pure.)
 3. **Prefer expressions to statements.** Streams over loops, switch expressions over if/else chains, values over mutation.
 4. **Model absence and failure as types.** `Optional` (or `Option`) instead of `null`; `Result` instead of exceptions for expected failures.
 
