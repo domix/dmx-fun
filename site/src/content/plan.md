@@ -1,7 +1,7 @@
 
 ### Introductory topics
 
-1. What is functional programming and why is it still relevant?
+1. ~~What is functional programming and why is it still relevant?~~
 2. Imperative programming vs functional programming
 3. ~~Immutability: the foundation of functional programming~~
 4. ~~Pure functions and side effects~~
