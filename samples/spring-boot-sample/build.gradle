@@ -20,7 +20,7 @@ dependencies {
     if (sbVersion.toString().startsWith('4.')) {
         // Apply only this upgrade for Spring Boot 4
         constraints {
-            implementation "org.apache.tomcat.embed:tomcat-embed-core:11.0.22"
+            implementation "org.apache.tomcat.embed:tomcat-embed-core:11.0.25"
         }
         // Boot 4.1.0 manages jackson-bom 3.1.4, which is vulnerable to the @JsonView /
         // @JsonUnwrapped deserialization bypass (Dependabot alert #90, fixed in 3.1.5).
