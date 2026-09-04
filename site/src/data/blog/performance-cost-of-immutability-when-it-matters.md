@@ -39,7 +39,7 @@ Two JVM mechanisms claw most of this back:
 
 ### 2. Copying
 
-Updating one field of an immutable aggregate means rebuilding the aggregate. For a record with five components, that is five field copies — negligible. For an immutable `List` of 100,000 elements, `List.copyOf` on every update is a 100,000-element array copy, and doing it inside a loop turns an O(n) job into O(n²).
+Updating one field of an immutable aggregate means rebuilding the aggregate. For a record with five components, that is five field copies — negligible. For an immutable `List` of 100,000 elements, rebuilding the list on every update — copying a mutable working copy with `List.copyOf`, or re-collecting a stream — is a 100,000-element copy each time, and doing it inside a loop turns an O(n) job into O(n²). (`List.copyOf` itself is smart enough to pass an already-immutable list through untouched; the copy here is the price of the *rebuild*, not of the method.)
 
 This is the one cost that produces genuinely catastrophic asymptotics, and it is also the most avoidable — the fix is either a builder used *inside* a pure function (mutation as an implementation detail) or a persistent data structure. Both are covered below.
 
@@ -55,7 +55,7 @@ This cost is the hardest for the JVM to remove today, and it is the one [Project
 
 The copying problem has a classical solution that the JDK does not ship: **persistent data structures**, immutable collections whose update operations return a new version that *shares almost all of its structure* with the old one.
 
-The canonical design — used by Clojure's vectors and maps, Scala's `Vector`, and Java libraries such as Vavr and Paguro (and the very similar hash-array-mapped tries elsewhere) — is a wide tree: a bitmapped trie with 32-way branching. Updating one element copies only the path from the root to the affected leaf, roughly log₃₂(n) small node copies, and every other node is shared between the old and new versions.
+The most common design — the one behind Clojure's vectors and maps and Java libraries such as Vavr and Paguro, with Scala's `Vector` and the hash-array-mapped tries elsewhere as close variations on the theme — is a wide tree: a bitmapped trie with 32-way branching. Updating one element copies only the path from the root to the affected leaf, roughly log₃₂(n) small node copies, and every other node is shared between the old and new versions.
 
 ```java
 // Vavr — updates return a new vector, structure is shared, nothing is copied wholesale
@@ -67,7 +67,7 @@ io.vavr.collection.Vector<Order> v2 = v1.update(3, v1.get(3).withStatus(SHIPPED)
 The practical consequences, stated honestly in both directions:
 
 - **Per-update cost drops from O(n) to effectively O(log₃₂ n)** — for a million elements, a handful of node copies instead of a million-element array copy. The loop that was quadratic with `List.copyOf` becomes near-linear.
-- **Old versions stay alive for free**, which is what makes them ideal for snapshots, undo histories, and handing data across threads without defensive copies.
+- **Old versions stay alive without full copies** — they hold only the nodes they don't share — which is what makes them ideal for snapshots, undo histories, and handing data across threads without defensive copies.
 - **The constant factors are worse than `ArrayList`.** Indexed reads walk a shallow tree instead of hitting an array slot; iteration touches scattered nodes instead of one contiguous array. For read-heavy code over data that never changes, a plain immutable `List` (one array, no tree) is both simpler and faster.
 - **They earn their keep in one specific situation:** many successive updated *versions* of a large collection, where copy-on-write would be quadratic and sharing across versions (or threads) is the point. If you do not have that shape, you do not need the dependency.
 
@@ -102,7 +102,7 @@ Outside this list, the honest engineering statement is: the cost exists, the JVM
 
 Counting only immutability's costs is bad accounting, because mutation is not free either — its costs are just paid in different places:
 
-- **Defensive copies disappear.** Mutable objects crossing trust boundaries get copied *on suspicion*, at every boundary, forever. An immutable value is handed over by reference, safely, every time. In share-heavy code, immutability can mean strictly *less* copying.
+- **Defensive copies disappear.** Mutable objects crossing trust boundaries get copied *on suspicion*, at every boundary, forever. A *deeply* immutable value — immutable elements in an immutable container, not just an unmodifiable `List.copyOf` around mutable beans — is handed over by reference, safely, every time. (In-process boundaries only: crossing to another system still means serialization and validation.) In share-heavy code, immutability can mean strictly *less* copying.
 - **Locks disappear with them.** Data that cannot change needs no synchronization to read. The mutable alternative in concurrent code — locking, or copying per thread — has its own price, paid in contention and in bugs that no profiler will ever show you. [Structuring parallel work without shared state](/dmx-fun/blog/functional-concurrency-parallel-work-without-shared-state) is built on exactly this.
 - **The JVM optimizes what cannot change.** Static finals — and record fields, which the JIT is allowed to trust — enable constant-folding; stable values enable speculation; and the platform's own trajectory — records, frozen arrays research, Valhalla — is a decade-long bet that immutable data is the *optimizable* kind.
 
