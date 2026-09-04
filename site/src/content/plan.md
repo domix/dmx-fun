@@ -118,7 +118,7 @@
 85. Virtual threads and functional code: what changes and what does not
 86. ~~Functional concurrency: structuring parallel work without shared state~~
 87. ~~Laziness and streaming: processing large data without loading it all~~
-88. The performance cost of immutability, and when it actually matters *(largely covered by #38 — remaining angle: benchmarks and persistent data structures)*
+88. ~~The performance cost of immutability, and when it actually matters~~
 
 ### Java platform and language evolution
 
