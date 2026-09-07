@@ -5,3 +5,5 @@
 build
 .ides
 .idea
+.codegraph
+graphify-out
