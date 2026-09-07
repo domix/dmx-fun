@@ -130,7 +130,7 @@
 
 ### Testing and quality
 
-94. Property-based testing for pure functions
+94. ~~Property-based testing for pure functions~~
 95. How to review functional code without slowing the team down
 96. Testing the imperative shell without mocking everything
 97. ~~Golden/approval tests for functional pipelines~~
