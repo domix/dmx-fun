@@ -16,7 +16,7 @@ imageCredit:
 
 An example-based test is a claim about one point: *given this exact input, the function returns this exact output*. Write five of them and you have verified five points in an input space that usually holds billions. The bugs, of course, live in the points you did not think to write — the empty list, the negative amount, the string with a surrogate pair, the total that does not divide evenly.
 
-Property-based testing inverts the deal. Instead of picking inputs, you state something that must be true for *every* input — a law — and let the framework generate hundreds of randomized cases trying to break it. When it succeeds, it does not just fail the build: it hands you the smallest input it could find that violates the law.
+Property-based testing inverts the deal. Instead of picking inputs, you state something that must be true for *every* input — a law — and let the framework generate hundreds of randomized cases trying to break it. When it succeeds, it does not just fail the build: it hands you a simplified counterexample — shrinking reduces the failing input as far as it can within its search bounds, which is usually, but not guaranteed to be, the smallest one that violates the law.
 
 The technique comes from the functional world — QuickCheck, published for Haskell in 2000 by Koen Claessen and John Hughes — and that origin is no accident. Properties need functions they can call thousands of times with arbitrary inputs and judge purely by the return value. In other words: they need [pure functions](/dmx-fun/blog/pure-functions-and-side-effects). If you have been pushing your logic into a pure core, you have already built the ideal test subject.
 
@@ -118,10 +118,12 @@ Arbitrary<Money> money() {
 }
 ```
 
+Any property then consumes it by name — `@ForAll("money") Money amount` — exactly like the `orderIds` provider earlier.
+
 Two honest warnings from the field:
 
 - **Random does not mean representative.** A uniform generator over `int` almost never produces the small values where your off-by-one bugs live. Good engines bias toward edge cases (zero, one, bounds), but *you* know your domain's dangerous values — encode them into the generator rather than hoping.
-- **Constrain with generators, not filters.** Generating arbitrary strings and discarding the ones that are not valid ISBNs throws away essentially every sample — and the engine does not quietly persist: jqwik aborts the property once discards outnumber accepted samples five to one (the default `maxDiscardRatio`). Build valid values constructively (`map`, `combine`) and keep the discard rate near zero.
+- **Constrain with generators, not filters.** Generating arbitrary strings and discarding the ones that are not valid ISBNs throws away essentially every sample — and the engine does not quietly persist: jqwik fails the property once tried runs exceed checked runs by more than five to one (the default `maxDiscardRatio`, where discarded samples count toward the tried side). Build valid values constructively (`map`, `combine`) and keep the discard rate near zero.
 
 The investment compounds: a good `Arbitrary<Order>` written once feeds every property you write about orders afterward — the same compositional payoff your [algebraic data types](/dmx-fun/blog/algebraic-data-types-for-business-developers) already gave the production code.
 
@@ -143,7 +145,7 @@ And if a function resists this treatment — it needs the clock, the database, a
 
 ## Conclusion
 
-Property-based testing is the testing style pure functions were born for: state a law, generate the inputs, let shrinking hand you the minimal counterexample. Six patterns — round-trip, invariant, idempotence, commutativity and associativity, oracle, easy-to-check — cover most code you will ever write, and the discipline of asking *"what is always true here?"* improves the design even before the first test runs.
+Property-based testing is the testing style pure functions were born for: state a law, generate the inputs, let shrinking hand you a minimized counterexample. Six patterns — round-trip, invariant, idempotence, commutativity and associativity, oracle, easy-to-check — cover most code you will ever write, and the discipline of asking *"what is always true here?"* improves the design even before the first test runs.
 
 The dice in the header are loaded, and that is the point: hundreds of adversarial rolls per build, every one reproducible from a seed. Your examples check the answers you knew. Properties check the ones you didn't.
 
