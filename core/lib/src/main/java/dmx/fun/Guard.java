@@ -19,7 +19,8 @@ import org.jspecify.annotations.Nullable;
  * All composition operators ({@link #and}, {@link #or}, {@link #negate()}, {@link #andThen},
  * {@link #contramap}, {@link #withMessage}) are {@code default} methods, so guards can be
  * defined as lambdas and composed without inheritance; {@link #allOf} and {@link #anyOf}
- * compose several guards at once. The choice to use {@code @FunctionalInterface} with
+ * compose several guards at once. For logging and metrics, {@link #named(String)} attaches a
+ * descriptive identity retrievable via {@link #name()}. The choice to use {@code @FunctionalInterface} with
  * {@code default} methods rather than an abstract class is documented in
  * <a href="https://domix.github.io/dmx-fun/adr/adr-011-guard-functional-interface/">
  * ADR-011 — Guard&lt;T&gt; as a @FunctionalInterface with default methods</a>.
@@ -330,6 +331,14 @@ public interface Guard<T> {
      */
     static <T> Guard<T> narrow(Guard<? super T> guard) {
         Objects.requireNonNull(guard, "guard");
+        return keepName(guard, narrowRaw(guard));
+    }
+
+    /**
+     * The adaptation behind {@link #narrow} without name preservation — used internally by
+     * the composition operators, whose result is anonymous anyway.
+     */
+    private static <T> Guard<T> narrowRaw(Guard<? super T> guard) {
         return value -> guard.check(value).map(_ -> value);
     }
 
@@ -403,7 +412,7 @@ public interface Guard<T> {
      */
     default Guard<T> andThen(Guard<? super T> next) {
         Objects.requireNonNull(next, "next");
-        Guard<T> narrowed = narrow(next);
+        Guard<T> narrowed = narrowRaw(next);
         return value -> {
             var first = this.check(value);
             return first.isInvalid() ? first : narrowed.check(value);
@@ -438,7 +447,7 @@ public interface Guard<T> {
      */
     default Guard<T> or(Guard<? super T> other) {
         Objects.requireNonNull(other, "other");
-        Guard<T> narrowed = narrow(other);
+        Guard<T> narrowed = narrowRaw(other);
         return value -> {
             var left = this.check(value);
             if (left.isValid()) {
@@ -484,9 +493,9 @@ public interface Guard<T> {
      */
     default Guard<T> negate(String errorMessage) {
         Objects.requireNonNull(errorMessage, "errorMessage");
-        return value -> this.check(value).isValid()
+        return keepName(this, value -> this.check(value).isValid()
             ? Validated.invalidNel(errorMessage)
-            : Validated.valid(value);
+            : Validated.valid(value));
     }
 
     /**
@@ -511,9 +520,9 @@ public interface Guard<T> {
      */
     default Guard<T> negate(Function<? super T, String> messageFromValue) {
         Objects.requireNonNull(messageFromValue, "messageFromValue");
-        return value -> this.check(value).isValid()
+        return keepName(this, value -> this.check(value).isValid()
             ? Validated.invalidNel(messageFromValue.apply(value))
-            : Validated.valid(value);
+            : Validated.valid(value));
     }
 
     /**
@@ -538,9 +547,112 @@ public interface Guard<T> {
      */
     default Guard<T> withMessage(String message) {
         Objects.requireNonNull(message, "message");
-        return value -> this.check(value).isValid()
+        return keepName(this, value -> this.check(value).isValid()
             ? Validated.valid(value)
-            : Validated.invalidNel(message);
+            : Validated.invalidNel(message));
+    }
+
+    // -------------------------------------------------------------------------
+    // Naming / observability
+    // -------------------------------------------------------------------------
+
+    /**
+     * The name reported by {@link #name()} for guards that were never {@link #named(String)}.
+     */
+    String ANONYMOUS = "anonymous";
+
+    /**
+     * Returns a descriptive name for this guard, for logging and metrics.
+     *
+     * <p>Guards are anonymous by default; use {@link #named(String)} to attach a name. The
+     * name identifies <em>which guard</em> was applied — a different piece of information
+     * from the error messages, which say <em>which rule</em> was violated. It never alters
+     * {@link #check(Object)} results or error messages.
+     *
+     * <p><strong>Note for implementors:</strong> this is a {@code default} method on a
+     * public interface. A class implementing {@code Guard} that already declares its own
+     * {@code String name()} accessor — a record with a {@code name} component, say —
+     * silently overrides this method, and that value will surface wherever guard names are
+     * logged or tagged. Rename such a component or override {@code name()} deliberately.
+     *
+     * @return the guard's name, or {@link #ANONYMOUS} when none was assigned
+     */
+    default String name() {
+        return ANONYMOUS;
+    }
+
+    /**
+     * Returns {@code true} when this guard carries a name assigned via {@link #named(String)}
+     * (or an overridden {@link #name()}), {@code false} for anonymous guards.
+     *
+     * <p>Lets observability code skip or bucket unnamed guards without comparing against the
+     * {@link #ANONYMOUS} literal.
+     *
+     * @return whether this guard has a non-default name
+     */
+    default boolean isNamed() {
+        return !ANONYMOUS.equals(name());
+    }
+
+    /**
+     * Returns a guard with the same {@link #check(Object)} behavior carrying a descriptive
+     * name, retrievable via {@link #name()}.
+     *
+     * <p><strong>Name propagation.</strong> Operators that decorate this same guard —
+     * {@link #withMessage}, {@link #mapMessages}, {@link #negate()}, {@link #contramap} and
+     * {@link #narrow} — preserve the name. Operators that <em>compose</em> guards —
+     * {@link #and}, {@link #or}, {@link #andThen}, {@link #allOf}, {@link #anyOf} — produce a
+     * new anonymous guard, so name the composite after composing. The rationale is documented
+     * in <a href="https://domix.github.io/dmx-fun/adr/adr-024-guard-naming/">ADR-024 — Guard
+     * naming</a>.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Guard<String> username = notBlank.and(minLength3).and(alphanumeric)
+     *     .named("username");
+     *
+     * var result = username.check(input);
+     * if (result.isInvalid()) {
+     *     log.warn("guard '{}' failed: {}", username.name(), result.getError().toList());
+     * }
+     * }</pre>
+     *
+     * @param name the descriptive name; must not be {@code null}, blank, or the
+     *             {@link #ANONYMOUS} sentinel (a guard named {@code "anonymous"} would be
+     *             indistinguishable from an unnamed one)
+     * @return a guard delegating to this one, with the given name
+     * @throws NullPointerException     if {@code name} is {@code null}
+     * @throws IllegalArgumentException if {@code name} is blank or equals {@link #ANONYMOUS}
+     */
+    default Guard<T> named(String name) {
+        Objects.requireNonNull(name, "name");
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("name must not be blank");
+        }
+        if (ANONYMOUS.equals(name)) {
+            throw new IllegalArgumentException(
+                "name must not be the reserved \"" + ANONYMOUS + "\" sentinel");
+        }
+        var self = this;
+        return new Guard<>() {
+            @Override
+            public Validated<NonEmptyList<String>, T> check(T value) {
+                return self.check(value);
+            }
+
+            @Override
+            public String name() {
+                return name;
+            }
+        };
+    }
+
+    /**
+     * Re-attaches {@code source}'s name to {@code decorated} when one was assigned — the
+     * single propagation site behind every unary decorator and {@link #narrow}.
+     */
+    private static <U> Guard<U> keepName(Guard<?> source, Guard<U> decorated) {
+        return source.isNamed() ? decorated.named(source.name()) : decorated;
     }
 
     // -------------------------------------------------------------------------
@@ -597,7 +709,7 @@ public interface Guard<T> {
      */
     default <U> Guard<U> contramap(Function<? super U, ? extends T> mapper) {
         Objects.requireNonNull(mapper, "mapper");
-        return u -> this.check(mapper.apply(u)).map(_ -> u);
+        return keepName(this, u -> this.check(mapper.apply(u)).map(_ -> u));
     }
 
     /**
@@ -630,8 +742,11 @@ public interface Guard<T> {
      * @throws NullPointerException if {@code mapper} or {@code fieldName} is {@code null}
      */
     default <U> Guard<U> contramap(Function<? super U, ? extends T> mapper, String fieldName) {
+        Objects.requireNonNull(mapper, "mapper");
         Objects.requireNonNull(fieldName, "fieldName");
-        return this.<U>contramap(mapper).mapMessages(message -> fieldName + ": " + message);
+        return keepName(this, u -> this.check(mapper.apply(u))
+            .map(_ -> u)
+            .mapError(errors -> errors.map(message -> fieldName + ": " + message)));
     }
 
     /**
@@ -660,7 +775,7 @@ public interface Guard<T> {
      */
     default Guard<T> mapMessages(Function<? super String, String> transform) {
         Objects.requireNonNull(transform, "transform");
-        return value -> this.check(value).mapError(errors -> errors.map(transform));
+        return keepName(this, value -> this.check(value).mapError(errors -> errors.map(transform)));
     }
 
     /**
@@ -776,7 +891,9 @@ public interface Guard<T> {
      *
      * <p>Returns {@code Try.success(value)} when the guard passes. When it fails, the
      * accumulated error messages are joined with {@code "; "} and wrapped in an
-     * {@link IllegalArgumentException}. Use {@link #checkToTry(Object, Function)} to supply
+     * {@link IllegalArgumentException}; for a {@link #named(String) named} guard the message
+     * is prefixed with {@code "guard 'name': "} so the failure stays traceable after the
+     * {@code Try} propagates. Use {@link #checkToTry(Object, Function)} to supply
      * a domain-specific exception instead.
      *
      * <p>Example:
@@ -798,7 +915,8 @@ public interface Guard<T> {
         return checkToTry(
             value,
             errors -> new IllegalArgumentException(
-                String.join("; ", errors.toList())
+                (isNamed() ? "guard '" + name() + "': " : "")
+                    + String.join("; ", errors.toList())
             )
         );
     }

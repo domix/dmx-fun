@@ -176,6 +176,35 @@ accountGuard.check(new Account(" ", "oops"));
 // Invalid(["username: must not be blank", "email: must contain @"])
 ```
 
+## `named(name)` / `name()` — identity for logs and metrics
+
+When a guard fails, the error messages say *which rule* was violated; the name says *which
+guard* was being applied — different information, and the one you need when guards are passed
+around or registered in pipelines. Guards report `Guard.ANONYMOUS` (`"anonymous"`) until
+`named` attaches an identity; `isNamed()` distinguishes the two without comparing literals.
+The name never touches check behavior or messages:
+
+```java
+Guard<String> username = notBlank.and(minLength3).named("username");
+
+username.name();                     // "username"
+notBlank.name();                     // "anonymous" (Guard.ANONYMOUS)
+username.named("login").name();      // "login" — last application wins
+```
+
+Name propagation follows the shape of the operation:
+
+- **Unary decorators preserve the name** — `withMessage`, `mapMessages`, `negate`,
+  `contramap`, and `Guard.narrow` decorate the *same* logical guard, so
+  `username.contramap(Form::username).name()` is still `"username"`.
+- **Composition produces a new, anonymous guard** — `and`, `or`, `andThen`, `allOf`, `anyOf`
+  combine several guards, so name the composite after composing.
+
+`named` rejects `null`, blank names, and the literal `"anonymous"` (it would be
+indistinguishable from an unnamed guard). The name surfaces automatically in `fun-assertj`
+failure messages (`Expected Guard 'username' to accept ...`) and in `checkToTry`'s default
+exception (`guard 'username': must not be blank`).
+
 ## Integrating with `Validated.combine`
 
 Guards produce `Validated<NonEmptyList<String>, T>` values, which compose naturally with
@@ -197,6 +226,7 @@ Validated<NonEmptyList<String>, Form> form =
 |------------------------------------|-----------------------------------|-------------------------------------------------------------------------|
 | `withMessage(message)`             | `Guard<T>`                        | Replace all errors with one fixed message (hides internal rule details) |
 | `mapMessages(transform)`           | `Guard<T>`                        | Rewrite each error message (prefixes, i18n keys, structured formats)    |
+| `named(name)` / `name()`           | `Guard<T>` / `String`             | Attach/read a descriptive identity for logging and metrics              |
 | `asPredicate()`                    | `Predicate<T>`                    | `Stream.filter`, `Collection.removeIf`, any standard Java predicate API |
 | `contramap(fn)`                    | `Guard<U>`                        | Adapt a field guard to validate the enclosing object type               |
 | `contramap(fn, fieldName)`         | `Guard<U>`                        | Same, prefixing each error with the field name                          |
