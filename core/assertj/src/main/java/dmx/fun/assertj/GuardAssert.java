@@ -1,6 +1,7 @@
 package dmx.fun.assertj;
 
 import dmx.fun.Guard;
+import dmx.fun.NonEmptyList;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -17,6 +18,21 @@ public final class GuardAssert<T> extends AbstractDmxFunAssert<GuardAssert<T>, G
         super(actual, GuardAssert.class);
     }
 
+    /** Renders the guard's identity for failure messages: "Guard 'name'" or plain "Guard". */
+    private String guardLabel() {
+        return actual.isNamed() ? "Guard '" + actual.name() + "'" : "Guard";
+    }
+
+    /** Shared reject preamble: fails unless the guard rejects {@code value}; returns the errors. */
+    private NonEmptyList<String> checkRejected(T value) {
+        isNotNull();
+        var result = actual.check(value);
+        if (!result.isInvalid()) {
+            throw buildError("Expected %s to reject <%s> but accepted it", guardLabel(), value);
+        }
+        return result.getError();
+    }
+
     /**
      * Verifies that the guard accepts (validates successfully) the given value.
      *
@@ -27,8 +43,8 @@ public final class GuardAssert<T> extends AbstractDmxFunAssert<GuardAssert<T>, G
         isNotNull();
         var result = actual.check(value);
         if (!result.isValid()) {
-            throw buildError("Expected Guard to accept <%s> but rejected it with <%s>",
-                value, result.getError());
+            throw buildError("Expected %s to accept <%s> but rejected it with <%s>",
+                guardLabel(), value, result.getError());
         }
         return this;
     }
@@ -40,11 +56,7 @@ public final class GuardAssert<T> extends AbstractDmxFunAssert<GuardAssert<T>, G
      * @return this assertion for chaining
      */
     public GuardAssert<T> rejects(T value) {
-        isNotNull();
-        var result = actual.check(value);
-        if (!result.isInvalid()) {
-            throw buildError("Expected Guard to reject <%s> but accepted it", value);
-        }
+        checkRejected(value);
         return this;
     }
 
@@ -57,16 +69,7 @@ public final class GuardAssert<T> extends AbstractDmxFunAssert<GuardAssert<T>, G
      * @return this assertion for chaining
      */
     public GuardAssert<T> rejectsWithMessage(T value, String message) {
-        isNotNull();
-        var result = actual.check(value);
-        if (!result.isInvalid()) {
-            throw buildError("Expected Guard to reject <%s> but accepted it", value);
-        }
-        var errors = result.getError();
-        if (errors.toList().stream().noneMatch(e -> e.contains(message))) {
-            throw buildError("Expected rejection messages <%s> to contain <%s>", errors, message);
-        }
-        return this;
+        return rejectsWithMessages(value, message);
     }
 
     /**
@@ -78,15 +81,11 @@ public final class GuardAssert<T> extends AbstractDmxFunAssert<GuardAssert<T>, G
      * @return this assertion for chaining
      */
     public GuardAssert<T> rejectsWithMessages(T value, String... messages) {
-        isNotNull();
-        var result = actual.check(value);
-        if (!result.isInvalid()) {
-            throw buildError("Expected Guard to reject <%s> but accepted it", value);
-        }
-        var errors = result.getError();
+        var errors = checkRejected(value);
         for (String message : messages) {
             if (errors.toList().stream().noneMatch(e -> e.contains(message))) {
-                throw buildError("Expected rejection messages <%s> to contain <%s>", errors, message);
+                throw buildError("Expected %s rejection messages <%s> to contain <%s>",
+                    guardLabel(), errors, message);
             }
         }
         return this;
