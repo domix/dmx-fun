@@ -24,7 +24,7 @@ runtime dependency on Jackson.
 
 `fun-jackson2` declares `jackson-databind` as `compileOnly`. You must add
 `jackson-databind` explicitly to your own classpath. Any version from
-**2.14.x through 2.22.x** is supported (see [version compatibility](#version-compatibility) below).
+**2.14.x through 2.23.x** is supported (see [version compatibility](#version-compatibility) below).
 
 <Dependency/>
 
@@ -93,7 +93,7 @@ The auto-configuration follows standard Spring Boot conventions:
 ## Version compatibility
 
 The module is tested in CI against the following Jackson versions on every pull
-request that touches the `jackson/` module:
+request that touches the `serialization/jackson2/` module:
 
 | Jackson version | Status  |
 |-----------------|---------|
@@ -106,6 +106,7 @@ request that touches the `jackson/` module:
 | 2.20.x          | tested  |
 | 2.21.x          | tested  |
 | 2.22.x          | tested  |
+| 2.23.x          | tested  |
 
 To test locally against a specific version:
 
