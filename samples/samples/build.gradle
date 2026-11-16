@@ -7,7 +7,7 @@ jacocoTestReport.enabled = false
 
 dependencies {
     implementation project(':core:lib')
-    implementation project(':serialization:jackson')
+    implementation project(':serialization:jackson2')
     implementation project(':observability:micrometer')
     implementation libs.jackson.databind
     implementation libs.micrometer.core

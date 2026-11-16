@@ -18,7 +18,7 @@ module dmx.fun.spring.boot {
     requires static spring.webmvc;
     requires static spring.web;
     requires static jakarta.servlet;
-    requires static dmx.fun.jackson;
+    requires static dmx.fun.jackson2;
     requires static com.fasterxml.jackson.databind;
     requires static dmx.fun.tracing;
     requires static micrometer.tracing;
@@ -32,7 +32,7 @@ module dmx.fun.spring.boot {
 
     exports dmx.fun.spring.boot;
     exports dmx.fun.spring.boot.web;
-    exports dmx.fun.spring.boot.jackson;
+    exports dmx.fun.spring.boot.jackson2;
     exports dmx.fun.spring.boot.tracing;
     exports dmx.fun.spring.boot.observation;
 }

@@ -140,7 +140,7 @@ that follow explain each one in detail.
 | `publish-snapshot.yml`            | push to `main` (SNAPSHOT version)   | Publish SNAPSHOT to Maven Central           |
 | `pages.yml`                       | push to `main`, manual dispatch     | Build Javadoc + Astro site → GitHub Pages   |
 | `assertj-compatibility.yaml`      | PR touching `assertj/**`            | Matrix: AssertJ 3.21 – 3.27                 |
-| `jackson-compatibility.yaml`      | PR touching `jackson/**`            | Matrix: Jackson 2.13 – 2.21                 |
+| `jackson2-compatibility.yaml`      | PR touching `serialization/jackson2/**`            | Matrix: Jackson 2.13 – 2.21                 |
 | `spring-compatibility.yaml`       | PR touching `spring/**`             | Matrix: Spring 6.0 – 7.0                   |
 
 ### `gradle.yml` — Main CI
@@ -216,14 +216,14 @@ the version catalog entry when the property is absent (safe for local developmen
 | Workflow                         | Gradle property      | Tested range            |
 |----------------------------------|----------------------|-------------------------|
 | `assertj-compatibility.yaml`     | `-PassertjVersion`   | `3.21.0` – `3.27.7`    |
-| `jackson-compatibility.yaml`     | `-PjacksonVersion`   | `2.14.3` – `2.22.1`    |
+| `jackson2-compatibility.yaml`     | `-Pjackson2Version`   | `2.14.3` – `2.22.1`    |
 | `spring-compatibility.yaml`      | `-PspringVersion`    | `6.0.23` – `7.0.8`     |
 
 To run a specific version locally:
 
 ```bash
 ./gradlew :assertj:test -PassertjVersion=3.25.3
-./gradlew :jackson:test -PjacksonVersion=2.17.3
+./gradlew :serialization:jackson2:test -Pjackson2Version=2.17.3
 ./gradlew :spring:test  -PspringVersion=6.1.21
 ```
 

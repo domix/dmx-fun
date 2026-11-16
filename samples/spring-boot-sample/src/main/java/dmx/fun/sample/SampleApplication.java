@@ -15,7 +15,7 @@ public class SampleApplication {
     }
 
     // Spring Boot 4.x uses Jackson 3.x by default; this sample pins Jackson 2.x.
-    // DmxFunModule is auto-configured by DmxFunJacksonAutoConfiguration — no manual
+    // DmxFunModule is auto-configured by DmxFunJackson2AutoConfiguration — no manual
     // new DmxFunModule() needed here.
     @Bean
     @Primary
@@ -26,7 +26,7 @@ public class SampleApplication {
 
     // Explicit HTTP message converter so Spring MVC uses the Jackson 2.x ObjectMapper above.
     // MappingJackson2HttpMessageConverter is deprecated for removal in Spring Framework 7 (Jackson 3.x
-    // migration); suppressed here because fun-jackson still targets Jackson 2.x.
+    // migration); suppressed here because fun-jackson2 still targets Jackson 2.x.
     @SuppressWarnings("removal")
     @Bean
     public MappingJackson2HttpMessageConverter jacksonHttpMessageConverter(ObjectMapper objectMapper) {

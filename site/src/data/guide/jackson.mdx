@@ -16,13 +16,13 @@ import {Content as SpringBootAuto}  from '../code/guide/jackson/spring-boot-auto
 
 > **Runnable example:** [`JacksonSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/JacksonSample.java)
 
-The `fun-jackson` module provides Jackson serializers and deserializers for all
+The `fun-jackson2` module provides Jackson serializers and deserializers for all
 dmx-fun types. It is an **optional** dependency — the core `fun` library has no
 runtime dependency on Jackson.
 
 ## Adding the dependency
 
-`fun-jackson` declares `jackson-databind` as `compileOnly`. You must add
+`fun-jackson2` declares `jackson-databind` as `compileOnly`. You must add
 `jackson-databind` explicitly to your own classpath. Any version from
 **2.14.x through 2.22.x** is supported (see [version compatibility](#version-compatibility) below).
 
@@ -76,7 +76,7 @@ without any explicit wiring.
 
 If you use `fun-spring-boot` (instead of wiring things manually), `DmxFunModule` is
 registered as a Spring bean automatically whenever both `jackson-databind` and
-`fun-jackson` are on the classpath. Spring Boot's `JacksonAutoConfiguration`
+`fun-jackson2` are on the classpath. Spring Boot's `JacksonAutoConfiguration`
 discovers all `Module` beans and applies them to the `ObjectMapper` — no
 `@Bean DmxFunModule` declaration required.
 
@@ -86,9 +86,9 @@ The auto-configuration follows standard Spring Boot conventions:
 
 | Condition | Behaviour |
 |---|---|
-| `jackson-databind` **and** `fun-jackson` on classpath | `DmxFunModule` bean registered |
+| `jackson-databind` **and** `fun-jackson2` on classpath | `DmxFunModule` bean registered |
 | User declares own `DmxFunModule` `@Bean` | Auto-configuration backs off (`@ConditionalOnMissingBean`) |
-| `dmx.fun.jackson.enabled=false` | Auto-configuration disabled entirely |
+| `dmx.fun.jackson2.enabled=false` | Auto-configuration disabled entirely |
 
 ## Version compatibility
 
@@ -110,7 +110,7 @@ request that touches the `jackson/` module:
 To test locally against a specific version:
 
 ```bash
-./gradlew :jackson:test -PjacksonVersion=2.15.4
+./gradlew :serialization:jackson2:test -Pjackson2Version=2.15.4
 ```
 
 ## Known limitations
