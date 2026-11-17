@@ -2,23 +2,45 @@
 
 Goal: a Spring Boot 4 controller returns dmx-fun types; the client gets the right status and JSON with no hand-written mapping.
 
-Before going on stage:
+## Before going on stage
 
 ```bash
-# from the repository root; Docker must be running (Testcontainers / docker-compose for PostgreSQL)
+# from the repository root; Docker must be running (PostgreSQL via Docker Compose on port 5432)
 ./gradlew :samples:spring-boot-sample:test     # proves the environment works
 ./gradlew :samples:spring-boot-sample:bootRun   # leave it running on :8080
 ```
 
-On stage, in a terminal with a large font:
+If port 5432 is taken on the machine, start a throwaway PostgreSQL elsewhere and point the sample at it:
 
 ```bash
-curl -s -X POST localhost:8080/items -H 'Content-Type: application/json' \
-  -d '{"name":"Widget","description":"A fine widget"}' | jq .          # 200, unwrapped Item
-curl -s -X POST localhost:8080/items -H 'Content-Type: application/json' \
-  -d '{"name":"","description":"x"}' -w '\n%{http_code}\n'            # 500, "name must not be blank"
-curl -s -o /dev/null -w '%{http_code}\n' localhost:8080/items/-1       # 404 from Option.none()
-curl -s 'localhost:8080/items/search?name=Widget' | jq .               # NonEmptyList as a plain array (DmxFunModule)
+docker run -d --rm --name dmx-fun-demo-postgres -e POSTGRES_DB=dmxfun -e POSTGRES_USER=dmxfun \
+  -e POSTGRES_PASSWORD=dmxfun -p 5434:5432 postgres:16-alpine
+./gradlew :samples:spring-boot-sample:bootRun \
+  --args='--spring.docker.compose.enabled=false --spring.datasource.url=jdbc:postgresql://localhost:5434/dmxfun'
 ```
 
-Fallback: record the four commands with asciinema before the talk and keep the cast in this directory.
+## On stage
+
+In a terminal with a large font, either type the four requests or run the scripted version,
+which types them for you with a pause after each response (`DEMO_PAUSE`, `DEMO_TYPE_DELAY` tune the pacing):
+
+```bash
+bash scripts/demo.sh
+```
+
+| Request | Expected | Why |
+|---|---|---|
+| `POST /items` `{"name":"Widget",…}` | `200`, the item as JSON | `Result.ok(item)`, unwrapped by the MVC return value handler |
+| `POST /items` `{"name":"",…}` | `500`, `name must not be blank` | `Result.err(message)`, no `@ExceptionHandler` |
+| `GET /items/-1` | `404`, empty body | `Option.none()` |
+| `GET /items/search?name=Widget` | `200`, a JSON array | `Result<NonEmptyList<Item>, String>`: the list is serialized by `DmxFunModule` |
+
+## Fallback
+
+`demo.cast` is a recording of `scripts/demo.sh` against the sample (asciicast v2). It plays on the
+slide right after the demo table (`<Cast />`, space to play, arrows to seek) and in a terminal with
+`pnpm demo:play`. Re-record after changing the sample or the script, with the sample running:
+
+```bash
+pnpm demo:record      # scripts/record-demo.sh → demo.cast
+```

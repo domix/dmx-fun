@@ -18,6 +18,7 @@
   "metrics.caption": "Failures with names need no log parsing. The tag is the record's simple name, so PaymentFailed shows up next to Waitlisted.",
   "demo.intro": "A Spring Boot 4 controller returns Option and Result directly. No ResponseEntity, no exception handler, no JSON code.",
   "demo.fallback": "If the network or Docker fails: the same four requests, recorded.",
+  "cast.caption": "Recorded against the same sample. Space plays, the arrows seek; narrate over it as over the terminal.",
   "adopt.caption": "Adopt at one boundary, never big-bang. Translate at the seams with toResult, mapError and getOrElse; the rest of the code does not notice.",
   "contribute.try": "Try it on one endpoint and open an issue telling us which error type you designed. Design feedback is the most valuable kind.",
   "contribute.gfi": "Pick a good first issue. Each one names the files to touch and what done looks like.",
