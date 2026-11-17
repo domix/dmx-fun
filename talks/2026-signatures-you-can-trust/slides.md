@@ -268,6 +268,19 @@ ES: Cambiar a la terminal; demo.md tiene los cuatro comandos. El sample es sprin
 
 ---
 
+# <T en="The demo, recorded" es="La demo, grabada" />
+
+<Cast />
+
+<p class="caption"><Tk k="cast.caption" /></p>
+
+<!--
+EN: Only if the live demo cannot run. Space plays and pauses; the arrows seek. Same four requests, same output, recorded with scripts/record-demo.sh against the sample on Boot 4. Narrate over it exactly as you would over the terminal.
+ES: Solo si la demo en vivo no puede correr. Espacio reproduce y pausa; las flechas buscan. Las mismas cuatro peticiones, la misma salida, grabadas con scripts/record-demo.sh contra el sample en Boot 4. Narrar encima igual que sobre la terminal.
+-->
+
+---
+
 # <T en="Start at one boundary" es="Empieza en una frontera" />
 
 | | |
