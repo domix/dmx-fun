@@ -1,0 +1,18 @@
+---
+fileName: 'chapter01/EnrollmentError.java'
+---
+
+```java
+public sealed interface EnrollmentError {
+
+    record StudentNotFound(String studentId) implements EnrollmentError {}
+
+    record CourseNotFound(String courseId) implements EnrollmentError {}
+
+    record CourseFull(String courseId, int capacity) implements EnrollmentError {}
+
+    record AlreadyEnrolled(String studentId, String courseId) implements EnrollmentError {}
+
+    record PaymentFailed(String reason) implements EnrollmentError {}
+}
+```

@@ -1,0 +1,52 @@
+---
+title: "Tutorial 0 — The honest signature"
+description: "Chapter 0 of the dmx-fun tutorial: an ordinary enroll method in plain Java, and the four ways it hides failure from its callers."
+order: 101
+h1: "0. The honest signature"
+---
+
+import {Content as Service} from '../../code/guide/tutorial/00/enrollment-service.mdx';
+import {Content as Caller}  from '../../code/guide/tutorial/00/caller.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+Here is `enroll`, written the way most Java services are written. A `Catalog` holds students,
+courses and enrollments; a `PaymentGateway` is someone else's API and reports trouble by
+throwing. Read the signature first, then the body.
+
+<Service/>
+
+The signature says: give me two ids, I give you an `Enrollment`. The body says something else.
+
+## Four ways to fail, zero of them in the signature
+
+| What happens | How the caller finds out |
+|---|---|
+| Unknown student or course | `StudentNotFoundException` / `CourseNotFoundException`, unchecked, undocumented |
+| Already enrolled | the method returns `null` |
+| Course full | `CourseFullException`, unchecked, undocumented |
+| Payment declined | a `RuntimeException("payment failed")` with the real cause wrapped inside |
+
+None of this is wrong by the rules of Java. All of it is invisible at the call site:
+
+<Caller/>
+
+The caller has to read the body, or the tests, or the stack traces in production, to learn
+what can go wrong. The `null` is the worst of the four: it is the only outcome that produces
+no noise at all until a `NullPointerException` fires three calls later.
+
+## Why not checked exceptions?
+
+Checked exceptions were Java's answer to exactly this problem, and `PaymentException` here is
+one. In practice they end up wrapped in a `RuntimeException` at the first inconvenient `catch`,
+which is what the payment block does. They also compose badly: lambdas and streams cannot throw
+them, so code that uses them splits into two dialects. We will keep the gateway's checked
+exception because we do not own that API, and deal with it at the boundary in chapter 4.
+
+## What this chapter sets up
+
+Nothing has been fixed yet. The rest of the tutorial rewrites this one method so that the
+signature stops lying, one outcome at a time. Chapter 1 takes the biggest step: it makes
+failure a return value.
+
+<p>Next: <a href={`${base}guide/tutorial/01-return-instead-of-throw`}>1. Return instead of throw</a></p>

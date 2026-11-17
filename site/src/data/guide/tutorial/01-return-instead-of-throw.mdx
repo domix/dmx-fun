@@ -1,0 +1,60 @@
+---
+title: "Tutorial 1 — Return instead of throw"
+description: "Chapter 1 of the dmx-fun tutorial: enroll returns Result<Enrollment, EnrollmentError>, failures become a sealed type, and callers handle every case in one switch the compiler checks."
+order: 102
+h1: "1. Return instead of throw"
+---
+
+import {Content as Error}    from '../../code/guide/tutorial/01/enrollment-error.mdx';
+import {Content as Service}  from '../../code/guide/tutorial/01/enrollment-service.mdx';
+import {Content as Describe} from '../../code/guide/tutorial/01/describe.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+One change of habit: when `enroll` cannot do its job, it **returns** that fact instead of
+throwing it. The return type becomes `Result<Enrollment, EnrollmentError>`: either an
+`Enrollment`, or a value that says exactly what went wrong.
+
+## First, name the failures
+
+Before touching `enroll`, write down everything that can go wrong, as a type:
+
+<Error/>
+
+A sealed interface with one record per case. Each case carries the data a caller would want:
+which student, which course, how many seats. There is a `PaymentFailed` case now, where chapter
+0 had a wrapped `RuntimeException`. Designing this type well is most of the work of using
+`Result`; the post on <a href={`${base}blog/designing-a-good-error-type`}>designing a good error type</a>
+goes deeper.
+
+## Then, return it
+
+<Service/>
+
+Same checks, same order. Every `throw` became `return Result.err(...)`, the `null` became
+`AlreadyEnrolled`, and the payment `catch` turns the exception into a value instead of
+rethrowing it. The body is still a staircase of `if`s; that is chapter 2's problem.
+
+## The caller handles every case, or it does not compile
+
+<Describe/>
+
+No `try`, no `null` check, no `instanceof`. `Result` is a sealed interface with two records,
+`Ok` and `Err`, and `EnrollmentError` is sealed too, so the `switch` is **exhaustive**: delete
+any `case` and the class stops compiling. Add a sixth error case to `EnrollmentError` and every
+`switch` over it fails to compile until it handles the new case. That is the compiler doing the
+work the stack traces did in chapter 0.
+
+Record patterns do the unpacking: `Result.Err(CourseFull(var id, var capacity))` reaches two
+levels down in one line. This is plain Java 21+, not a library feature; `Result` is just shaped
+so the language can take it apart.
+
+## What changed since chapter 0
+
+- `enroll` returns `Result<Enrollment, EnrollmentError>` instead of a nullable `Enrollment`.
+- The three exception classes and the `null` are gone; their information lives in five records.
+- Callers switch over the outcome and the compiler checks they covered everything.
+
+Still to fix: the staircase of `if`s inside `enroll`, and the `try/catch` around the payment call.
+
+<p>Reference: <a href={`${base}guide/result`}>`Result<T, E>`</a> · Previous: <a href={`${base}guide/tutorial/00-honest-signature`}>0. The honest signature</a></p>

@@ -1,0 +1,18 @@
+// ── Enrollment tutorial ───────────────────────────────────────────────────────
+// Companion code for the didactic guide (site: guide/tutorial). One package per
+// chapter; every chapter rewrites the same `enroll` operation with one more dmx-fun
+// type. The site pulls its snippets from these sources so that what readers see
+// always compiles and is covered by the tests here. NOT published to Maven Central.
+plugins {
+    id 'dmx-fun.java-base'
+}
+
+javadoc.enabled = false
+jacocoTestReport.enabled = false
+
+dependencies {
+    implementation project(':core:lib')
+
+    testImplementation project(':core:assertj')
+    testImplementation libs.assertj.core
+}
