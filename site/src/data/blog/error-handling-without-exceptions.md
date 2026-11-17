@@ -253,3 +253,4 @@ glance, and let traffic keep flowing.
 ---
 
 *Found a bug or have a suggestion? Open an issue on [GitHub](https://github.com/domix/dmx-fun).*
+- [From exceptions to honest signatures](/dmx-fun/guide/tutorial/01-return-instead-of-throw) — chapters 1 and 2 of the tutorial, where `enroll` is rewritten to return `Result` and then chained
