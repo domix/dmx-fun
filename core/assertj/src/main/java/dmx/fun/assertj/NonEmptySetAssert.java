@@ -3,10 +3,8 @@ package dmx.fun.assertj;
 import dmx.fun.NonEmptySet;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -78,7 +76,8 @@ public final class NonEmptySetAssert<T> extends AbstractDmxFunAssert<NonEmptySet
 
     /**
      * Verifies that the {@code NonEmptySet} contains exactly the given elements and nothing else,
-     * regardless of order.
+     * regardless of order. Each expected element must match a distinct element of the set, so
+     * repeating an element in {@code elements} can never match a set that holds it once.
      *
      * @param elements the expected elements
      * @return this assertion for chaining
@@ -87,8 +86,8 @@ public final class NonEmptySetAssert<T> extends AbstractDmxFunAssert<NonEmptySet
     public final NonEmptySetAssert<T> containsExactlyInAnyOrder(T... elements) {
         Objects.requireNonNull(elements, "elements must not be null");
         isNotNull();
-        Set<T> expected = new HashSet<>(Arrays.asList(elements));
-        if (!actual.toSet().equals(expected)) {
+        List<T> expected = Arrays.asList(elements);
+        if (actual.size() != expected.size() || !actual.toSet().containsAll(expected)) {
             throw buildError("Expected NonEmptySet to contain exactly %s in any order but was %s",
                 expected, actual.toSet());
         }

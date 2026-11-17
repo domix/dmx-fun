@@ -70,6 +70,13 @@ class NonEmptySetAssertTest {
     }
 
     @Test
+    void containsExactlyInAnyOrder_shouldFail_whenAnExpectedElementIsRepeated() {
+        assertThatThrownBy(() -> assertThat(NonEmptySet.singleton("a")).containsExactlyInAnyOrder("a", "a"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("exactly [a, a]");
+    }
+
+    @Test
     void isFluent_shouldChain() {
         assertThat(ABC).hasHead("a").hasSize(3).contains("b").containsExactlyInAnyOrder("a", "b", "c");
     }
