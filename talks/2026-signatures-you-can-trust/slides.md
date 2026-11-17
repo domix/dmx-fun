@@ -307,9 +307,11 @@ ES: [32–35] Nunca big-bang. La librería está diseñada para adoptarse costur
 | **3** | <Tk k="contribute.integrations" /> |
 | **4** | <Tk k="contribute.posts" /> |
 
+<p class="caption"><Tk k="contribute.gfi.where" /> <a href="https://github.com/domix/dmx-fun/labels/good%20first%20issue" target="_blank">github.com/domix/dmx-fun/labels/good first issue</a></p>
+
 <!--
-EN: The ask has to be specific. First one is the most valuable: design feedback on the error type people actually built. Second: name the number of good-first-issues curated before this talk and what one of them is about. Third: each integration module is a template for the next. Fourth: real adoption stories, on the site blog, with their name on it.
-ES: La petición tiene que ser concreta. La primera es la más valiosa: feedback de diseño sobre el tipo de error que la gente realmente construyó. Segunda: decir cuántos good first issue hay curados antes de esta charla y de qué va uno de ellos. Tercera: cada módulo de integración es la plantilla del siguiente. Cuarta: historias reales de adopción, en el blog del sitio, con su nombre.
+EN: The ask has to be specific. First one is the most valuable: design feedback on the error type people actually built. Second: say how many good-first-issues are open (eight when this deck was written, #575 to #582: a README row, NonEmptySet/NonEmptyMap in both Jackson lines, a JAXB adapter, three AssertJ classes, site tokens, Dependabot for talks/) and describe one in a sentence; each names the files to touch and what done looks like. Check the label the day before. Third: each integration module is a template for the next. Fourth: real adoption stories, on the site blog, with their name on it.
+ES: La petición tiene que ser concreta. La primera es la más valiosa: feedback de diseño sobre el tipo de error que la gente realmente construyó. Segunda: decir cuántos good first issue hay abiertos (ocho al escribir este deck, #575 a #582: una fila del README, NonEmptySet/NonEmptyMap en las dos líneas de Jackson, un adaptador JAXB, tres clases de AssertJ, tokens del sitio, Dependabot para talks/) y describir uno en una frase; cada uno dice qué archivos tocar y cómo se ve terminado. Revisar la etiqueta el día anterior. Tercera: cada módulo de integración es la plantilla del siguiente. Cuarta: historias reales de adopción, en el blog del sitio, con su nombre.
 -->
 
 ---

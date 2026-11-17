@@ -22,6 +22,7 @@
   "adopt.caption": "Adopta en una sola frontera, nunca big-bang. Traduce en las costuras con toResult, mapError y getOrElse; el resto del código no se entera.",
   "contribute.try": "Pruébala en un endpoint y abre un issue contando qué tipo de error diseñaste. El feedback de diseño es el más valioso.",
   "contribute.gfi": "Toma un good first issue. Cada uno dice qué archivos tocar y cómo se ve terminado.",
+  "contribute.gfi.where": "La lista curada vive bajo una etiqueta:",
   "contribute.integrations": "Escribe una integración que nos falta: Micronaut, Helidon, el cliente HTTP que usas a diario.",
   "contribute.posts": "Cuenta tu historia de adopción como post invitado en el blog.",
   "closing.ask": "Pruébala en un solo endpoint. Abre un issue contando qué tipo de error diseñaste.",
