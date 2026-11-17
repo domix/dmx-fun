@@ -17,6 +17,7 @@ All CI/CD is handled by GitHub Actions. The workflows live in `.github/workflows
 | `publish.yml`                | push to `main` — stable version only   | Publish all modules to Maven Central, create git tag and GitHub Release |
 | `publish-snapshot.yml`       | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central                             |
 | `jackson2-compatibility.yaml` | PR touching `serialization/jackson2/**`               | Matrix test against Jackson 2.14.x – 2.23.x                             |
+| `jackson3-compatibility.yaml` | PR touching `serialization/jackson3/**`               | Matrix test against Jackson 3.0.x – 3.3.x                               |
 | `assertj-compatibility.yaml`             | PR touching `assertj/**`                           | Matrix test against AssertJ 3.21.x – 3.27.x                              |
 | `spring-boot-compatibility.yaml`         | PR touching `spring-boot/**` or `spring/**`        | Matrix test of `fun-spring-boot` against Spring Boot 3.3.x – 4.1.x       |
 | `spring-boot-sample-compatibility.yaml`  | PR touching `spring-boot-sample/**` or `spring/**` | Matrix test of the Spring Boot sample app against Boot 3.4.x – 4.1.x     |
@@ -96,7 +97,7 @@ Stable versions cause all steps to be skipped.
 
 ---
 
-## `jackson2-compatibility.yaml` — Jackson matrix
+## `jackson2-compatibility.yaml` — Jackson 2 matrix
 
 **Triggers**: PR where at least one changed file matches `serialization/jackson2/**` or the workflow file itself.
 
@@ -120,6 +121,30 @@ Runs only on pull requests — not on push to `main`.
 **Local equivalent**:
 ```bash
 ./gradlew :serialization:jackson2:test -Pjackson2Version=2.17.3
+```
+
+**Secrets required**: none.
+
+---
+
+## `jackson3-compatibility.yaml` — Jackson 3 matrix
+
+**Triggers**: PR where at least one changed file matches `serialization/jackson3/**` or the workflow file itself.
+
+Runs only on pull requests — not on push to `main`.
+
+**What it does**: runs `:serialization:jackson3:test` for each Jackson 3 version in the matrix:
+
+| Jackson version | Status |
+|-----------------|--------|
+| 3.0.4           | tested |
+| 3.1.8           | tested |
+| 3.2.4           | tested |
+| 3.3.0           | tested |
+
+**Local equivalent**:
+```bash
+./gradlew :serialization:jackson3:test -Pjackson3Version=3.1.8
 ```
 
 **Secrets required**: none.

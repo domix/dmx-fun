@@ -1,12 +1,14 @@
 ---
 title: "Jackson Integration — Developer Guide"
-description: "How to serialize and deserialize all dmx-fun types with Jackson: module registration, JSON shapes, TypeReference round-trips, Spring Boot / JAX-RS integration, and known limitations."
+description: "How to serialize and deserialize all dmx-fun types with Jackson 3 (fun-jackson3) or Jackson 2 (fun-jackson2): which module to pick, registration, JSON shapes, TypeReference round-trips, Spring Boot / JAX-RS integration, and known limitations."
 order: 14
 h1: "Jackson Integration"
 ---
 
 import {Content as Dependency}      from '../code/guide/jackson/dependency.mdx';
+import {Content as Dependency3}     from '../code/guide/jackson/dependency-jackson3.mdx';
 import {Content as Registration}    from '../code/guide/jackson/registration.mdx';
+import {Content as Registration3}   from '../code/guide/jackson/registration-jackson3.mdx';
 import {Content as RoundtripOption} from '../code/guide/jackson/roundtrip-option.mdx';
 import {Content as RoundtripResult} from '../code/guide/jackson/roundtrip-result.mdx';
 import {Content as RoundtripTry}    from '../code/guide/jackson/roundtrip-try.mdx';
@@ -14,27 +16,72 @@ import {Content as RoundtripOther}  from '../code/guide/jackson/roundtrip-other.
 import {Content as SpringJaxrs}     from '../code/guide/jackson/spring-jaxrs.mdx';
 import {Content as SpringBootAuto}  from '../code/guide/jackson/spring-boot-auto.mdx';
 
-> **Runnable example:** [`JacksonSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/JacksonSample.java)
+export const base = import.meta.env.BASE_URL;
 
-The `fun-jackson2` module provides Jackson serializers and deserializers for all
-dmx-fun types. It is an **optional** dependency — the core `fun` library has no
-runtime dependency on Jackson.
+> **Runnable example:** [`JacksonSample.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/main/java/dmx/fun/samples/JacksonSample.java)
+> (Jackson 2) and the [Spring Boot sample](https://github.com/domix/dmx-fun/tree/main/samples/spring-boot-sample) (Jackson 3 on Boot 4).
+
+dmx-fun ships Jackson serializers and deserializers for all its types as two **optional**
+modules, one per Jackson line. The core `fun` library has no runtime dependency on Jackson.
+
+## Which module do I need?
+
+Jackson 2 (`com.fasterxml.jackson.*`) and Jackson 3 (`tools.jackson.*`) are binary-incompatible
+and both are maintained upstream. Pick the module that matches the Jackson your stack already
+uses; the JSON produced is identical, so documents written by one line are read by the other.
+
+| Your stack | Module | Base package | Spring Boot opt-out property |
+|---|---|---|---|
+| Spring Boot 4, Spring Framework 7, or Jackson 3 directly | `codes.domix:fun-jackson3` **(primary)** | `dmx.fun.jackson3` | `dmx.fun.jackson3.enabled` |
+| Spring Boot 3, or Jackson 2 directly | `codes.domix:fun-jackson2` | `dmx.fun.jackson2` | `dmx.fun.jackson2.enabled` |
+
+Both modules can sit on the same classpath and module path (`dmx.fun.jackson3` and
+`dmx.fun.jackson2`), which matters for mixed Boot 3 / Boot 4 deployments. `fun-jackson3` is the
+primary line: new features land there first. `fun-jackson2` receives bug fixes and version bumps
+while Spring Boot 3 is in open-source support. The rule behind this split, its trigger and the
+retirement policy are recorded in <a href={`${base}adr/adr-024-parallel-peer-major-lines`}>ADR-024</a>.
+
+### Migrating from `fun-jackson` (0.2.x and earlier)
+
+In 0.3.0 the Jackson 2 module was renamed so that every line carries its major version:
+
+| | 0.2.x | 0.3.0+ |
+|---|---|---|
+| Artifact | `codes.domix:fun-jackson` | `codes.domix:fun-jackson2` |
+| JPMS module / package | `dmx.fun.jackson` | `dmx.fun.jackson2` |
+| Import | `dmx.fun.jackson.DmxFunModule` | `dmx.fun.jackson2.DmxFunModule` |
+| Spring Boot opt-out property | `dmx.fun.jackson.enabled` | `dmx.fun.jackson2.enabled` |
+
+Nothing else changes: the JSON shapes and the serializer behaviour are the same.
 
 ## Adding the dependency
 
-`fun-jackson2` declares `jackson-databind` as `compileOnly`. You must add
-`jackson-databind` explicitly to your own classpath. Any version from
-**2.14.x through 2.23.x** is supported (see [version compatibility](#version-compatibility) below).
+Both modules declare Jackson as `compileOnly`: you must have `jackson-databind` of the matching
+line on your own classpath. Supported ranges: **3.0.x through 3.3.x** for `fun-jackson3` and
+**2.14.x through 2.23.x** for `fun-jackson2` (see [version compatibility](#version-compatibility)).
+
+### Jackson 3
+
+<Dependency3/>
+
+### Jackson 2
 
 <Dependency/>
 
 ## Registering `DmxFunModule`
 
-<Registration/>
+Each module has its own `DmxFunModule` class, in its own package, registered as a service
+provider for its line's module SPI (`tools.jackson.databind.JacksonModule` for Jackson 3,
+`com.fasterxml.jackson.databind.Module` for Jackson 2). Auto-discovery picks it up without
+explicit wiring.
 
-`DmxFunModule` is registered as a `com.fasterxml.jackson.databind.Module`
-service provider, so `findAndRegisterModules()` picks it up automatically
-without any explicit wiring.
+### Jackson 3
+
+<Registration3/>
+
+### Jackson 2
+
+<Registration/>
 
 ## JSON shapes
 
@@ -51,6 +98,10 @@ without any explicit wiring.
 | `NonEmptyList<T>`    | `[head, ...tail]` | —                      |
 
 ## Round-trip examples
+
+The examples below use the Jackson 2 API. With Jackson 3 only the mapper construction differs
+(`JsonMapper.builder().findAndAddModules().build()` instead of `new ObjectMapper().findAndRegisterModules()`)
+and the exceptions are unchecked; `TypeReference`, `readValue` and `writeValueAsString` are the same.
 
 ### `Option<T>`
 
@@ -75,10 +126,11 @@ without any explicit wiring.
 ### Auto-configuration with `fun-spring-boot`
 
 If you use `fun-spring-boot` (instead of wiring things manually), `DmxFunModule` is
-registered as a Spring bean automatically whenever both `jackson-databind` and
-`fun-jackson2` are on the classpath. Spring Boot's `JacksonAutoConfiguration`
-discovers all `Module` beans and applies them to the `ObjectMapper` — no
-`@Bean DmxFunModule` declaration required.
+registered as a Spring bean automatically whenever `jackson-databind` and the matching dmx-fun
+module are on the classpath. Spring Boot's `JacksonAutoConfiguration` discovers all module beans
+and applies them to the mapper — no `@Bean DmxFunModule` declaration required. There is one
+auto-configuration per line; they are independent, so an application with both lines on the
+classpath gets both modules, each registered with its own mapper.
 
 <SpringBootAuto/>
 
@@ -86,14 +138,30 @@ The auto-configuration follows standard Spring Boot conventions:
 
 | Condition | Behaviour |
 |---|---|
-| `jackson-databind` **and** `fun-jackson2` on classpath | `DmxFunModule` bean registered |
-| User declares own `DmxFunModule` `@Bean` | Auto-configuration backs off (`@ConditionalOnMissingBean`) |
-| `dmx.fun.jackson2.enabled=false` | Auto-configuration disabled entirely |
+| `tools.jackson.core:jackson-databind` **and** `fun-jackson3` on classpath | Jackson 3 `DmxFunModule` bean registered (`DmxFunJackson3AutoConfiguration`) |
+| `com.fasterxml.jackson.core:jackson-databind` **and** `fun-jackson2` on classpath | Jackson 2 `DmxFunModule` bean registered (`DmxFunJackson2AutoConfiguration`) |
+| User declares own `DmxFunModule` `@Bean` | That line's auto-configuration backs off (`@ConditionalOnMissingBean`) |
+| `dmx.fun.jackson3.enabled=false` / `dmx.fun.jackson2.enabled=false` | That line's auto-configuration disabled entirely |
 
 ## Version compatibility
 
-The module is tested in CI against the following Jackson versions on every pull
-request that touches the `serialization/jackson2/` module:
+Each module is tested in CI against every supported minor line of its Jackson major, at the
+latest patch, on every pull request that touches the module.
+
+### `fun-jackson3`
+
+| Jackson version | Status  |
+|-----------------|---------|
+| 3.0.x           | tested  |
+| 3.1.x           | tested  |
+| 3.2.x           | tested  |
+| 3.3.x           | tested  |
+
+```bash
+./gradlew :serialization:jackson3:test -Pjackson3Version=3.1.8
+```
+
+### `fun-jackson2`
 
 | Jackson version | Status  |
 |-----------------|---------|
@@ -107,8 +175,6 @@ request that touches the `serialization/jackson2/` module:
 | 2.21.x          | tested  |
 | 2.22.x          | tested  |
 | 2.23.x          | tested  |
-
-To test locally against a specific version:
 
 ```bash
 ./gradlew :serialization:jackson2:test -Pjackson2Version=2.15.4

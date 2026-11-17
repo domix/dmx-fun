@@ -6,8 +6,9 @@ fileName: 'Demo.java'
 // Spring Boot (fun-spring-boot) — DmxFunModule is registered automatically;
 // no explicit @Bean is needed. See "Auto-configuration with fun-spring-boot" below.
 
-// Spring Boot (fun-jackson2 only, without fun-spring-boot) — declare the bean manually;
-// Spring's JacksonAutoConfiguration applies it to the ObjectMapper.
+// Spring Boot without fun-spring-boot — declare the bean manually; Spring Boot's
+// JacksonAutoConfiguration applies it to the mapper. Shown with Jackson 2 (fun-jackson2);
+// on Boot 4 return tools.jackson.databind.JacksonModule from dmx.fun.jackson3 instead.
 @Configuration
 public class JacksonConfig {
     @Bean
