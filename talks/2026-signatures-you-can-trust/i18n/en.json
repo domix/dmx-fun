@@ -22,6 +22,7 @@
   "adopt.caption": "Adopt at one boundary, never big-bang. Translate at the seams with toResult, mapError and getOrElse; the rest of the code does not notice.",
   "contribute.try": "Try it on one endpoint and open an issue telling us which error type you designed. Design feedback is the most valuable kind.",
   "contribute.gfi": "Pick a good first issue. Each one names the files to touch and what done looks like.",
+  "contribute.gfi.where": "The curated list lives under one label:",
   "contribute.integrations": "Write an integration we lack: Micronaut, Helidon, the HTTP client you use every day.",
   "contribute.posts": "Tell your adoption story as a guest post on the blog.",
   "closing.ask": "Try it on one endpoint. Open an issue telling us which error type you designed.",

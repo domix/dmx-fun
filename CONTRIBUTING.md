@@ -2,6 +2,17 @@
 
 Thank you for your interest in contributing to this project! This repository explores functional programming constructions in Java, and your contributions are welcome and appreciated.
 
+## Your First Contribution
+
+Issues labelled [`good first issue`](https://github.com/domix/dmx-fun/labels/good%20first%20issue) are
+curated for newcomers: each one explains why it matters, names the files to touch, points at an existing
+class to copy from, and says what "done" looks like, with a rough size. Pick one, leave a comment saying you
+are on it, and open a pull request when the listed checks pass. If something in the issue turns out to be
+wrong or unclear, say so in the issue; fixing the description is a contribution too.
+
+Another welcome first contribution: try the library on one endpoint of a service you work on and open an
+issue telling us which error type you designed. Design feedback is the most valuable feedback we get.
+
 ## How to Contribute
 
 ### 1. Fork the Repository
