@@ -20,8 +20,8 @@ their position. Nothing went wrong. The student simply gets a different answer.
 
 The temptation is to keep `CourseFull` and attach the position to it. That makes the waiting
 list an error the caller has to "recover" from, and it puts something that is not a failure on
-the failure track, where `recoverWith` and `mapError` would treat it as one. The honest model
-has two success shapes:
+the failure track, where `recoverWith` and `mapError` would treat it as one. A model that
+matches the business has two success shapes:
 
 <Outcome/>
 
@@ -44,8 +44,8 @@ seat goes through payment and persistence as before and returns `Right`.
 
 The pipeline is the same shape as chapter 5 with one fewer step; `ensureSeatAvailable` was
 folded into the fork. `EnrollmentError` lost `CourseFull` and gained nothing: the error type got
-**smaller** as the model got more honest, which is a good sign that the case never belonged
-there. The `AlreadyEnrolled` recovery now returns the existing enrollment as a `Right`.
+**smaller** as the model came closer to the business rule, which is a good sign that the case
+never belonged there. The `AlreadyEnrolled` recovery now returns the existing enrollment as a `Right`.
 
 ## The caller, with nested patterns
 

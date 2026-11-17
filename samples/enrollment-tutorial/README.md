@@ -7,7 +7,7 @@ rewrites the same `enroll` operation with one more dmx-fun type; the shared doma
 
 | Package     | Chapter                     | Introduces                              |
 |-------------|-----------------------------|-----------------------------------------|
-| `chapter00` | The honest signature        | the problem: exceptions, `null`, wrapped causes |
+| `chapter00` | What the signature hides    | the problem: exceptions, `null`, wrapped causes |
 | `chapter01` | Return instead of throw     | `Result<T, E>`, a sealed error type, exhaustive `switch` |
 | `chapter02` | Two tracks                  | `map`, `flatMap`, `recoverWith`: one pipeline, first failure wins |
 | `chapter03` | Absence is not failure      | `Option<T>` for the discount code and the catalog lookups |

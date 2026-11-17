@@ -302,3 +302,7 @@ Functional programming, for a backend engineer, means this: **make the invisible
 If you are working in Java and want to adopt these patterns without building the types from scratch, **[dmx-fun](https://github.com/domix/dmx-fun)** provides `Result<V, E>`, `Option<T>`, `Try<V>`, `Validated<E, A>`, and companion modules for Jackson, Spring, Resilience4J, Micrometer, and Jakarta Validation — each designed to compose with the others and with the Java standard library, without pulling in a full FP framework.
 
 The [developer guide](https://domix.github.io/dmx-fun/) covers each type with real-world examples, common pitfalls, and composition patterns.
+
+## Further reading
+
+- [From exceptions to signatures you can trust](/dmx-fun/guide/tutorial/00-what-the-signature-hides) — chapter 0 of the tutorial, where the argument starts from one ordinary method
