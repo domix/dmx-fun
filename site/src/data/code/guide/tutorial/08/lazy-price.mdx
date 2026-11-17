@@ -1,0 +1,21 @@
+---
+fileName: 'chapter08/EnrollmentService.java — the price as a description'
+---
+
+```java
+            .flatMap(offering -> seatOrWaitingList(form, offering,
+                Lazy.of(() -> priceFor(offering.course(), form.discountCode()))))
+            // ...
+
+    /** The price is a description until a seat is confirmed; the waiting-list branch never evaluates it. */
+    private Result<Either<Waitlisted, Enrolled>, EnrollmentError> seatOrWaitingList(
+            EnrollmentForm form, Offering offering, Lazy<Integer> price) {
+        Course course = offering.course();
+        if (catalog.enrolledCount(course.id()) >= course.capacity()) {
+            return Result.ok(Either.left(waitingList.add(form.studentId(), course.id())));
+        }
+        return charge(form.studentId(), price.get())
+            .map(_ -> catalog.save(new Enrollment(form.studentId(), course.id())))
+            .map(enrollment -> Either.right(new Enrolled(enrollment, offering.schedules().head())));
+    }
+```

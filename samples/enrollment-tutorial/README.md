@@ -15,6 +15,8 @@ rewrites the same `enroll` operation with one more dmx-fun type; the shared doma
 | `chapter05` | All the errors at once      | `Validated` by hand, then `Guard` rules composed with `allOf`; `InvalidForm` bridges into `Result` |
 | `chapter06` | Two outcomes, no villain    | `Either<Waitlisted, Enrolled>` as the success value; `CourseFull` leaves the error type |
 | `chapter07` | At least one                | `NonEmptyList` for schedules and rosters; `Option<NonEmptyList<_>>` for "nobody yet" |
+| `chapter08` | Laziness and resources      | `Lazy` so waitlisted students never get a price computed; `Resource` to export the roster and always close the file |
+| `chapter09` | Out the door                | HTTP status per outcome, Micrometer counter per variant, the JSON shape via `fun-jackson3`; builds on `chapter08` instead of rewriting `enroll` |
 
 The site snippets under `site/src/data/code/guide/tutorial/` are copied from these sources.
 When you change a chapter, update its snippets in the same commit.
