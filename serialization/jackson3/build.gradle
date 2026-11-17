@@ -42,6 +42,6 @@ mavenPublishing {
     coordinates("codes.domix", "fun-jackson3", "${project.version}")
     pom {
         name = 'dmx-fun Jackson 3 integration'
-        description = 'Jackson 3 (tools.jackson) module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
+        description = 'Jackson 3 (tools.jackson) module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, NonEmptyList, NonEmptySet, and NonEmptyMap.'
     }
 }

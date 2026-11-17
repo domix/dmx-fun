@@ -9,6 +9,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.exc.MismatchedInputException;
 import dmx.fun.Either;
 import dmx.fun.NonEmptyList;
+import dmx.fun.NonEmptyMap;
+import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Try;
@@ -18,6 +20,7 @@ import dmx.fun.Tuple4;
 import dmx.fun.Validated;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
@@ -659,6 +662,121 @@ class DmxFunModuleTest {
         void deserializeFromNonArray_throws() {
             assertThrows(DatabindException.class, () ->
                 mapper.readValue("42", new TypeReference<NonEmptyList<Integer>>() {}));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // NonEmptySet
+    // -------------------------------------------------------------------------
+
+    @Nested
+    class NonEmptySetTests {
+
+        @Test
+        void serializeHeadFirst() throws Exception {
+            var nes = NonEmptySet.of(1, Set.of(2));
+            var json = mapper.writeValueAsString(nes);
+            assertThat(json).isEqualTo("[1,2]");
+        }
+
+        @Test
+        void roundTrip() throws Exception {
+            var original = NonEmptySet.of("a", Set.of("b"));
+            var json = mapper.writeValueAsString(original);
+            var deserialized = mapper.readValue(json, new TypeReference<NonEmptySet<String>>() {});
+            assertThat(deserialized.head()).isEqualTo("a");
+            assertThat(deserialized.toSet()).isEqualTo(Set.of("a", "b"));
+        }
+
+        @Test
+        void deserializeDropsDuplicates() throws Exception {
+            var deserialized = mapper.readValue("[1,2,1]", new TypeReference<NonEmptySet<Integer>>() {});
+            assertThat(deserialized.head()).isEqualTo(1);
+            assertThat(deserialized.size()).isEqualTo(2);
+        }
+
+        @Test
+        void emptyArrayThrows() {
+            var ex = assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[]", new TypeReference<NonEmptySet<Integer>>() {}));
+            assertThat(ex.getMessage()).contains("NonEmptySet");
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void deserializeRawType_coversNullElementTypePath() throws Exception {
+            var result = mapper.readValue("[1,2]", NonEmptySet.class);
+            assertThat(result.head()).isEqualTo(1);
+            assertThat(result.toSet()).isEqualTo(Set.of(1, 2));
+        }
+
+        @Test
+        void deserializeFromNonArray_throws() {
+            assertThrows(DatabindException.class, () ->
+                mapper.readValue("42", new TypeReference<NonEmptySet<Integer>>() {}));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // NonEmptyMap
+    // -------------------------------------------------------------------------
+
+    @Nested
+    class NonEmptyMapTests {
+
+        @Test
+        void serializeAsObjectHeadFirst() throws Exception {
+            var nem = NonEmptyMap.of("a", 1, Map.of("b", 2));
+            var json = mapper.writeValueAsString(nem);
+            assertThat(json).isEqualTo("{\"a\":1,\"b\":2}");
+        }
+
+        @Test
+        void roundTrip() throws Exception {
+            var original = NonEmptyMap.of("a", 1, Map.of("b", 2));
+            var json = mapper.writeValueAsString(original);
+            var deserialized = mapper.readValue(json, new TypeReference<NonEmptyMap<String, Integer>>() {});
+            assertThat(deserialized.headKey()).isEqualTo("a");
+            assertThat(deserialized.headValue()).isEqualTo(1);
+            assertThat(deserialized.toMap()).isEqualTo(Map.of("a", 1, "b", 2));
+        }
+
+        @Test
+        void deserializeConvertsKeysAndValues() throws Exception {
+            var deserialized = mapper.readValue("{\"1\":\"x\",\"2\":\"y\"}",
+                new TypeReference<NonEmptyMap<Integer, String>>() {});
+            assertThat(deserialized.headKey()).isEqualTo(1);
+            assertThat(deserialized.toMap()).isEqualTo(Map.of(1, "x", 2, "y"));
+        }
+
+        @Test
+        void emptyObjectThrows() {
+            var ex = assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("{}", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+            assertThat(ex.getMessage()).contains("NonEmptyMap");
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void deserializeRawType_coversNullMapTypePath() throws Exception {
+            var result = mapper.readValue("{\"a\":1}", NonEmptyMap.class);
+            assertThat(result.headKey()).isEqualTo("a");
+            assertThat(result.headValue()).isEqualTo(1);
+        }
+
+        @Test
+        void deserializeFromNonObject_throws() {
+            assertThrows(DatabindException.class, () ->
+                mapper.readValue("[1]", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+        }
+
+        @Test
+        void nestedInResult_roundTrips() throws Exception {
+            Result<NonEmptyMap<String, Integer>, String> original = Result.ok(NonEmptyMap.singleton("a", 1));
+            var json = mapper.writeValueAsString(original);
+            assertThat(json).isEqualTo("{\"ok\":{\"a\":1}}");
+            var back = mapper.readValue(json, new TypeReference<Result<NonEmptyMap<String, Integer>, String>>() {});
+            assertThat(back.get().toMap()).isEqualTo(Map.of("a", 1));
         }
     }
 
