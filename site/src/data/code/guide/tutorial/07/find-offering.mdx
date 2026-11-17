@@ -1,0 +1,12 @@
+---
+fileName: 'chapter07/EnrollmentService.java — findOffering'
+---
+
+```java
+    /** A course plus its schedules; a course without schedules is not offered, so it is "not found". */
+    private Result<Offering, EnrollmentError> findOffering(String courseId) {
+        return Option.ofNullable(catalog.findCourse(courseId))
+            .flatMap(course -> Option.ofNullable(schedules.get(courseId)).map(s -> new Offering(course, s)))
+            .toResult(new CourseNotFound(courseId));
+    }
+```

@@ -46,6 +46,11 @@ public class Catalog {
         return enrollments.stream().filter(e -> e.courseId().equals(courseId)).count();
     }
 
+    /** Everyone enrolled in a course, possibly nobody. Chapter 7 turns "possibly nobody" into a type. */
+    public List<Enrollment> enrollmentsFor(String courseId) {
+        return enrollments.stream().filter(e -> e.courseId().equals(courseId)).toList();
+    }
+
     public Enrollment save(Enrollment enrollment) {
         enrollments.add(enrollment);
         return enrollment;

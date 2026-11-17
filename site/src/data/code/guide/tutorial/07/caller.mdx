@@ -1,0 +1,10 @@
+---
+fileName: 'Caller.java'
+---
+
+```java
+// None: nobody enrolled yet; Some: a cohort with a head. No isEmpty() anywhere.
+String sent = service.roster("c1")
+    .map(cohort -> WelcomeMail.compose("c1", cohort))
+    .getOrElse("nobody to welcome yet");
+```

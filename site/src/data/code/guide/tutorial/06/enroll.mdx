@@ -1,0 +1,17 @@
+---
+fileName: 'chapter06/EnrollmentService.java — enroll'
+---
+
+```java
+    public Result<Either<Waitlisted, Enrolled>, EnrollmentError> enroll(EnrollmentForm form) {
+        return validate(form)
+            .flatMap(f -> findStudent(f.studentId()))
+            .flatMap(_ -> findCourse(form.courseId()))
+            .flatMap(course -> ensureNotEnrolled(form.studentId(), course))
+            .flatMap(course -> seatOrWaitingList(form, course))
+            .recoverWith(error -> switch (error) {
+                case AlreadyEnrolled(var s, var c) -> Result.ok(Either.right(new Enrolled(new Enrollment(s, c))));
+                default -> Result.err(error);
+            });
+    }
+```
