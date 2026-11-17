@@ -1,6 +1,7 @@
 package dmx.fun.sample.item;
 
 import dmx.fun.Guard;
+import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Try;
@@ -94,5 +95,16 @@ public class ItemService {
 
     public List<Item> findByName(String name) {
         return repository.findByName(name);
+    }
+
+    /**
+     * Returns {@link Result#ok} with a {@link NonEmptyList} of the items named {@code name},
+     * or {@link Result#err} when there are none.
+     *
+     * <p>The non-emptiness lives in the type: callers never check for an empty list.
+     */
+    public Result<NonEmptyList<Item>, String> search(String name) {
+        return NonEmptyList.fromList(repository.findByName(name))
+            .toResult("no items named '" + name + "'");
     }
 }

@@ -125,6 +125,34 @@ class ItemControllerTest {
             .andExpect(jsonPath("$").isArray());
     }
 
+    // ── GET /items/search ─────────────────────────────────────────────────────
+    //
+    // These two tests are the only ones whose response body is produced by DmxFunModule:
+    // the Result is unwrapped by the return-value handler, but the NonEmptyList inside it
+    // reaches Jackson. Without the module registered, Jackson would render NonEmptyList as
+    // a bean ({"head":...,"tail":[...]}) instead of a plain array.
+
+    @Test
+    void search_returnsNonEmptyListAsJsonArray_viaDmxFunModule() throws Exception {
+        createItemAndExtractId("Searchable", "first");
+        createItemAndExtractId("Searchable", "second");
+
+        mockMvc.perform(get("/items/search").param("name", "Searchable"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].name").value("Searchable"))
+            .andExpect(jsonPath("$[1].name").value("Searchable"))
+            .andExpect(jsonPath("$.head").doesNotExist());
+    }
+
+    @Test
+    void search_returnsErr_whenNothingMatches() throws Exception {
+        mockMvc.perform(get("/items/search").param("name", "NoSuchItem"))
+            .andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$", containsString("no items named 'NoSuchItem'")));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private long createItemAndExtractId(String name, String description) throws Exception {

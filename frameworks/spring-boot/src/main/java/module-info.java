@@ -3,7 +3,8 @@
  *
  * <p>Provides autoconfiguration for Spring transaction helpers ({@link dmx.fun.spring.TxResult},
  * {@link dmx.fun.spring.TxTry}, {@link dmx.fun.spring.TxValidated}), the transactional AOP
- * aspect, Jackson serialization support, and Spring MVC return-value handlers for
+ * aspect, Jackson serialization support (Jackson 2 via {@code fun-jackson2} and Jackson 3 via
+ * {@code fun-jackson3}), and Spring MVC return-value handlers for
  * {@code Option}, {@code Result}, {@code Validated}, and {@code Try}.
  */
 module dmx.fun.spring.boot {
@@ -20,6 +21,8 @@ module dmx.fun.spring.boot {
     requires static jakarta.servlet;
     requires static dmx.fun.jackson2;
     requires static com.fasterxml.jackson.databind;
+    requires static dmx.fun.jackson3;
+    requires static tools.jackson.databind;
     requires static dmx.fun.tracing;
     requires static micrometer.tracing;
     requires static dmx.fun.observation;
@@ -33,6 +36,7 @@ module dmx.fun.spring.boot {
     exports dmx.fun.spring.boot;
     exports dmx.fun.spring.boot.web;
     exports dmx.fun.spring.boot.jackson2;
+    exports dmx.fun.spring.boot.jackson3;
     exports dmx.fun.spring.boot.tracing;
     exports dmx.fun.spring.boot.observation;
 }

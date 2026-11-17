@@ -1,5 +1,6 @@
 package dmx.fun.sample.item;
 
+import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import java.util.List;
@@ -9,10 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller demonstrating JSON serialization of dmx-fun types via fun-jackson2.
+ * REST controller demonstrating JSON serialization of dmx-fun types via the dmx-fun Jackson
+ * module ({@code fun-jackson3} on Spring Boot 4, {@code fun-jackson2} on Spring Boot 3).
  *
  * <ul>
  *   <li>{@code GET /items/{id}} — returns {@link dmx.fun.Option}{@code <Item>} directly;
@@ -23,6 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
  *       HTTP 500 with the error body.</li>
  *   <li>{@code PUT /items/{id}} — same {@code Result} pattern, demonstrating the declarative
  *       {@link dmx.fun.spring.TransactionalResult} style from the service layer.</li>
+ *   <li>{@code GET /items/search?name=...} — returns {@link Result}{@code <NonEmptyList<Item>,String>};
+ *       the handler unwraps the {@code Result} and the {@link dmx.fun.NonEmptyList} body is
+ *       serialized by {@code DmxFunModule} as a plain JSON array. This is the endpoint that
+ *       exercises the Jackson integration itself.</li>
  * </ul>
  */
 @RestController
@@ -54,6 +61,15 @@ public class ItemController {
     @PostMapping
     public Result<Item, String> create(@RequestBody CreateItemRequest request) {
         return service.create(request.name(), request.description());
+    }
+
+    // Result<NonEmptyList<Item>,String>: the handler unwraps the Result, then Jackson serializes
+    // the NonEmptyList through DmxFunModule (registered by fun-spring-boot):
+    //   ok(items) → HTTP 200 [{"id":1,...},{"id":2,...}]
+    //   err(msg)  → HTTP 500 "no items named 'x'"
+    @GetMapping("/search")
+    public Result<NonEmptyList<Item>, String> search(@RequestParam("name") String name) {
+        return service.search(name);
     }
 
     @PutMapping("/{id}")
