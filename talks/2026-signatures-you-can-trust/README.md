@@ -1,0 +1,30 @@
+# From exceptions to signatures you can trust
+
+45-minute talk for Java user groups. Tracked in [issue #561](https://github.com/domix/dmx-fun/issues/561).
+
+```bash
+cd talks && pnpm install
+pnpm dev          # opens the deck; press L to switch EN/ES, D for light mode
+pnpm build        # static site in 2026-signatures-you-can-trust/dist
+pnpm export       # deck-en.pdf and deck-es.pdf (needs: pnpm add -D playwright-chromium)
+```
+
+## Two languages, one source
+
+- Short sentences on slides use `<T en="…" es="…" />`.
+- Longer passages use `<Tk k="…" />` with the text in `i18n/en.json` and `i18n/es.json`.
+- Speaker notes carry both languages, prefixed `EN:` and `ES:`.
+- `scripts/check-i18n.mjs` runs before `dev`, `build` and `export`; it fails when a sentence exists in only one language.
+- Open with `?lang=es` to start in Spanish; `L` toggles live; the choice is remembered in the browser. `VITE_DECK_LANG` sets the default for exports.
+
+## Code on slides
+
+Every snippet is imported from the compiled, tested sources in `samples/enrollment-tutorial` with
+`<<< @/snippets/<path>#region`. The regions are `// #region name` … `// #endregion name` comments in the
+Java files. Slidev only imports from inside its workspace, so `scripts/sync-snippets.mjs` copies the
+files listed in `snippets.json` into `snippets/` (git-ignored) before every `dev`, `build` and `export`.
+To show new code: add the region to the source and the file to `snippets.json`; never paste code into the deck.
+
+## Theme
+
+Shared with future talks: see `../theme/README.md`.

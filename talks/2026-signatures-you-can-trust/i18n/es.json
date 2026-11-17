@@ -1,0 +1,7 @@
+{
+  "cover.subtitle": "Manejo de errores en Java 25 con dmx-fun: un método, reescrito hasta que su firma deja de mentir.",
+  "hook.question": "¿Qué pasa cuando esto falla?",
+  "hook.answer": "Tres respuestas, ninguna en la firma: una excepción, un null, un Optional que nadie revisa.",
+  "tracks.caption": "En la vía del éxito cada paso alimenta al siguiente. El primer fallo cambia de vía y se salta todo lo que queda.",
+  "closing.ask": "Pruébala en un solo endpoint. Abre un issue contando qué tipo de error diseñaste."
+}

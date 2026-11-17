@@ -16,6 +16,7 @@ public final class EnrollmentMessages {
 
     private EnrollmentMessages() {}
 
+    // #region describe
     public static String describe(Result<Enrollment, EnrollmentError> result) {
         return switch (result) {
             case Result.Ok(Enrollment e) ->
@@ -32,4 +33,5 @@ public final class EnrollmentMessages {
                 "Payment failed: " + reason;
         };
     }
+    // #endregion describe
 }

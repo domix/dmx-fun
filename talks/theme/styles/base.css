@@ -1,0 +1,104 @@
+/* Base layout rules: one idea per slide, short title top-left, generous margins, code never below 24px. */
+.slidev-layout {
+  background: var(--dmx-bg);
+  color: var(--dmx-text);
+  font-family: 'Inter Variable', Inter, system-ui, sans-serif;
+  padding: 3rem 3.5rem;
+}
+
+.slidev-layout h1 {
+  font-size: 2.2rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.25rem;
+}
+
+.slidev-layout h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--dmx-text-2);
+}
+
+.slidev-layout p,
+.slidev-layout li {
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+.slidev-layout a {
+  color: var(--dmx-ok);
+  text-decoration: none;
+  border-bottom: 1px solid var(--dmx-border);
+}
+
+.slidev-layout table {
+  font-size: 1.1rem;
+}
+
+.slidev-layout th,
+.slidev-layout td {
+  border-bottom: 1px solid var(--dmx-border);
+  padding: 0.4rem 0.8rem;
+  text-align: left;
+}
+
+/* Code: JetBrains Mono, minimum 24px. Split the snippet, never shrink the type. */
+.slidev-layout pre,
+.slidev-layout code {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+.slidev-layout pre.shiki,
+.slidev-layout .slidev-code {
+  font-size: 24px !important;
+  line-height: 1.45 !important;
+  background: var(--dmx-surface) !important;
+  border: 1px solid var(--dmx-border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+/* Semantic accents, used in prose and in diagrams. */
+.ok  { color: var(--dmx-ok); }
+.err { color: var(--dmx-err); }
+.gradient-title {
+  background: var(--dmx-gradient-title);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Grid texture for cover and section slides (from og-default.svg). */
+.dmx-grid-bg {
+  background-color: var(--dmx-bg-cover);
+  background-image:
+    linear-gradient(var(--dmx-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dmx-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Lambda mark + wordmark, as in the site header. */
+.dmx-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-weight: 650;
+}
+.dmx-brand .mark {
+  color: var(--dmx-ok);
+  font-size: 1.3em;
+  line-height: 1;
+}
+
+/* Bottom corner: language badge and slide number, small and quiet. */
+.dmx-footer {
+  position: absolute;
+  left: 3.5rem;
+  right: 3.5rem;
+  bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--dmx-text-2);
+}

@@ -8,6 +8,7 @@ package dmx.fun.tutorial.chapter01;
  * where the failure modes were three exception classes, a {@code null} and a wrapped cause
  * that nothing listed in one place.
  */
+// #region error
 public sealed interface EnrollmentError {
 
     record StudentNotFound(String studentId) implements EnrollmentError {}
@@ -20,3 +21,4 @@ public sealed interface EnrollmentError {
 
     record PaymentFailed(String reason) implements EnrollmentError {}
 }
+// #endregion error

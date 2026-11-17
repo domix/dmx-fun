@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" width="900" height="260" role="img" aria-label="Two tracks: success on top, failure below">
+  <style>
+    .ok  { stroke: var(--dmx-ok, #58a6ff); }
+    .err { stroke: var(--dmx-err, #d29922); }
+    .lbl { font: 600 20px 'Inter Variable', Inter, system-ui, sans-serif; fill: var(--dmx-text, #c9d1d9); }
+    .step { fill: var(--dmx-surface, #161b22); stroke: var(--dmx-border, #30363d); }
+  </style>
+  <!-- success track -->
+  <line x1="40" y1="80" x2="860" y2="80" class="ok" stroke-width="6"/>
+  <!-- failure track -->
+  <line x1="40" y1="190" x2="860" y2="190" class="err" stroke-width="6"/>
+  <!-- steps on the success track -->
+  <g>
+    <rect x="120" y="50" width="150" height="60" rx="10" class="step"/>
+    <text x="195" y="88" text-anchor="middle" class="lbl">findStudent</text>
+    <rect x="330" y="50" width="150" height="60" rx="10" class="step"/>
+    <text x="405" y="88" text-anchor="middle" class="lbl">findCourse</text>
+    <rect x="540" y="50" width="150" height="60" rx="10" class="step"/>
+    <text x="615" y="88" text-anchor="middle" class="lbl">charge</text>
+  </g>
+  <!-- a failure switches tracks and skips the rest -->
+  <path d="M 480 80 C 510 80, 510 190, 540 190" class="err" stroke-width="6" fill="none"/>
+  <text x="720" y="225" text-anchor="middle" class="lbl">Err travels untouched</text>
+  <text x="800" y="60" text-anchor="middle" class="lbl">Ok</text>
+</svg>
