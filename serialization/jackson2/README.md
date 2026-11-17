@@ -1,6 +1,6 @@
 # fun-jackson2
 
-Jackson **2.x** (`com.fasterxml.jackson.*`) line.
+Jackson **2.x** (`com.fasterxml.jackson.*`) line. For Jackson 3 (`tools.jackson.*`) see `fun-jackson3`.
 
 Jackson serializers and deserializers for all [dmx-fun](https://github.com/domix/dmx-fun) types.
 

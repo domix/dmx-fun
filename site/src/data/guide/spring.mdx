@@ -69,7 +69,8 @@ explicit `@Bean` declarations required:
 | `TxTry` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
 | `TxValidated` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
 | `DmxTransactionalAspect` | Same as above **and** `aspectjweaver` is also on the classpath |
-| `DmxFunModule` | `jackson-databind` **and** `fun-jackson2` are both on the classpath |
+| `DmxFunModule` (Jackson 3) | `tools.jackson.core:jackson-databind` **and** `fun-jackson3` are both on the classpath |
+| `DmxFunModule` (Jackson 2) | `com.fasterxml.jackson.core:jackson-databind` **and** `fun-jackson2` are both on the classpath |
 | `DmxTracing` | `micrometer-tracing` **and** `fun-tracing` on classpath **and** a `Tracer` bean is present |
 | `optionReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
 | `resultReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
@@ -327,15 +328,16 @@ Each property is documented in the JAR's
 `META-INF/additional-spring-configuration-metadata.json`, so IDE autocompletion works
 out of the box.
 
-### Interaction with `fun-jackson2`
+### Interaction with `fun-jackson3` / `fun-jackson2`
 
 The handlers delegate body serialization to Spring's existing body processor. When
-`fun-jackson2` is on the classpath and `DmxFunModule` is registered (which `fun-spring-boot`
+a dmx-fun Jackson module (`fun-jackson3` on Boot 4, `fun-jackson2` on Boot 3) is on the
+classpath and `DmxFunModule` is registered (which `fun-spring-boot`
 does automatically), the **unwrapped** value or error is serialized — not the wrapper type.
 This means `Result.ok(item)` produces `{"id":1,"name":"Widget"}`, not `{"ok":{"id":1,...}}`.
 
 If you want the wrapped JSON shape (`{"ok":{...}}` / `{"err":"..."}`), disable the Result
-handler (`dmx.fun.mvc.result-handler.enabled=false`) and let `fun-jackson2` serialize the
+handler (`dmx.fun.mvc.result-handler.enabled=false`) and let the Jackson module serialize the
 `Result` directly.
 
 ---

@@ -1,8 +1,11 @@
 ---
-fileName: 'Demo.java'
+fileName: 'Demo.java — Jackson 2'
 ---
 
 ```java
+import dmx.fun.jackson2.DmxFunModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 // Manual registration
 ObjectMapper mapper = new ObjectMapper()
     .registerModule(new DmxFunModule());

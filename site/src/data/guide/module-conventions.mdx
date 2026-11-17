@@ -14,6 +14,10 @@ The design rationale — why each integration is a separate subproject with a `c
 dependency, how the BOM fits in, and the alternatives considered — is documented in
 <a href={`${base}adr/adr-022-integration-modules`}>ADR-022 — Integration modules as optional peer dependencies</a>.
 
+When a peer library ships two binary-incompatible major lines, there is one module per
+line and the major becomes part of the name: `fun-jackson2` (Jackson 2) and `fun-jackson3`
+(Jackson 3). The rule and its trigger are in <a href={`${base}adr/adr-024-parallel-peer-major-lines`}>ADR-024</a>.
+
 This page is a checklist for maintainers adding a new module.
 
 ## When to create a module
@@ -59,6 +63,7 @@ def moduleMap = [
     ':lib'          : 'dmx.fun',
     ':assertj'      : 'dmx.fun.assertj',
     ':serialization:jackson2'      : 'dmx.fun.jackson2',
+    ':serialization:jackson3'      : 'dmx.fun.jackson3',
     ':spring'       : 'dmx.fun.spring',
     ':fun-newmod'   : 'dmx.fun.newmod',   // ← add this line
 ]
@@ -123,7 +128,7 @@ following the pattern of `jackson2-compatibility.yaml`:
 ### 7. Write a `README.md` in the module root
 
 Cover: what the module does, Maven/Gradle coordinates, usage snippet, version compatibility table.
-See `jackson/README.md` or `assertj/README.md` for the expected format.
+See `serialization/jackson2/README.md` or `core/assertj/README.md` for the expected format.
 
 ### 8. Add a guide page
 

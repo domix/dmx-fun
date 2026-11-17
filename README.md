@@ -16,7 +16,8 @@ All modules are published to Maven Central. Add only what you need.
 |--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
 | `fun-bom`          | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-bom)](https://central.sonatype.com/artifact/codes.domix/fun-bom)                   | Bill of Materials — import once to manage all dmx-fun versions in one place.                  |
 | `fun`              | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun)](https://central.sonatype.com/artifact/codes.domix/fun)                           | Core library. `Option`, `Result`, `Try`, `Validated`, `Either`, `Lazy`, `Tuple`, `NonEmptyList/Map/Set`, `Guard`, `Resource`, `Accumulator`. |
-| `fun-jackson2`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson2)](https://central.sonatype.com/artifact/codes.domix/fun-jackson2)           | Jackson 2.x serializers and deserializers for all dmx-fun types.                              |
+| `fun-jackson3`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson3)](https://central.sonatype.com/artifact/codes.domix/fun-jackson3)           | Jackson 3 (`tools.jackson`) serializers and deserializers — Spring Boot 4 / Spring Framework 7. |
+| `fun-jackson2`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-jackson2)](https://central.sonatype.com/artifact/codes.domix/fun-jackson2)           | Jackson 2 (`com.fasterxml.jackson`) serializers and deserializers — Spring Boot 3.            |
 | `fun-assertj`      | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-assertj)](https://central.sonatype.com/artifact/codes.domix/fun-assertj)           | Fluent AssertJ assertions for all dmx-fun types. Use in `test` scope.                         |
 | `fun-spring`       | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring)](https://central.sonatype.com/artifact/codes.domix/fun-spring)             | `@Transactional` support for `Result`, `Try`, `Option`, and `Validated`.                      |
 | `fun-spring-boot`  | [![Maven Central](https://img.shields.io/maven-central/v/codes.domix/fun-spring-boot)](https://central.sonatype.com/artifact/codes.domix/fun-spring-boot)   | Spring Boot auto-configuration for dmx-fun. Registers `TxResult`/`TxTry`/`TxValidated`, `DmxFunModule` (Jackson), `DmxTracing`, `DmxObservation`, and MVC handlers automatically when the corresponding dependencies are on the classpath. |
@@ -93,20 +94,22 @@ implementation("codes.domix:fun:LATEST_VERSION")
 
 ### Jackson integration (optional)
 
-Serializers and deserializers for all dmx-fun types.
+Serializers and deserializers for all dmx-fun types. Pick the module that matches your Jackson line:
+`fun-jackson3` for Jackson 3 (`tools.jackson`, the default in Spring Boot 4 and Spring Framework 7),
+`fun-jackson2` for Jackson 2 (`com.fasterxml.jackson`, Spring Boot 3). Both can coexist on one classpath.
 
 **Maven**
 ```xml
 <dependency>
     <groupId>codes.domix</groupId>
-    <artifactId>fun-jackson2</artifactId>
+    <artifactId>fun-jackson3</artifactId>   <!-- or fun-jackson2 -->
     <version>LATEST_VERSION</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
-implementation("codes.domix:fun-jackson2:LATEST_VERSION")
+implementation("codes.domix:fun-jackson3:LATEST_VERSION")   // or fun-jackson2
 ```
 
 ### Spring integration (optional)
