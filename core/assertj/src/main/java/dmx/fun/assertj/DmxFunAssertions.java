@@ -3,6 +3,7 @@ package dmx.fun.assertj;
 import dmx.fun.Accumulator;
 import dmx.fun.Either;
 import dmx.fun.Guard;
+import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
 import dmx.fun.Resource;
 import dmx.fun.Result;
@@ -27,6 +28,7 @@ import org.jspecify.annotations.NullMarked;
  * assertThat(resource).succeedsWith("value");
  * assertThat(guard).accepts("alice").rejects("!!");
  * assertThat(accumulator).hasValue(42).accumulationContains("step1");
+ * assertThat(nonEmptyList).hasHead("a").hasSize(3);
  * }</pre>
  */
 @NullMarked
@@ -163,5 +165,16 @@ public final class DmxFunAssertions {
      */
     public static <E, A> AccumulatorAssert<E, A> assertThat(Accumulator<E, A> actual) {
         return new AccumulatorAssert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for a {@link NonEmptyList}.
+     *
+     * @param <T>    the element type
+     * @param actual the NonEmptyList to assert on
+     * @return a new {@link NonEmptyListAssert}
+     */
+    public static <T> NonEmptyListAssert<T> assertThat(NonEmptyList<T> actual) {
+        return new NonEmptyListAssert<>(actual);
     }
 }
