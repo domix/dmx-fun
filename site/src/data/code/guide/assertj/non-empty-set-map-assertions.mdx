@@ -1,0 +1,24 @@
+---
+fileName: 'ScoresTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+NonEmptySet<String> tags = NonEmptySet.of("java", Set.of("fp", "types"));
+NonEmptyMap<String, Integer> scores = NonEmptyMap.of("ana", 10, Map.of("bo", 7));
+
+// Sets: head, size, membership, exact contents in any order
+assertThat(tags)
+    .hasHead("java")
+    .hasSize(3)
+    .contains("fp")
+    .containsExactlyInAnyOrder("types", "fp", "java");
+
+// Maps: size, keys, entries, and a value checked in place
+assertThat(scores)
+    .hasSize(2)
+    .containsKey("bo")
+    .containsEntry("ana", 10)
+    .hasValueSatisfying("bo", v -> assertThat(v).isLessThan(10));
+```
