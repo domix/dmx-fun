@@ -1,0 +1,7 @@
+{
+  "cover.subtitle": "Error handling in Java 25 with dmx-fun: one method, rewritten until its signature stops lying.",
+  "hook.question": "What happens when this fails?",
+  "hook.answer": "Three answers, none of them in the signature: an exception, a null, an Optional nobody checks.",
+  "tracks.caption": "On the success track each step feeds the next. The first failure switches tracks and skips everything after it.",
+  "closing.ask": "Try it on one endpoint. Open an issue telling us which error type you designed."
+}

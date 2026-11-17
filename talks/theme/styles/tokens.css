@@ -1,0 +1,29 @@
+/*
+ * dmx-fun design tokens for talks. Derived from the site (DocsLayout.astro) and og-default.svg.
+ * Two accents with a fixed meaning: --ok is the success track, --err the failure track. No third accent.
+ */
+:root {
+  --dmx-bg: #ffffff;
+  --dmx-bg-cover: #f8f9fa;
+  --dmx-grid: #e1e4e8;
+  --dmx-surface: #f6f8fa;
+  --dmx-border: #e1e4e8;
+  --dmx-text: #24292e;
+  --dmx-text-2: #586069;
+  --dmx-ok: #0366d6;          /* success track: Ok, Right, Some */
+  --dmx-err: #9a6700;         /* failure track: Err, Left, None */
+  --dmx-indigo: #6366f1;      /* section-title gradient end only */
+  --dmx-gradient-title: linear-gradient(135deg, var(--dmx-ok), var(--dmx-indigo));
+}
+
+html.dark {
+  --dmx-bg: #0d1117;
+  --dmx-bg-cover: #0f172a;
+  --dmx-grid: #1e293b;
+  --dmx-surface: #161b22;
+  --dmx-border: #30363d;
+  --dmx-text: #c9d1d9;
+  --dmx-text-2: #8b949e;
+  --dmx-ok: #58a6ff;
+  --dmx-err: #d29922;
+}

@@ -43,6 +43,7 @@ public final class FormValidation {
 
     // ── Second half: rules as values ──────────────────────────────────────────
 
+    // #region guards
     static final Guard<String> NOT_BLANK = Guard.of(s -> !s.isBlank(), "must not be blank");
     static final Guard<String> EMAIL = Guard.of(s -> s.contains("@"), "must contain @");
     static final Guard<String> AGE_AT_LEAST_16 =
@@ -58,4 +59,5 @@ public final class FormValidation {
     public static Validated<NonEmptyList<String>, EnrollmentForm> withGuards(EnrollmentForm form) {
         return FORM.check(form);
     }
+    // #endregion guards
 }

@@ -1,0 +1,10 @@
+{
+  "comment": "Source files the deck imports code from, relative to the repository root. scripts/sync-snippets.mjs copies them into snippets/ (git-ignored) before dev/build/export, because Slidev only imports snippets from inside the workspace.",
+  "files": [
+    "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter00/EnrollmentService.java",
+    "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter01/EnrollmentError.java",
+    "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter01/EnrollmentMessages.java",
+    "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter02/EnrollmentService.java",
+    "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter05/FormValidation.java"
+  ]
+}

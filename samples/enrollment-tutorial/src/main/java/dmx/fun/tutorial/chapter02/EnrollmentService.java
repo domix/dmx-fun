@@ -32,6 +32,7 @@ public class EnrollmentService {
         this.payments = payments;
     }
 
+    // #region enroll
     public Result<Enrollment, EnrollmentError> enroll(String studentId, String courseId) {
         return findStudent(studentId)
             .flatMap(_ -> findCourse(courseId))
@@ -44,6 +45,7 @@ public class EnrollmentService {
                 default -> Result.err(error);
             });
     }
+    // #endregion enroll
 
     private Result<Student, EnrollmentError> findStudent(String studentId) {
         Student student = catalog.findStudent(studentId);

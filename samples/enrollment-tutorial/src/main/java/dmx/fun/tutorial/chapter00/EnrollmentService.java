@@ -25,6 +25,7 @@ public class EnrollmentService {
         this.payments = payments;
     }
 
+    // #region enroll
     public @Nullable Enrollment enroll(String studentId, String courseId) {
         Student student = catalog.findStudent(studentId);
         if (student == null) {
@@ -47,4 +48,5 @@ public class EnrollmentService {
         }
         return catalog.save(new Enrollment(studentId, courseId));
     }
+    // #endregion enroll
 }

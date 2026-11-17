@@ -1,0 +1,28 @@
+{
+  "name": "slidev-theme-dmx-fun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Slidev theme for dmx-fun talks: the site's palette, the lambda mark, Inter + JetBrains Mono, dark by default.",
+  "keywords": ["slidev-theme", "slidev"],
+  "engines": { "node": ">=22.22.0", "slidev": ">=53.0.0" },
+  "slidev": {
+    "defaults": {
+      "colorSchema": "dark",
+      "aspectRatio": "16/9",
+      "fonts": {
+        "sans": "Inter Variable",
+        "mono": "JetBrains Mono",
+        "provider": "none"
+      },
+      "highlighter": "shiki",
+      "lineNumbers": false
+    },
+    "colorSchema": "both",
+    "highlighter": "shiki"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0"
+  }
+}

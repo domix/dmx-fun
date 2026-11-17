@@ -1,0 +1,12 @@
+{
+  "name": "@domix/dmx-fun-talks",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "scripts": {
+    "dev": "pnpm --filter ./2026-signatures-you-can-trust dev",
+    "build": "pnpm --filter ./2026-signatures-you-can-trust build",
+    "export": "pnpm --filter ./2026-signatures-you-can-trust export",
+    "check": "pnpm -r check"
+  }
+}
