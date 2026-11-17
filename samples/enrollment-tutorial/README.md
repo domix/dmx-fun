@@ -11,6 +11,8 @@ rewrites the same `enroll` operation with one more dmx-fun type; the shared doma
 | `chapter01` | Return instead of throw     | `Result<T, E>`, a sealed error type, exhaustive `switch` |
 | `chapter02` | Two tracks                  | `map`, `flatMap`, `recoverWith`: one pipeline, first failure wins |
 | `chapter03` | Absence is not failure      | `Option<T>` for the discount code and the catalog lookups |
+| `chapter04` | Capture at the edge         | `Try.run(...).rethrowFatal().toResult(...)` replaces the last try/catch |
+| `chapter05` | All the errors at once      | `Validated` by hand, then `Guard` rules composed with `allOf`; `InvalidForm` bridges into `Result` |
 
 The site snippets under `site/src/data/code/guide/tutorial/` are copied from these sources.
 When you change a chapter, update its snippets in the same commit.

@@ -1,0 +1,16 @@
+---
+fileName: 'chapter05/EnrollmentForm.java'
+---
+
+```java
+public record EnrollmentForm(
+    String studentId,
+    String courseId,
+    String email,
+    String age,
+    Option<String> discountCode
+) {}
+
+// EnrollmentError gains one case:
+record InvalidForm(NonEmptyList<String> errors) implements EnrollmentError {}
+```
