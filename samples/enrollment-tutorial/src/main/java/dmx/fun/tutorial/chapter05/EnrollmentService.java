@@ -52,11 +52,13 @@ public class EnrollmentService {
     }
 
     /** The bridge: all form errors, as one {@code EnrollmentError}, on the failure track. */
+    // #region validate
     private Result<EnrollmentForm, EnrollmentError> validate(EnrollmentForm form) {
         return FormValidation.withGuards(form)
             .toResult()
             .<EnrollmentError>mapError(InvalidForm::new);
     }
+    // #endregion validate
 
     /** The fee, minus the discount if the code is present and known. Unknown codes are ignored. */
     int priceFor(Course course, Option<String> discountCode) {

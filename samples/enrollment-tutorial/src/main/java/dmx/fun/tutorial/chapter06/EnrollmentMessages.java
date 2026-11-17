@@ -10,6 +10,7 @@ public final class EnrollmentMessages {
 
     private EnrollmentMessages() {}
 
+    // #region describe
     public static String describe(Result<Either<Waitlisted, Enrolled>, EnrollmentError> result) {
         return switch (result) {
             case Result.Ok(Either.Right(Enrolled(var e))) ->
@@ -20,4 +21,5 @@ public final class EnrollmentMessages {
                 "Could not process the request: " + error;
         };
     }
+    // #endregion describe
 }

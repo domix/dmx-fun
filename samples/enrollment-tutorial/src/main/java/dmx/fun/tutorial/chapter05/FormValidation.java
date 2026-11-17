@@ -17,6 +17,7 @@ public final class FormValidation {
 
     // ── First half: by hand ───────────────────────────────────────────────────
 
+    // #region byHand
     public static Validated<NonEmptyList<String>, EnrollmentForm> byHand(EnrollmentForm form) {
         Validated<NonEmptyList<String>, String> studentId = form.studentId().isBlank()
             ? Validated.invalidNel("studentId: must not be blank")
@@ -32,6 +33,7 @@ public final class FormValidation {
             .combine(email, NonEmptyList::concat, (_, _) -> form)
             .combine(age, NonEmptyList::concat, (_, _) -> form);
     }
+    // #endregion byHand
 
     private static boolean isAtLeast16(String age) {
         try {

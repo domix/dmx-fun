@@ -23,6 +23,7 @@ public final class EnrollmentMetrics {
     }
 
     public Result<Either<Waitlisted, Enrolled>, EnrollmentError> record(Result<Either<Waitlisted, Enrolled>, EnrollmentError> result) {
+        // #region record
         String outcome = switch (result) {
             case Result.Ok(Either.Right(Enrolled _))  -> "Enrolled";
             case Result.Ok(Either.Left(Waitlisted _)) -> "Waitlisted";
@@ -30,5 +31,6 @@ public final class EnrollmentMetrics {
         };
         registry.counter("enrollment.outcome", "outcome", outcome).increment();
         return result;
+        // #endregion record
     }
 }

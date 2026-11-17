@@ -1,3 +1,8 @@
 packages:
   - theme
   - 2026-*
+
+# playwright-chromium downloads its browser in a postinstall script, which pnpm blocks unless allowed here.
+# It is only needed for `pnpm export` (PDF).
+allowBuilds:
+  playwright-chromium: true

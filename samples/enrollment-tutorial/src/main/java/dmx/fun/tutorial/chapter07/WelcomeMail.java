@@ -11,8 +11,10 @@ public final class WelcomeMail {
 
     private WelcomeMail() {}
 
+    // #region compose
     public static String compose(String courseId, NonEmptyList<Enrollment> cohort) {
         return "Welcome to " + courseId + ", " + cohort.head().studentId()
             + (cohort.size() == 1 ? "" : " and " + (cohort.size() - 1) + " more");
     }
+    // #endregion compose
 }
