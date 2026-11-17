@@ -13,42 +13,46 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Serializes {@link NonEmptySet} to a JSON array {@code [head, ...rest]}, head first.
- * Elements carry type metadata based on the declared element type (or {@code Object} at the
- * root), as a {@code Set} would; the array itself is never wrapped.
+ * Elements are written through the serializer of the declared element type (specialized by
+ * the runtime class when it is generic) and carry the type metadata that type calls for, as a
+ * {@code Set} would; the array itself is never wrapped.
  */
 @NullMarked
 @SuppressWarnings("rawtypes")
 class NonEmptySetSerializer extends StdSerializer<NonEmptySet> {
 
+    private final JavaType elementType;
+    private final @Nullable BeanProperty property;
     private final @Nullable TypeSerializer elementTypeSerializer;
 
-    NonEmptySetSerializer() {
-        this(null);
+    NonEmptySetSerializer(JavaType elementType) {
+        this(elementType, null, null);
     }
 
-    private NonEmptySetSerializer(@Nullable TypeSerializer elementTypeSerializer) {
+    private NonEmptySetSerializer(JavaType elementType, @Nullable BeanProperty property,
+                                  @Nullable TypeSerializer elementTypeSerializer) {
         super(NonEmptySet.class);
+        this.elementType = elementType;
+        this.property = property;
         this.elementTypeSerializer = elementTypeSerializer;
     }
 
     @Override
     public ValueSerializer<?> createContextual(SerializationContext ctxt, @Nullable BeanProperty property) {
-        JavaType declared = property != null ? property.getType() : null;
-        JavaType elementType = declared != null && declared.containedTypeCount() > 0
-            ? declared.containedType(0)
-            : ctxt.constructType(Object.class);
-        return new NonEmptySetSerializer(ctxt.findTypeSerializer(elementType));
+        return new NonEmptySetSerializer(elementType, property, ctxt.findTypeSerializer(elementType));
     }
 
     @Override
     public void serialize(NonEmptySet value, JsonGenerator gen, SerializationContext ctxt) {
         gen.writeStartArray();
         for (Object element : value) {
+            ValueSerializer<Object> serializer = elementType.hasGenericTypes()
+                ? ctxt.findContentValueSerializer(ctxt.constructSpecializedType(elementType, element.getClass()), property)
+                : ctxt.findContentValueSerializer(element.getClass(), property);
             if (elementTypeSerializer == null) {
-                ctxt.writeValue(gen, element);
+                serializer.serialize(element, gen, ctxt);
             } else {
-                ctxt.findValueSerializer(element.getClass())
-                    .serializeWithType(element, gen, ctxt, elementTypeSerializer);
+                serializer.serializeWithType(element, gen, ctxt, elementTypeSerializer);
             }
         }
         gen.writeEndArray();

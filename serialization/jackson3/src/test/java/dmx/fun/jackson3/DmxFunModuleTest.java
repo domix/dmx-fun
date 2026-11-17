@@ -678,6 +678,10 @@ class DmxFunModuleTest {
 
     record ItemValues(NonEmptyMap<String, Item> values, NonEmptySet<Item> elements) {}
 
+    record ListValues(NonEmptyMap<String, List<Item>> values, NonEmptySet<List<Item>> elements) {}
+
+    record SetsByKey(Map<String, NonEmptySet<Object>> byKey) {}
+
     enum Color { RED }
 
     private static ObjectMapper nonFinalTypingMapper() {
@@ -848,6 +852,38 @@ class DmxFunModuleTest {
             var back = typed.readValue(json, ItemValues.class);
             assertThat(back.values().headValue()).isEqualTo(new Item("x"));
             assertThat(back.elements().head()).isEqualTo(new Item("y"));
+        }
+
+        @Test
+        void nestedGenericValues_keepTheirBindingsUnderNonFinalTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ListValues(
+                NonEmptyMap.singleton("a", List.of(new Item("x"))),
+                NonEmptySet.of(List.of(new Item("y")), Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).doesNotContain(Item.class.getName());
+            var back = typed.readValue(json, ListValues.class);
+            assertThat(back.values().headValue()).isEqualTo(List.of(new Item("x")));
+            assertThat(back.elements().head()).isEqualTo(List.of(new Item("y")));
+        }
+
+        @Test
+        void nestedInPlainMap_usesItsOwnElementType() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new SetsByKey(Map.of("k", NonEmptySet.of(new Item("q"), Set.of())));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("[\"" + Item.class.getName() + "\",{\"name\":\"q\"}]");
+            var back = typed.readValue(json, SetsByKey.class);
+            assertThat(back.byKey().get("k").head()).isEqualTo(new Item("q"));
+        }
+
+        @Test
+        void mapValue_isSerializedThroughAContextualizedSerializer() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var json = typed.writeValueAsString(NonEmptyMap.singleton("a", Map.of("x", 1)));
+            assertThat(json).isEqualTo("{\"a\":[\"java.util.ImmutableCollections$Map1\",{\"x\":1}]}");
+            assertThat(mapper.writeValueAsString(NonEmptyMap.singleton("a", Map.of("x", 1))))
+                .isEqualTo("{\"a\":{\"x\":1}}");
         }
 
         @Test

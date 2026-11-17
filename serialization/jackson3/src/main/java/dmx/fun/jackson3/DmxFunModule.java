@@ -65,8 +65,19 @@ public class DmxFunModule extends SimpleModule {
         addSerializer(new Tuple3Serializer());
         addSerializer(new Tuple4Serializer());
         addSerializer(new NonEmptyListSerializer());
-        addSerializer(new NonEmptySetSerializer());
-        addSerializer(new NonEmptyMapSerializer());
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Besides the class-keyed serializers above, registers {@link NonEmptySerializers}, which
+     * builds the {@code NonEmptySet} and {@code NonEmptyMap} serializers from the full
+     * {@code JavaType} so the declared element and value types drive content serialization.
+     */
+    @Override
+    public void setupModule(SetupContext context) {
+        super.setupModule(context);
+        context.addSerializers(new NonEmptySerializers());
     }
 
     @SuppressWarnings("unchecked")
