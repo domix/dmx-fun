@@ -1,0 +1,171 @@
+---
+import { getCollection, render } from 'astro:content';
+import { site } from '../../config/site.ts';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const languageName: Record<string, string> = { en: 'English', es: 'Spanish' };
+
+const talks = (await getCollection('talks'))
+  .sort((a, b) => b.id.localeCompare(a.id));
+const rendered = await Promise.all(talks.map(async (talk) => ({ talk, Content: (await render(talk)).Content })));
+
+const href = (path: string) => /^https?:\/\//.test(path) ? path : `${base}${path}`;
+const latestEvent = (talk: typeof talks[number]) =>
+  [...talk.data.events].sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+---
+
+<DocsLayout title="Talks" description={`Talks about ${site.slug}: slides in English and Spanish, recordings when available, and the source of every deck.`}>
+
+  <div class="talks-header">
+    <h1>Talks</h1>
+    <p class="talks-subtitle">
+      Sessions about {site.slug} for user groups and conferences. Each deck is one source in two languages:
+      open it in English or Spanish, or press <kbd>L</kbd> while presenting. Slides, PDFs and, when there is one,
+      the recording.
+    </p>
+  </div>
+
+  {rendered.length === 0 && <p>No talks yet.</p>}
+
+  {rendered.map(({ talk, Content }) => {
+    const t = talk.data;
+    const event = latestEvent(talk);
+    return (
+      <article class="talk" id={talk.id}>
+        <div class="talk-meta">
+          <span class={`talk-status status-${t.status}`}>{t.status === 'delivered' ? 'Delivered' : 'Upcoming'}</span>
+          <span>{t.duration} min</span>
+          <span class="talk-dot">·</span>
+          <span>{t.languages.map(l => languageName[l]).join(' and ')}</span>
+          {event && (
+            <>
+              <span class="talk-dot">·</span>
+              <span>
+                {event.url ? <a href={event.url} target="_blank" rel="noopener">{event.name}</a> : event.name}
+                {event.city && `, ${event.city}`}, {event.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            </>
+          )}
+        </div>
+
+        <h2 class="talk-title">{t.title}</h2>
+        <p class="talk-description">{t.description}</p>
+
+        <div class="talk-actions">
+          {t.languages.map(l => (
+            <a href={`${href(t.deck)}?lang=${l}`} class="btn btn-primary" target="_blank" rel="noopener">
+              Slides · {languageName[l]}
+            </a>
+          ))}
+          {t.pdf.en && <a href={href(t.pdf.en)} class="btn btn-outline" target="_blank" rel="noopener">PDF · English</a>}
+          {t.pdf.es && <a href={href(t.pdf.es)} class="btn btn-outline" target="_blank" rel="noopener">PDF · Spanish</a>}
+          {t.video && <a href={t.video} class="btn btn-outline" target="_blank" rel="noopener">Video</a>}
+          <a href={t.source} class="btn btn-outline" target="_blank" rel="noopener">Source</a>
+        </div>
+
+        <div class="talk-body">
+          <Content />
+        </div>
+
+        {t.related.length > 0 && (
+          <div class="talk-related">
+            <span class="talk-related-label">Related</span>
+            {t.related.map(r => (
+              <a href={href(r.href)} {...(/^https?:\/\//.test(r.href) ? { target: '_blank', rel: 'noopener' } : {})}>{r.label}</a>
+            ))}
+          </div>
+        )}
+
+        {t.events.length > 1 && (
+          <div class="talk-events">
+            <span class="talk-related-label">Delivered at</span>
+            <ul>
+              {t.events.map(e => (
+                <li>
+                  {e.url ? <a href={e.url} target="_blank" rel="noopener">{e.name}</a> : e.name}
+                  {e.city && `, ${e.city}`} — {e.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </article>
+    );
+  })}
+
+  <div class="talks-footer">
+    <p>
+      Want this talk at your meetup, or want to give it yourself? The deck, the speaker notes and the demo
+      script are in the repository under <a href={`${site.github}/tree/main/talks`} target="_blank" rel="noopener">talks/</a>.
+      Open an <a href={`${site.github}/issues`} target="_blank" rel="noopener">issue</a> and we will help.
+    </p>
+  </div>
+
+</DocsLayout>
+
+<style>
+  .talks-header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); }
+  .talks-header h1 { margin: 0 0 0.5rem; }
+  .talks-subtitle { color: var(--color-text-secondary); font-size: 1.05rem; line-height: 1.6; margin: 0; max-width: 60rem; }
+  kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--color-border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--color-code-bg);
+  }
+
+  .talk {
+    padding: 1.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+    margin-bottom: 2rem;
+  }
+  .talk-meta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+    font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.75rem;
+  }
+  .talk-dot { opacity: 0.6; }
+  .talk-status {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase;
+    padding: 0.15rem 0.55rem; border-radius: 999px; border: 1px solid var(--color-border);
+  }
+  .status-delivered { color: var(--color-primary); border-color: var(--color-primary); }
+  .talk-title { margin: 0 0 0.75rem; font-size: 1.6rem; line-height: 1.25; }
+  .talk-description { margin: 0 0 1.25rem; font-size: 1.05rem; line-height: 1.6; }
+
+  .talk-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+    text-decoration: none; transition: transform 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--color-primary); color: #fff; border: 1px solid var(--color-primary); }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-outline { border: 1px solid var(--color-border); color: var(--color-text); background: var(--color-bg); }
+  .btn-outline:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+  .talk-body { font-size: 0.98rem; line-height: 1.65; }
+  .talk-body :global(table) { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+  .talk-body :global(th), .talk-body :global(td) { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+  .talk-body :global(th) { color: var(--color-text-secondary); font-weight: 600; }
+  .talk-body :global(code) { font-size: 0.9em; background: var(--color-code-bg); padding: 0.1rem 0.35rem; border-radius: 4px; }
+
+  .talk-related, .talk-events { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--color-border); font-size: 0.92rem; }
+  .talk-related { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: baseline; }
+  .talk-related-label { color: var(--color-text-secondary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.02em; }
+  .talk-events ul { margin: 0.5rem 0 0; padding-left: 1.2rem; }
+
+  .talks-footer { color: var(--color-text-secondary); font-size: 0.95rem; line-height: 1.6; padding-top: 0.5rem; }
+
+  @media (max-width: 640px) {
+    .talk { padding: 1.25rem; }
+    .talk-title { font-size: 1.35rem; }
+  }
+</style>

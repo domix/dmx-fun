@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - 'site/**'
+      - 'talks/**'
       - 'core/**'
       - 'serialization/**'
       - 'observability/**'
@@ -47,7 +48,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: site/pnpm-lock.yaml
+          cache-dependency-path: |
+            site/pnpm-lock.yaml
+            talks/pnpm-lock.yaml
 
       - name: Set up JDK
         uses: actions/setup-java@v5.2.0
@@ -62,8 +65,29 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: site
 
+      - name: Install talk decks
+        # also downloads the Chromium build used by `pnpm export` (playwright-chromium postinstall)
+        run: pnpm install --frozen-lockfile
+        working-directory: talks
+
       - name: Build with Gradle Wrapper
         run: ./gradlew aggregateJavadoc
+
+      - name: Build and export talk decks
+        run: pnpm build && pnpm export
+        working-directory: talks
+
+      - name: Copy talk decks into the site
+        # each deck is served at /dmx-fun/talks/<slug>/ next to its PDFs; the Talks page links there
+        run: |
+          for deck in talks/*/; do
+            [ -f "$deck/slides.md" ] || continue
+            slug=$(basename "$deck")
+            mkdir -p "site/public/talks/$slug"
+            cp -r "$deck/dist/." "site/public/talks/$slug/"
+            cp "$deck"/deck-*.pdf "site/public/talks/$slug/"
+          done
+          find site/public/talks -maxdepth 2
 
       - name: Build
         run: pnpm run build

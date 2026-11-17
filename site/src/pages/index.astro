@@ -4,8 +4,10 @@ import DocsLayout from '../layouts/DocsLayout.astro';
 import {Content as QuickExample} from '../data/code/quick-example.mdx';
 import {Content as InstallGradle} from '../data/code/home/install-gradle.mdx';
 import {Content as InstallMaven} from '../data/code/home/install-maven.mdx';
+import {getCollection} from 'astro:content';
 
 const base = import.meta.env.BASE_URL;
+const talks = (await getCollection('talks')).sort((a, b) => b.id.localeCompare(a.id));
 
 const tagColor: Record<string, string> = {
     'Nullability':          'blue',
@@ -176,6 +178,28 @@ const features = [
       </div>
     </div>
   </section>
+
+  <!-- ── Talks ──────────────────────────────────────────── -->
+  {talks.length > 0 && (
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Talks</h2>
+        <a href={`${base}talks`} class="section-link">All talks →</a>
+      </div>
+      <p class="section-desc">Bring dmx-fun to your user group. One deck, English and Spanish, built from the same tested code as the tutorial.</p>
+      <div class="module-grid">
+        {talks.map(t => (
+          <a href={`${base}talks#${t.id}`} class="type-card accent-blue">
+            <div class="card-header">
+              <span class="card-name">{t.data.title}</span>
+              <span class="card-tag color-blue">{t.data.duration} min · {t.data.languages.map(l => l.toUpperCase()).join(' / ')}</span>
+            </div>
+            <p class="card-summary">{t.data.description}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 
   <!-- ── CTA ────────────────────────────────────────────── -->
   <div class="cta">
