@@ -1,0 +1,61 @@
+---
+title: "Tutorial 2 — Two tracks"
+description: "Chapter 2 of the dmx-fun tutorial: enroll becomes a chain of small steps with map, flatMap and recoverWith; the first failure skips the rest, and one failure is turned back into a success."
+order: 103
+h1: "2. Two tracks"
+---
+
+import {Content as Enroll} from '../../code/guide/tutorial/02/enroll.mdx';
+import {Content as Steps}  from '../../code/guide/tutorial/02/steps.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+Chapter 1 left `enroll` as a staircase: five `if`s, each with an early `return Result.err(...)`.
+It is correct and it is tedious, and the tedium grows with every step you add. This chapter
+rewrites the same method as a chain.
+
+## Small steps first
+
+Each check becomes a method that returns a `Result`. The methods do not know about each other:
+
+<Steps/>
+
+Each one answers a single question and hands back either the thing the next step needs or the
+error that explains why it cannot. The `null` checks and the `try/catch` are still here; they
+move out in chapters 3 and 4.
+
+## Then the chain
+
+<Enroll/>
+
+Read it as two tracks. On the success track, each `flatMap` takes the value from the previous
+step, runs the next step, and passes its value on. The moment a step returns an `Err`, the value
+switches to the failure track and every remaining `flatMap` and `map` is skipped; the error
+travels to the end untouched. Nobody writes `if (result.isErr()) return result;` between steps,
+because that is exactly what `flatMap` does.
+
+Three operations cover almost everything you will do with a `Result`:
+
+| | Takes | Use it when |
+|---|---|---|
+| `map` | a function that cannot fail | the next step always works: saving the enrollment |
+| `flatMap` | a function that returns a `Result` | the next step can fail: every lookup and check |
+| `recoverWith` | a function from the error to a `Result` | you want to turn some failures back into successes |
+
+## Choosing which failures are failures
+
+The last line is a design decision, not plumbing. Enrolling a student who is already enrolled
+used to be an error. For the caller it is noise: they asked for an enrollment and one exists.
+`recoverWith` looks at the error and, for `AlreadyEnrolled` only, returns the existing enrollment
+as a success. Every other error passes through unchanged. The operation is now idempotent, and
+the gateway is never charged a second time because the pipeline never reached `charge`.
+
+## What changed since chapter 1
+
+- The five `if`/`return` pairs became five one-line methods and one chain.
+- Failure propagation is implicit: the first `Err` wins and the rest is skipped.
+- `AlreadyEnrolled` is no longer an error the caller sees; `recoverWith` absorbs it.
+
+Still to fix: the `== null` checks inside the lookups, and the `try/catch` around the payment.
+
+<p>Reference: <a href={`${base}guide/result`}>`Result<T, E>`</a> · Previous: <a href={`${base}guide/tutorial/01-return-instead-of-throw`}>1. Return instead of throw</a> · Next: <a href={`${base}guide/tutorial/03-absence-is-not-failure`}>3. Absence is not failure</a></p>

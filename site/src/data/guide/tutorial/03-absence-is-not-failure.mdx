@@ -1,0 +1,75 @@
+---
+title: "Tutorial 3 — Absence is not failure"
+description: "Chapter 3 of the dmx-fun tutorial: an optional discount code and nullable catalog lookups become Option<T>; what Option adds over java.util.Optional."
+order: 104
+h1: "3. Absence is not failure"
+---
+
+import {Content as Caller}   from '../../code/guide/tutorial/03/caller.mdx';
+import {Content as PriceFor} from '../../code/guide/tutorial/03/price-for.mdx';
+import {Content as Lookups}  from '../../code/guide/tutorial/03/lookups.mdx';
+import {Content as Enroll}   from '../../code/guide/tutorial/03/enroll.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+Not everything that is missing went wrong. A student who has no discount code is the normal
+case, not a failure, and it must not end up in `EnrollmentError`. Java's traditional answer is a
+`String discountCode` parameter that may be `null`, with the same problem chapter 0 had: the
+signature does not say so.
+
+## An absent value, in the type
+
+`enroll` gains a third parameter, `Option<String> discountCode`. `Option` has two cases,
+`Some` and `None`, and a caller has to pick one explicitly:
+
+<Caller/>
+
+The price is computed through the option without ever asking "is it there?":
+
+<PriceFor/>
+
+Read it top to bottom. If there is a code, look it up; if the code is known, apply the
+percentage; otherwise, fall back to the full fee. `None` at any point just flows to `getOrElse`.
+An unknown code is treated as no code, which is a business rule and reads like one.
+
+## Absence at the boundary
+
+The second place where things are missing is the `Catalog`. It returns `null` when a row does
+not exist, and chapter 2 checked for that by hand in each lookup. Now the `null` is wrapped the
+instant it appears and converted to the right error in the same breath:
+
+<Lookups/>
+
+`Option.ofNullable` is the fence: `null` can exist on one side of it, never on the other. The
+`Catalog` itself did not change. You rarely get to rewrite the data layer; you wrap it where you
+call it.
+
+## The chain, with the price in it
+
+<Enroll/>
+
+Only one line changed: `charge` now receives `priceFor(course, discountCode)`. Everything the
+previous chapter said about the two tracks still holds.
+
+## Why not `java.util.Optional`?
+
+`Optional` was designed for one purpose, a return type for "maybe not found", and its own
+documentation discourages it as a field or a parameter. `Option` is meant to go everywhere a
+value can be absent: parameters, record components, collections, JSON. It is a sealed
+interface, so `switch (option) { case Some(var v) -> ...; case None() -> ...; }` is exhaustive;
+it converts to `Result` with `toResult(error)` as the lookups above do; and `fun-jackson2`
+and `fun-jackson3` serialize `Some(v)` as `v` and `None` as `null`. The full reasoning is in
+<a href={`${base}adr/adr-015-option-vs-optional`}>ADR-015</a>; the practical rule is: `Option`
+inside your code, and convert at the edge if an API hands you an `Optional`
+(`Option.fromOptional`).
+
+## What changed since chapter 2
+
+- `enroll` takes `Option<String> discountCode`; `priceFor` computes the fee through it.
+- The catalog lookups wrap `null` with `Option.ofNullable` and convert to `Result` with `toResult`;
+  no `== null` remains in the service.
+- Unknown discount codes are a `None`, not an error.
+
+Still to fix: the `try/catch` around the payment call.
+
+<p>Reference: <a href={`${base}guide/option`}>`Option<T>`</a> · Previous: <a href={`${base}guide/tutorial/02-two-tracks`}>2. Two tracks</a></p>

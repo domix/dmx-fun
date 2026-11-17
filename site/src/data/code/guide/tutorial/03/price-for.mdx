@@ -1,0 +1,13 @@
+---
+fileName: 'chapter03/EnrollmentService.java — priceFor'
+---
+
+```java
+    /** The fee, minus the discount if the code is present and known. Unknown codes are ignored. */
+    int priceFor(Course course, Option<String> discountCode) {
+        return discountCode
+            .flatMap(code -> Option.ofNullable(DISCOUNTS.get(code)))
+            .map(percent -> course.feeCents() - course.feeCents() * percent / 100)
+            .getOrElse(course.feeCents());
+    }
+```
