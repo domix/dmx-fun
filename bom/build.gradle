@@ -19,6 +19,7 @@ dependencies {
         api project(':core:lib')
         api project(':core:assertj')
         api project(':serialization:jackson2')
+        api project(':serialization:jackson3')
         api project(':serialization:jakarta-jaxb')
         api project(':serialization:jakarta-validation')
         api project(':observability:micrometer')

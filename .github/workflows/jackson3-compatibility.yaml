@@ -1,0 +1,36 @@
+# Verifies that the fun-jackson3 module remains compatible with multiple Jackson 3
+# versions. Jackson is declared as compileOnly so users bring their own version;
+# this matrix catches regressions against older (but still supported) releases
+# before they reach main.
+#
+# Triggered only on pull requests that touch serialization/jackson3/** or this workflow file.
+# To run a specific version locally:
+#   ./gradlew :serialization:jackson3:test -Pjackson3Version=3.1.8
+name: Jackson 3 compatibility
+
+on:
+  pull_request:
+    # Run when the jackson3 module or this workflow file is modified.
+    paths:
+      - 'serialization/jackson3/**'
+      - '.github/workflows/jackson3-compatibility.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # One entry per minor line from 3.0 to the current release, each at its latest patch.
+        # Update this list when a new minor is released or an old one is EOL.
+        jackson-version: ['3.0.4', '3.1.8', '3.2.4', '3.3.0']
+    name: Jackson 3 ${{ matrix.jackson-version }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-java@v5.2.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v6
+      # Pass the matrix version as a Gradle property; the build falls back to
+      # the catalog version when the property is absent (local development).
+      - run: ./gradlew :serialization:jackson3:test -Pjackson3Version=${{ matrix.jackson-version }}

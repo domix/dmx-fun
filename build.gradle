@@ -15,6 +15,7 @@ def moduleMap = [
     ':core:lib'                         : 'dmx.fun',
     ':core:assertj'                     : 'dmx.fun.assertj',
     ':serialization:jackson2'            : 'dmx.fun.jackson2',
+    ':serialization:jackson3'            : 'dmx.fun.jackson3',
     ':serialization:jakarta-jaxb'       : 'dmx.fun.jakarta.jaxb',
     ':serialization:jakarta-validation' : 'dmx.fun.jakarta.validation',
     ':observability:micrometer'         : 'dmx.fun.micrometer',
