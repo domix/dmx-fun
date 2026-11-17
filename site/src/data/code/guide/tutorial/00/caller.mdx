@@ -1,0 +1,14 @@
+---
+fileName: 'Caller.java'
+---
+
+```java
+// What a caller of chapter 0 has to know — none of it is in the signature.
+Enrollment e = service.enroll("s1", "c1");      // may be null: already enrolled
+if (e == null) { /* remember this check, or NPE later */ }
+
+service.enroll("ghost", "c1");                  // throws StudentNotFoundException
+service.enroll("s2", "c1");                     // throws CourseFullException
+service.enroll("s1", "c1");                     // throws RuntimeException("payment failed")
+                                                //   with the real PaymentException inside
+```

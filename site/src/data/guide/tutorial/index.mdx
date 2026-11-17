@@ -1,0 +1,50 @@
+---
+title: "Tutorial — From exceptions to honest signatures"
+description: "A guided path through dmx-fun for Java developers: one example, enrolling a student in a course, rewritten chapter by chapter until every signature tells the truth about failure."
+order: 100
+h1: "Tutorial: from exceptions to honest signatures"
+---
+
+export const base = import.meta.env.BASE_URL;
+
+This tutorial is for Java developers who have never used dmx-fun, and who may never have used
+a library like it. It does not start with theory. It starts with a method most of us have
+written, shows what its signature hides, and fixes one thing per chapter.
+
+## One example, rewritten
+
+The running example is **enrolling a student in a course with limited seats**. It is small
+enough to fit on a screen and it has, naturally, every situation the library is for: lookups that
+can fail, an optional discount code, a third-party payment API that throws, a sign-up form whose
+errors should all be reported at once, a full course that puts you on a waiting list, and a
+course that must have at least one schedule.
+
+Every chapter rewrites the same `enroll` operation. The example grows in clarity, never in
+features. The code for each chapter is a package in
+[`samples/enrollment-tutorial`](https://github.com/domix/dmx-fun/tree/main/samples/enrollment-tutorial),
+compiled and tested on every build; the snippets on these pages are copied from it.
+
+## Chapters
+
+| # | Chapter | You will meet |
+|---|---|---|
+| 0 | <a href={`${base}guide/tutorial/00-honest-signature`}>The honest signature</a> | the problem, in twenty lines of ordinary Java |
+| 1 | <a href={`${base}guide/tutorial/01-return-instead-of-throw`}>Return instead of throw</a> | `Result<T, E>`, a sealed error type, an exhaustive `switch` |
+| 2 | Two tracks | `map`, `flatMap`, `recover` |
+| 3 | Absence is not failure | `Option<T>` |
+| 4 | Capture at the edge | `Try<T>` |
+| 5 | All the errors at once | `Validated`, then `Guard` |
+| 6 | Two outcomes, no villain | `Either<L, R>` |
+| 7 | At least one | `NonEmptyList<T>` |
+| 8 | Laziness and resources | `Lazy<T>`, `Resource<T>` |
+| 9 | Out the door | Spring Boot, Jackson, Micrometer |
+| 10 | What you just did has a name | the vocabulary, last |
+
+Chapters 2 to 10 are being written in this order.
+
+## How to read it
+
+Each chapter fits on one screen of code and one screen of prose, and ends with what changed
+since the previous one plus a link to the reference page of the type it introduced. If you
+already know what a `Result` is, start at chapter 2; if you already use dmx-fun, the
+reference guide is the better map.

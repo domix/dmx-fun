@@ -1,0 +1,30 @@
+---
+fileName: 'chapter01/EnrollmentService.java'
+---
+
+```java
+    public Result<Enrollment, EnrollmentError> enroll(String studentId, String courseId) {
+        Student student = catalog.findStudent(studentId);
+        if (student == null) {
+            return Result.err(new StudentNotFound(studentId));
+        }
+        Course course = catalog.findCourse(courseId);
+        if (course == null) {
+            return Result.err(new CourseNotFound(courseId));
+        }
+        if (catalog.isEnrolled(studentId, courseId)) {
+            return Result.err(new AlreadyEnrolled(studentId, courseId));
+        }
+        if (catalog.enrolledCount(courseId) >= course.capacity()) {
+            return Result.err(new CourseFull(courseId, course.capacity()));
+        }
+        try {
+            payments.charge(studentId, course.feeCents());
+        } catch (PaymentException e) {
+            // Still a try/catch, but now the failure becomes a value. Chapter 4 does this properly.
+            return Result.err(new PaymentFailed(e.getMessage()));
+        }
+        return Result.ok(catalog.save(new Enrollment(studentId, courseId)));
+    }
+}
+```

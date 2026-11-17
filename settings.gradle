@@ -28,4 +28,5 @@ include('frameworks:quarkus:deployment')
 project(':frameworks:quarkus:deployment').name = 'fun-quarkus-deployment'
 include('frameworks:quarkus:integration-test')
 include('samples:samples')
+include('samples:enrollment-tutorial')
 include('samples:spring-boot-sample')
