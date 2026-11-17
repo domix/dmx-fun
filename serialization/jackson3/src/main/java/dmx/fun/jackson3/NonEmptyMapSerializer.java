@@ -14,7 +14,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Serializes {@link NonEmptyMap} to a JSON object, exactly like a {@code Map<K, V>},
- * head entry first. Values are written through the serializer of the declared value type
+ * head entry first. Keys use the key serializer of the declared key type ({@code Object}, hence
+ * dynamic, when unresolved). Values are written through the serializer of the declared value type
  * (specialized by the runtime class when it is generic) and carry the type metadata that type
  * calls for, as a {@code Map} would; the object itself is never wrapped.
  */
@@ -22,25 +23,31 @@ import org.jspecify.annotations.Nullable;
 @SuppressWarnings("rawtypes")
 class NonEmptyMapSerializer extends StdSerializer<NonEmptyMap> {
 
+    private final JavaType keyType;
     private final JavaType valueType;
     private final @Nullable BeanProperty property;
+    private final @Nullable ValueSerializer<Object> keySerializer;
     private final @Nullable TypeSerializer valueTypeSerializer;
 
-    NonEmptyMapSerializer(JavaType valueType) {
-        this(valueType, null, null);
+    NonEmptyMapSerializer(JavaType keyType, JavaType valueType) {
+        this(keyType, valueType, null, null, null);
     }
 
-    private NonEmptyMapSerializer(JavaType valueType, @Nullable BeanProperty property,
+    private NonEmptyMapSerializer(JavaType keyType, JavaType valueType, @Nullable BeanProperty property,
+                                  @Nullable ValueSerializer<Object> keySerializer,
                                   @Nullable TypeSerializer valueTypeSerializer) {
         super(NonEmptyMap.class);
+        this.keyType = keyType;
         this.valueType = valueType;
         this.property = property;
+        this.keySerializer = keySerializer;
         this.valueTypeSerializer = valueTypeSerializer;
     }
 
     @Override
     public ValueSerializer<?> createContextual(SerializationContext ctxt, @Nullable BeanProperty property) {
-        return new NonEmptyMapSerializer(valueType, property, ctxt.findTypeSerializer(valueType));
+        return new NonEmptyMapSerializer(keyType, valueType, property,
+            ctxt.findKeySerializer(keyType, property), ctxt.findTypeSerializer(valueType));
     }
 
     @Override
@@ -49,7 +56,10 @@ class NonEmptyMapSerializer extends StdSerializer<NonEmptyMap> {
         gen.writeStartObject();
         for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value.toMap()).entrySet()) {
             Object key = entry.getKey();
-            ctxt.findKeySerializer(key.getClass(), property).serialize(key, gen, ctxt);
+            ValueSerializer<Object> keySer = keySerializer != null
+                ? keySerializer
+                : ctxt.findKeySerializer(keyType, property);
+            keySer.serialize(key, gen, ctxt);
             Object element = entry.getValue();
             ValueSerializer<Object> serializer = valueType.hasGenericTypes()
                 ? ctxt.findContentValueSerializer(ctxt.constructSpecializedType(valueType, element.getClass()), property)

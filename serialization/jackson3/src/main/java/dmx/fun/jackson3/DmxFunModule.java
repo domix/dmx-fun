@@ -73,11 +73,13 @@ public class DmxFunModule extends SimpleModule {
      * <p>Besides the class-keyed serializers above, registers {@link NonEmptySerializers}, which
      * builds the {@code NonEmptySet} and {@code NonEmptyMap} serializers from the full
      * {@code JavaType} so the declared element and value types drive content serialization.
+     * It is registered first so that class-keyed serializers added to this module afterwards
+     * take precedence over it.
      */
     @Override
     public void setupModule(SetupContext context) {
-        super.setupModule(context);
         context.addSerializers(new NonEmptySerializers());
+        super.setupModule(context);
     }
 
     @SuppressWarnings("unchecked")

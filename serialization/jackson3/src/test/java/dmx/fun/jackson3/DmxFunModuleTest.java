@@ -682,6 +682,21 @@ class DmxFunModuleTest {
 
     record SetsByKey(Map<String, NonEmptySet<Object>> byKey) {}
 
+    interface Key {}
+
+    record Id(String value) implements Key {}
+
+    record KeyedValues(NonEmptyMap<Key, Integer> keyed, Map<Key, Integer> plain) {}
+
+    /** Serializes any {@link Key} as {@code key:<class simple name>}, to tell declared-type lookup apart. */
+    static final class KeySerializer extends tools.jackson.databind.ser.std.StdSerializer<Key> {
+        KeySerializer() { super(Key.class); }
+        @Override
+        public void serialize(Key value, tools.jackson.core.JsonGenerator gen, tools.jackson.databind.SerializationContext ctxt) {
+            gen.writeName("key:" + value.getClass().getSimpleName());
+        }
+    }
+
     enum Color { RED }
 
     private static ObjectMapper nonFinalTypingMapper() {
@@ -875,6 +890,30 @@ class DmxFunModuleTest {
             assertThat(json).contains("[\"" + Item.class.getName() + "\",{\"name\":\"q\"}]");
             var back = typed.readValue(json, SetsByKey.class);
             assertThat(back.byKey().get("k").head()).isEqualTo(new Item("q"));
+        }
+
+        @Test
+        void keys_useTheKeySerializerOfTheDeclaredKeyType() throws Exception {
+            var custom = new tools.jackson.databind.module.SimpleModule("keys").addKeySerializer(Key.class, new KeySerializer());
+            var withKeys = JsonMapper.builder().addModule(new DmxFunModule()).addModule(custom).build();
+            var holder = new KeyedValues(NonEmptyMap.singleton(new Id("a"), 1), Map.of(new Id("a"), 1));
+            assertThat(withKeys.writeValueAsString(holder))
+                .isEqualTo("{\"keyed\":{\"key:Id\":1},\"plain\":{\"key:Id\":1}}");
+        }
+
+        @Test
+        void callerProvidedSerializer_takesPrecedence() throws Exception {
+            var module = new DmxFunModule();
+            module.addSerializer(NonEmptyMap.class, new tools.jackson.databind.ser.std.StdSerializer<>(NonEmptyMap.class) {
+                @Override
+                public void serialize(NonEmptyMap value, tools.jackson.core.JsonGenerator gen,
+                                      tools.jackson.databind.SerializationContext ctxt) {
+                    gen.writeString("custom");
+                }
+            });
+            var custom = JsonMapper.builder().addModule(module).build();
+            assertThat(custom.writeValueAsString(NonEmptyMap.singleton("a", 1))).isEqualTo("\"custom\"");
+            assertThat(custom.writeValueAsString(NonEmptySet.singleton(1))).isEqualTo("[1]");
         }
 
         @Test

@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Resolves {@link NonEmptySetSerializer} and {@link NonEmptyMapSerializer} from the full
- * {@link JavaType}, so the declared element and value types (with their generic bindings)
+ * {@link JavaType}, so the declared element, key and value types (with their generic bindings)
  * drive content serialization the way they do for {@code Set} and {@code Map}. Unresolved
  * type parameters fall back to {@code Object}.
  */
@@ -29,7 +29,7 @@ final class NonEmptySerializers extends Serializers.Base {
             return new NonEmptySetSerializer(type.containedTypeOrUnknown(0));
         }
         if (NonEmptyMap.class.isAssignableFrom(raw)) {
-            return new NonEmptyMapSerializer(type.containedTypeOrUnknown(1));
+            return new NonEmptyMapSerializer(type.containedTypeOrUnknown(0), type.containedTypeOrUnknown(1));
         }
         return null;
     }
