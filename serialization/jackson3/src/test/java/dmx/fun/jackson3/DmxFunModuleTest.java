@@ -2,13 +2,18 @@ package dmx.fun.jackson3;
 
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.DefaultTyping;
+import tools.jackson.databind.cfg.EnumFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.exc.InvalidFormatException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.exc.MismatchedInputException;
 import dmx.fun.Either;
 import dmx.fun.NonEmptyList;
+import dmx.fun.NonEmptyMap;
+import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Try;
@@ -18,6 +23,7 @@ import dmx.fun.Tuple4;
 import dmx.fun.Validated;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
@@ -659,6 +665,282 @@ class DmxFunModuleTest {
         void deserializeFromNonArray_throws() {
             assertThrows(DatabindException.class, () ->
                 mapper.readValue("42", new TypeReference<NonEmptyList<Integer>>() {}));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Default-typing fixtures shared by NonEmptySet and NonEmptyMap
+    // -------------------------------------------------------------------------
+
+    record Item(String name) {}
+
+    record ObjectValues(NonEmptyMap<String, Object> values, NonEmptySet<Object> elements) {}
+
+    record ItemValues(NonEmptyMap<String, Item> values, NonEmptySet<Item> elements) {}
+
+    record ListValues(NonEmptyMap<String, List<Item>> values, NonEmptySet<List<Item>> elements) {}
+
+    record SetsByKey(Map<String, NonEmptySet<Object>> byKey) {}
+
+    interface Key {}
+
+    record Id(String value) implements Key {}
+
+    record KeyedValues(NonEmptyMap<Key, Integer> keyed, Map<Key, Integer> plain) {}
+
+    /** Serializes any {@link Key} as {@code key:<class simple name>}, to tell declared-type lookup apart. */
+    static final class KeySerializer extends tools.jackson.databind.ser.std.StdSerializer<Key> {
+        KeySerializer() { super(Key.class); }
+        @Override
+        public void serialize(Key value, tools.jackson.core.JsonGenerator gen, tools.jackson.databind.SerializationContext ctxt) {
+            gen.writeName("key:" + value.getClass().getSimpleName());
+        }
+    }
+
+    enum Color { RED }
+
+    private static ObjectMapper nonFinalTypingMapper() {
+        return JsonMapper.builder().addModule(new DmxFunModule())
+            .activateDefaultTyping(
+                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
+                DefaultTyping.NON_FINAL)
+            .build();
+    }
+
+    // -------------------------------------------------------------------------
+    // NonEmptySet
+    // -------------------------------------------------------------------------
+
+    @Nested
+    class NonEmptySetTests {
+
+        @Test
+        void serializeHeadFirst() throws Exception {
+            var nes = NonEmptySet.of(1, Set.of(2));
+            var json = mapper.writeValueAsString(nes);
+            assertThat(json).isEqualTo("[1,2]");
+        }
+
+        @Test
+        void roundTrip() throws Exception {
+            var original = NonEmptySet.of("a", Set.of("b"));
+            var json = mapper.writeValueAsString(original);
+            var deserialized = mapper.readValue(json, new TypeReference<NonEmptySet<String>>() {});
+            assertThat(deserialized.head()).isEqualTo("a");
+            assertThat(deserialized.toSet()).isEqualTo(Set.of("a", "b"));
+        }
+
+        @Test
+        void deserializeDropsDuplicates() throws Exception {
+            var deserialized = mapper.readValue("[1,2,1]", new TypeReference<NonEmptySet<Integer>>() {});
+            assertThat(deserialized.head()).isEqualTo(1);
+            assertThat(deserialized.size()).isEqualTo(2);
+        }
+
+        @Test
+        void emptyArrayThrows() {
+            var ex = assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("[]", new TypeReference<NonEmptySet<Integer>>() {}));
+            assertThat(ex.getMessage()).contains("NonEmptySet");
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void deserializeRawType_coversNullElementTypePath() throws Exception {
+            var result = mapper.readValue("[1,2]", NonEmptySet.class);
+            assertThat(result.head()).isEqualTo(1);
+            assertThat(result.toSet()).isEqualTo(Set.of(1, 2));
+        }
+
+        @Test
+        void deserializeFromNonArray_throws() {
+            assertThrows(DatabindException.class, () ->
+                mapper.readValue("42", new TypeReference<NonEmptySet<Integer>>() {}));
+        }
+
+        @Test
+        void declaredObjectElements_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("k", 1), NonEmptySet.of(new Item("x"), Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"elements\":[[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]]");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(back.elements().head()).isEqualTo(new Item("x"));
+        }
+
+        @Test
+        void nullElementThrows() {
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                mapper.readValue("[null]", new TypeReference<NonEmptySet<Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null element");
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // NonEmptyMap
+    // -------------------------------------------------------------------------
+
+    @Nested
+    class NonEmptyMapTests {
+
+        @Test
+        void serializeAsObjectHeadFirst() throws Exception {
+            var nem = NonEmptyMap.of("a", 1, Map.of("b", 2));
+            var json = mapper.writeValueAsString(nem);
+            assertThat(json).isEqualTo("{\"a\":1,\"b\":2}");
+        }
+
+        @Test
+        void roundTrip() throws Exception {
+            var original = NonEmptyMap.of("a", 1, Map.of("b", 2));
+            var json = mapper.writeValueAsString(original);
+            var deserialized = mapper.readValue(json, new TypeReference<NonEmptyMap<String, Integer>>() {});
+            assertThat(deserialized.headKey()).isEqualTo("a");
+            assertThat(deserialized.headValue()).isEqualTo(1);
+            assertThat(deserialized.toMap()).isEqualTo(Map.of("a", 1, "b", 2));
+        }
+
+        @Test
+        void deserializeConvertsKeysAndValues() throws Exception {
+            var deserialized = mapper.readValue("{\"1\":\"x\",\"2\":\"y\"}",
+                new TypeReference<NonEmptyMap<Integer, String>>() {});
+            assertThat(deserialized.headKey()).isEqualTo(1);
+            assertThat(deserialized.toMap()).isEqualTo(Map.of(1, "x", 2, "y"));
+        }
+
+        @Test
+        void emptyObjectThrows() {
+            var ex = assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("{}", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+            assertThat(ex.getMessage()).contains("NonEmptyMap");
+        }
+
+        @Test
+        @SuppressWarnings("unchecked")
+        void deserializeRawType_coversNullTypesPath() throws Exception {
+            var result = mapper.readValue("{\"a\":1}", NonEmptyMap.class);
+            assertThat(result.headKey()).isEqualTo("a");
+            assertThat(result.headValue()).isEqualTo(1);
+        }
+
+        @Test
+        void deserializeFromNonObject_throws() {
+            assertThrows(DatabindException.class, () ->
+                mapper.readValue("[1]", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+        }
+
+        @Test
+        void nullValueThrows() {
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                mapper.readValue("{\"a\":null}", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null value for key 'a'");
+        }
+
+        @Test
+        void unknownEnumKeyReadAsNull_throws() {
+            var lenient = JsonMapper.builder().addModule(new DmxFunModule())
+                .enable(EnumFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
+                .build();
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                lenient.readValue("{\"BLUE\":1}", new TypeReference<NonEmptyMap<Color, Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null key for 'BLUE'");
+            var known = lenient.readValue("{\"RED\":1}", new TypeReference<NonEmptyMap<Color, Integer>>() {});
+            assertThat(known.toMap()).isEqualTo(Map.of(Color.RED, 1));
+        }
+
+        @Test
+        void declaredObjectValues_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("a", new Item("x")), NonEmptySet.of(1, Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"values\":{\"a\":[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]}");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(back.values().headValue()).isEqualTo(new Item("x"));
+        }
+
+        @Test
+        void declaredFinalValues_stayPlainUnderNonFinalTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ItemValues(NonEmptyMap.singleton("a", new Item("x")), NonEmptySet.of(new Item("y"), Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).isEqualTo("{\"values\":{\"a\":{\"name\":\"x\"}},\"elements\":[{\"name\":\"y\"}]}");
+            var back = typed.readValue(json, ItemValues.class);
+            assertThat(back.values().headValue()).isEqualTo(new Item("x"));
+            assertThat(back.elements().head()).isEqualTo(new Item("y"));
+        }
+
+        @Test
+        void nestedGenericValues_keepTheirBindingsUnderNonFinalTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ListValues(
+                NonEmptyMap.singleton("a", List.of(new Item("x"))),
+                NonEmptySet.of(List.of(new Item("y")), Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).doesNotContain(Item.class.getName());
+            var back = typed.readValue(json, ListValues.class);
+            assertThat(back.values().headValue()).isEqualTo(List.of(new Item("x")));
+            assertThat(back.elements().head()).isEqualTo(List.of(new Item("y")));
+        }
+
+        @Test
+        void nestedInPlainMap_usesItsOwnElementType() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new SetsByKey(Map.of("k", NonEmptySet.of(new Item("q"), Set.of())));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("[\"" + Item.class.getName() + "\",{\"name\":\"q\"}]");
+            var back = typed.readValue(json, SetsByKey.class);
+            assertThat(back.byKey().get("k").head()).isEqualTo(new Item("q"));
+        }
+
+        @Test
+        void keys_useTheKeySerializerOfTheDeclaredKeyType() throws Exception {
+            var custom = new tools.jackson.databind.module.SimpleModule("keys").addKeySerializer(Key.class, new KeySerializer());
+            var withKeys = JsonMapper.builder().addModule(new DmxFunModule()).addModule(custom).build();
+            var holder = new KeyedValues(NonEmptyMap.singleton(new Id("a"), 1), Map.of(new Id("a"), 1));
+            assertThat(withKeys.writeValueAsString(holder))
+                .isEqualTo("{\"keyed\":{\"key:Id\":1},\"plain\":{\"key:Id\":1}}");
+        }
+
+        @Test
+        void callerProvidedSerializer_takesPrecedence() throws Exception {
+            var module = new DmxFunModule();
+            module.addSerializer(NonEmptyMap.class, new tools.jackson.databind.ser.std.StdSerializer<>(NonEmptyMap.class) {
+                @Override
+                public void serialize(NonEmptyMap value, tools.jackson.core.JsonGenerator gen,
+                                      tools.jackson.databind.SerializationContext ctxt) {
+                    gen.writeString("custom");
+                }
+            });
+            var custom = JsonMapper.builder().addModule(module).build();
+            assertThat(custom.writeValueAsString(NonEmptyMap.singleton("a", 1))).isEqualTo("\"custom\"");
+            assertThat(custom.writeValueAsString(NonEmptySet.singleton(1))).isEqualTo("[1]");
+        }
+
+        @Test
+        void mapValue_isSerializedThroughAContextualizedSerializer() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var json = typed.writeValueAsString(NonEmptyMap.singleton("a", Map.of("x", 1)));
+            assertThat(json).isEqualTo("{\"a\":[\"java.util.ImmutableCollections$Map1\",{\"x\":1}]}");
+            assertThat(mapper.writeValueAsString(NonEmptyMap.singleton("a", Map.of("x", 1))))
+                .isEqualTo("{\"a\":{\"x\":1}}");
+        }
+
+        @Test
+        void serializeWithDefaultTyping_staysAPlainObject() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var json = typed.writeValueAsString(NonEmptyMap.of("a", 1, Map.of()));
+            assertThat(json).isEqualTo("{\"a\":1}");
+            var back = typed.readValue(json, new TypeReference<NonEmptyMap<String, Integer>>() {});
+            assertThat(back.toMap()).isEqualTo(Map.of("a", 1));
+        }
+
+        @Test
+        void nestedInResult_roundTrips() throws Exception {
+            Result<NonEmptyMap<String, Integer>, String> original = Result.ok(NonEmptyMap.singleton("a", 1));
+            var json = mapper.writeValueAsString(original);
+            assertThat(json).isEqualTo("{\"ok\":{\"a\":1}}");
+            var back = mapper.readValue(json, new TypeReference<Result<NonEmptyMap<String, Integer>, String>>() {});
+            assertThat(back.get().toMap()).isEqualTo(Map.of("a", 1));
         }
     }
 

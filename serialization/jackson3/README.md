@@ -76,6 +76,8 @@ JacksonModule dmxFunModule() {
 | `Tuple3<A, B, C>`    | `Tuple3.of(a, b, c)`       | `[a, b, c]`            |
 | `Tuple4<A, B, C, D>` | `Tuple4.of(a, b, c, d)`    | `[a, b, c, d]`         |
 | `NonEmptyList<T>`    | `NonEmptyList.of(h, tail)` | `[h, ...tail]`         |
+| `NonEmptySet<T>`     | `NonEmptySet.of(h, rest)`  | `[h, ...rest]`         |
+| `NonEmptyMap<K, V>`  | `NonEmptyMap.of(k, v, rest)` | `{k: v, ...}`        |
 
 The JSON shapes are identical to `fun-jackson2`, so documents written by one line are
 readable by the other.
