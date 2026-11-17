@@ -10,4 +10,13 @@ dependencies {
     implementation 'com.github.ben-manes:gradle-versions-plugin:0.53.0'
     implementation 'com.vanniktech:gradle-maven-publish-plugin:0.36.0'
     implementation 'org.cyclonedx:cyclonedx-gradle-plugin:3.2.4'
+
+    constraints {
+        // The plugins above pull vulnerable transitive versions onto the build classpath
+        // (Jackson 2.20.1, Guava 33.5.0, plexus-utils 3.6.0). Lift them to patched releases.
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.23.0'
+        implementation 'com.fasterxml.jackson.core:jackson-core:2.23.0'
+        implementation 'com.google.guava:guava:33.7.2-jre'
+        implementation 'org.codehaus.plexus:plexus-utils:3.6.4'
+    }
 }
