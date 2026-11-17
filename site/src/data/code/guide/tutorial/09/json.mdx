@@ -1,0 +1,15 @@
+---
+fileName: 'outcome.json'
+---
+
+```json
+// JSON produced by fun-jackson3 (fun-jackson2 produces the same shape)
+// Result.ok(Either.right(new Enrolled(...)))
+{"ok":{"right":{"enrollment":{"studentId":"s1","courseId":"c1"},"firstMeeting":{...}}}}
+
+// Result.ok(Either.left(new Waitlisted("s2", "c1", 1)))
+{"ok":{"left":{"studentId":"s2","courseId":"c1","position":1}}}
+
+// Result.err(new StudentNotFound("ghost"))
+{"err":{"studentId":"ghost"}}
+```

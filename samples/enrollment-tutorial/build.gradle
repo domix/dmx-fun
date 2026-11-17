@@ -12,7 +12,10 @@ jacocoTestReport.enabled = false
 
 dependencies {
     implementation project(':core:lib')
+    implementation libs.micrometer.core          // chapter 9: counting outcomes by variant
 
     testImplementation project(':core:assertj')
     testImplementation libs.assertj.core
+    testImplementation project(':serialization:jackson3')  // chapter 9: the JSON shape of an outcome
+    testImplementation libs.jackson3.databind
 }
