@@ -1,15 +1,15 @@
 ---
-title: "Tutorial — From exceptions to honest signatures"
+title: "Tutorial — From exceptions to signatures you can trust"
 description: "A guided path through dmx-fun for Java developers: one example, enrolling a student in a course, rewritten chapter by chapter until every signature tells the truth about failure."
 order: 100
-h1: "Tutorial: from exceptions to honest signatures"
+h1: "Tutorial: from exceptions to signatures you can trust"
 ---
 
 export const base = import.meta.env.BASE_URL;
 
 This tutorial is for Java developers who have never used dmx-fun, and who may never have used
 a library like it. It does not start with theory. It starts with a method most of us have
-written, shows what its signature hides, and fixes one thing per chapter.
+written, shows what its signature leaves unsaid, and fixes one thing per chapter.
 
 ## One example, rewritten
 
@@ -28,7 +28,7 @@ compiled and tested on every build; the snippets on these pages are copied from 
 
 | # | Chapter | You will meet |
 |---|---|---|
-| 0 | <a href={`${base}guide/tutorial/00-honest-signature`}>The honest signature</a> | the problem, in twenty lines of ordinary Java |
+| 0 | <a href={`${base}guide/tutorial/00-what-the-signature-hides`}>What the signature hides</a> | the problem, in twenty lines of ordinary Java |
 | 1 | <a href={`${base}guide/tutorial/01-return-instead-of-throw`}>Return instead of throw</a> | `Result<T, E>`, a sealed error type, an exhaustive `switch` |
 | 2 | <a href={`${base}guide/tutorial/02-two-tracks`}>Two tracks</a> | `map`, `flatMap`, `recoverWith` |
 | 3 | <a href={`${base}guide/tutorial/03-absence-is-not-failure`}>Absence is not failure</a> | `Option<T>` |

@@ -162,4 +162,4 @@ and the failure arrives at each consumer in the shape that consumer can act on.
 ---
 
 *Found a bug or have a suggestion? Open an issue on [GitHub](https://github.com/domix/dmx-fun).*
-- [From exceptions to honest signatures](/dmx-fun/guide/tutorial/04-capture-at-the-edge) — chapters 4 and 5 of the tutorial, where exceptions and form messages are translated at the boundary
+- [From exceptions to signatures you can trust](/dmx-fun/guide/tutorial/04-capture-at-the-edge) — chapters 4 and 5 of the tutorial, where exceptions and form messages are translated at the boundary

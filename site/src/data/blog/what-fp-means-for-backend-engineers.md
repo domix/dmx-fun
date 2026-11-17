@@ -305,4 +305,4 @@ The [developer guide](https://domix.github.io/dmx-fun/) covers each type with re
 
 ## Further reading
 
-- [From exceptions to honest signatures](/dmx-fun/guide/tutorial/00-honest-signature) — chapter 0 of the tutorial, where the argument starts from one ordinary method
+- [From exceptions to signatures you can trust](/dmx-fun/guide/tutorial/00-what-the-signature-hides) — chapter 0 of the tutorial, where the argument starts from one ordinary method

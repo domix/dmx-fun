@@ -219,4 +219,4 @@ know exactly which type its authors reached for — and which one they should ha
 - [Designing More Expressive APIs with Functional Types](/dmx-fun/blog/expressive-apis-with-functional-types) — putting `Validated` in method signatures so accumulation is part of the contract
 - [Functional Design of Business Rules](/dmx-fun/blog/functional-design-of-business-rules) — where independent validation rules naturally live
 - [Algebraic Data Types Explained for Business Software Developers](/dmx-fun/blog/algebraic-data-types-for-business-developers) — the sealed `Valid`/`Invalid` modeling underneath
-- [From exceptions to honest signatures](/dmx-fun/guide/tutorial/05-all-the-errors-at-once) — chapter 5 of the tutorial, where a sign-up form is validated by hand and then with `Guard`
+- [From exceptions to signatures you can trust](/dmx-fun/guide/tutorial/05-all-the-errors-at-once) — chapter 5 of the tutorial, where a sign-up form is validated by hand and then with `Guard`
