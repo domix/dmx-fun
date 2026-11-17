@@ -1,6 +1,6 @@
 ---
 title: "AssertJ Integration — Developer Guide"
-description: "How to use the optional fun-assertj module: fluent assertions for Either, Option, Result, Try, Validated, Tuple, Resource, Guard, and Accumulator types via DmxFunAssertions.assertThat."
+description: "How to use the optional fun-assertj module: fluent assertions for Either, Option, Result, Try, Validated, Tuple, Resource, Guard, Accumulator, and NonEmptyList types via DmxFunAssertions.assertThat."
 order: 15
 h1: "AssertJ Integration"
 ---
@@ -15,6 +15,7 @@ import {Content as TupleAssertions}        from '../code/guide/assertj/tuple-ass
 import {Content as ResourceAssertions}    from '../code/guide/assertj/resource-assertions.mdx';
 import {Content as GuardAssertions}       from '../code/guide/assertj/guard-assertions.mdx';
 import {Content as AccumulatorAssertions} from '../code/guide/assertj/accumulator-assertions.mdx';
+import {Content as NonEmptyListAssertions} from '../code/guide/assertj/non-empty-list-assertions.mdx';
 
 > **Runnable example:** [`AssertJSampleTest.java`](https://github.com/domix/dmx-fun/blob/main/samples/src/test/java/dmx/fun/samples/AssertJSampleTest.java)
 
@@ -61,6 +62,7 @@ in the same test class without naming conflict, because the argument types diffe
 | `Resource<T>`        | `succeedsWith(expected)`, `failsWith(exceptionType)`, `failsWithMessage(message)`                                        |
 | `Guard<T>`           | `accepts(value)`, `rejects(value)`, `rejectsWithMessage(value, message)`, `rejectsWithMessages(value, messages...)`      |
 | `Accumulator<E, A>`  | `hasValue(expected)`, `hasAccumulation(expected)`, `accumulationContains(element)`, `accumulationHasSize(size)`          |
+| `NonEmptyList<T>`    | `hasHead(expected)`, `hasSize(n)`, `contains(elements...)`, `containsExactly(elements...)`, `hasTailSatisfying(consumer)` |
 
 ## `Either<L, R>` assertions
 
@@ -114,6 +116,14 @@ not a `Collection`, the assertion fails with a descriptive error. Use
 non-collection and nullable values.
 
 <AccumulatorAssertions/>
+
+## `NonEmptyList<T>` assertions
+
+`contains` checks membership in any order; `containsExactly` checks both the
+elements and their order. `hasTailSatisfying` hands you the tail as a plain
+`List<T>` (empty for a singleton), so any AssertJ list assertion applies to it.
+
+<NonEmptyListAssertions/>
 
 ## Version compatibility
 
