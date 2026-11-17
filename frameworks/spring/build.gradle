@@ -27,6 +27,11 @@ dependencies {
     testImplementation libs.h2
     testImplementation libs.testcontainers.junit5
     testImplementation libs.testcontainers.postgresql
+    constraints {
+        // Testcontainers 1.21.x pulls commons-compress 1.24.0 (GHSA-4265-ccf5-phj5, GHSA-4g9r-vxhx-9pgx);
+        // lift it to a patched release until Testcontainers is upgraded.
+        testImplementation libs.commons.compress
+    }
     testRuntimeOnly    libs.postgresql
 
     // Fluent assertions for dmx-fun types (ResultAssert, TryAssert, etc.).

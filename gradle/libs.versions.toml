@@ -6,8 +6,8 @@ assertj = "3.27.7"
 jackson = "2.23.0"
 jackson3 = "3.3.0"
 aspectj = "1.9.25.1"
-spring = "7.0.8"
-springBoot = "4.1.0"
+spring = "7.0.10"
+springBoot = "4.1.2"
 h2 = "2.4.240"
 postgresql = "42.7.12"
 testcontainers = "1.21.4"
@@ -25,8 +25,9 @@ yasson = "3.0.4"
 jaxbImpl = "4.0.9"
 jakartaJsonApi = "2.1.3"
 parsson = "1.1.9"
-quarkus = "3.37.0"
+quarkus = "3.40.1"
 reactor = "3.8.6"
+commonsCompress = "1.28.0"   # constraint only: Testcontainers 1.21.x still pulls 1.24.0
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
@@ -47,6 +48,7 @@ spring-test = { module = "org.springframework:spring-test", version.ref = "sprin
 jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version = "6.1.0" }
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commonsCompress" }
 testcontainers-junit5 = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }

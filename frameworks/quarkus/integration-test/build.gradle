@@ -1,8 +1,20 @@
 // ── Quarkus integration-test module ──────────────────────────────────────────
 // Boots a full Quarkus application via @QuarkusTest and validates transactional
 // behaviour against a real PostgreSQL database started by Quarkus Dev Services.
-// Runs against the catalog Quarkus version (3.35.x) only; the compatibility
-// matrix across older Quarkus releases is covered by the unit tests.
+// Runs against the catalog Quarkus version only; the compatibility matrix across
+// older Quarkus releases is covered by the unit tests.
+buildscript {
+    dependencies {
+        constraints {
+            // The Quarkus Gradle plugin pulls vulnerable transitive versions onto the build classpath
+            // (Jackson 2.22.0, Guava 33.6.0, plexus-utils 4.0.2). Lift them to patched releases.
+            classpath 'com.fasterxml.jackson.core:jackson-databind:2.23.0'
+            classpath 'com.fasterxml.jackson.core:jackson-core:2.23.0'
+            classpath 'com.google.guava:guava:33.7.2-jre'
+            classpath 'org.codehaus.plexus:plexus-utils:4.0.3'
+        }
+    }
+}
 plugins {
     id 'dmx-fun.java-base'
     alias(libs.plugins.quarkus)

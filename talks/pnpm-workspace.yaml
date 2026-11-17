@@ -6,3 +6,9 @@ packages:
 # It is only needed for `pnpm export` (PDF).
 allowBuilds:
   playwright-chromium: true
+
+# Security overrides for transitive packages Slidev pins (see Dependabot alerts):
+# monaco-editor pins dompurify 3.4.15; pptxgenjs requires image-size ^1.2.1, whose line has no fix.
+overrides:
+  "dompurify@<3.4.17": "3.4.18"
+  "image-size@<2.0.3": "2.0.3"

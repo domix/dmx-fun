@@ -14,22 +14,10 @@ jacocoTestReport.enabled = false
 def sbVersion = findProperty('springBootVersion') ?: libs.versions.springBoot.get()
 
 dependencies {
-    // Spring Boot BOM — non-enforced so explicit version pins below can override.
+    // Spring Boot BOM (non-enforced). The catalog default, 4.1.2, manages patched Tomcat (11.0.27),
+    // Jackson 3 (3.1.7) and Log4j (2.25.5), so no version pins are needed here anymore.
     implementation     platform("org.springframework.boot:spring-boot-dependencies:${sbVersion}")
     testImplementation platform("org.springframework.boot:spring-boot-dependencies:${sbVersion}")
-
-    if (sbVersion.toString().startsWith('4.')) {
-        // Apply only this upgrade for Spring Boot 4
-        constraints {
-            implementation "org.apache.tomcat.embed:tomcat-embed-core:11.0.25"
-        }
-        // Boot 4.1.0 manages jackson-bom 3.1.4, which is vulnerable to the @JsonView /
-        // @JsonUnwrapped deserialization bypass (Dependabot alert #90, fixed in 3.1.5).
-        // Gradle picks the highest version among platforms, so this wins over the Boot BOM.
-        // Remove once Spring Boot manages jackson-bom >= 3.1.5. See issue #517.
-        implementation     platform("tools.jackson:jackson-bom:3.1.5")
-        testImplementation platform("tools.jackson:jackson-bom:3.1.5")
-    }
 
     // dmx-fun modules
     implementation project(':frameworks:spring-boot')  // TxResult, TxTry, TxValidated, @TransactionalResult, auto-config

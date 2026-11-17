@@ -168,14 +168,14 @@ Map `Option`, `Result`, `Try`, and `Validated` to a `ServerResponse` in function
 <dependency>
     <groupId>org.springframework</groupId>
     <artifactId>spring-webflux</artifactId>
-    <version>7.0.8</version>
+    <version>7.0.10</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
 implementation("codes.domix:fun-spring-webflux:LATEST_VERSION")
-implementation("org.springframework:spring-webflux:7.0.8")
+implementation("org.springframework:spring-webflux:7.0.10")
 ```
 
 ### Quarkus integration (optional)
