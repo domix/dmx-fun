@@ -3,7 +3,7 @@
 Companion code for the didactic guide on the site (`guide/tutorial`). The running example is
 enrolling a student in a course with limited seats. Each chapter lives in its own package and
 rewrites the same `enroll` operation with one more dmx-fun type; the shared domain (`Student`,
-`Course`, `Enrollment`, `Catalog`, `PaymentGateway`) stays in `domain` and never changes.
+`Course`, `Enrollment`, `Catalog`, `PaymentGateway`) stays in `domain`; the only change along the way is one read-only query added for chapter 7.
 
 | Package     | Chapter                     | Introduces                              |
 |-------------|-----------------------------|-----------------------------------------|
@@ -13,6 +13,8 @@ rewrites the same `enroll` operation with one more dmx-fun type; the shared doma
 | `chapter03` | Absence is not failure      | `Option<T>` for the discount code and the catalog lookups |
 | `chapter04` | Capture at the edge         | `Try.run(...).rethrowFatal().toResult(...)` replaces the last try/catch |
 | `chapter05` | All the errors at once      | `Validated` by hand, then `Guard` rules composed with `allOf`; `InvalidForm` bridges into `Result` |
+| `chapter06` | Two outcomes, no villain    | `Either<Waitlisted, Enrolled>` as the success value; `CourseFull` leaves the error type |
+| `chapter07` | At least one                | `NonEmptyList` for schedules and rosters; `Option<NonEmptyList<_>>` for "nobody yet" |
 
 The site snippets under `site/src/data/code/guide/tutorial/` are copied from these sources.
 When you change a chapter, update its snippets in the same commit.

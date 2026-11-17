@@ -1,0 +1,65 @@
+---
+title: "Tutorial 7 — At least one"
+description: "Chapter 7 of the dmx-fun tutorial: a course offering has at least one schedule and a roster worth mailing has at least one student; NonEmptyList puts the cardinality in the type instead of in runtime checks."
+order: 108
+h1: "7. At least one"
+---
+
+import {Content as Offering}     from '../../code/guide/tutorial/07/offering.mdx';
+import {Content as FindOffering} from '../../code/guide/tutorial/07/find-offering.mdx';
+import {Content as Roster}       from '../../code/guide/tutorial/07/roster.mdx';
+import {Content as Caller}       from '../../code/guide/tutorial/07/caller.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+Some rules are about *how many*. A course cannot be offered without a schedule. A welcome mail
+cannot go to nobody. In most codebases these rules live in a comment, an `if (list.isEmpty())`
+that half the callers forget, or an `IllegalArgumentException` deep in a constructor. This
+chapter puts them where the compiler can see them.
+
+## A list that cannot be empty
+
+<Offering/>
+
+`NonEmptyList<T>` has no empty value. You build one with `NonEmptyList.of(head, tail)` or from
+a `List` through `fromList`, which returns an `Option` because the list you start from might be
+empty. Once you hold a `NonEmptyList`, `head()` returns a `T`, not an `Optional<T>`, and nobody
+writes a branch for a situation the type rules out. `Enrolled` can promise a first meeting
+because `Offering` promises a schedule.
+
+## Where the guarantee is established
+
+<FindOffering/>
+
+The catalog still returns a nullable course, and the term's schedules are a plain `Map`. Both
+are wrapped with `Option` as in chapter 3, and a course with no schedules is simply not offered:
+the same `CourseNotFound` the caller already handles. The emptiness check happens once, here,
+and from this point on the type carries the fact.
+
+## Nobody yet, or a cohort
+
+<Roster/>
+
+`roster` returns `Option<NonEmptyList<Enrollment>>`. Read the type as a sentence: maybe there is
+a cohort, and if there is, it has at least one student. `WelcomeMail.compose` takes the
+`NonEmptyList` and so cannot be called with nobody; it has no empty branch and no "sent 0
+mails" log line. The decision about the empty case is made exactly once, by the caller:
+
+<Caller/>
+
+## Cardinality is a type, too
+
+`List<T>` says "zero or more" and leaves "but never zero here" to a comment. `NonEmptyList<T>`
+says it in the signature, and the compiler holds everyone to it. dmx-fun also provides
+`NonEmptySet` and `NonEmptyMap` for the same rule over sets and maps; they are not needed in
+this example, and their guide pages cover them.
+
+## What changed since chapter 6
+
+- `Offering` pairs a course with a `NonEmptyList<Schedule>`; `Enrolled` reports the first meeting.
+- `roster` returns `Option<NonEmptyList<Enrollment>>`; `WelcomeMail.compose` requires a cohort.
+- One read-only query, `Catalog.enrollmentsFor`, was added to the shared store.
+
+Still to come: deferring work until it is needed, and closing what you open.
+
+<p>Reference: <a href={`${base}guide/non-empty-list`}>`NonEmptyList<T>`</a> · Previous: <a href={`${base}guide/tutorial/06-two-outcomes-no-villain`}>6. Two outcomes, no villain</a></p>

@@ -1,0 +1,10 @@
+---
+fileName: 'chapter07/Offering.java'
+---
+
+```java
+public record Offering(Course course, NonEmptyList<Schedule> schedules) {}
+
+// Enrolled now says when the first meeting is: schedules().head() always exists
+public record Enrolled(Enrollment enrollment, Schedule firstMeeting) {}
+```

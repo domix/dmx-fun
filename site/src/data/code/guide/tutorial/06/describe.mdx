@@ -1,0 +1,16 @@
+---
+fileName: 'chapter06/EnrollmentMessages.java'
+---
+
+```java
+    public static String describe(Result<Either<Waitlisted, Enrolled>, EnrollmentError> result) {
+        return switch (result) {
+            case Result.Ok(Either.Right(Enrolled(var e))) ->
+                "Enrolled " + e.studentId() + " in " + e.courseId();
+            case Result.Ok(Either.Left(Waitlisted(var s, var c, var position))) ->
+                s + " is number " + position + " on the waiting list for " + c;
+            case Result.Err(var error) ->
+                "Could not process the request: " + error;
+        };
+    }
+```
