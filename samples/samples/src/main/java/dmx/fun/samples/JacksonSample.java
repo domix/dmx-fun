@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Try;
-import dmx.fun.jackson.DmxFunModule;
+import dmx.fun.jackson2.DmxFunModule;
 
 /**
- * Demonstrates fun-jackson: JSON serialization and deserialization for dmx-fun types.
+ * Demonstrates fun-jackson2: JSON serialization and deserialization for dmx-fun types.
  * Register DmxFunModule with your ObjectMapper once, then use it everywhere.
  */
 public class JacksonSample {

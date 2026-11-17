@@ -1,6 +1,6 @@
 # spring-boot-sample
 
-End-to-end Spring Boot demo showing how `fun-spring-boot`, `fun-jackson`, and `fun-assertj`
+End-to-end Spring Boot demo showing how `fun-spring-boot`, `fun-jackson2`, and `fun-assertj`
 fit together in a realistic, production-style Spring Boot project.
 
 This module is **not published** to Maven Central — it lives in the repository as
@@ -14,7 +14,7 @@ documentation-by-code.
 | Create item — validation failure, transaction rolls back | `TxResult`                                        |
 | Update item — success / not-found                        | `@TransactionalResult` (declarative)              |
 | Fetch item — wraps `Optional` in `Option`                | `ItemService.findById`                            |
-| REST response serializes `Result<Item,String>` to JSON   | `fun-jackson` + `DmxFunModule`                    |
+| REST response serializes `Result<Item,String>` to JSON   | `fun-jackson2` + `DmxFunModule`                    |
 | Integration tests with fluent assertions                 | `fun-assertj` + Testcontainers                    |
 | Local dev starts PostgreSQL automatically                | Spring Boot Docker Compose + `docker-compose.yml` |
 | CI runs full suite against real PostgreSQL               | Testcontainers                                    |

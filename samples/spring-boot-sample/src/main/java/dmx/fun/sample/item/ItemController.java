@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller demonstrating JSON serialization of dmx-fun types via fun-jackson.
+ * REST controller demonstrating JSON serialization of dmx-fun types via fun-jackson2.
  *
  * <ul>
  *   <li>{@code GET /items/{id}} — returns {@link dmx.fun.Option}{@code <Item>} directly;

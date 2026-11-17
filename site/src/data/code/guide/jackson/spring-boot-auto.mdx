@@ -3,7 +3,7 @@ fileName: 'Demo.java / application.properties'
 ---
 
 ```java
-// With fun-spring-boot, jackson-databind, and fun-jackson all on the classpath,
+// With fun-spring-boot, jackson-databind, and fun-jackson2 all on the classpath,
 // DmxFunModule is registered automatically as a bean. No @Bean declaration needed —
 // Spring Boot's JacksonAutoConfiguration discovers all Module beans and applies
 // them to the ObjectMapper.
@@ -25,5 +25,5 @@ public DmxFunModule dmxFunModule() {
 
 ```properties
 # Opt out of the Jackson auto-configuration (enabled by default)
-dmx.fun.jackson.enabled=false
+dmx.fun.jackson2.enabled=false
 ```

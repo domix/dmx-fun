@@ -28,7 +28,7 @@ core/
   lib/               → codes.domix:fun              (always required)
   assertj/           → codes.domix:fun-assertj
 serialization/
-  jackson/           → codes.domix:fun-jackson
+  jackson2/          → codes.domix:fun-jackson2
   jakarta-jaxb/      → codes.domix:fun-jakarta-jaxb
   jakarta-validation/→ codes.domix:fun-jakarta-validation
 observability/
@@ -56,7 +56,7 @@ enforced by the `dmx-fun.java-module` convention plugin:
 - `api project(':core:lib')` exposes the core library transitively, so users only
   need one dependency declaration for both the integration and the core types.
 - Test dependencies use the concrete peer version resolved by a Gradle property
-  (e.g., `-PjacksonVersion=X.Y.Z`), falling back to the version catalog entry.
+  (e.g., `-Pjackson2Version=X.Y.Z`), falling back to the version catalog entry.
   This enables CI compatibility matrix jobs without modifying build files.
 - Every module ships a `module-info.java` (JPMS), consistent with
   [ADR-002 — JPMS from day one](https://domix.github.io/dmx-fun/adr/adr-002-jpms/).
@@ -93,7 +93,7 @@ implementation(platform("codes.domix:fun-bom:${version}"))
 ```
 
 **CI compatibility matrices** — each integration module with a peer dependency
-provides a dedicated workflow (e.g., `jackson-compatibility.yaml`) that runs the
+provides a dedicated workflow (e.g., `jackson2-compatibility.yaml`) that runs the
 module's test suite against every supported version of the peer library using the
 `-P{framework}Version=X.Y.Z` override property. The core `lib` and `assertj` modules
 do not need a compatibility matrix because they have no peer dependency.

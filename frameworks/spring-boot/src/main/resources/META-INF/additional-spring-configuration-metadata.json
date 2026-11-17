@@ -37,6 +37,12 @@
       "description": "Whether to auto-configure the Spring MVC Result/Validated/Try return-value handler. Set to false to disable success -> 200 and error/failure -> 500 mapping."
     },
     {
+      "name": "dmx.fun.jackson2.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to auto-configure the fun-jackson2 DmxFunModule bean (Jackson 2.x, com.fasterxml.jackson). Spring Boot registers it with the application's ObjectMapper. Set to false to disable it entirely."
+    },
+    {
       "name": "dmx.fun.tracing.enabled",
       "type": "java.lang.Boolean",
       "defaultValue": true,
