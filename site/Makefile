@@ -34,6 +34,20 @@ build-pages: ## Build for GitHub Pages (sets GITHUB_PAGES=true)
 copy-javadocs: ## Copy Javadoc output from Gradle into public/
 	$(PNPM) run copy:javadocs
 
+# ── Talk decks ────────────────────────────────────────────────────────────────
+
+.PHONY: talks
+talks: ## Build and export every deck in ../talks and copy them into public/talks/<slug>/ (what pages.yml does)
+	cd ../talks && $(PNPM) install --frozen-lockfile && $(PNPM) build && $(PNPM) export
+	rm -rf public/talks
+	for deck in ../talks/*/; do \
+		[ -f "$$deck/slides.md" ] || continue; \
+		slug=$$(basename "$$deck"); \
+		mkdir -p "public/talks/$$slug"; \
+		cp -r "$$deck/dist/." "public/talks/$$slug/"; \
+		cp "$$deck"/deck-*.pdf "public/talks/$$slug/"; \
+	done
+
 # ── Docker ────────────────────────────────────────────────────────────────────
 
 .PHONY: docker-build

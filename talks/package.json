@@ -5,8 +5,8 @@
   "packageManager": "pnpm@11.15.1",
   "scripts": {
     "dev": "pnpm --filter ./2026-signatures-you-can-trust dev",
-    "build": "pnpm --filter ./2026-signatures-you-can-trust build",
-    "export": "pnpm --filter ./2026-signatures-you-can-trust export",
+    "build": "pnpm -r build",
+    "export": "pnpm -r export",
     "check": "pnpm -r check"
   }
 }

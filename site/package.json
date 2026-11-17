@@ -5,7 +5,7 @@
   "private": true,
   "packageManager": "pnpm@11.15.1",
   "scripts": {
-    "copy:javadocs": "cp -r ../build/reports/javadoc/ public/",
+    "copy:javadocs": "rm -rf public/javadoc && cp -r ../build/reports/javadoc public/javadoc",
     "predev": "pnpm run copy:javadocs",
     "dev": "astro dev",
     "prebuild": "pnpm run copy:javadocs",

@@ -51,5 +51,27 @@ const adr = defineCollection({
     }),
 });
 
+const talks = defineCollection({
+    loader: glob({pattern: "**/*.{md,mdx}", base: "./src/data/talks"}),
+    schema: z.object({
+        title: z.string(),
+        description: z.string(),
+        duration: z.number().int().positive(),            // minutes, questions included
+        languages: z.array(z.enum(['en', 'es'])).nonempty(),
+        status: z.enum(['upcoming', 'delivered']).default('upcoming'),
+        deck: z.string(),                                  // path under the site base, e.g. talks/<slug>/
+        pdf: z.object({en: z.string().optional(), es: z.string().optional()}).default({}),
+        video: z.string().url().optional(),
+        source: z.string().url(),                          // the deck's directory on GitHub
+        related: z.array(z.object({label: z.string(), href: z.string()})).default([]),
+        events: z.array(z.object({
+            name: z.string(),
+            date: z.date(),
+            city: z.string().optional(),
+            url: z.string().url().optional(),
+        })).default([]),
+    }),
+});
+
 // Export a single `collections` object to register your collection(s)
-export const collections = {code, blog, guide, adr};
+export const collections = {code, blog, guide, adr, talks};
