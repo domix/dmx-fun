@@ -22,6 +22,7 @@ public final class HttpMapping {
 
     private HttpMapping() {}
 
+    // #region statusFor
     public static int statusFor(Result<Either<Waitlisted, Enrolled>, EnrollmentError> result) {
         return switch (result) {
             case Result.Ok(Either.Right(Enrolled _))     -> 201;  // Created
@@ -33,4 +34,5 @@ public final class HttpMapping {
             case Result.Err(PaymentFailed _)             -> 502;  // Bad Gateway: the payment provider failed
         };
     }
+    // #endregion statusFor
 }

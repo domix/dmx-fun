@@ -9,5 +9,6 @@
 
 <style scoped>
 .section-layout { display: flex; align-items: center; }
-.section-body :deep(h1) { font-size: 3rem; }
+.section-body :deep(h1) { font-size: 84px; line-height: 1.1; margin-bottom: 32px; }
+.section-body :deep(p)  { font-size: 38px; line-height: 1.35; color: var(--dmx-text-2); max-width: 1500px; }
 </style>

@@ -16,7 +16,7 @@
 
 <style scoped>
 .cover-layout { display: flex; flex-direction: column; justify-content: center; gap: 2rem; }
-.cover-layout .dmx-brand { position: absolute; top: 2.5rem; left: 3.5rem; font-size: 1.1rem; }
-.cover-body :deep(h1) { font-size: 3.4rem; line-height: 1.1; }
-.cover-body :deep(p)  { font-size: 1.4rem; color: var(--dmx-text-2); }
+.cover-layout .dmx-brand { position: absolute; top: 80px; left: 112px; font-size: 32px; }
+.cover-body :deep(h1) { font-size: 100px; line-height: 1.08; margin-bottom: 40px; }
+.cover-body :deep(p)  { font-size: 40px; line-height: 1.35; color: var(--dmx-text-2); max-width: 1500px; }
 </style>

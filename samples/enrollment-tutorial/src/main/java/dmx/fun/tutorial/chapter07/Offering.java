@@ -10,4 +10,6 @@ import dmx.fun.tutorial.domain.Course;
  * be constructed empty, which means {@code schedules().head()} always exists and nobody ever
  * writes {@code if (schedules.isEmpty())} for a situation that cannot happen.
  */
+// #region offering
 public record Offering(Course course, NonEmptyList<Schedule> schedules) {}
+// #endregion offering

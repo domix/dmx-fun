@@ -31,11 +31,13 @@ public class EnrollmentService {
         this.payments = payments;
     }
 
+    // #region signature
     public Result<Enrollment, EnrollmentError> enroll(String studentId, String courseId) {
         Student student = catalog.findStudent(studentId);
         if (student == null) {
             return Result.err(new StudentNotFound(studentId));
         }
+    // #endregion signature
         Course course = catalog.findCourse(courseId);
         if (course == null) {
             return Result.err(new CourseNotFound(courseId));

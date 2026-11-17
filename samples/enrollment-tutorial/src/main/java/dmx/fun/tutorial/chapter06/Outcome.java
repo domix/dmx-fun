@@ -13,9 +13,11 @@ public final class Outcome {
 
     private Outcome() {}
 
+    // #region outcome
     /** The student holds a seat; payment has been taken. */
     public record Enrolled(Enrollment enrollment) {}
 
     /** The course was full; the student is in line at {@code position}, and nothing was charged. */
     public record Waitlisted(String studentId, String courseId, int position) {}
+    // #endregion outcome
 }
