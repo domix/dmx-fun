@@ -1,0 +1,13 @@
+---
+fileName: 'Caller.java'
+---
+
+```java
+// Three callers, one signature. The type says the code is optional; nobody passes null.
+service.enroll("s1", "c1", Option.none());             // full fee
+service.enroll("s1", "c1", Option.some("EARLY10"));    // 10% off
+service.enroll("s1", "c1", Option.some("BOGUS"));      // unknown code: full fee, not an error
+
+// A request field that may be absent stays an Option all the way down
+record EnrollRequest(String studentId, String courseId, Option<String> discountCode) {}
+```
