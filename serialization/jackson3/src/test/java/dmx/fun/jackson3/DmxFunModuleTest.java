@@ -2,7 +2,9 @@ package dmx.fun.jackson3;
 
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.DefaultTyping;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.exc.InvalidFormatException;
 import tools.jackson.databind.JsonNode;
@@ -715,6 +717,13 @@ class DmxFunModuleTest {
             assertThrows(DatabindException.class, () ->
                 mapper.readValue("42", new TypeReference<NonEmptySet<Integer>>() {}));
         }
+
+        @Test
+        void nullElementThrows() {
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                mapper.readValue("[null]", new TypeReference<NonEmptySet<Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null element");
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -758,7 +767,7 @@ class DmxFunModuleTest {
 
         @Test
         @SuppressWarnings("unchecked")
-        void deserializeRawType_coversNullMapTypePath() throws Exception {
+        void deserializeRawType_coversNullTypesPath() throws Exception {
             var result = mapper.readValue("{\"a\":1}", NonEmptyMap.class);
             assertThat(result.headKey()).isEqualTo("a");
             assertThat(result.headValue()).isEqualTo(1);
@@ -768,6 +777,26 @@ class DmxFunModuleTest {
         void deserializeFromNonObject_throws() {
             assertThrows(DatabindException.class, () ->
                 mapper.readValue("[1]", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+        }
+
+        @Test
+        void nullValueThrows() {
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                mapper.readValue("{\"a\":null}", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null value for key 'a'");
+        }
+
+        @Test
+        void serializeWithDefaultTyping_staysAPlainObject() throws Exception {
+            var typed = JsonMapper.builder().addModule(new DmxFunModule())
+                .activateDefaultTyping(
+                    BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
+                    DefaultTyping.NON_FINAL)
+                .build();
+            var json = typed.writeValueAsString(NonEmptyMap.of("a", 1, Map.of()));
+            assertThat(json).isEqualTo("{\"a\":1}");
+            var back = typed.readValue(json, new TypeReference<NonEmptyMap<String, Integer>>() {});
+            assertThat(back.toMap()).isEqualTo(Map.of("a", 1));
         }
 
         @Test

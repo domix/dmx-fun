@@ -4,6 +4,7 @@ import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.SerializationContext;
 import tools.jackson.databind.ser.std.StdSerializer;
 import dmx.fun.NonEmptyMap;
+import java.util.Map;
 import org.jspecify.annotations.NullMarked;
 
 /**
@@ -19,7 +20,14 @@ class NonEmptyMapSerializer extends StdSerializer<NonEmptyMap> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void serialize(NonEmptyMap value, JsonGenerator gen, SerializationContext ctxt) {
-        ctxt.writeValue(gen, value.toMap());
+        gen.writeStartObject();
+        for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value.toMap()).entrySet()) {
+            Object key = entry.getKey();
+            ctxt.findKeySerializer(key.getClass(), null).serialize(key, gen, ctxt);
+            ctxt.writeValue(gen, entry.getValue());
+        }
+        gen.writeEndObject();
     }
 }

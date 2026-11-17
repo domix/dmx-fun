@@ -7,6 +7,7 @@ import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.exc.MismatchedInputException;
 import tools.jackson.databind.deser.std.StdDeserializer;
 import dmx.fun.NonEmptySet;
 import java.util.LinkedHashSet;
@@ -16,7 +17,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Deserializes a JSON array to {@link NonEmptySet}, keeping the first element as head.
- * Throws {@link InvalidFormatException} for empty arrays.
+ * Throws {@link InvalidFormatException} for empty arrays and {@link MismatchedInputException}
+ * for {@code null} elements.
  */
 @NullMarked
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -51,6 +53,10 @@ class NonEmptySetDeserializer extends StdDeserializer<NonEmptySet> {
         Set<Object> elements = new LinkedHashSet<>();
         while (p.nextToken() != JsonToken.END_ARRAY) {
             var element = elementType != null ? ctxt.readValue(p, elementType) : p.readValueAs(Object.class);
+            if (element == null) {
+                throw MismatchedInputException.from(p, NonEmptySet.class,
+                    "Cannot deserialize NonEmptySet with a null element");
+            }
             elements.add(element);
         }
 
