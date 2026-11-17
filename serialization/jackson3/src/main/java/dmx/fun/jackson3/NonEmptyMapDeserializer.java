@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Deserializes a JSON object to {@link NonEmptyMap}, keeping the first entry as head.
  * Throws {@link InvalidFormatException} for empty objects and {@link MismatchedInputException}
- * for {@code null} values.
+ * for {@code null} keys or values.
  */
 @NullMarked
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -59,6 +59,10 @@ class NonEmptyMapDeserializer extends StdDeserializer<NonEmptyMap> {
         while (p.nextToken() == JsonToken.PROPERTY_NAME) {
             String name = p.currentName();
             Object key = keyDeserializer != null ? keyDeserializer.deserializeKey(name, ctxt) : name;
+            if (key == null) {
+                throw MismatchedInputException.from(p, NonEmptyMap.class,
+                    "Cannot deserialize NonEmptyMap with a null key for '" + name + "'");
+            }
             p.nextToken();
             Object value = valueType != null ? ctxt.readValue(p, valueType) : p.readValueAs(Object.class);
             if (value == null) {

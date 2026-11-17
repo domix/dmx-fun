@@ -3,6 +3,7 @@ package dmx.fun.jackson3;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.DefaultTyping;
+import tools.jackson.databind.cfg.EnumFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import tools.jackson.databind.json.JsonMapper;
@@ -668,6 +669,26 @@ class DmxFunModuleTest {
     }
 
     // -------------------------------------------------------------------------
+    // Default-typing fixtures shared by NonEmptySet and NonEmptyMap
+    // -------------------------------------------------------------------------
+
+    record Item(String name) {}
+
+    record ObjectValues(NonEmptyMap<String, Object> values, NonEmptySet<Object> elements) {}
+
+    record ItemValues(NonEmptyMap<String, Item> values, NonEmptySet<Item> elements) {}
+
+    enum Color { RED }
+
+    private static ObjectMapper nonFinalTypingMapper() {
+        return JsonMapper.builder().addModule(new DmxFunModule())
+            .activateDefaultTyping(
+                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
+                DefaultTyping.NON_FINAL)
+            .build();
+    }
+
+    // -------------------------------------------------------------------------
     // NonEmptySet
     // -------------------------------------------------------------------------
 
@@ -716,6 +737,16 @@ class DmxFunModuleTest {
         void deserializeFromNonArray_throws() {
             assertThrows(DatabindException.class, () ->
                 mapper.readValue("42", new TypeReference<NonEmptySet<Integer>>() {}));
+        }
+
+        @Test
+        void declaredObjectElements_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("k", 1), NonEmptySet.of(new Item("x"), Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"elements\":[[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]]");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(back.elements().head()).isEqualTo(new Item("x"));
         }
 
         @Test
@@ -787,12 +818,41 @@ class DmxFunModuleTest {
         }
 
         @Test
-        void serializeWithDefaultTyping_staysAPlainObject() throws Exception {
-            var typed = JsonMapper.builder().addModule(new DmxFunModule())
-                .activateDefaultTyping(
-                    BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
-                    DefaultTyping.NON_FINAL)
+        void unknownEnumKeyReadAsNull_throws() {
+            var lenient = JsonMapper.builder().addModule(new DmxFunModule())
+                .enable(EnumFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
                 .build();
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                lenient.readValue("{\"BLUE\":1}", new TypeReference<NonEmptyMap<Color, Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null key for 'BLUE'");
+            var known = lenient.readValue("{\"RED\":1}", new TypeReference<NonEmptyMap<Color, Integer>>() {});
+            assertThat(known.toMap()).isEqualTo(Map.of(Color.RED, 1));
+        }
+
+        @Test
+        void declaredObjectValues_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("a", new Item("x")), NonEmptySet.of(1, Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"values\":{\"a\":[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]}");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(back.values().headValue()).isEqualTo(new Item("x"));
+        }
+
+        @Test
+        void declaredFinalValues_stayPlainUnderNonFinalTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ItemValues(NonEmptyMap.singleton("a", new Item("x")), NonEmptySet.of(new Item("y"), Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).isEqualTo("{\"values\":{\"a\":{\"name\":\"x\"}},\"elements\":[{\"name\":\"y\"}]}");
+            var back = typed.readValue(json, ItemValues.class);
+            assertThat(back.values().headValue()).isEqualTo(new Item("x"));
+            assertThat(back.elements().head()).isEqualTo(new Item("y"));
+        }
+
+        @Test
+        void serializeWithDefaultTyping_staysAPlainObject() throws Exception {
+            var typed = nonFinalTypingMapper();
             var json = typed.writeValueAsString(NonEmptyMap.of("a", 1, Map.of()));
             assertThat(json).isEqualTo("{\"a\":1}");
             var back = typed.readValue(json, new TypeReference<NonEmptyMap<String, Integer>>() {});
