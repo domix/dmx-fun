@@ -1,0 +1,14 @@
+---
+fileName: 'chapter03/EnrollmentService.java — charge, before'
+---
+
+```java
+    private Result<Integer, EnrollmentError> charge(String studentId, int amountCents) {
+        try {
+            payments.charge(studentId, amountCents);
+            return Result.ok(amountCents);
+        } catch (PaymentException e) {
+            return Result.err(new PaymentFailed(e.getMessage())); // chapter 4 removes this try/catch
+        }
+    }
+```

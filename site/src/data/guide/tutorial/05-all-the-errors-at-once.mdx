@@ -1,0 +1,69 @@
+---
+title: "Tutorial 5 — All the errors at once"
+description: "Chapter 5 of the dmx-fun tutorial: validating the sign-up form with Validated so every problem is reported together, then turning the rules into Guard values, and bridging into the Result pipeline."
+order: 106
+h1: "5. All the errors at once"
+---
+
+import {Content as Form}   from '../../code/guide/tutorial/05/form.mdx';
+import {Content as ByHand} from '../../code/guide/tutorial/05/by-hand.mdx';
+import {Content as Guards} from '../../code/guide/tutorial/05/guards.mdx';
+import {Content as Bridge} from '../../code/guide/tutorial/05/bridge.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+So far `enroll` received clean ids. Real enrollments start with a form, and forms arrive as
+strings. A user who gets their email, age and id wrong wants to hear about all three, not fix
+one, submit, and discover the next.
+
+<Form/>
+
+## Where the two tracks stop helping
+
+A `Result` chain stops at the first failure; that is its whole point. For a form it is the
+wrong behaviour: three bad fields would surface one at a time. `Validated` is the type for this
+case. Each field check produces a `Validated`, and combining them keeps **every** error:
+
+<ByHand/>
+
+`combine` takes the other check, a way to merge errors, and a way to merge values. When both
+sides are valid, the values merge; when either is invalid, the errors do. `NonEmptyList::concat`
+is the merger, because a list of errors that exists is never empty. Three bad fields produce one
+`Invalid` with three messages, in field order.
+
+It works, and the pattern is already repeating: a predicate, a message, a ternary. By the fifth
+form you will have written it twenty times.
+
+## Rules as values
+
+<Guards/>
+
+A `Guard` is one rule: a predicate and the message for when it fails. `NOT_BLANK`, `EMAIL` and
+`AGE_AT_LEAST_16` are written once and know nothing about forms. `contramap` points a rule at a
+field and prefixes the message with the field name. `allOf` runs every rule and collects every
+failure, which is exactly what `byHand` did with `combine`, minus the ceremony. The same guards
+can validate the next form, a request body, or a CSV row.
+
+`Guard.ofCatching` is chapter 4 at the scale of a single rule: `parseInt` throws on `"fifteen"`,
+and the exception is folded into the rule's message instead of escaping.
+
+## The bridge into the pipeline
+
+<Bridge/>
+
+`toResult` turns the `Validated` into a `Result`, and `mapError` wraps the message list into
+`InvalidForm`, the sixth case of `EnrollmentError`. From there the chapter 4 pipeline runs
+unchanged. A bad form never reaches the catalog or the gateway.
+
+Notice the boundary this draws. Form errors are **messages for a user**, accumulated, and they
+live in `NonEmptyList<String>`. Everything after the form is a **typed domain error** meant for
+code to switch on. Keeping the two apart is what lets the pipeline stay exhaustive while the
+form stays flexible.
+
+## What changed since chapter 4
+
+- `enroll` takes a raw `EnrollmentForm`; validation is the first step of the chain.
+- Field checks accumulate with `Validated`, first by hand, then as reusable `Guard` values.
+- `EnrollmentError.InvalidForm` carries all the messages into the failure track.
+
+<p>Reference: <a href={`${base}guide/validated`}>`Validated<E, A>`</a> and <a href={`${base}guide/guard`}>`Guard<T>`</a> · Previous: <a href={`${base}guide/tutorial/04-capture-at-the-edge`}>4. Capture at the edge</a></p>
