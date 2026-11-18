@@ -41,6 +41,6 @@ mavenPublishing {
     coordinates("codes.domix", "fun-jackson2", "${project.version}")
     pom {
         name = 'dmx-fun Jackson 2 integration'
-        description = 'Jackson 2 (com.fasterxml.jackson) module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, and NonEmptyList.'
+        description = 'Jackson 2 (com.fasterxml.jackson) module for dmx-fun: serializers and deserializers for Option, Result, Try, Validated, Either, Lazy, Tuple2/3/4, NonEmptyList, NonEmptySet, and NonEmptyMap.'
     }
 }

@@ -3,6 +3,8 @@ package dmx.fun.jackson2;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import dmx.fun.Either;
 import dmx.fun.NonEmptyList;
+import dmx.fun.NonEmptyMap;
+import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Try;
@@ -35,7 +37,9 @@ public class DmxFunModule extends SimpleModule {
      * serialization and deserialization for various dmx-fun types. During construction,
      * it registers custom serializers and deserializers for types such as {@code Try},
      * {@code Either}, {@code Option}, {@code Result}, {@code Validated}, {@code Tuple2},
-     * {@code Tuple3}, {@code Tuple4}, and {@code NonEmptyList}.
+     * {@code Tuple3}, {@code Tuple4}, {@code NonEmptyList}, {@code NonEmptySet}, and {@code NonEmptyMap}.
+     * The {@code NonEmptySet} and {@code NonEmptyMap} serializers are the exception: they are
+     * contributed by {@link #setupModule(SetupContext)} when the module is registered.
      * <p>
      * It is used to ensure these types are correctly processed by Jackson's {@code ObjectMapper}.
      * <p>
@@ -61,6 +65,21 @@ public class DmxFunModule extends SimpleModule {
         addSerializer(new NonEmptyListSerializer());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Besides the class-keyed serializers above, registers {@link NonEmptySerializers}, which
+     * builds the {@code NonEmptySet} and {@code NonEmptyMap} serializers from the full
+     * {@code JavaType} so the declared element and value types drive content serialization.
+     * It is registered first so that class-keyed serializers added to this module afterwards
+     * take precedence over it.
+     */
+    @Override
+    public void setupModule(SetupContext context) {
+        context.addSerializers(new NonEmptySerializers());
+        super.setupModule(context);
+    }
+
     @SuppressWarnings("unchecked")
     private void registerDeserializers() {
         addDeserializer(Option.class, new OptionDeserializer());
@@ -72,5 +91,7 @@ public class DmxFunModule extends SimpleModule {
         addDeserializer(Tuple3.class, new Tuple3Deserializer());
         addDeserializer(Tuple4.class, new Tuple4Deserializer());
         addDeserializer(NonEmptyList.class, new NonEmptyListDeserializer());
+        addDeserializer(NonEmptySet.class, new NonEmptySetDeserializer());
+        addDeserializer(NonEmptyMap.class, new NonEmptyMapDeserializer());
     }
 }
