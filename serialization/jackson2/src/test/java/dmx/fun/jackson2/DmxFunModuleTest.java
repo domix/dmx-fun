@@ -1,6 +1,7 @@
 package dmx.fun.jackson2;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -717,6 +718,21 @@ class DmxFunModuleTest {
 
     record Zoo(Set<Animal> plain, NonEmptySet<Animal> set, NonEmptyMap<String, Animal> map) {}
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+    @JsonSubTypes(@JsonSubTypes.Type(value = Pet.class, name = "pet"))
+    static class TypedAnimal { public String name; }
+
+    static class Pet extends TypedAnimal { public String breed; }
+
+    record TypedZoo(Set<TypedAnimal> plain, NonEmptySet<TypedAnimal> set, NonEmptyMap<String, TypedAnimal> map) {}
+
+    private static Pet pet() {
+        var pet = new Pet();
+        pet.name = "rex";
+        pet.breed = "collie";
+        return pet;
+    }
+
     private static Dog dog() {
         var dog = new Dog();
         dog.name = "rex";
@@ -822,6 +838,15 @@ class DmxFunModuleTest {
             var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
             assertThat(staticMapper.writeValueAsString(zoo))
                 .isEqualTo("{\"plain\":[{\"name\":\"rex\"}],\"set\":[{\"name\":\"rex\"}],\"map\":{\"a\":{\"name\":\"rex\"}}}");
+        }
+
+        @Test
+        void staticTyping_staysDynamicWhenTheElementTypeCarriesTypeIds() throws Exception {
+            var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
+            var json = staticMapper.writeValueAsString(new TypedZoo(Set.of(pet()), NonEmptySet.singleton(pet()), NonEmptyMap.singleton("a", pet())));
+            var plain = json.substring(json.indexOf("[") + 1, json.indexOf("]"));
+            assertThat(plain).contains("\"breed\":\"collie\"").contains("\"@type\":\"pet\"");
+            assertThat(json).isEqualTo("{\"plain\":[" + plain + "],\"set\":[" + plain + "],\"map\":{\"a\":" + plain + "}}");
         }
 
         @Test
