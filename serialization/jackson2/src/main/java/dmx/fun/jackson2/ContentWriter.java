@@ -16,8 +16,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * Writes the elements of a container through the serializer of their declared type, the way
  * Jackson's own collection and map serializers do: a final declared type (or any declared type
- * other than {@code Object} under {@code MapperFeature.USE_STATIC_TYPING}) resolves its serializer
- * once, any other type resolves per runtime class (specialized by the declared generic bindings
+ * other than {@code Object} under {@code MapperFeature.USE_STATIC_TYPING}, unless it carries type
+ * ids) resolves its serializer once, any other type resolves per runtime class (specialized by the declared generic bindings
  * when there are any) and caches the result, and a {@link TypeSerializer} for the declared type
  * is applied when default typing or {@code @JsonTypeInfo} asks for one.
  *
@@ -45,8 +45,11 @@ final class ContentWriter {
     static ContentWriter of(SerializerProvider provider, JavaType declaredType, @Nullable BeanProperty property)
             throws JsonMappingException {
         TypeSerializer typeSerializer = provider.findTypeSerializer(declaredType);
-        boolean staticTyping = declaredType.isFinal()
-            || (provider.isEnabled(MapperFeature.USE_STATIC_TYPING) && !declaredType.isJavaLangObject());
+        // Like BasicSerializerFactory.buildContainerSerializer: a declared type that carries type ids
+        // is always resolved dynamically, so subtypes keep their own fields.
+        boolean staticTyping = typeSerializer == null
+            && (declaredType.isFinal()
+                || (provider.isEnabled(MapperFeature.USE_STATIC_TYPING) && !declaredType.isJavaLangObject()));
         JsonSerializer<Object> staticSerializer = staticTyping
             ? provider.findContentValueSerializer(declaredType, property)
             : null;
