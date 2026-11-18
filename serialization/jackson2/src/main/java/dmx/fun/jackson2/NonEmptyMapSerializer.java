@@ -1,11 +1,14 @@
 package dmx.fun.jackson2;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.WritableTypeId;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.ContextualSerializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import dmx.fun.NonEmptyMap;
@@ -19,7 +22,9 @@ import org.jspecify.annotations.Nullable;
  * head entry first. Keys use the key serializer of the declared key type ({@code Object}, hence
  * dynamic, when unresolved). Values are written through the serializer of the declared value type
  * and carry the type metadata that type calls for, as a {@code Map} would (see
- * {@link ContentWriter}); the object itself is never wrapped.
+ * {@link ContentWriter}). The object itself carries a type id only when the slot holding the map
+ * asks for one (for example an {@code Object} field under default typing), again as a
+ * {@code Map} would.
  */
 @NullMarked
 @SuppressWarnings("rawtypes")
@@ -51,15 +56,27 @@ class NonEmptyMapSerializer extends StdSerializer<NonEmptyMap> implements Contex
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void serialize(NonEmptyMap value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeStartObject();
+        writeEntries(value, gen, provider);
+        gen.writeEndObject();
+    }
+
+    @Override
+    public void serializeWithType(NonEmptyMap value, JsonGenerator gen, SerializerProvider provider,
+                                  TypeSerializer typeSer) throws IOException {
+        WritableTypeId typeId = typeSer.writeTypePrefix(gen, typeSer.typeId(value, JsonToken.START_OBJECT));
+        writeEntries(value, gen, provider);
+        typeSer.writeTypeSuffix(gen, typeId);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void writeEntries(NonEmptyMap value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         JsonSerializer<Object> keySer = keySerializer != null ? keySerializer : provider.findKeySerializer(keyType, null);
         ContentWriter writer = values != null ? values : ContentWriter.of(provider, valueType, null);
-        gen.writeStartObject();
         for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value.toMap()).entrySet()) {
             keySer.serialize(entry.getKey(), gen, provider);
             writer.write(entry.getValue(), gen, provider);
         }
-        gen.writeEndObject();
     }
 }

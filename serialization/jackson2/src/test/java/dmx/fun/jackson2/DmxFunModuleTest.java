@@ -1,9 +1,13 @@
 package dmx.fun.jackson2;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,6 +23,9 @@ import dmx.fun.Tuple2;
 import dmx.fun.Tuple3;
 import dmx.fun.Tuple4;
 import dmx.fun.Validated;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -698,6 +705,27 @@ class DmxFunModuleTest {
 
     enum Color { RED }
 
+    record Dated(
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC") NonEmptySet<Date> dates,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC") NonEmptyMap<String, Date> byName) {}
+
+    record Typed(@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS) Object value) {}
+
+    static class Animal { public String name; }
+
+    static class Dog extends Animal { public String breed; }
+
+    record Zoo(Set<Animal> plain, NonEmptySet<Animal> set, NonEmptyMap<String, Animal> map) {}
+
+    private static Dog dog() {
+        var dog = new Dog();
+        dog.name = "rex";
+        dog.breed = "collie";
+        return dog;
+    }
+
+    private static final Date JAN_2 = Date.from(LocalDate.of(2024, 1, 2).atStartOfDay(ZoneOffset.UTC).toInstant());
+
     private static ObjectMapper nonFinalTypingMapper() {
         return new ObjectMapper().registerModule(new DmxFunModule())
             .activateDefaultTyping(
@@ -767,6 +795,46 @@ class DmxFunModuleTest {
         }
 
         @Test
+        void inObjectSlot_carriesItsOwnTypeIdAndRoundTrips() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("k", 1), NonEmptySet.of(NonEmptyMap.singleton("a", 1), Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"elements\":[[\"dmx.fun.NonEmptyMap\",{\"a\":1}]]");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(back.elements().head()).isInstanceOf(NonEmptyMap.class);
+            assertThat(((NonEmptyMap<?, ?>) back.elements().head()).headValue()).isEqualTo(1);
+        }
+
+        @Test
+        void asPropertyTypeId_roundTrips() throws Exception {
+            var json = mapper.writeValueAsString(new Typed(NonEmptySet.singleton(1)));
+            assertThat(json).isEqualTo("{\"value\":[\"dmx.fun.NonEmptySet\",[1]]}");
+            var back = mapper.readValue(json, Typed.class);
+            assertThat(((NonEmptySet<?>) back.value()).head()).isEqualTo(1);
+        }
+
+        @Test
+        void staticTyping_usesTheDeclaredElementSerializer() throws Exception {
+            var zoo = new Zoo(Set.of(dog()), NonEmptySet.singleton(dog()), NonEmptyMap.singleton("a", dog()));
+            assertThat(mapper.writeValueAsString(zoo))
+                .isEqualTo("{\"plain\":[{\"name\":\"rex\",\"breed\":\"collie\"}],\"set\":[{\"name\":\"rex\",\"breed\":\"collie\"}],"
+                    + "\"map\":{\"a\":{\"name\":\"rex\",\"breed\":\"collie\"}}}");
+            var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
+            assertThat(staticMapper.writeValueAsString(zoo))
+                .isEqualTo("{\"plain\":[{\"name\":\"rex\"}],\"set\":[{\"name\":\"rex\"}],\"map\":{\"a\":{\"name\":\"rex\"}}}");
+        }
+
+        @Test
+        void propertyFormat_appliesToElements() throws Exception {
+            var holder = new Dated(NonEmptySet.singleton(JAN_2), NonEmptyMap.singleton("a", JAN_2));
+            var json = mapper.writeValueAsString(holder);
+            assertThat(json).isEqualTo("{\"dates\":[\"2024-01-02\"],\"byName\":{\"a\":\"2024-01-02\"}}");
+            var back = mapper.readValue(json, Dated.class);
+            assertThat(back.dates().head()).isEqualTo(JAN_2);
+            assertThat(back.byName().headValue()).isEqualTo(JAN_2);
+        }
+
+        @Test
         void nullElementThrows() {
             var ex = assertThrows(MismatchedInputException.class, () ->
                 mapper.readValue("[null]", new TypeReference<NonEmptySet<Integer>>() {}));
@@ -825,6 +893,27 @@ class DmxFunModuleTest {
         void deserializeFromNonObject_throws() {
             assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("[1]", new TypeReference<NonEmptyMap<String, Integer>>() {}));
+        }
+
+        @Test
+        void inObjectSlot_carriesItsOwnTypeIdAndRoundTrips() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("s", NonEmptySet.singleton(1)), NonEmptySet.of(1, Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"values\":{\"s\":[\"dmx.fun.NonEmptySet\",[1]]}");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(back.values().headValue()).isInstanceOf(NonEmptySet.class);
+            assertThat(((NonEmptySet<?>) back.values().headValue()).head()).isEqualTo(1);
+        }
+
+        @Test
+        void asPropertyTypeId_roundTrips() throws Exception {
+            var json = mapper.writeValueAsString(new Typed(NonEmptyMap.singleton("a", 1)));
+            assertThat(json).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.NonEmptyMap\",\"a\":1}}");
+            var back = mapper.readValue(json, Typed.class);
+            assertThat(((NonEmptyMap<?, ?>) back.value()).headValue()).isEqualTo(1);
+            assertThrows(InvalidFormatException.class, () ->
+                mapper.readValue("{\"value\":{\"@class\":\"dmx.fun.NonEmptyMap\"}}", Typed.class));
         }
 
         @Test
