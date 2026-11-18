@@ -51,21 +51,15 @@ class EitherDeserializer extends StdDeserializer<Either> implements ContextualDe
 
     @Override
     public Either deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (p.currentToken() != JsonToken.START_OBJECT) {
-            throw ctxt.wrongTokenException(p, Either.class, JsonToken.START_OBJECT, "Expected object");
-        }
-        if (p.nextToken() != JsonToken.FIELD_NAME) {
-            throw ctxt.wrongTokenException(p, Either.class, JsonToken.FIELD_NAME, "Expected field name");
-        }
-        var fieldName = p.currentName();
+        String fieldName = ObjectEntries.firstFieldName(p, ctxt, Either.class);
         p.nextToken(); // move to value
 
         Either result;
         if ("right".equals(fieldName)) {
-            var value = rightType != null ? ctxt.readValue(p, rightType) : p.readValueAs(Object.class);
+            var value = rightType != null ? ctxt.readValue(p, rightType) : ctxt.readValue(p, Object.class);
             result = Either.right(value);
         } else if ("left".equals(fieldName)) {
-            var value = leftType != null ? ctxt.readValue(p, leftType) : p.readValueAs(Object.class);
+            var value = leftType != null ? ctxt.readValue(p, leftType) : ctxt.readValue(p, Object.class);
             result = Either.left(value);
         } else {
             throw ctxt.weirdStringException(fieldName, Either.class, "Expected 'right' or 'left' field");

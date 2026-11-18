@@ -1,6 +1,7 @@
 package dmx.fun.jackson3;
 
 import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.BeanProperty;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.JavaType;
@@ -50,7 +51,11 @@ class OptionDeserializer extends StdDeserializer<Option> {
 
     @Override
     public Option deserialize(JsonParser p, DeserializationContext ctxt) {
-        Object value = valueType != null ? ctxt.readValue(p, valueType) : p.readValueAs(Object.class);
+        if (p.hasToken(JsonToken.VALUE_NULL)) {
+            // Reached with an explicit null only inside a type-id wrapper; a bare null goes to getNullValue.
+            return Option.none();
+        }
+        Object value = valueType != null ? ctxt.readValue(p, valueType) : ctxt.readValue(p, Object.class);
         return Option.some(value);
     }
 }

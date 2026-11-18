@@ -38,8 +38,8 @@ public class DmxFunModule extends SimpleModule {
      * it registers custom serializers and deserializers for types such as {@code Try},
      * {@code Either}, {@code Option}, {@code Result}, {@code Validated}, {@code Tuple2},
      * {@code Tuple3}, {@code Tuple4}, {@code NonEmptyList}, {@code NonEmptySet}, and {@code NonEmptyMap}.
-     * The {@code NonEmptySet} and {@code NonEmptyMap} serializers are the exception: they are
-     * contributed by {@link #setupModule(SetupContext)} when the module is registered.
+     * The {@code NonEmptyList}, {@code NonEmptySet} and {@code NonEmptyMap} serializers are the
+     * exception: they are contributed by {@link #setupModule(SetupContext)} when the module is registered.
      * <p>
      * It is used to ensure these types are correctly processed by Jackson's {@code ObjectMapper}.
      * <p>
@@ -62,15 +62,14 @@ public class DmxFunModule extends SimpleModule {
         addSerializer(new Tuple2Serializer());
         addSerializer(new Tuple3Serializer());
         addSerializer(new Tuple4Serializer());
-        addSerializer(new NonEmptyListSerializer());
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>Besides the class-keyed serializers above, registers {@link NonEmptySerializers}, which
-     * builds the {@code NonEmptySet} and {@code NonEmptyMap} serializers from the full
-     * {@code JavaType} so the declared element and value types drive content serialization.
+     * builds the {@code NonEmptyList}, {@code NonEmptySet} and {@code NonEmptyMap} serializers from
+     * the full {@code JavaType} so the declared element and value types drive content serialization.
      * It is registered first so that class-keyed serializers added to this module afterwards
      * take precedence over it.
      */

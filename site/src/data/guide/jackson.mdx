@@ -99,6 +99,33 @@ explicit wiring.
 | `NonEmptySet<T>`     | `[head, ...rest]` | —                      |
 | `NonEmptyMap<K, V>`  | `{k: v, ...}`     | —                      |
 
+## Type ids and polymorphic typing
+
+The shapes above never carry type metadata on their own. When Jackson asks for a type id, through
+`@JsonTypeInfo` on a property, or default typing (`activateDefaultTyping`), both modules behave the
+way Jackson's own `List`, `Set` and `Map` codecs do:
+
+- **Contents** are written through the serializer of the declared element, key or value type, so a
+  `NonEmptySet<Object>` holding a record `Item` carries the `Item` type id under `NON_FINAL` default
+  typing while a `NonEmptySet<Item>` does not (records are final, so `NON_FINAL` never asks). Property-level `@JsonFormat` and `@JsonSerialize(typing = ...)`
+  apply to the contents as they would for a `List`.
+- **The dmx-fun value itself** carries a type id only when the slot holding it asks for one (an
+  `Object` field under default typing, or `@JsonTypeInfo` on the property). The id names the dmx-fun
+  type (`dmx.fun.Result` with `Id.CLASS`, `Result` with `Id.NAME`, never the implementation class) and
+  is written around the value's own shape:
+
+| Value                                              | `@JsonTypeInfo(use = Id.CLASS)` on an `Object` field      |
+|----------------------------------------------------|-----------------------------------------------------------|
+| `Result`, `Validated`, `Either`, `Try.failure`, `NonEmptyMap` | `{"@class": "dmx.fun.Result", "ok": v}` (inline, like a POJO) |
+| `Tuple2/3/4`, `NonEmptyList`, `NonEmptySet`        | `["dmx.fun.Tuple2", [a, b]]` (wrapper array, like a `List`) |
+| `Option`, `Try.success`                            | `["dmx.fun.Option", v]` (wrapper array, like a scalar: the value is transparent) |
+
+A document written this way round-trips through the same module, and through the other line. With
+`Id.NAME` or `Id.SIMPLE_NAME`, register the dmx-fun types you use (`registerSubtypes(Result.class, ...)`),
+as you would for any named subtype.
+Without a type id request nothing is wrapped, so the shapes table stays the contract for plain
+properties.
+
 ## Round-trip examples
 
 The examples below use the Jackson 2 API. With Jackson 3 only the mapper construction differs

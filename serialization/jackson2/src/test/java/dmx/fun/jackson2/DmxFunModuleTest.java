@@ -7,9 +7,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
@@ -672,6 +674,39 @@ class DmxFunModuleTest {
             assertThrows(JsonMappingException.class, () ->
                 mapper.readValue("42", new TypeReference<NonEmptyList<Integer>>() {}));
         }
+
+        @Test
+        void nullElementThrows() {
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                mapper.readValue("[null]", new TypeReference<NonEmptyList<Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null element");
+        }
+
+        @Test
+        void declaredObjectElements_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var json = typed.writeValueAsString(new ObjectList(NonEmptyList.of(new Item("x"), List.of())));
+            assertThat(json).isEqualTo("{\"items\":[[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]]}");
+            var back = typed.readValue(json, ObjectList.class);
+            assertThat(back.items().head()).isEqualTo(new Item("x"));
+        }
+
+        @Test
+        void propertyFormat_appliesToElements() throws Exception {
+            var json = mapper.writeValueAsString(new DatedList(NonEmptyList.of(JAN_2, List.of())));
+            assertThat(json).isEqualTo("{\"dates\":[\"2024-01-02\"]}");
+            assertThat(mapper.readValue(json, DatedList.class).dates().head()).isEqualTo(JAN_2);
+        }
+
+        @Test
+        void inObjectSlot_carriesItsOwnTypeIdAndRoundTrips() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("l", NonEmptyList.of(1, List.of(2))), NonEmptySet.of(1, Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"values\":{\"l\":[\"dmx.fun.NonEmptyList\",[1,2]]}");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(((NonEmptyList<?>) back.values().headValue()).toList()).isEqualTo(List.of(1, 2));
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -711,6 +746,25 @@ class DmxFunModuleTest {
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC") NonEmptyMap<String, Date> byName) {}
 
     record Typed(@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS) Object value) {}
+
+    record ObjectList(NonEmptyList<Object> items) {}
+
+    record DatedList(
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC") NonEmptyList<Date> dates) {}
+
+    record DynamicZoo(
+        @JsonSerialize(typing = JsonSerialize.Typing.DYNAMIC) NonEmptySet<Animal> set,
+        @JsonSerialize(typing = JsonSerialize.Typing.DYNAMIC) NonEmptyMap<String, Animal> map,
+        @JsonSerialize(typing = JsonSerialize.Typing.DYNAMIC) NonEmptyList<Animal> list) {}
+
+    record Named(@JsonTypeInfo(use = JsonTypeInfo.Id.NAME) Object value) {}
+
+    record AnnotatedZoo(@JsonSerialize NonEmptySet<Animal> set) {}
+
+    record StaticZoo(
+        @JsonSerialize(typing = JsonSerialize.Typing.STATIC) NonEmptySet<Animal> set,
+        @JsonSerialize(typing = JsonSerialize.Typing.STATIC) NonEmptyMap<String, Animal> map,
+        @JsonSerialize(typing = JsonSerialize.Typing.STATIC) NonEmptyList<Animal> list) {}
 
     static class Animal { public String name; }
 
@@ -1052,6 +1106,126 @@ class DmxFunModuleTest {
             assertThat(json).isEqualTo("{\"ok\":{\"a\":1}}");
             var back = mapper.readValue(json, new TypeReference<Result<NonEmptyMap<String, Integer>, String>>() {});
             assertThat(back.get().toMap()).isEqualTo(Map.of("a", 1));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Type ids on the dmx-fun values themselves (@JsonTypeInfo on an Object slot)
+    // -------------------------------------------------------------------------
+
+    @Nested
+    class TypeIdTests {
+
+        private String write(Object value) throws Exception {
+            return mapper.writeValueAsString(new Typed(value));
+        }
+
+        private Object read(String json) throws Exception {
+            return mapper.readValue(json, Typed.class).value();
+        }
+
+        @Test
+        void option_isWrappedLikeAScalar() throws Exception {
+            var some = write(Option.some(42));
+            assertThat(some).isEqualTo("{\"value\":[\"dmx.fun.Option\",42]}");
+            assertThat(((Option<?>) read(some)).get()).isEqualTo(42);
+
+            var none = write(Option.none());
+            assertThat(none).isEqualTo("{\"value\":[\"dmx.fun.Option\",null]}");
+            assertThat(((Option<?>) read(none)).isEmpty()).isTrue();
+        }
+
+        @Test
+        void result_carriesTheIdInsideItsObject() throws Exception {
+            var ok = write(Result.ok(42));
+            assertThat(ok).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Result\",\"ok\":42}}");
+            assertThat(((Result<?, ?>) read(ok)).get()).isEqualTo(42);
+
+            var err = write(Result.err("bad"));
+            assertThat(err).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Result\",\"err\":\"bad\"}}");
+            assertThat(((Result<?, ?>) read(err)).getError()).isEqualTo("bad");
+        }
+
+        @Test
+        void try_successIsWrappedAndFailureCarriesTheIdInsideItsObject() throws Exception {
+            var success = write(Try.success(42));
+            assertThat(success).isEqualTo("{\"value\":[\"dmx.fun.Try\",42]}");
+            assertThat(((Try<?>) read(success)).get()).isEqualTo(42);
+
+            var failure = write(Try.failure(new RuntimeException("boom")));
+            assertThat(failure).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Try\",\"error\":\"boom\"}}");
+            var back = (Try<?>) read(failure);
+            assertThat(back.isFailure()).isTrue();
+            assertThat(back.getCause().getMessage()).isEqualTo("boom");
+        }
+
+        @Test
+        void validated_carriesTheIdInsideItsObject() throws Exception {
+            var json = write(Validated.valid(42));
+            assertThat(json).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Validated\",\"valid\":42}}");
+            assertThat(((Validated<?, ?>) read(json)).get()).isEqualTo(42);
+        }
+
+        @Test
+        void either_carriesTheIdInsideItsObject() throws Exception {
+            var json = write(Either.left("l"));
+            assertThat(json).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Either\",\"left\":\"l\"}}");
+            assertThat(((Either<?, ?>) read(json)).getLeft()).isEqualTo("l");
+        }
+
+        @Test
+        void tuples_carryTheIdAroundTheirArray() throws Exception {
+            var t2 = write(Tuple2.of(1, 2));
+            assertThat(t2).isEqualTo("{\"value\":[\"dmx.fun.Tuple2\",[1,2]]}");
+            assertThat(read(t2)).isEqualTo(Tuple2.of(1, 2));
+
+            var t3 = write(Tuple3.of(1, 2, 3));
+            assertThat(t3).isEqualTo("{\"value\":[\"dmx.fun.Tuple3\",[1,2,3]]}");
+            assertThat(read(t3)).isEqualTo(Tuple3.of(1, 2, 3));
+
+            var t4 = write(Tuple4.of(1, 2, 3, 4));
+            assertThat(t4).isEqualTo("{\"value\":[\"dmx.fun.Tuple4\",[1,2,3,4]]}");
+            assertThat(read(t4)).isEqualTo(Tuple4.of(1, 2, 3, 4));
+        }
+
+        @Test
+        void nonEmptyList_carriesTheIdAroundItsArray() throws Exception {
+            var json = write(NonEmptyList.of(1, List.of(2)));
+            assertThat(json).isEqualTo("{\"value\":[\"dmx.fun.NonEmptyList\",[1,2]]}");
+            assertThat(((NonEmptyList<?>) read(json)).toList()).isEqualTo(List.of(1, 2));
+        }
+
+        @Test
+        void nameIds_nameTheDmxFunType() throws Exception {
+            var named = JsonMapper.builder().addModule(new DmxFunModule()).build();
+            named.registerSubtypes(new NamedType(Result.class, "Result"), new NamedType(Option.class, "Option"));
+            var result = named.writeValueAsString(new Named(Result.ok(42)));
+            assertThat(result).isEqualTo("{\"value\":{\"@type\":\"Result\",\"ok\":42}}");
+            assertThat(((Result<?, ?>) named.readValue(result, Named.class).value()).get()).isEqualTo(42);
+
+            var option = named.writeValueAsString(new Named(Option.some(42)));
+            assertThat(option).isEqualTo("{\"value\":[\"Option\",42]}");
+            assertThat(((Option<?>) named.readValue(option, Named.class).value()).get()).isEqualTo(42);
+        }
+
+        @Test
+        void jsonSerializeWithoutTyping_doesNotDisableStaticTyping() throws Exception {
+            var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
+            assertThat(staticMapper.writeValueAsString(new AnnotatedZoo(NonEmptySet.singleton(dog()))))
+                .isEqualTo("{\"set\":[{\"name\":\"rex\"}]}");
+        }
+
+        @Test
+        void propertyTypingOverride_isHonouredByTheNonEmptyContainers() throws Exception {
+            var dynamic = new DynamicZoo(NonEmptySet.singleton(dog()), NonEmptyMap.singleton("a", dog()), NonEmptyList.of(dog(), List.of()));
+            var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
+            assertThat(staticMapper.writeValueAsString(dynamic))
+                .doesNotContain("[{\"name\":\"rex\"}]")
+                .contains("\"breed\":\"collie\"");
+
+            var fixed = new StaticZoo(NonEmptySet.singleton(dog()), NonEmptyMap.singleton("a", dog()), NonEmptyList.of(dog(), List.of()));
+            assertThat(mapper.writeValueAsString(fixed))
+                .isEqualTo("{\"set\":[{\"name\":\"rex\"}],\"map\":{\"a\":{\"name\":\"rex\"}},\"list\":[{\"name\":\"rex\"}]}");
         }
     }
 

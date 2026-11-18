@@ -50,8 +50,12 @@ class TryDeserializer extends StdDeserializer<Try> implements ContextualDeserial
 
     @Override
     public Try deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (p.currentToken() == JsonToken.START_OBJECT) {
-            ObjectNode node = p.readValueAsTree();
+        JsonToken token = p.currentToken();
+        // An As.PROPERTY type id leaves the parser on the first FIELD_NAME (or END_OBJECT) of the object.
+        if (token == JsonToken.START_OBJECT || token == JsonToken.FIELD_NAME || token == JsonToken.END_OBJECT) {
+            ObjectNode node = token == JsonToken.END_OBJECT
+                ? ctxt.getNodeFactory().objectNode()
+                : (ObjectNode) ctxt.readTree(p);
             if (node.size() == 1 && node.has("error")) {
                 var errorNode = node.get("error");
                 if (errorNode.isTextual() || errorNode.isNull()) {
@@ -71,7 +75,7 @@ class TryDeserializer extends StdDeserializer<Try> implements ContextualDeserial
             Object value = ctxt.readValue(p, valueType);
             return Try.success(value);
         }
-        Object value = p.readValueAs(Object.class);
+        Object value = ctxt.readValue(p, Object.class);
         return Try.success(value);
     }
 }
