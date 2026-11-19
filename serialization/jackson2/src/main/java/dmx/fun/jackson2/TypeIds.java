@@ -2,6 +2,7 @@ package dmx.fun.jackson2;
 
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.WritableTypeId;
+import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import org.jspecify.annotations.NullMarked;
 
@@ -18,6 +19,11 @@ final class TypeIds {
     }
 
     static WritableTypeId of(TypeSerializer typeSer, Object value, Class<?> dmxFunType, JsonToken shape) {
-        return typeSer.typeId(value, shape, typeSer.getTypeIdResolver().idFromValueAndType(null, dmxFunType));
+        TypeIdResolver resolver = typeSer.getTypeIdResolver();
+        if (resolver == null) {
+            // Id.DEDUCTION writes no id at all; only the shape matters.
+            return typeSer.typeId(value, shape);
+        }
+        return typeSer.typeId(value, shape, resolver.idFromValueAndType(null, dmxFunType));
     }
 }

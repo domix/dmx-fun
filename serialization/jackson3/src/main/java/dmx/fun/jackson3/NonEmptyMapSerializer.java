@@ -69,7 +69,7 @@ class NonEmptyMapSerializer extends StdSerializer<NonEmptyMap> {
     @SuppressWarnings("unchecked")
     private void writeEntries(NonEmptyMap value, JsonGenerator gen, SerializationContext ctxt) {
         ValueSerializer<Object> keySer = keySerializer != null ? keySerializer : ctxt.findKeySerializer(keyType, null);
-        ContentWriter writer = values != null ? values : ContentWriter.of(ctxt, valueType, null);
+        ContentWriter writer = ContentWriter.resolved(values, ctxt, valueType);
         for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value.toMap()).entrySet()) {
             keySer.serialize(entry.getKey(), gen, ctxt);
             writer.write(entry.getValue(), gen, ctxt);

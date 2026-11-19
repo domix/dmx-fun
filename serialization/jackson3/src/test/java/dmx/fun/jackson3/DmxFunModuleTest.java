@@ -789,6 +789,22 @@ class DmxFunModuleTest {
 
     record Named(@JsonTypeInfo(use = JsonTypeInfo.Id.NAME) Object value) {}
 
+    record Deduced(@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION) Object value) {}
+
+    record ObjectPayloads(Option<Object> option, Try<Object> attempt, Result<Object, String> result,
+                          Validated<String, Object> validated, Either<String, Object> either,
+                          Tuple2<Object, Integer> t2, Tuple3<Object, Integer, Integer> t3,
+                          Tuple4<Object, Integer, Integer, Integer> t4) {}
+
+    record SameTypeNesting(Option<Option<Item>> option, Tuple2<Tuple2<String, Integer>, String> tuple,
+                  Result<Result<String, Integer>, String> result, Either<Either<String, Integer>, String> either,
+                  NonEmptyList<NonEmptyList<Integer>> list) {}
+
+    record ItemPayloads(Option<Item> option, Try<Item> attempt, Result<Item, String> result,
+                        Validated<String, Item> validated, Either<String, Item> either,
+                        Tuple2<Item, Integer> t2, Tuple3<Item, Integer, Integer> t3,
+                        Tuple4<Item, Integer, Integer, Integer> t4) {}
+
     record AnnotatedZoo(@JsonSerialize NonEmptySet<Animal> set) {}
 
     record StaticZoo(
@@ -1228,6 +1244,64 @@ class DmxFunModuleTest {
             var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
             assertThat(staticMapper.writeValueAsString(new AnnotatedZoo(NonEmptySet.singleton(dog()))))
                 .isEqualTo("{\"set\":[{\"name\":\"rex\"}]}");
+        }
+
+        @Test
+        void deductionIds_writeNothingAndDoNotFail() throws Exception {
+            assertThat(mapper.writeValueAsString(new Deduced(Result.ok(1)))).isEqualTo("{\"value\":{\"ok\":1}}");
+            assertThat(mapper.writeValueAsString(new Deduced(Option.some(1)))).isEqualTo("{\"value\":1}");
+        }
+
+        @Test
+        void payloadsDeclaredAsObject_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var item = new Item("x");
+            var holder = new ObjectPayloads(Option.some(item), Try.success(item), Result.ok(item), Validated.valid(item),
+                Either.right(item), Tuple2.of(item, 1), Tuple3.of(item, 1, 2), Tuple4.of(item, 1, 2, 3));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json.split(java.util.regex.Pattern.quote(Item.class.getName()), -1)).hasSize(9);
+            var back = typed.readValue(json, ObjectPayloads.class);
+            assertThat(back.option().get()).isEqualTo(item);
+            assertThat(back.attempt().get()).isEqualTo(item);
+            assertThat(back.result().get()).isEqualTo(item);
+            assertThat(back.validated().get()).isEqualTo(item);
+            assertThat(back.either().getRight()).isEqualTo(item);
+            assertThat(back.t2()._1()).isEqualTo(item);
+            assertThat(back.t3()._1()).isEqualTo(item);
+            assertThat(back.t4()._1()).isEqualTo(item);
+        }
+
+        @Test
+        void nestedSameType_roundTrips() throws Exception {
+            var nested = new SameTypeNesting(Option.some(Option.some(new Item("x"))), Tuple2.of(Tuple2.of("a", 1), "b"),
+                Result.ok(Result.ok("v")), Either.left(Either.right(1)), NonEmptyList.of(NonEmptyList.of(1, List.of(2)), List.of()));
+            var plain = mapper.writeValueAsString(nested);
+            assertThat(plain).isEqualTo("{\"option\":{\"name\":\"x\"},\"tuple\":[[\"a\",1],\"b\"],\"result\":{\"ok\":{\"ok\":\"v\"}},"
+                + "\"either\":{\"left\":{\"right\":1}},\"list\":[[1,2]]}");
+            assertThat(mapper.readValue(plain, SameTypeNesting.class)).isEqualTo(nested);
+
+            var typed = nonFinalTypingMapper();
+            assertThat(typed.readValue(typed.writeValueAsString(nested), SameTypeNesting.class)).isEqualTo(nested);
+        }
+
+        @Test
+        void rootValues_underDefaultTyping_resolvePayloadsAsObject() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var json = typed.writeValueAsString(Result.<Item, String>ok(new Item("x")));
+            // Jackson resolves a root value by its runtime class (Result.Ok, with no bindings), so the
+            // payload type is Object and the final Item still gets an id, as inside a raw List at the root.
+            assertThat(json).isEqualTo("{\"ok\":[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]}");
+        }
+
+        @Test
+        void payloadsDeclaredAsFinalType_stayPlainUnderNonFinalTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var item = new Item("x");
+            var holder = new ItemPayloads(Option.some(item), Try.success(item), Result.ok(item), Validated.valid(item),
+                Either.right(item), Tuple2.of(item, 1), Tuple3.of(item, 1, 2), Tuple4.of(item, 1, 2, 3));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).doesNotContain(Item.class.getName());
+            assertThat(typed.readValue(json, ItemPayloads.class)).isEqualTo(holder);
         }
 
         @Test

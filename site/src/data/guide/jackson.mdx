@@ -105,10 +105,14 @@ The shapes above never carry type metadata on their own. When Jackson asks for a
 `@JsonTypeInfo` on a property, or default typing (`activateDefaultTyping`), both modules behave the
 way Jackson's own `List`, `Set` and `Map` codecs do:
 
-- **Contents** are written through the serializer of the declared element, key or value type, so a
-  `NonEmptySet<Object>` holding a record `Item` carries the `Item` type id under `NON_FINAL` default
-  typing while a `NonEmptySet<Item>` does not (records are final, so `NON_FINAL` never asks). Property-level `@JsonFormat` and `@JsonSerialize(typing = ...)`
-  apply to the contents as they would for a `List`.
+- **Contents and payloads** are written through the serializer of the declared type parameter, so a
+  `NonEmptySet<Object>` or a `Result<Object, E>` holding a record `Item` carries the `Item` type id
+  under `NON_FINAL` default typing while a `NonEmptySet<Item>` or `Result<Item, E>` does not (records
+  are final, so `NON_FINAL` never asks). Property-level `@JsonFormat` and `@JsonSerialize(typing = ...)`
+  apply to the contents as they would for a `List`. At the root, or in a raw or `Object`-typed slot,
+  the type parameters are unknown and count as `Object`, exactly like a raw `List` at the root; under
+  default typing Jackson resolves such a root value by its runtime class, so put dmx-fun values in a
+  property with a declared type when the payload type matters.
 - **The dmx-fun value itself** carries a type id only when the slot holding it asks for one (an
   `Object` field under default typing, or `@JsonTypeInfo` on the property). The id names the dmx-fun
   type (`dmx.fun.Result` with `Id.CLASS`, `Result` with `Id.NAME`, never the implementation class) and

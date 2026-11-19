@@ -62,7 +62,7 @@ class NonEmptyListSerializer extends StdSerializer<NonEmptyList> implements Cont
     }
 
     private void writeElements(NonEmptyList value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        ContentWriter writer = elements != null ? elements : ContentWriter.of(provider, elementType, null);
+        ContentWriter writer = ContentWriter.resolved(elements, provider, elementType);
         for (Object element : value) {
             writer.write(element, gen, provider);
         }

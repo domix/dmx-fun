@@ -23,8 +23,7 @@ import org.jspecify.annotations.Nullable;
  * when there are any) and caches the result, and a {@link TypeSerializer} for the declared type
  * is applied when default typing or {@code @JsonTypeInfo} asks for one.
  *
- * <p>Shared by {@link NonEmptyListSerializer}, {@link NonEmptySetSerializer} and
- * {@link NonEmptyMapSerializer}. Instances are
+ * <p>Shared by every dmx-fun serializer with a payload or contents. Instances are
  * created in {@code createContextual}, one per contextualized serializer.
  */
 @NullMarked
@@ -83,7 +82,20 @@ final class ContentWriter {
         return provider.isEnabled(MapperFeature.USE_STATIC_TYPING);
     }
 
-    void write(Object element, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    /**
+     * The contextual writer when there is one; otherwise one resolved on the spot. Jackson always
+     * contextualizes a serializer before using it, so the second branch is a safety net only.
+     */
+    static ContentWriter resolved(@Nullable ContentWriter contextual, SerializerProvider provider, JavaType declaredType)
+            throws JsonMappingException {
+        return contextual != null ? contextual : of(provider, declaredType, null);
+    }
+
+    void write(@Nullable Object element, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        if (element == null) {
+            provider.defaultSerializeNull(gen);
+            return;
+        }
         JsonSerializer<Object> serializer = staticSerializer != null ? staticSerializer : dynamicSerializer(element, provider);
         if (typeSerializer == null) {
             serializer.serialize(element, gen, provider);

@@ -39,11 +39,11 @@ public class DmxFunModule extends SimpleModule {
      * <p>
      * This module extends {@code SimpleModule} and is specifically designed to handle
      * serialization and deserialization for various dmx-fun types. During construction,
-     * it registers custom serializers and deserializers for types such as {@code Try},
-     * {@code Either}, {@code Option}, {@code Result}, {@code Validated}, {@code Tuple2},
-     * {@code Tuple3}, {@code Tuple4}, {@code NonEmptyList}, {@code NonEmptySet}, and {@code NonEmptyMap}.
-     * The {@code NonEmptyList}, {@code NonEmptySet} and {@code NonEmptyMap} serializers are the
-     * exception: they are contributed by {@link #setupModule(SetupContext)} when the module is registered.
+     * it registers custom deserializers for {@code Try}, {@code Either}, {@code Option},
+     * {@code Result}, {@code Validated}, {@code Tuple2}, {@code Tuple3}, {@code Tuple4},
+     * {@code NonEmptyList}, {@code NonEmptySet}, and {@code NonEmptyMap}. The matching serializers
+     * are contributed by {@link #setupModule(SetupContext)} when the module is registered, because
+     * they are built from the full declared type.
      * <p>
      * It is used to ensure these types are correctly processed by a Jackson 3 {@code ObjectMapper}.
      * <p>
@@ -52,34 +52,20 @@ public class DmxFunModule extends SimpleModule {
      */
     public DmxFunModule() {
         super("DmxFunModule");
-        registerSerializers();
         registerDeserializers();
-    }
-
-    @SuppressWarnings("unchecked")
-    private void registerSerializers() {
-        addSerializer(new OptionSerializer());
-        addSerializer(new ResultSerializer());
-        addSerializer(new TrySerializer());
-        addSerializer(new ValidatedSerializer());
-        addSerializer(new EitherSerializer());
-        addSerializer(new Tuple2Serializer());
-        addSerializer(new Tuple3Serializer());
-        addSerializer(new Tuple4Serializer());
     }
 
     /**
      * {@inheritDoc}
      *
-     * <p>Besides the class-keyed serializers above, registers {@link NonEmptySerializers}, which
-     * builds the {@code NonEmptyList}, {@code NonEmptySet} and {@code NonEmptyMap} serializers from
-     * the full {@code JavaType} so the declared element and value types drive content serialization.
-     * It is registered first so that class-keyed serializers added to this module afterwards
-     * take precedence over it.
+     * <p>Registers {@link DmxFunSerializers}, which builds every dmx-fun serializer from the full
+     * {@code JavaType} so the declared payload, element, key and value types drive content
+     * serialization. It is registered first so that class-keyed serializers added to this module
+     * with {@code addSerializer} take precedence over it.
      */
     @Override
     public void setupModule(SetupContext context) {
-        context.addSerializers(new NonEmptySerializers());
+        context.addSerializers(new DmxFunSerializers());
         super.setupModule(context);
     }
 

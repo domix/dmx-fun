@@ -58,7 +58,7 @@ class NonEmptySetSerializer extends StdSerializer<NonEmptySet> {
     }
 
     private void writeElements(NonEmptySet value, JsonGenerator gen, SerializationContext ctxt) {
-        ContentWriter writer = elements != null ? elements : ContentWriter.of(ctxt, elementType, null);
+        ContentWriter writer = ContentWriter.resolved(elements, ctxt, elementType);
         for (Object element : value) {
             writer.write(element, gen, ctxt);
         }
