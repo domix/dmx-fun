@@ -51,21 +51,15 @@ class ResultDeserializer extends StdDeserializer<Result> implements ContextualDe
 
     @Override
     public Result deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (p.currentToken() != JsonToken.START_OBJECT) {
-            throw ctxt.wrongTokenException(p, Result.class, JsonToken.START_OBJECT, "Expected object");
-        }
-        if (p.nextToken() != JsonToken.FIELD_NAME) {
-            throw ctxt.wrongTokenException(p, Result.class, JsonToken.FIELD_NAME, "Expected field name");
-        }
-        String fieldName = p.currentName();
+        String fieldName = ObjectEntries.firstFieldName(p, ctxt, Result.class);
         p.nextToken(); // move to value
 
         Result result;
         if ("ok".equals(fieldName)) {
-            Object value = valueType != null ? ctxt.readValue(p, valueType) : p.readValueAs(Object.class);
+            Object value = valueType != null ? ctxt.readValue(p, valueType) : ctxt.readValue(p, Object.class);
             result = Result.ok(value);
         } else if ("err".equals(fieldName)) {
-            Object error = errorType != null ? ctxt.readValue(p, errorType) : p.readValueAs(Object.class);
+            Object error = errorType != null ? ctxt.readValue(p, errorType) : ctxt.readValue(p, Object.class);
             result = Result.err(error);
         } else {
             throw ctxt.weirdStringException(fieldName, Result.class, "Expected 'ok' or 'err' field");

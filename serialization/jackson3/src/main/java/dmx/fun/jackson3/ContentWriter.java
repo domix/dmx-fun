@@ -6,6 +6,7 @@ import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ValueSerializer;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.jsontype.TypeSerializer;
 import tools.jackson.databind.ser.impl.PropertySerializerMap;
 import org.jspecify.annotations.NullMarked;
@@ -14,12 +15,13 @@ import org.jspecify.annotations.Nullable;
 /**
  * Writes the elements of a container through the serializer of their declared type, the way
  * Jackson's own collection and map serializers do: a final declared type (or any declared type
- * other than {@code Object} under {@code MapperFeature.USE_STATIC_TYPING}, unless it carries type
- * ids) resolves its serializer once, any other type resolves per runtime class (specialized by the declared generic bindings
+ * other than {@code Object} under {@code MapperFeature.USE_STATIC_TYPING} or a property-level
+ * {@code @JsonSerialize(typing = STATIC)}, unless it carries type ids) resolves its serializer
+ * once, any other type resolves per runtime class (specialized by the declared generic bindings
  * when there are any) and caches the result, and a {@link TypeSerializer} for the declared type
  * is applied when default typing or {@code @JsonTypeInfo} asks for one.
  *
- * <p>Shared by {@link NonEmptySetSerializer} and {@link NonEmptyMapSerializer}. Instances are
+ * <p>Shared by every dmx-fun serializer with a payload or contents. Instances are
  * created in {@code createContextual}, one per contextualized serializer.
  */
 @NullMarked
@@ -42,18 +44,54 @@ final class ContentWriter {
 
     static ContentWriter of(SerializationContext ctxt, JavaType declaredType, @Nullable BeanProperty property) {
         TypeSerializer typeSerializer = ctxt.findTypeSerializer(declaredType);
-        // Like BasicSerializerFactory.buildContainerSerializer: a declared type that carries type ids
-        // is always resolved dynamically, so subtypes keep their own fields.
-        boolean staticTyping = typeSerializer == null
-            && (declaredType.isFinal()
-                || (ctxt.isEnabled(MapperFeature.USE_STATIC_TYPING) && !declaredType.isJavaLangObject()));
-        ValueSerializer<Object> staticSerializer = staticTyping
+        if (typeSerializer != null) {
+            typeSerializer = typeSerializer.forProperty(ctxt, property);
+        }
+        ValueSerializer<Object> staticSerializer = usesStaticTyping(ctxt, declaredType, property, typeSerializer)
             ? ctxt.findContentValueSerializer(declaredType, property)
             : null;
         return new ContentWriter(declaredType, property, typeSerializer, staticSerializer);
     }
 
-    void write(Object element, JsonGenerator gen, SerializationContext ctxt) {
+    /**
+     * Mirrors Jackson's container serializers: a declared type that carries type ids is always
+     * resolved dynamically so subtypes keep their own fields; a final type is always static; otherwise
+     * {@code @JsonSerialize(typing = ...)} on the property wins, and {@code MapperFeature.USE_STATIC_TYPING}
+     * decides for every declared type but {@code Object}.
+     */
+    private static boolean usesStaticTyping(SerializationContext ctxt, JavaType declaredType,
+                                            @Nullable BeanProperty property, @Nullable TypeSerializer typeSerializer) {
+        if (typeSerializer != null) {
+            return false;
+        }
+        if (declaredType.isFinal()) {
+            return true;
+        }
+        if (declaredType.isJavaLangObject()) {
+            return false;
+        }
+        JsonSerialize.Typing typing = property != null && property.getMember() != null
+            ? ctxt.getAnnotationIntrospector().findSerializationTyping(ctxt.getConfig(), property.getMember())
+            : null;
+        if (typing != null && typing != JsonSerialize.Typing.DEFAULT_TYPING) {
+            return typing == JsonSerialize.Typing.STATIC;
+        }
+        return ctxt.isEnabled(MapperFeature.USE_STATIC_TYPING);
+    }
+
+    /**
+     * The contextual writer when there is one; otherwise one resolved on the spot. Jackson always
+     * contextualizes a serializer before using it, so the second branch is a safety net only.
+     */
+    static ContentWriter resolved(@Nullable ContentWriter contextual, SerializationContext ctxt, JavaType declaredType) {
+        return contextual != null ? contextual : of(ctxt, declaredType, null);
+    }
+
+    void write(@Nullable Object element, JsonGenerator gen, SerializationContext ctxt) {
+        if (element == null) {
+            ctxt.defaultSerializeNullValue(gen);
+            return;
+        }
         ValueSerializer<Object> serializer = staticSerializer != null ? staticSerializer : dynamicSerializer(element, ctxt);
         if (typeSerializer == null) {
             serializer.serialize(element, gen, ctxt);

@@ -18,7 +18,8 @@ import org.jspecify.annotations.Nullable;
  * and a JSON {@code null} goes through {@link ValueDeserializer#getNullValue}. Without a declared
  * type (raw container), values are read as {@code Object} through the active context.
  *
- * <p>Shared by {@link NonEmptySetDeserializer} and {@link NonEmptyMapDeserializer}. The result
+ * <p>Shared by {@link NonEmptyListDeserializer}, {@link NonEmptySetDeserializer} and
+ * {@link NonEmptyMapDeserializer}. The result
  * may be {@code null}; callers decide whether that is acceptable.
  */
 @NullMarked

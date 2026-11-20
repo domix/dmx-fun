@@ -62,7 +62,7 @@ class NonEmptySetSerializer extends StdSerializer<NonEmptySet> implements Contex
     }
 
     private void writeElements(NonEmptySet value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        ContentWriter writer = elements != null ? elements : ContentWriter.of(provider, elementType, null);
+        ContentWriter writer = ContentWriter.resolved(elements, provider, elementType);
         for (Object element : value) {
             writer.write(element, gen, provider);
         }

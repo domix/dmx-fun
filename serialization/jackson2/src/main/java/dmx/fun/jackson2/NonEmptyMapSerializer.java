@@ -73,7 +73,7 @@ class NonEmptyMapSerializer extends StdSerializer<NonEmptyMap> implements Contex
     @SuppressWarnings("unchecked")
     private void writeEntries(NonEmptyMap value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         JsonSerializer<Object> keySer = keySerializer != null ? keySerializer : provider.findKeySerializer(keyType, null);
-        ContentWriter writer = values != null ? values : ContentWriter.of(provider, valueType, null);
+        ContentWriter writer = ContentWriter.resolved(values, provider, valueType);
         for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value.toMap()).entrySet()) {
             keySer.serialize(entry.getKey(), gen, provider);
             writer.write(entry.getValue(), gen, provider);

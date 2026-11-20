@@ -4,10 +4,10 @@ import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.databind.BeanProperty;
 import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ValueDeserializer;
-import tools.jackson.databind.exc.InvalidFormatException;
 import tools.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.exc.MismatchedInputException;
 import dmx.fun.NonEmptyList;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,30 +15,30 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Deserializes JSON array to {@link NonEmptyList}.
- * Throws {@link InvalidFormatException} for empty arrays.
+ * Deserializes a JSON array to {@link NonEmptyList}. Elements are read through the deserializer
+ * of the declared element type (see {@link ContentReader}). Throws {@link InvalidFormatException}
+ * for empty arrays and {@link MismatchedInputException} for {@code null} elements.
  */
 @NullMarked
 @SuppressWarnings({"rawtypes", "unchecked"})
 class NonEmptyListDeserializer extends StdDeserializer<NonEmptyList> {
 
-    private final @Nullable JavaType elementType;
+    private final ContentReader elements;
 
     NonEmptyListDeserializer() {
-        super(NonEmptyList.class);
-        this.elementType = null;
+        this(ContentReader.raw());
     }
 
-    private NonEmptyListDeserializer(JavaType elementType) {
+    private NonEmptyListDeserializer(ContentReader elements) {
         super(NonEmptyList.class);
-        this.elementType = elementType;
+        this.elements = elements;
     }
 
     @Override
     public ValueDeserializer<?> createContextual(DeserializationContext ctxt, @Nullable BeanProperty property) {
         var contextualType = ctxt.getContextualType();
         if (contextualType != null && contextualType.containedTypeCount() > 0) {
-            return new NonEmptyListDeserializer(contextualType.containedType(0));
+            return new NonEmptyListDeserializer(ContentReader.of(ctxt, contextualType.containedType(0), property));
         }
         return this;
     }
@@ -48,18 +48,19 @@ class NonEmptyListDeserializer extends StdDeserializer<NonEmptyList> {
         if (p.currentToken() != JsonToken.START_ARRAY) {
             throw ctxt.wrongTokenException(p, NonEmptyList.class, JsonToken.START_ARRAY, "Expected array");
         }
-        List<Object> elements = new ArrayList<>();
+        List<Object> result = new ArrayList<>();
         while (p.nextToken() != JsonToken.END_ARRAY) {
-            var element = elementType != null ? ctxt.readValue(p, elementType) : p.readValueAs(Object.class);
-            elements.add(element);
+            Object element = elements.read(p, ctxt);
+            if (element == null) {
+                throw MismatchedInputException.from(p, NonEmptyList.class,
+                    "Cannot deserialize NonEmptyList with a null element");
+            }
+            result.add(element);
         }
 
-        if (elements.isEmpty()) {
+        if (result.isEmpty()) {
             throw InvalidFormatException.from(p, "Cannot deserialize NonEmptyList from empty array", null, NonEmptyList.class);
         }
-
-        Object head = elements.get(0);
-        List<Object> tail = elements.subList(1, elements.size());
-        return NonEmptyList.of(head, tail);
+        return NonEmptyList.of(result.get(0), result.subList(1, result.size()));
     }
 }

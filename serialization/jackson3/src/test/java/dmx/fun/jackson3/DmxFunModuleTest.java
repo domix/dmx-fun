@@ -7,9 +7,11 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.DefaultTyping;
 import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.cfg.EnumFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.jsontype.NamedType;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.exc.InvalidFormatException;
 import tools.jackson.databind.JsonNode;
@@ -673,7 +675,41 @@ class DmxFunModuleTest {
             assertThrows(DatabindException.class, () ->
                 mapper.readValue("42", new TypeReference<NonEmptyList<Integer>>() {}));
         }
+
+        @Test
+        void nullElementThrows() {
+            var ex = assertThrows(MismatchedInputException.class, () ->
+                mapper.readValue("[null]", new TypeReference<NonEmptyList<Integer>>() {}));
+            assertThat(ex.getMessage()).contains("null element");
+        }
+
+        @Test
+        void declaredObjectElements_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var json = typed.writeValueAsString(new ObjectList(NonEmptyList.of(new Item("x"), List.of())));
+            assertThat(json).isEqualTo("{\"items\":[[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]]}");
+            var back = typed.readValue(json, ObjectList.class);
+            assertThat(back.items().head()).isEqualTo(new Item("x"));
+        }
+
+        @Test
+        void propertyFormat_appliesToElements() throws Exception {
+            var json = mapper.writeValueAsString(new DatedList(NonEmptyList.of(JAN_2, List.of())));
+            assertThat(json).isEqualTo("{\"dates\":[\"2024-01-02\"]}");
+            assertThat(mapper.readValue(json, DatedList.class).dates().head()).isEqualTo(JAN_2);
+        }
+
+        @Test
+        void inObjectSlot_carriesItsOwnTypeIdAndRoundTrips() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var holder = new ObjectValues(NonEmptyMap.singleton("l", NonEmptyList.of(1, List.of(2))), NonEmptySet.of(1, Set.of()));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).contains("\"values\":{\"l\":[\"dmx.fun.NonEmptyList\",[1,2]]}");
+            var back = typed.readValue(json, ObjectValues.class);
+            assertThat(((NonEmptyList<?>) back.values().headValue()).toList()).isEqualTo(List.of(1, 2));
+        }
     }
+
 
     // -------------------------------------------------------------------------
     // Default-typing fixtures shared by NonEmptySet and NonEmptyMap
@@ -740,6 +776,41 @@ class DmxFunModuleTest {
         dog.breed = "collie";
         return dog;
     }
+
+    record ObjectList(NonEmptyList<Object> items) {}
+
+    record DatedList(
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC") NonEmptyList<Date> dates) {}
+
+    record DynamicZoo(
+        @JsonSerialize(typing = JsonSerialize.Typing.DYNAMIC) NonEmptySet<Animal> set,
+        @JsonSerialize(typing = JsonSerialize.Typing.DYNAMIC) NonEmptyMap<String, Animal> map,
+        @JsonSerialize(typing = JsonSerialize.Typing.DYNAMIC) NonEmptyList<Animal> list) {}
+
+    record Named(@JsonTypeInfo(use = JsonTypeInfo.Id.NAME) Object value) {}
+
+    record Deduced(@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION) Object value) {}
+
+    record ObjectPayloads(Option<Object> option, Try<Object> attempt, Result<Object, String> result,
+                          Validated<String, Object> validated, Either<String, Object> either,
+                          Tuple2<Object, Integer> t2, Tuple3<Object, Integer, Integer> t3,
+                          Tuple4<Object, Integer, Integer, Integer> t4) {}
+
+    record SameTypeNesting(Option<Option<Item>> option, Tuple2<Tuple2<String, Integer>, String> tuple,
+                  Result<Result<String, Integer>, String> result, Either<Either<String, Integer>, String> either,
+                  NonEmptyList<NonEmptyList<Integer>> list) {}
+
+    record ItemPayloads(Option<Item> option, Try<Item> attempt, Result<Item, String> result,
+                        Validated<String, Item> validated, Either<String, Item> either,
+                        Tuple2<Item, Integer> t2, Tuple3<Item, Integer, Integer> t3,
+                        Tuple4<Item, Integer, Integer, Integer> t4) {}
+
+    record AnnotatedZoo(@JsonSerialize NonEmptySet<Animal> set) {}
+
+    record StaticZoo(
+        @JsonSerialize(typing = JsonSerialize.Typing.STATIC) NonEmptySet<Animal> set,
+        @JsonSerialize(typing = JsonSerialize.Typing.STATIC) NonEmptyMap<String, Animal> map,
+        @JsonSerialize(typing = JsonSerialize.Typing.STATIC) NonEmptyList<Animal> list) {}
 
     private static final Date JAN_2 = Date.from(LocalDate.of(2024, 1, 2).atStartOfDay(ZoneOffset.UTC).toInstant());
 
@@ -1064,6 +1135,186 @@ class DmxFunModuleTest {
             assertThat(json).isEqualTo("{\"ok\":{\"a\":1}}");
             var back = mapper.readValue(json, new TypeReference<Result<NonEmptyMap<String, Integer>, String>>() {});
             assertThat(back.get().toMap()).isEqualTo(Map.of("a", 1));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Type ids on the dmx-fun values themselves (@JsonTypeInfo on an Object slot)
+    // -------------------------------------------------------------------------
+
+    @Nested
+    class TypeIdTests {
+
+        private String write(Object value) throws Exception {
+            return permissiveTypeIdMapper().writeValueAsString(new Typed(value));
+        }
+
+        private Object read(String json) throws Exception {
+            return permissiveTypeIdMapper().readValue(json, Typed.class).value();
+        }
+
+        @Test
+        void option_isWrappedLikeAScalar() throws Exception {
+            var some = write(Option.some(42));
+            assertThat(some).isEqualTo("{\"value\":[\"dmx.fun.Option\",42]}");
+            assertThat(((Option<?>) read(some)).get()).isEqualTo(42);
+
+            var none = write(Option.none());
+            assertThat(none).isEqualTo("{\"value\":[\"dmx.fun.Option\",null]}");
+            assertThat(((Option<?>) read(none)).isEmpty()).isTrue();
+        }
+
+        @Test
+        void result_carriesTheIdInsideItsObject() throws Exception {
+            var ok = write(Result.ok(42));
+            assertThat(ok).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Result\",\"ok\":42}}");
+            assertThat(((Result<?, ?>) read(ok)).get()).isEqualTo(42);
+
+            var err = write(Result.err("bad"));
+            assertThat(err).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Result\",\"err\":\"bad\"}}");
+            assertThat(((Result<?, ?>) read(err)).getError()).isEqualTo("bad");
+        }
+
+        @Test
+        void try_successIsWrappedAndFailureCarriesTheIdInsideItsObject() throws Exception {
+            var success = write(Try.success(42));
+            assertThat(success).isEqualTo("{\"value\":[\"dmx.fun.Try\",42]}");
+            assertThat(((Try<?>) read(success)).get()).isEqualTo(42);
+
+            var failure = write(Try.failure(new RuntimeException("boom")));
+            assertThat(failure).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Try\",\"error\":\"boom\"}}");
+            var back = (Try<?>) read(failure);
+            assertThat(back.isFailure()).isTrue();
+            assertThat(back.getCause().getMessage()).isEqualTo("boom");
+        }
+
+        @Test
+        void validated_carriesTheIdInsideItsObject() throws Exception {
+            var json = write(Validated.valid(42));
+            assertThat(json).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Validated\",\"valid\":42}}");
+            assertThat(((Validated<?, ?>) read(json)).get()).isEqualTo(42);
+        }
+
+        @Test
+        void either_carriesTheIdInsideItsObject() throws Exception {
+            var json = write(Either.left("l"));
+            assertThat(json).isEqualTo("{\"value\":{\"@class\":\"dmx.fun.Either\",\"left\":\"l\"}}");
+            assertThat(((Either<?, ?>) read(json)).getLeft()).isEqualTo("l");
+        }
+
+        @Test
+        void tuples_carryTheIdAroundTheirArray() throws Exception {
+            var t2 = write(Tuple2.of(1, 2));
+            assertThat(t2).isEqualTo("{\"value\":[\"dmx.fun.Tuple2\",[1,2]]}");
+            assertThat(read(t2)).isEqualTo(Tuple2.of(1, 2));
+
+            var t3 = write(Tuple3.of(1, 2, 3));
+            assertThat(t3).isEqualTo("{\"value\":[\"dmx.fun.Tuple3\",[1,2,3]]}");
+            assertThat(read(t3)).isEqualTo(Tuple3.of(1, 2, 3));
+
+            var t4 = write(Tuple4.of(1, 2, 3, 4));
+            assertThat(t4).isEqualTo("{\"value\":[\"dmx.fun.Tuple4\",[1,2,3,4]]}");
+            assertThat(read(t4)).isEqualTo(Tuple4.of(1, 2, 3, 4));
+        }
+
+        @Test
+        void nonEmptyList_carriesTheIdAroundItsArray() throws Exception {
+            var json = write(NonEmptyList.of(1, List.of(2)));
+            assertThat(json).isEqualTo("{\"value\":[\"dmx.fun.NonEmptyList\",[1,2]]}");
+            assertThat(((NonEmptyList<?>) read(json)).toList()).isEqualTo(List.of(1, 2));
+        }
+
+        @Test
+        void nameIds_nameTheDmxFunType() throws Exception {
+            var named = JsonMapper.builder().addModule(new DmxFunModule())
+                .polymorphicTypeValidator(BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build())
+                .registerSubtypes(new NamedType(Result.class, "Result"), new NamedType(Option.class, "Option"))
+                .build();
+            var result = named.writeValueAsString(new Named(Result.ok(42)));
+            assertThat(result).isEqualTo("{\"value\":{\"@type\":\"Result\",\"ok\":42}}");
+            assertThat(((Result<?, ?>) named.readValue(result, Named.class).value()).get()).isEqualTo(42);
+
+            var option = named.writeValueAsString(new Named(Option.some(42)));
+            assertThat(option).isEqualTo("{\"value\":[\"Option\",42]}");
+            assertThat(((Option<?>) named.readValue(option, Named.class).value()).get()).isEqualTo(42);
+        }
+
+        @Test
+        void jsonSerializeWithoutTyping_doesNotDisableStaticTyping() throws Exception {
+            var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
+            assertThat(staticMapper.writeValueAsString(new AnnotatedZoo(NonEmptySet.singleton(dog()))))
+                .isEqualTo("{\"set\":[{\"name\":\"rex\"}]}");
+        }
+
+        @Test
+        void deductionIds_writeNothingAndDoNotFail() throws Exception {
+            assertThat(mapper.writeValueAsString(new Deduced(Result.ok(1)))).isEqualTo("{\"value\":{\"ok\":1}}");
+            assertThat(mapper.writeValueAsString(new Deduced(Option.some(1)))).isEqualTo("{\"value\":1}");
+        }
+
+        @Test
+        void payloadsDeclaredAsObject_carryTypeIdsUnderDefaultTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var item = new Item("x");
+            var holder = new ObjectPayloads(Option.some(item), Try.success(item), Result.ok(item), Validated.valid(item),
+                Either.right(item), Tuple2.of(item, 1), Tuple3.of(item, 1, 2), Tuple4.of(item, 1, 2, 3));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json.split(java.util.regex.Pattern.quote(Item.class.getName()), -1)).hasSize(9);
+            var back = typed.readValue(json, ObjectPayloads.class);
+            assertThat(back.option().get()).isEqualTo(item);
+            assertThat(back.attempt().get()).isEqualTo(item);
+            assertThat(back.result().get()).isEqualTo(item);
+            assertThat(back.validated().get()).isEqualTo(item);
+            assertThat(back.either().getRight()).isEqualTo(item);
+            assertThat(back.t2()._1()).isEqualTo(item);
+            assertThat(back.t3()._1()).isEqualTo(item);
+            assertThat(back.t4()._1()).isEqualTo(item);
+        }
+
+        @Test
+        void nestedSameType_roundTrips() throws Exception {
+            var nested = new SameTypeNesting(Option.some(Option.some(new Item("x"))), Tuple2.of(Tuple2.of("a", 1), "b"),
+                Result.ok(Result.ok("v")), Either.left(Either.right(1)), NonEmptyList.of(NonEmptyList.of(1, List.of(2)), List.of()));
+            var plain = mapper.writeValueAsString(nested);
+            assertThat(plain).isEqualTo("{\"option\":{\"name\":\"x\"},\"tuple\":[[\"a\",1],\"b\"],\"result\":{\"ok\":{\"ok\":\"v\"}},"
+                + "\"either\":{\"left\":{\"right\":1}},\"list\":[[1,2]]}");
+            assertThat(mapper.readValue(plain, SameTypeNesting.class)).isEqualTo(nested);
+
+            var typed = nonFinalTypingMapper();
+            assertThat(typed.readValue(typed.writeValueAsString(nested), SameTypeNesting.class)).isEqualTo(nested);
+        }
+
+        @Test
+        void rootValues_underDefaultTyping_resolvePayloadsAsObject() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var json = typed.writeValueAsString(Result.<Item, String>ok(new Item("x")));
+            // Jackson resolves a root value by its runtime class (Result.Ok, with no bindings), so the
+            // payload type is Object and the final Item still gets an id, as inside a raw List at the root.
+            assertThat(json).isEqualTo("{\"ok\":[\"" + Item.class.getName() + "\",{\"name\":\"x\"}]}");
+        }
+
+        @Test
+        void payloadsDeclaredAsFinalType_stayPlainUnderNonFinalTyping() throws Exception {
+            var typed = nonFinalTypingMapper();
+            var item = new Item("x");
+            var holder = new ItemPayloads(Option.some(item), Try.success(item), Result.ok(item), Validated.valid(item),
+                Either.right(item), Tuple2.of(item, 1), Tuple3.of(item, 1, 2), Tuple4.of(item, 1, 2, 3));
+            var json = typed.writeValueAsString(holder);
+            assertThat(json).doesNotContain(Item.class.getName());
+            assertThat(typed.readValue(json, ItemPayloads.class)).isEqualTo(holder);
+        }
+
+        @Test
+        void propertyTypingOverride_isHonouredByTheNonEmptyContainers() throws Exception {
+            var dynamic = new DynamicZoo(NonEmptySet.singleton(dog()), NonEmptyMap.singleton("a", dog()), NonEmptyList.of(dog(), List.of()));
+            var staticMapper = JsonMapper.builder().addModule(new DmxFunModule()).enable(MapperFeature.USE_STATIC_TYPING).build();
+            assertThat(staticMapper.writeValueAsString(dynamic))
+                .doesNotContain("[{\"name\":\"rex\"}]")
+                .contains("\"breed\":\"collie\"");
+
+            var fixed = new StaticZoo(NonEmptySet.singleton(dog()), NonEmptyMap.singleton("a", dog()), NonEmptyList.of(dog(), List.of()));
+            assertThat(mapper.writeValueAsString(fixed))
+                .isEqualTo("{\"set\":[{\"name\":\"rex\"}],\"map\":{\"a\":{\"name\":\"rex\"}},\"list\":[{\"name\":\"rex\"}]}");
         }
     }
 

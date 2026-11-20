@@ -51,21 +51,15 @@ class ValidatedDeserializer extends StdDeserializer<Validated> implements Contex
 
     @Override
     public Validated deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (p.currentToken() != JsonToken.START_OBJECT) {
-            throw ctxt.wrongTokenException(p, Validated.class, JsonToken.START_OBJECT, "Expected object");
-        }
-        if (p.nextToken() != JsonToken.FIELD_NAME) {
-            throw ctxt.wrongTokenException(p, Validated.class, JsonToken.FIELD_NAME, "Expected field name");
-        }
-        String fieldName = p.currentName();
+        String fieldName = ObjectEntries.firstFieldName(p, ctxt, Validated.class);
         p.nextToken(); // move to value
 
         Validated result;
         if ("valid".equals(fieldName)) {
-            Object value = valueType != null ? ctxt.readValue(p, valueType) : p.readValueAs(Object.class);
+            Object value = valueType != null ? ctxt.readValue(p, valueType) : ctxt.readValue(p, Object.class);
             result = Validated.valid(value);
         } else if ("invalid".equals(fieldName)) {
-            Object error = errorType != null ? ctxt.readValue(p, errorType) : p.readValueAs(Object.class);
+            Object error = errorType != null ? ctxt.readValue(p, errorType) : ctxt.readValue(p, Object.class);
             result = Validated.invalid(error);
         } else {
             throw ctxt.weirdStringException(fieldName, Validated.class, "Expected 'valid' or 'invalid' field");
