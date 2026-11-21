@@ -109,4 +109,31 @@ class GuardAssertTest {
             .isInstanceOf(AssertionError.class)
             .hasMessageContaining("[my guard]");
     }
+
+    // ── named guards in failure messages ──────────────────────────────────────
+
+    @Test
+    void shouldRenderGuardName_inAcceptAndRejectFailures() {
+        var named = ALPHANUMERIC.named("username");
+
+        assertThatThrownBy(() -> assertThat(named).accepts("!!"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Expected Guard 'username' to accept");
+
+        assertThatThrownBy(() -> assertThat(named).rejects("alice"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Expected Guard 'username' to reject");
+
+        assertThatThrownBy(() -> assertThat(named).rejectsWithMessage("!!", "no such message"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Expected Guard 'username' rejection messages");
+    }
+
+    @Test
+    void shouldRenderPlainGuard_forAnonymousGuards() {
+        assertThatThrownBy(() -> assertThat(ALPHANUMERIC).accepts("!!"))
+            .isInstanceOf(AssertionError.class)
+            .hasMessageContaining("Expected Guard to accept")
+            .hasMessageNotContaining("Guard '");
+    }
 }
