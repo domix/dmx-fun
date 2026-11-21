@@ -15,11 +15,10 @@ drawings:
   persist: false
 transition: fade
 blocks:
-  - { en: The signature that lies, es: La firma que miente, from: 3, to: 7 }
-  - { en: Railway, es: Railway, from: 8, to: 10 }
-  - { en: All the errors at once, es: Todos los errores a la vez, from: 11, to: 13 }
-  - { en: Why this library, es: Por qué esta librería, from: 14, to: 15 }
-  - { en: Out the door, es: Hacia fuera, from: 16, to: 22 }
+  - { en: The signature that lies, es: La firma que miente, from: 4, to: 9 }
+  - { en: Railway, es: Railway, from: 10, to: 12 }
+  - { en: All the errors at once, es: Todos los errores a la vez, from: 13, to: 15 }
+  - { en: Out the door, es: Hacia fuera, from: 16, to: 25 }
 layout: cover
 ---
 
@@ -61,6 +60,38 @@ ES: [0–1] Treinta segundos, antes de que empiece la charla de verdad. La frase
 -->
 
 ---
+
+# <T en="Three gaps I wanted to fill" es="Tres huecos que quería llenar" />
+
+<div class="cols-3">
+  <div>
+    <span class="num">1</span>
+    <h3><Tk k="gaps.lang.title" /></h3>
+    <p><Tk k="gaps.lang.body" /></p>
+    <p class="fact"><Tk k="gaps.lang.fact" /></p>
+  </div>
+  <div>
+    <span class="num">2</span>
+    <h3><Tk k="gaps.docs.title" /></h3>
+    <p><Tk k="gaps.docs.body" /></p>
+    <p class="fact"><Tk k="gaps.docs.fact" /></p>
+  </div>
+  <div>
+    <span class="num">3</span>
+    <h3><Tk k="gaps.eco.title" /></h3>
+    <p><Tk k="gaps.eco.body" /></p>
+    <p class="fact"><Tk k="gaps.eco.fact" /></p>
+  </div>
+</div>
+
+<p class="caption"><Tk k="why.vavr" /></p>
+
+<!--
+EN: [1–3] The honest part, in the speaker's own order, before any code: why this library exists. One: I wanted a library written in the Java we have now, and the codebase is the proof, not the README. Two: documentation that teaches; the guide, the ten-chapter tutorial this talk follows, the blog, and sample modules that compile and run on every pull request. Three: an ecosystem; the types are only useful if they travel through Spring, Jackson and the observability stack you already have. Vavr and Arrow are mentioned, not attacked: they were right for Java 8 and for Kotlin.
+ES: [1–3] La parte franca, en el orden del ponente, antes de cualquier código: por qué existe esta librería. Uno: quería una librería escrita en el Java que tenemos hoy, y la prueba es el código, no el README. Dos: documentación que enseña; la guía, el tutorial de diez capítulos que sigue esta charla, el blog, y módulos de ejemplo que compilan y corren en cada pull request. Tres: un ecosistema; los tipos solo sirven si viajan por Spring, Jackson y la pila de observabilidad que ya tienes. Vavr y Arrow se mencionan, no se atacan: fueron la respuesta correcta para Java 8 y para Kotlin.
+-->
+
+---
 layout: default
 ---
 
@@ -84,13 +115,13 @@ User findUser(String id)
 
 <v-click>
 
-<p class="caption err"><Tk k="hook.answer" /></p>
+<p class="punchline"><Tk k="hook.answer" /></p>
 
 </v-click>
 
 <!--
-EN: [1–4] Ask the room before clicking. Someone always says "it throws", someone else "it returns null"; each answer gets its chip. Then the anecdote: the production incident where a caller handled the exception nobody documented, or trusted the Optional that was never empty until it was. One real story, two sentences, no statistics. The last click is the point: none of the three is in the signature.
-ES: [1–4] Preguntar a la sala antes de hacer clic. Alguien siempre dice "lanza", otro "devuelve null"; cada respuesta recibe su chip. Luego la anécdota: el incidente en producción donde un caller manejó la excepción que nadie documentó, o confió en el Optional que nunca venía vacío hasta que vino. Una historia real, dos frases, sin estadísticas. El último clic es el punto: ninguna de las tres está en la firma.
+EN: [3–5] Ask the room before clicking. Someone always says "it throws", someone else "it returns null"; each answer gets its chip. Then the anecdote: the production incident where a caller handled the exception nobody documented, or trusted the Optional that was never empty until it was. One real story, two sentences, no statistics. The last click is the point: none of the three is in the signature.
+ES: [3–5] Preguntar a la sala antes de hacer clic. Alguien siempre dice "lanza", otro "devuelve null"; cada respuesta recibe su chip. Luego la anécdota: el incidente en producción donde un caller manejó la excepción que nadie documentó, o confió en el Optional que nunca venía vacío hasta que vino. Una historia real, dos frases, sin estadísticas. El último clic es el punto: ninguna de las tres está en la firma.
 -->
 
 ---
@@ -106,8 +137,23 @@ class: dense
 </Marks>
 
 <!--
-EN: [4–10 starts] Same enroll as tutorial chapter 0. First click: the signature promises an Enrollment. Then click by click: exception, exception, null, exception, wrapped cause. Four failure modes, zero in the signature. Nothing here is bad Java; it is the Java most of us write.
-ES: [empieza 4–10] El mismo enroll del capítulo 0 del tutorial. Primer clic: la firma promete un Enrollment. Luego clic a clic: excepción, excepción, null, excepción, causa envuelta. Cuatro formas de fallar, cero en la firma. Nada de esto es mal Java; es el Java que casi todos escribimos.
+EN: [5–10 starts] Same enroll as tutorial chapter 0. First click: the signature promises an Enrollment. Then click by click: exception, exception, null, exception, wrapped cause. Four failure modes, zero in the signature. Nothing here is bad Java; it is the Java most of us write.
+ES: [empieza 5–10] El mismo enroll del capítulo 0 del tutorial. Primer clic: la firma promete un Enrollment. Luego clic a clic: excepción, excepción, null, excepción, causa envuelta. Cuatro formas de fallar, cero en la firma. Nada de esto es mal Java; es el Java que casi todos escribimos.
+-->
+
+---
+class: dense
+---
+
+# <T en="What every caller has to remember" es="Lo que cada caller tiene que recordar" />
+
+<<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter00/EnrollmentMessages.java#describe java {4-6|8-9|10-11|12-14|all}
+
+<p class="caption err"><Tk k="caller.caption" /></p>
+
+<!--
+EN: The other side of chapter 0: the caller. Click 1: the null check you only write if you knew null meant "already enrolled". Click 2: two exceptions you only catch if you read the body. Click 3: a third one. Click 4: and a bare RuntimeException for the payment, so the catch swallows anything else too. This is the argument against exceptions in one screen: they are not values. The type says nothing about them, you cannot map or chain them, and every layer either re-declares them or wraps them. Checked exceptions fix the first problem and make the other two worse; the long answer is in the questions slide.
+ES: El otro lado del capítulo 0: el caller. Clic 1: el null check que solo escribes si sabías que null significaba "ya inscrito". Clic 2: dos excepciones que solo atrapas si leíste el cuerpo. Clic 3: una tercera. Clic 4: y un RuntimeException pelado para el pago, así que el catch se traga cualquier otra cosa también. Este es el argumento contra las excepciones en una pantalla: no son valores. El tipo no dice nada de ellas, no puedes hacer map ni encadenarlas, y cada capa las vuelve a declarar o las envuelve. Las checked arreglan el primer problema y empeoran los otros dos; la respuesta larga está en la slide de preguntas.
 -->
 
 ---
@@ -233,38 +279,6 @@ ES: La costura. toResult convierte el Validated en un Result; mapError envuelve 
 
 ---
 
-# <T en="Three gaps I wanted to fill" es="Tres huecos que quería llenar" />
-
-<div class="cols-3">
-  <div>
-    <span class="num">1</span>
-    <h3><Tk k="gaps.lang.title" /></h3>
-    <p><Tk k="gaps.lang.body" /></p>
-    <p class="fact"><Tk k="gaps.lang.fact" /></p>
-  </div>
-  <div>
-    <span class="num">2</span>
-    <h3><Tk k="gaps.docs.title" /></h3>
-    <p><Tk k="gaps.docs.body" /></p>
-    <p class="fact"><Tk k="gaps.docs.fact" /></p>
-  </div>
-  <div>
-    <span class="num">3</span>
-    <h3><Tk k="gaps.eco.title" /></h3>
-    <p><Tk k="gaps.eco.body" /></p>
-    <p class="fact"><Tk k="gaps.eco.fact" /></p>
-  </div>
-</div>
-
-<p class="caption"><Tk k="why.vavr" /></p>
-
-<!--
-EN: [23–27] The honest part, in the speaker's own order. One: I wanted a library written in the Java we have now, and the codebase is the proof, not the README. Two: documentation that teaches; the guide, the ten-chapter tutorial this talk follows, and sample modules that compile and run on every pull request. Three: an ecosystem; the types are only useful if they travel through Spring, Jackson and the observability stack you already have. Vavr and Arrow are mentioned, not attacked: they were right for Java 8 and for Kotlin.
-ES: [23–27] La parte franca, en el orden del ponente. Uno: quería una librería escrita en el Java que tenemos hoy, y la prueba es el código, no el README. Dos: documentación que enseña; la guía, el tutorial de diez capítulos que sigue esta charla, y módulos de ejemplo que compilan y corren en cada pull request. Tres: un ecosistema; los tipos solo sirven si viajan por Spring, Jackson y la pila de observabilidad que ya tienes. Vavr y Arrow se mencionan, no se atacan: fueron la respuesta correcta para Java 8 y para Kotlin.
--->
-
----
-
 # <T en="Integrations, as words" es="Integraciones, en palabras" />
 
 <div class="cards">
@@ -293,8 +307,8 @@ ES: [23–27] La parte franca, en el orden del ponente. Uno: quería una librer�
 <p class="caption"><Tk k="integrations.caption" /></p>
 
 <!--
-EN: No logos. Each row is a separate artifact under codes.domix; the BOM aligns versions. The point of the slide is the shape, not the list: the core knows nothing about any of these, and each one is small enough to read in an afternoon, which matters for the "contribute" slide.
-ES: Sin logos. Cada fila es un artefacto separado bajo codes.domix; el BOM alinea versiones. El sentido de la slide es la forma, no la lista: el núcleo no sabe nada de ninguno de estos, y cada uno es lo bastante pequeño para leerse en una tarde, lo que importa para la slide de "contribuir".
+EN: [23–25] No logos. Each card is a separate set of artifacts under codes.domix; the BOM aligns versions. The point of the slide is the shape, not the list: the core knows nothing about any of these, and each one is small enough to read in an afternoon, which matters for the "contribute" slide.
+ES: [23–25] Sin logos. Cada tarjeta es un conjunto de artefactos separados bajo codes.domix; el BOM alinea versiones. El sentido de la slide es la forma, no la lista: el núcleo no sabe nada de ninguno de estos, y cada uno es lo bastante pequeño para leerse en una tarde, lo que importa para la slide de "contribuir".
 -->
 
 ---
@@ -308,8 +322,8 @@ class: dense
 <p class="caption"><Tk k="status.caption" /></p>
 
 <!--
-EN: [27–32 begins] Tutorial chapter 9. Everything the pipeline can produce, and the HTTP status for each, in one exhaustive switch. Click 1: the two successes, 201 and 202, because the waiting list is a legitimate answer. Click 2: a bad form is 422. Click 3: not found, conflict, and 502 when the payment provider failed. No framework in this file.
-ES: [empieza 27–32] Capítulo 9 del tutorial. Todo lo que el pipeline puede producir, y el status HTTP de cada caso, en un solo switch exhaustivo. Clic 1: los dos éxitos, 201 y 202, porque la lista de espera es una respuesta legítima. Clic 2: un formulario inválido es 422. Clic 3: no encontrado, conflicto, y 502 cuando falló el proveedor de pagos. No hay framework en este archivo.
+EN: [25–30 begins] Tutorial chapter 9. Everything the pipeline can produce, and the HTTP status for each, in one exhaustive switch. Click 1: the two successes, 201 and 202, because the waiting list is a legitimate answer. Click 2: a bad form is 422. Click 3: not found, conflict, and 502 when the payment provider failed. No framework in this file.
+ES: [empieza 25–30] Capítulo 9 del tutorial. Todo lo que el pipeline puede producir, y el status HTTP de cada caso, en un solo switch exhaustivo. Clic 1: los dos éxitos, 201 y 202, porque la lista de espera es una respuesta legítima. Clic 2: un formulario inválido es 422. Clic 3: no encontrado, conflicto, y 502 cuando falló el proveedor de pagos. No hay framework en este archivo.
 -->
 
 ---
@@ -318,18 +332,33 @@ ES: [empieza 27–32] Capítulo 9 del tutorial. Todo lo que el pipeline puede pr
 
 <<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter09/EnrollmentMetrics.java#record java {1-5|6|all}
 
+<div class="mt-6">
+  <Diagram name="outcomes" />
+</div>
+
 <p class="caption"><Tk k="metrics.caption" /></p>
 
 <!--
-EN: One Micrometer counter, tagged by what happened. Because failures are records, the tag is the simple class name; nobody agreed on a log format. The dashboard shows PaymentFailed next to Waitlisted the day you deploy this.
-ES: Un contador de Micrometer, etiquetado por lo que pasó. Como los fallos son records, la etiqueta es el nombre simple de la clase; nadie tuvo que acordar un formato de log. El dashboard muestra PaymentFailed junto a Waitlisted el día que despliegas esto.
+EN: One Micrometer counter, tagged by what happened. The bars are what the dashboard shows the day you deploy this: the two legitimate outcomes in blue, the named failures in amber, no log parsing in between. Because failures are records, the tag is the simple class name; nobody agreed on a log format. The dashboard shows PaymentFailed next to Waitlisted the day you deploy this.
+ES: Un contador de Micrometer, etiquetado por lo que pasó. Las barras son lo que muestra el dashboard el día que despliegas esto: los dos resultados legítimos en azul, los fallos con nombre en ámbar, sin parsear logs en medio. Como los fallos son records, la etiqueta es el nombre simple de la clase; nadie tuvo que acordar un formato de log. El dashboard muestra PaymentFailed junto a Waitlisted el día que despliegas esto.
+-->
+
+---
+
+# <T en="The controller, as written" es="El controller, tal cual" />
+
+<<< @/snippets/samples/spring-boot-sample/src/main/java/dmx/fun/sample/item/ItemController.java#endpoints java {1-4|6-9|11-14|all}
+
+<p class="caption"><Tk k="demo.intro" /></p>
+
+<!--
+EN: The real file from spring-boot-sample, nothing elided. Click 1: Option<Item>, and the auto-configured handler turns none() into a 404. Click 2: Result<Item, String>; ok is the body, err is the status. Click 3: Result<NonEmptyList<Item>, String>, where the handler unwraps and Jackson writes the list as a plain array. No ResponseEntity, no @ExceptionHandler, no JSON code anywhere in the controller.
+ES: El archivo real de spring-boot-sample, sin recortes. Clic 1: Option<Item>, y el handler autoconfigurado convierte none() en un 404. Clic 2: Result<Item, String>; ok es el cuerpo, err es el status. Clic 3: Result<NonEmptyList<Item>, String>, donde el handler desenvuelve y Jackson escribe la lista como un array normal. Sin ResponseEntity, sin @ExceptionHandler, sin código JSON en ningún sitio del controller.
 -->
 
 ---
 
 # <T en="Demo: a controller that returns the Result" es="Demo: un controller que devuelve el Result" />
-
-<p><Tk k="demo.intro" /></p>
 
 | | | |
 |---|---|---|
@@ -371,13 +400,15 @@ ES: Solo si la demo en vivo no puede correr. Espacio reproduce y pausa; las flec
 <p class="caption"><Tk k="adopt.caption" /></p>
 
 <!--
-EN: [32–35] Never big-bang. The library is designed to be adopted one seam at a time: Option.fromOptional, Try.of around the code that throws, getOrElse on the way out. The blog post "introducing FP into a legacy codebase" is the long version.
-ES: [32–35] Nunca big-bang. La librería está diseñada para adoptarse costura a costura: Option.fromOptional, Try.of alrededor del código que lanza, getOrElse al salir. El post "introducing FP into a legacy codebase" es la versión larga.
+EN: [30–32] Never big-bang. The library is designed to be adopted one seam at a time: Option.fromOptional, Try.of around the code that throws, getOrElse on the way out. The blog post "introducing FP into a legacy codebase" is the long version.
+ES: [30–32] Nunca big-bang. La librería está diseñada para adoptarse costura a costura: Option.fromOptional, Try.of alrededor del código que lanza, getOrElse al salir. El post "introducing FP into a legacy codebase" es la versión larga.
 -->
 
 ---
 
-# <T en="Four ways to contribute" es="Cuatro formas de contribuir" />
+# <T en="Open source: four ways in" es="Open source: cuatro formas de entrar" />
+
+<p class="lead"><Tk k="contribute.open" /></p>
 
 | | |
 |---|---|
@@ -389,8 +420,31 @@ ES: [32–35] Nunca big-bang. La librería está diseñada para adoptarse costur
 <p class="caption"><Tk k="contribute.gfi.where" /> <a href="https://github.com/domix/dmx-fun/labels/good%20first%20issue" target="_blank">github.com/domix/dmx-fun/labels/good first issue</a></p>
 
 <!--
-EN: The ask has to be specific. First one is the most valuable: design feedback on the error type people actually built. Second: say how many good-first-issues are open (eight when this deck was written, #575 to #582: a README row, NonEmptySet/NonEmptyMap in both Jackson lines, a JAXB adapter, three AssertJ classes, site tokens, Dependabot for talks/) and describe one in a sentence; each names the files to touch and what done looks like. Check the label the day before. Third: each integration module is a template for the next. Fourth: real adoption stories, on the site blog, with their name on it.
-ES: La petición tiene que ser concreta. La primera es la más valiosa: feedback de diseño sobre el tipo de error que la gente realmente construyó. Segunda: decir cuántos good first issue hay abiertos (ocho al escribir este deck, #575 a #582: una fila del README, NonEmptySet/NonEmptyMap en las dos líneas de Jackson, un adaptador JAXB, tres clases de AssertJ, tokens del sitio, Dependabot para talks/) y describir uno en una frase; cada uno dice qué archivos tocar y cómo se ve terminado. Revisar la etiqueta el día anterior. Tercera: cada módulo de integración es la plantilla del siguiente. Cuarta: historias reales de adopción, en el blog del sitio, con su nombre.
+EN: [32–33] Say it plainly first: Apache 2.0, the repository is public, the ADRs are public, and anyone can open an issue. Then the ask has to be specific. First one is the most valuable: design feedback on the error type people actually built. Second: say how many good-first-issues are open (eight when this deck was written, #575 to #582: a README row, NonEmptySet/NonEmptyMap in both Jackson lines, a JAXB adapter, three AssertJ classes, site tokens, Dependabot for talks/) and describe one in a sentence; each names the files to touch and what done looks like. Check the label the day before. Third: each integration module is a template for the next. Fourth: real adoption stories, on the site blog, with their name on it.
+ES: [32–33] Decirlo claro primero: Apache 2.0, el repositorio es público, los ADRs son públicos, y cualquiera puede abrir un issue. Luego la petición tiene que ser concreta. La primera es la más valiosa: feedback de diseño sobre el tipo de error que la gente realmente construyó. Segunda: decir cuántos good first issue hay abiertos (ocho al escribir este deck, #575 a #582: una fila del README, NonEmptySet/NonEmptyMap en las dos líneas de Jackson, un adaptador JAXB, tres clases de AssertJ, tokens del sitio, Dependabot para talks/) y describir uno en una frase; cada uno dice qué archivos tocar y cómo se ve terminado. Revisar la etiqueta el día anterior. Tercera: cada módulo de integración es la plantilla del siguiente. Cuarta: historias reales de adopción, en el blog del sitio, con su nombre.
+-->
+
+---
+
+# <T en="One method, five rewrites" es="Un método, cinco reescrituras" />
+
+<div class="rewrites">
+  <v-click><div class="row"><code><span class="err">@Nullable Enrollment</span> enroll(String studentId, String courseId)</code><span class="label"><T en="Chapter 0: four lies, none in the signature" es="Capítulo 0: cuatro mentiras, ninguna en la firma" /></span></div></v-click>
+  <v-click><div class="row"><code><span class="ok">Result&lt;Enrollment, EnrollmentError&gt;</span> enroll(String studentId, String courseId)</code><span class="label"><T en="Chapter 1: the signature tells the truth" es="Capítulo 1: la firma dice la verdad" /></span></div></v-click>
+  <v-click><div class="row"><code>findStudent(id)<span class="ok">.flatMap(…).flatMap(…).map(…).recoverWith(…)</span></code><span class="label"><T en="Chapter 2: one chain, first failure wins" es="Capítulo 2: una cadena, el primer fallo gana" /></span></div></v-click>
+  <v-click><div class="row"><code>Result&lt;Enrollment, EnrollmentError&gt; enroll(<span class="ok">EnrollmentForm form</span>)</code><span class="label"><T en="Chapter 5: every form error at once" es="Capítulo 5: todos los errores del formulario a la vez" /></span></div></v-click>
+  <v-click><div class="row"><code>Result&lt;<span class="ok">Either&lt;Waitlisted, Enrolled&gt;</span>, EnrollmentError&gt; enroll(EnrollmentForm form)</code><span class="label"><T en="Chapter 6: two outcomes, no villain" es="Capítulo 6: dos resultados, ningún villano" /></span></div></v-click>
+</div>
+
+<v-click>
+
+<p class="caption"><Tk k="recap.caption" /></p>
+
+</v-click>
+
+<!--
+EN: [33–35] The whole talk in five lines; one click each. The signatures are quoted from the tutorial chapters, and the coloured part is what each rewrite changed. Chapter 6 is the one you have not seen: a full course becomes a waiting list, a second legitimate answer on the Ok track; the status slide already used it. Then the last click: none of these was a big-bang, every one compiled on its own.
+ES: [33–35] Toda la charla en cinco líneas; un clic cada una. Las firmas están citadas de los capítulos del tutorial, y la parte coloreada es lo que cambió cada reescritura. El capítulo 6 es el que no han visto: un curso lleno se convierte en lista de espera, una segunda respuesta legítima en la vía Ok; la slide de los status ya lo usó. Y el último clic: ninguna fue un big-bang, cada una compiló por sí sola.
 -->
 
 ---
@@ -427,62 +481,15 @@ ES: Dejar esta slide durante las preguntas. La firma es la del gancho, cuarenta 
 
 # <T en="Three questions that always come" es="Tres preguntas que siempre llegan" />
 
-| | |
-|---|---|
-| **<Tk k="qa.immutability.q" />** | <Tk k="qa.immutability.a" /> |
-| **<Tk k="qa.checked.q" />** | <Tk k="qa.checked.a" /> |
-| **<Tk k="qa.kotlin.q" />** | <Tk k="qa.kotlin.a" /> |
+<div class="qa">
+  <v-click><div class="row"><h3><Tk k="qa.immutability.q" /></h3><p><Tk k="qa.immutability.a" /></p></div></v-click>
+  <v-click><div class="row"><h3><Tk k="qa.checked.q" /></h3><p><Tk k="qa.checked.a" /></p></div></v-click>
+  <v-click><div class="row"><h3><Tk k="qa.kotlin.q" /></h3><p><Tk k="qa.kotlin.a" /></p></div></v-click>
+</div>
 
 <p class="caption"><Tk k="qa.caption" /> <a href="https://domix.github.io/dmx-fun/blog/performance-cost-of-immutability-when-it-matters" target="_blank">immutability</a> · <a href="https://domix.github.io/dmx-fun/blog/why-just-use-exceptions-persists" target="_blank">exceptions</a> · <a href="https://domix.github.io/dmx-fun/blog/vavr-arrow-cats-fp-ts-what-problems-they-solve" target="_blank">Vavr, Arrow</a></p>
 
 <!--
 EN: [35–45] Show only if one of these is asked, or if the room is quiet. Immutability: records are small, escape analysis removes most short-lived allocations, and Valhalla is coming; the real costs are in large collections copied in loops, which this library does not ask you to do. Checked exceptions: they do solve the "visible in the signature" problem, but they do not compose: no lambdas, no map, no chaining, and every layer re-declares or wraps them. Kotlin: Arrow is the right answer in Kotlin; the question here is what to do in the Java you already have.
 ES: [35–45] Mostrar solo si preguntan una de estas, o si la sala está callada. Inmutabilidad: los records son pequeños, el escape analysis elimina casi todas las asignaciones de vida corta, y Valhalla viene en camino; los costes reales están en colecciones grandes copiadas en bucles, que esta librería no te pide hacer. Excepciones checked: sí resuelven lo de "visible en la firma", pero no componen: sin lambdas, sin map, sin encadenar, y cada capa las vuelve a declarar o las envuelve. Kotlin: Arrow es la respuesta correcta en Kotlin; la pregunta aquí es qué hacer con el Java que ya tienes.
--->
-
----
-layout: section
----
-
-# <T en="Backup: chapters 6 and 7" es="Respaldo: capítulos 6 y 7" />
-
-<p><Tk k="backup.intro" /></p>
-
-<!--
-EN: Not part of the 35 minutes. Jump here from the closing slide if a question leads to it.
-ES: No forma parte de los 35 minutos. Saltar aquí desde la slide de cierre si una pregunta lleva a ello.
--->
-
----
-
-# <T en="Two outcomes, no villain" es="Dos resultados, ningún villano" />
-
-<<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter06/Outcome.java#outcome java
-
-<div class="mt-6" />
-
-<<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter06/EnrollmentMessages.java#describe java
-
-<p class="caption"><Tk k="either.caption" /></p>
-
-<!--
-EN: Chapter 6. Business says a full course is a waiting list, not an error. Either<Waitlisted, Enrolled> inside the Result: two legitimate answers on the success track. The switch still covers everything, and CourseFull disappears from the error type.
-ES: Capítulo 6. Negocio dice que un curso lleno es una lista de espera, no un error. Either<Waitlisted, Enrolled> dentro del Result: dos respuestas legítimas en la vía Ok. El switch sigue cubriendo todo, y CourseFull desaparece del tipo de error.
--->
-
----
-
-# <T en="At least one" es="Al menos uno" />
-
-<<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter07/Offering.java#offering java
-
-<div class="mt-6" />
-
-<<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter07/WelcomeMail.java#compose java
-
-<p class="caption"><Tk k="nel.caption" /></p>
-
-<!--
-EN: Chapter 7. NonEmptyList cannot be constructed empty, so head() always exists and the parameter type is the precondition. The same idea gives Result<NonEmptyList<Item>, String> in the demo's search endpoint.
-ES: Capítulo 7. NonEmptyList no puede construirse vacía, así que head() siempre existe y el tipo del parámetro es la precondición. La misma idea da el Result<NonEmptyList<Item>, String> del endpoint de búsqueda de la demo.
 -->
