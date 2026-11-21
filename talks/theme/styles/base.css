@@ -1,7 +1,10 @@
 /*
- * Base layout rules: one idea per slide, short title top-left, generous margins, code never below 24px.
- * Sizes are in px for a 1920×1080 canvas (slides.md sets canvasWidth: 1920), so 24px code is 24px on a
- * 1080p projector. When a snippet does not fit at that size, split the snippet; never shrink the type.
+ * Base layout rules: one idea per slide, short title top-left, generous margins, code at 28px, 24px as
+ * the floor on a `dense` slide. Sizes are in px for a 1920×1080 canvas (slides.md sets canvasWidth:
+ * 1920), so 28px code is 28px on a 1080p projector. When a snippet does not fit at 24px, split it.
+ *
+ * Vertical budget on a content slide: kicker + title end near y=220; the takeaway band starts at
+ * y≈930 (one line) or y≈885 (two lines); the footer sits below y=1000.
  */
 .slidev-layout {
   box-sizing: border-box;
@@ -69,14 +72,22 @@
 
 .slidev-layout strong { font-weight: 650; }
 
-/* Caption under a snippet or diagram. */
+/* The takeaway: one sentence per slide, pinned above the footer, with the success-track bar. */
 .slidev-layout .caption {
-  color: var(--dmx-text-2);
-  font-size: 28px;
-  margin-top: 28px;
+  position: absolute;
+  left: 112px;
+  right: 112px;
+  bottom: 84px;
+  margin: 0;
+  padding: 6px 0 6px 28px;
+  border-left: 6px solid var(--dmx-ok);
+  color: var(--dmx-text);
+  font-size: 34px;
+  line-height: 1.35;
 }
+.slidev-layout .caption.err { border-left-color: var(--dmx-err); }
 
-/* Code: JetBrains Mono, minimum 24px. */
+/* Code: JetBrains Mono, 28px; 24px on a slide with `class: dense` in its frontmatter. */
 .slidev-layout pre,
 .slidev-layout code {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -93,13 +104,17 @@
 
 .slidev-layout pre.shiki,
 .slidev-layout .slidev-code {
-  font-size: 24px !important;
+  font-size: 28px !important;
   line-height: 1.4 !important;
   background: var(--dmx-surface) !important;
   border: 1px solid var(--dmx-border);
   border-radius: 14px;
   margin: 0;
   padding: 20px 28px;
+}
+.slidev-layout.dense pre.shiki,
+.slidev-layout.dense .slidev-code {
+  font-size: 24px !important;
 }
 
 /* Semantic accents, used in prose and in diagrams. */
