@@ -1,28 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 380" role="img" aria-label="Two tracks: success on top, failure below; a failure switches tracks and skips the remaining steps">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 520" role="img" aria-label="Railway: the Ok track above with five stations, the Err track below; a failure switches down and skips the remaining stations; recoverWith switches back up">
   <style>
-    .ok   { stroke: var(--dmx-ok, #58a6ff); }
-    .err  { stroke: var(--dmx-err, #d29922); }
-    .mono { font: 500 30px 'JetBrains Mono', ui-monospace, monospace; fill: var(--dmx-text, #c9d1d9); }
-    .tag  { font: 650 30px 'Inter Variable', Inter, system-ui, sans-serif; }
-    .tag.ok  { fill: var(--dmx-ok, #58a6ff); stroke: none; }
-    .tag.err { fill: var(--dmx-err, #d29922); stroke: none; }
-    .step { fill: var(--dmx-surface, #161b22); stroke: var(--dmx-border, #30363d); stroke-width: 2; }
+    .rail      { fill: none; stroke-width: 8; stroke-linecap: round; }
+    .glow      { fill: none; stroke-width: 26; stroke-linecap: round; opacity: 0.16; }
+    .ok        { stroke: var(--dmx-ok, #58a6ff); }
+    .err       { stroke: var(--dmx-err, #d29922); }
+    .step      { fill: var(--dmx-surface, #161b22); stroke: var(--dmx-border, #30363d); stroke-width: 2; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35)); }
+    .mono      { font: 500 24px 'JetBrains Mono', ui-monospace, monospace; fill: var(--dmx-text, #c9d1d9); }
+    .op        { font: 600 20px 'JetBrains Mono', ui-monospace, monospace; fill: var(--dmx-text-2, #8b949e); }
+    .tag       { font: 700 30px 'Inter Variable', Inter, system-ui, sans-serif; stroke: none; }
+    .tag.ok    { fill: var(--dmx-ok, #58a6ff); }
+    .tag.err   { fill: var(--dmx-err, #d29922); }
+    .pill      { fill: var(--dmx-surface, #161b22); stroke-width: 3; }
+    .pill.err  { stroke: var(--dmx-err, #d29922); }
+    .pill.ok   { stroke: var(--dmx-ok, #58a6ff); }
+    .pill-text { font: 600 22px 'JetBrains Mono', ui-monospace, monospace; }
+    .pill-text.err { fill: var(--dmx-err, #d29922); }
+    .pill-text.ok  { fill: var(--dmx-ok, #58a6ff); }
+    .dot       { stroke: none; }
+    .dot.ok    { fill: var(--dmx-ok, #58a6ff); }
+    .dot.err   { fill: var(--dmx-err, #d29922); }
+    .station, .link { transition: opacity 0.4s ease; }
+    .scene     { opacity: 0; transition: opacity 0.4s ease; }
+    /* Click states: the slide wraps the diagram in .stage-0 / .stage-1 / .stage-2 */
+    .stage-1 #fail1, .stage-2 #fail2 { opacity: 1; }
+    .stage-1 .st3, .stage-1 .st4, .stage-1 .st5, .stage-1 .ln3, .stage-1 .ln4 { opacity: 0.25; }
+    .stage-2 .st4, .stage-2 .st5, .stage-2 .ln4 { opacity: 0.25; }
   </style>
-  <!-- success track -->
-  <line x1="40" y1="120" x2="1560" y2="120" class="ok" stroke-width="8"/>
-  <!-- failure track -->
-  <line x1="40" y1="320" x2="1560" y2="320" class="err" stroke-width="8"/>
-  <!-- steps on the success track -->
-  <g>
-    <rect x="160" y="75" width="300" height="90" rx="14" class="step"/>
-    <text x="310" y="131" text-anchor="middle" class="mono">findStudent</text>
-    <rect x="560" y="75" width="300" height="90" rx="14" class="step"/>
-    <text x="710" y="131" text-anchor="middle" class="mono">findCourse</text>
-    <rect x="960" y="75" width="300" height="90" rx="14" class="step"/>
-    <text x="1110" y="131" text-anchor="middle" class="mono">charge</text>
+
+  <!-- rails, with a soft glow under each -->
+  <line x1="40" y1="130" x2="1560" y2="130" class="glow ok"/>
+  <line x1="40" y1="130" x2="1560" y2="130" class="rail ok"/>
+  <line x1="40" y1="400" x2="1560" y2="400" class="glow err"/>
+  <line x1="40" y1="400" x2="1560" y2="400" class="rail err"/>
+  <circle cx="40" cy="130" r="9" class="dot ok"/>
+  <circle cx="40" cy="400" r="9" class="dot err"/>
+  <text x="1560" y="88" text-anchor="end" class="tag ok">Ok</text>
+  <text x="1560" y="358" text-anchor="end" class="tag err">Err</text>
+
+  <!-- operators between stations -->
+  <text x="340" y="70" text-anchor="middle" class="op link ln1">flatMap</text>
+  <text x="640" y="70" text-anchor="middle" class="op link ln2">flatMap</text>
+  <text x="940" y="70" text-anchor="middle" class="op link ln3">flatMap</text>
+  <text x="1240" y="70" text-anchor="middle" class="op link ln4">map</text>
+
+  <!-- stations on the Ok rail -->
+  <g class="station st1">
+    <rect x="60" y="88" width="260" height="84" rx="18" class="step"/>
+    <text x="190" y="139" text-anchor="middle" class="mono">findStudent</text>
   </g>
-  <!-- a failure switches tracks and skips the rest -->
-  <path d="M 860 120 C 910 120, 910 320, 960 320" class="err" stroke-width="8" fill="none"/>
-  <text x="1420" y="100" text-anchor="middle" class="tag ok">Ok</text>
-  <text x="1420" y="300" text-anchor="middle" class="tag err">Err</text>
+  <g class="station st2">
+    <rect x="360" y="88" width="260" height="84" rx="18" class="step"/>
+    <text x="490" y="139" text-anchor="middle" class="mono">findCourse</text>
+  </g>
+  <g class="station st3">
+    <rect x="660" y="88" width="260" height="84" rx="18" class="step"/>
+    <text x="790" y="139" text-anchor="middle" class="mono">ensureNotEnrolled</text>
+  </g>
+  <g class="station st4">
+    <rect x="960" y="88" width="260" height="84" rx="18" class="step"/>
+    <text x="1090" y="139" text-anchor="middle" class="mono">charge</text>
+  </g>
+  <g class="station st5">
+    <rect x="1260" y="88" width="260" height="84" rx="18" class="step"/>
+    <text x="1390" y="139" text-anchor="middle" class="mono">save</text>
+  </g>
+
+  <!-- click 1: a failure after findCourse switches down; the rest of the Ok rail is skipped -->
+  <g id="fail1" class="scene">
+    <path d="M 620 130 C 690 130, 690 400, 760 400" class="rail err"/>
+    <circle cx="620" cy="130" r="9" class="dot err"/>
+    <rect x="860" y="372" width="300" height="56" rx="28" class="pill err"/>
+    <text x="1010" y="408" text-anchor="middle" class="pill-text err">CourseNotFound</text>
+  </g>
+
+  <!-- click 2: a failure after ensureNotEnrolled rides the Err rail until recoverWith lifts it back -->
+  <g id="fail2" class="scene">
+    <path d="M 920 130 C 990 130, 990 400, 1060 400" class="rail err"/>
+    <circle cx="920" cy="130" r="9" class="dot err"/>
+    <rect x="1080" y="372" width="300" height="56" rx="28" class="pill err"/>
+    <text x="1230" y="408" text-anchor="middle" class="pill-text err">AlreadyEnrolled</text>
+    <path d="M 1400 400 C 1480 400, 1480 130, 1560 130" class="rail ok"/>
+    <text x="1500" y="282" text-anchor="middle" class="op">recoverWith</text>
+    <circle cx="1560" cy="130" r="11" class="dot ok"/>
+  </g>
 </svg>
