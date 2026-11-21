@@ -1,7 +1,7 @@
 ---
 number: 24
 title: "Parallel integration modules for incompatible peer major lines"
-status: Proposed
+status: Accepted
 date: 2026-10-18
 ---
 
