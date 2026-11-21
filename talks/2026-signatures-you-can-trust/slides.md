@@ -176,16 +176,20 @@ ES: Recorrer la cadena con los clics. Clic 1: findStudent devuelve Result<Studen
 -->
 
 ---
+clicks: 2
+---
 
 # <T en="The railway, on one slide" es="El railway, en una slide" />
 
-<Diagram name="two-tracks" />
+<div :class="'stage-' + $clicks">
+  <Diagram name="two-tracks" />
+</div>
 
 <p class="caption"><Tk k="railway.caption" /></p>
 
 <!--
-EN: The metaphor comes after the code on purpose: now it names something they have just read. Blue is the success track, amber the failure track; those two colors mean the same thing on every slide of this deck. Nested switches are what you write when you do not have the lower track.
-ES: La metáfora viene después del código a propósito: ahora nombra algo que acaban de leer. Azul es la vía Ok, ámbar la vía Err; esos dos colores significan lo mismo en todas las slides de este deck. Los switch anidados son lo que escribes cuando no tienes la vía de abajo.
+EN: The metaphor comes after the code on purpose: now it names something they have just read. Blue is the Ok track, amber the Err track; those two colors mean the same thing on every slide of this deck. Click 1: findCourse fails, CourseNotFound switches down and rides the lower rail; the three stations after it dim because nobody runs them. Click 2: a different run, AlreadyEnrolled at ensureNotEnrolled, skips charge and save, and recoverWith lifts it back onto the Ok rail at the end: enrolling twice is idempotent. Nested switches are what you write when you do not have the lower track.
+ES: La metáfora viene después del código a propósito: ahora nombra algo que acaban de leer. Azul es la vía Ok, ámbar la vía Err; esos dos colores significan lo mismo en todas las slides de este deck. Clic 1: findCourse falla, CourseNotFound baja y viaja por la vía inferior; las tres estaciones siguientes se apagan porque nadie las ejecuta. Clic 2: otra ejecución, AlreadyEnrolled en ensureNotEnrolled, se salta charge y save, y recoverWith lo devuelve a la vía Ok al final: inscribirse dos veces es idempotente. Los switch anidados son lo que escribes cuando no tienes la vía de abajo.
 -->
 
 ---
