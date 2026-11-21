@@ -31,7 +31,7 @@ onBeforeUnmount(() => player?.dispose())
 </template>
 
 <style>
-.cast { height: 740px; }
+.cast { height: 620px; }
 /* Player theme from the design tokens: surface background, site text color, the two accents in the ANSI slots. */
 .asciinema-player-theme-dmx {
   --term-color-foreground: var(--dmx-text);

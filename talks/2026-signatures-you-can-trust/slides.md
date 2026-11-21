@@ -14,6 +14,12 @@ fonts:
 drawings:
   persist: false
 transition: fade
+blocks:
+  - { en: The signature that lies, es: La firma que miente, from: 2, to: 6 }
+  - { en: Railway, es: Railway, from: 7, to: 9 }
+  - { en: All the errors at once, es: Todos los errores a la vez, from: 10, to: 12 }
+  - { en: Why this library, es: Por qué esta librería, from: 13, to: 14 }
+  - { en: Out the door, es: Hacia fuera, from: 15, to: 21 }
 layout: cover
 ---
 
@@ -50,10 +56,16 @@ ES: [0–4] Preguntar a la sala antes de hacer clic. Alguien siempre dice "lanza
 -->
 
 ---
+class: dense
+---
 
 # <T en="Chapter 0: twenty lines, four lies" es="Capítulo 0: veinte líneas, cuatro mentiras" />
 
+<Marks :at="[4, 11, 14, 19]" dense>
+
 <<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter00/EnrollmentService.java#enroll java {1|2-5|10-12|13-15|16-20|all}
+
+</Marks>
 
 <!--
 EN: [4–10 starts] Same enroll as tutorial chapter 0. First click: the signature promises an Enrollment. Then click by click: exception, exception, null, exception, wrapped cause. Four failure modes, zero in the signature. Nothing here is bad Java; it is the Java most of us write.
@@ -220,6 +232,8 @@ EN: No logos. Each row is a separate artifact under codes.domix; the BOM aligns 
 ES: Sin logos. Cada fila es un artefacto separado bajo codes.domix; el BOM alinea versiones. El sentido de la slide es la forma, no la lista: el núcleo no sabe nada de ninguno de estos, y cada uno es lo bastante pequeño para leerse en una tarde, lo que importa para la slide de "contribuir".
 -->
 
+---
+class: dense
 ---
 
 # <T en="Out the door: one place decides the status" es="Hacia fuera: un solo lugar decide el status" />
