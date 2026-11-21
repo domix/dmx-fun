@@ -47,6 +47,13 @@ dependencies {
     testRuntimeOnly libs.postgresql
 }
 
+// The Quarkus BOM is an enforcedPlatform, so a plain constraint cannot lift the Guava it pins
+// (33.6.0, GHSA for CompactHashMap deserialization). force() is the one mechanism that overrides a
+// strict version; Guava is a transitive of the Quarkus internals and nothing here relies on 33.6.0.
+configurations.configureEach {
+    resolutionStrategy.force 'com.google.guava:guava:33.7.2-jre'
+}
+
 test {
     systemProperty 'java.util.logging.manager', 'org.jboss.logmanager.LogManager'
     jvmArgs '-Xmx1g'
