@@ -15,11 +15,11 @@ drawings:
   persist: false
 transition: fade
 blocks:
-  - { en: The signature that lies, es: La firma que miente, from: 2, to: 6 }
-  - { en: Railway, es: Railway, from: 7, to: 9 }
-  - { en: All the errors at once, es: Todos los errores a la vez, from: 10, to: 12 }
-  - { en: Why this library, es: Por qué esta librería, from: 13, to: 14 }
-  - { en: Out the door, es: Hacia fuera, from: 15, to: 21 }
+  - { en: The signature that lies, es: La firma que miente, from: 3, to: 7 }
+  - { en: Railway, es: Railway, from: 8, to: 10 }
+  - { en: All the errors at once, es: Todos los errores a la vez, from: 11, to: 13 }
+  - { en: Why this library, es: Por qué esta librería, from: 14, to: 15 }
+  - { en: Out the door, es: Hacia fuera, from: 16, to: 22 }
 layout: cover
 ---
 
@@ -36,23 +36,61 @@ ES: Abrir con ?lang=es para una sala en español. L cambia el idioma en cualquie
 layout: default
 ---
 
+# <T en="Naming things" es="Ponerle nombre a las cosas" />
+
+<blockquote class="quote">
+  <p><Tk k="naming.quote" /></p>
+  <footer>Phil Karlton</footer>
+</blockquote>
+
+<div class="naming">
+  <v-click><span class="word">fun</span></v-click><v-click><span class="verdict err"><Tk k="naming.generic" /></span></v-click>
+  <v-click><span class="word">domix</span></v-click><v-click><span class="verdict"><Tk k="naming.nickname" /></span></v-click>
+  <v-click><span class="word ok">dmx-fun</span></v-click><v-click><span class="verdict"><Tk k="naming.result" /></span></v-click>
+</div>
+
+<v-click>
+
+<Mascot class="closing-mascot" :size="300" />
+
+</v-click>
+
+<!--
+EN: [0–1] Thirty seconds, before the real talk starts. Karlton's line, then the confession: when I built this I did not know what to call it. "fun" was the whole idea, and too generic to be found. So the nickname went in front, and that is the name. One of the two hard things solved; the other one is still open. The mascot comes in on the last click; it is the same robot as on the site.
+ES: [0–1] Treinta segundos, antes de que empiece la charla de verdad. La frase de Karlton, y luego la confesión: cuando construí esto no sabía cómo llamarlo. "fun" era toda la idea, y demasiado genérico para encontrarlo. Así que el apodo fue delante, y ese es el nombre. Una de las dos cosas difíciles, resuelta; la otra sigue pendiente. La mascota entra en el último clic; es el mismo robot que en el sitio.
+-->
+
+---
+layout: default
+---
+
 # <T en="The signature that lies" es="La firma que miente" />
+
+<div class="hero-code">
 
 ```java
 User findUser(String id)
 ```
 
-<p class="mt-10"><Tk k="hook.question" /></p>
+</div>
+
+<p class="question"><Tk k="hook.question" /></p>
+
+<div class="chips">
+  <v-click><span class="chip err"><Tk k="hook.exception" /></span></v-click>
+  <v-click><span class="chip err"><Tk k="hook.null" /></span></v-click>
+  <v-click><span class="chip err"><Tk k="hook.optional" /></span></v-click>
+</div>
 
 <v-click>
 
-<p><Tk k="hook.answer" /></p>
+<p class="caption err"><Tk k="hook.answer" /></p>
 
 </v-click>
 
 <!--
-EN: [0–4] Ask the room before clicking. Someone always says "it throws", someone else "it returns null". Then the anecdote: the production incident where a caller handled the exception nobody documented, or trusted the Optional that was never empty until it was. One real story, two sentences, no statistics.
-ES: [0–4] Preguntar a la sala antes de hacer clic. Alguien siempre dice "lanza", otro "devuelve null". Luego la anécdota: el incidente en producción donde un caller manejó la excepción que nadie documentó, o confió en el Optional que nunca venía vacío hasta que vino. Una historia real, dos frases, sin estadísticas.
+EN: [1–4] Ask the room before clicking. Someone always says "it throws", someone else "it returns null"; each answer gets its chip. Then the anecdote: the production incident where a caller handled the exception nobody documented, or trusted the Optional that was never empty until it was. One real story, two sentences, no statistics. The last click is the point: none of the three is in the signature.
+ES: [1–4] Preguntar a la sala antes de hacer clic. Alguien siempre dice "lanza", otro "devuelve null"; cada respuesta recibe su chip. Luego la anécdota: el incidente en producción donde un caller manejó la excepción que nadie documentó, o confió en el Optional que nunca venía vacío hasta que vino. Una historia real, dos frases, sin estadísticas. El último clic es el punto: ninguna de las tres está en la firma.
 -->
 
 ---
@@ -115,7 +153,7 @@ ES: Esta es la slide de recompensa del primer bloque. Los record patterns sacan 
 layout: section
 ---
 
-# <T en="Two tracks" es="Dos vías" />
+# <T en="Two tracks" es="Railway" />
 
 <p><T en="Five steps, one chain, no nested switches." es="Cinco pasos, una cadena, sin switch anidados." /></p>
 
@@ -139,7 +177,7 @@ ES: Recorrer la cadena con los clics. Clic 1: findStudent devuelve Result<Studen
 
 ---
 
-# <T en="The railway, on one slide" es="La vía del tren, en una slide" />
+# <T en="The railway, on one slide" es="El railway, en una slide" />
 
 <Diagram name="two-tracks" />
 
@@ -147,7 +185,7 @@ ES: Recorrer la cadena con los clics. Clic 1: findStudent devuelve Result<Studen
 
 <!--
 EN: The metaphor comes after the code on purpose: now it names something they have just read. Blue is the success track, amber the failure track; those two colors mean the same thing on every slide of this deck. Nested switches are what you write when you do not have the lower track.
-ES: La metáfora viene después del código a propósito: ahora nombra algo que acaban de leer. Azul es la vía del éxito, ámbar la del fallo; esos dos colores significan lo mismo en todas las slides de este deck. Los switch anidados son lo que escribes cuando no tienes la vía de abajo.
+ES: La metáfora viene después del código a propósito: ahora nombra algo que acaban de leer. Azul es la vía Ok, ámbar la vía Err; esos dos colores significan lo mismo en todas las slides de este deck. Los switch anidados son lo que escribes cuando no tienes la vía de abajo.
 -->
 
 ---
@@ -178,7 +216,7 @@ ES: La misma validación, dicha de otra forma. Clic 1: tres reglas, cada una un 
 
 ---
 
-# <T en="Back on the tracks" es="De vuelta a las vías" />
+# <T en="Back on the tracks" es="De vuelta al railway" />
 
 <<< @/snippets/samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter05/EnrollmentService.java#validate java
 
@@ -191,39 +229,62 @@ ES: La costura. toResult convierte el Validated en un Result; mapError envuelve 
 
 ---
 
-# <T en="Why this library" es="Por qué esta librería" />
+# <T en="Three gaps I wanted to fill" es="Tres huecos que quería llenar" />
 
-<p><Tk k="why.intro" /></p>
-
-| | |
-|---|---|
-| <T en="Java 25 baseline" es="Base Java 25" /> | <T en="sealed interfaces, records, pattern matching; no class hierarchy to learn" es="interfaces selladas, records, pattern matching; sin jerarquía de clases que aprender" /> |
-| <T en="Core with one dependency" es="Núcleo con una dependencia" /> | <T en="JSpecify annotations; a JPMS module from day one" es="anotaciones JSpecify; módulo JPMS desde el primer día" /> |
-| <T en="Integrations as peers" es="Integraciones como peers" /> | <T en="optional modules, framework version is yours; ADR-022" es="módulos opcionales, la versión del framework es tuya; ADR-022" /> |
-| <T en="Tested matrices" es="Matrices probadas" /> | <T en="Jackson 2.14 to 2.23, Jackson 3.0 to 3.3, Spring Boot 3.3 to 4.1, on every pull request" es="Jackson 2.14 a 2.23, Jackson 3.0 a 3.3, Spring Boot 3.3 a 4.1, en cada pull request" /> |
-| <T en="Decisions on record" es="Decisiones por escrito" /> | <T en="24 public ADRs, from the Java version to the Jackson 2 and 3 policy" es="24 ADRs públicos, desde la versión de Java hasta la política de Jackson 2 y 3" /> |
+<div class="cols-3">
+  <div>
+    <span class="num">1</span>
+    <h3><Tk k="gaps.lang.title" /></h3>
+    <p><Tk k="gaps.lang.body" /></p>
+    <p class="fact"><Tk k="gaps.lang.fact" /></p>
+  </div>
+  <div>
+    <span class="num">2</span>
+    <h3><Tk k="gaps.docs.title" /></h3>
+    <p><Tk k="gaps.docs.body" /></p>
+    <p class="fact"><Tk k="gaps.docs.fact" /></p>
+  </div>
+  <div>
+    <span class="num">3</span>
+    <h3><Tk k="gaps.eco.title" /></h3>
+    <p><Tk k="gaps.eco.body" /></p>
+    <p class="fact"><Tk k="gaps.eco.fact" /></p>
+  </div>
+</div>
 
 <p class="caption"><Tk k="why.vavr" /></p>
 
 <!--
-EN: [23–27] Factual tone, two slides. No hierarchy to learn: Result is sealed, Ok and Err are records, you already know how to switch on them. Vavr and Arrow are mentioned, not attacked: they were right for Java 8 and for Kotlin. The ADRs are the honest part: every shape here has a written reason, and some of them say "we are not sure yet".
-ES: [23–27] Tono factual, dos slides. Sin jerarquía que aprender: Result es sellado, Ok y Err son records, ya sabes hacer switch sobre ellos. Vavr y Arrow se mencionan, no se atacan: fueron la respuesta correcta para Java 8 y para Kotlin. Los ADRs son la parte franca: cada forma aquí tiene un porqué escrito, y algunos dicen "todavía no estamos seguros".
+EN: [23–27] The honest part, in the speaker's own order. One: I wanted a library written in the Java we have now, and the codebase is the proof, not the README. Two: documentation that teaches; the guide, the ten-chapter tutorial this talk follows, and sample modules that compile and run on every pull request. Three: an ecosystem; the types are only useful if they travel through Spring, Jackson and the observability stack you already have. Vavr and Arrow are mentioned, not attacked: they were right for Java 8 and for Kotlin.
+ES: [23–27] La parte franca, en el orden del ponente. Uno: quería una librería escrita en el Java que tenemos hoy, y la prueba es el código, no el README. Dos: documentación que enseña; la guía, el tutorial de diez capítulos que sigue esta charla, y módulos de ejemplo que compilan y corren en cada pull request. Tres: un ecosistema; los tipos solo sirven si viajan por Spring, Jackson y la pila de observabilidad que ya tienes. Vavr y Arrow se mencionan, no se atacan: fueron la respuesta correcta para Java 8 y para Kotlin.
 -->
 
 ---
 
 # <T en="Integrations, as words" es="Integraciones, en palabras" />
 
-| | |
-|---|---|
-| `fun-jackson3` · `fun-jackson2` | <T en="JSON for every type, one module per Jackson line" es="JSON para todos los tipos, un módulo por línea de Jackson" /> |
-| `fun-spring-boot` · `fun-spring` | <T en="controllers return Result and Option; transactions roll back on Err" es="los controllers devuelven Result y Option; las transacciones hacen rollback en Err" /> |
-| `fun-spring-webflux` · `fun-reactor` | <T en="Mono and Flux in and out" es="Mono y Flux de ida y vuelta" /> |
-| `fun-quarkus` | <T en="the same transactions, on CDI" es="las mismas transacciones, sobre CDI" /> |
-| `fun-micrometer` · `fun-observation` · `fun-tracing` | <T en="counters, timers and spans tagged by outcome" es="contadores, timers y spans etiquetados por resultado" /> |
-| `fun-resilience4j` | <T en="retry and circuit breaker that return Try instead of throwing" es="retry y circuit breaker que devuelven Try en vez de lanzar" /> |
-| `fun-jakarta-validation` · `fun-jakarta-jaxb` | <T en="Bean Validation as Validated; JSON-B and JAXB adapters" es="Bean Validation como Validated; adaptadores JSON-B y JAXB" /> |
-| `fun-assertj` | <T en="assertions that read like the types" es="aserciones que se leen como los tipos" /> |
+<div class="cards">
+  <div class="card">
+    <h3><Tk k="integrations.json.title" /></h3>
+    <p class="mods"><code>fun-jackson3</code> <code>fun-jackson2</code></p>
+    <p><Tk k="integrations.json.body" /></p>
+  </div>
+  <div class="card">
+    <h3><Tk k="integrations.web.title" /></h3>
+    <p class="mods"><code>fun-spring-boot</code> <code>fun-spring</code> <code>fun-spring-webflux</code> <code>fun-reactor</code> <code>fun-quarkus</code></p>
+    <p><Tk k="integrations.web.body" /></p>
+  </div>
+  <div class="card">
+    <h3><Tk k="integrations.obs.title" /></h3>
+    <p class="mods"><code>fun-micrometer</code> <code>fun-observation</code> <code>fun-tracing</code> <code>fun-resilience4j</code></p>
+    <p><Tk k="integrations.obs.body" /></p>
+  </div>
+  <div class="card">
+    <h3><Tk k="integrations.test.title" /></h3>
+    <p class="mods"><code>fun-jakarta-validation</code> <code>fun-jakarta-jaxb</code> <code>fun-assertj</code></p>
+    <p><Tk k="integrations.test.body" /></p>
+  </div>
+</div>
 
 <p class="caption"><Tk k="integrations.caption" /></p>
 
@@ -268,10 +329,10 @@ ES: Un contador de Micrometer, etiquetado por lo que pasó. Como los fallos son 
 
 | | | |
 |---|---|---|
-| `POST /items` `{"name":"Widget"}` | **200** | `Result.ok(item)` |
-| `POST /items` `{"name":""}` | **500** `name must not be blank` | `Result.err(message)` |
-| `GET /items/-1` | **404** | `Option.none()` |
-| `GET /items/search?name=Widget` | **200** `[…]` | `Result<NonEmptyList<Item>, String>` |
+| `POST /items` `{"name":"Widget"}` | **<span class="ok">200</span>** | `Result.ok(item)` |
+| `POST /items` `{"name":""}` | **<span class="err">500</span>** `name must not be blank` | `Result.err(message)` |
+| `GET /items/-1` | **<span class="err">404</span>** | `Option.none()` |
+| `GET /items/search?name=Widget` | **<span class="ok">200</span>** `[…]` | `Result<NonEmptyList<Item>, String>` |
 
 <p class="caption"><Tk k="demo.fallback" /></p>
 
@@ -297,11 +358,11 @@ ES: Solo si la demo en vivo no puede correr. Espacio reproduce y pausa; las flec
 
 # <T en="Start at one boundary" es="Empieza en una frontera" />
 
-| | |
-|---|---|
-| **1** | <T en="One dependency: codes.domix:fun, or the BOM if you take more than one module." es="Una dependencia: codes.domix:fun, o el BOM si tomas más de un módulo." /> |
-| **2** | <T en="One endpoint returns Result. The service behind it does not change yet." es="Un endpoint devuelve Result. El servicio detrás todavía no cambia." /> |
-| **3** | <T en="One sealed error type, cases carved by what the caller can do about them." es="Un tipo de error sellado, con los casos recortados por lo que el caller puede hacer con ellos." /> |
+<div class="steps">
+  <div><span class="num">1</span><p><T en="One dependency: codes.domix:fun, or the BOM if you take more than one module." es="Una dependencia: codes.domix:fun, o el BOM si tomas más de un módulo." /></p></div>
+  <div><span class="num">2</span><p><T en="One endpoint returns Result. The service behind it does not change yet." es="Un endpoint devuelve Result. El servicio detrás todavía no cambia." /></p></div>
+  <div><span class="num">3</span><p><T en="One sealed error type, cases carved by what the caller can do about them." es="Un tipo de error sellado, con los casos recortados por lo que el caller puede hacer con ellos." /></p></div>
+</div>
 
 <p class="caption"><Tk k="adopt.caption" /></p>
 
@@ -334,16 +395,28 @@ layout: section
 
 # <T en="Try it on one endpoint" es="Pruébala en un solo endpoint" />
 
+<div class="hero-code">
+
+```java
+Result<User, UserError> findUser(UserId id)
+```
+
+</div>
+
 <p><Tk k="closing.ask" /></p>
 
-<div class="cols mt-12">
+<div class="cols closing-cols mt-6">
   <Qr name="tutorial" url="domix.github.io/dmx-fun/guide/tutorial"><Tk k="closing.tutorial" /></Qr>
   <Qr name="repo" url="github.com/domix/dmx-fun"><Tk k="closing.repo" /></Qr>
 </div>
 
+<p class="handle"><Tk k="closing.speaker" /></p>
+
+<Mascot class="closing-mascot" :size="240" />
+
 <!--
-EN: Leave this slide up during questions. Two sentences about the project and the speaker go here, at the end, not at the start: who maintains it, since when, and that every decision is an ADR anyone can argue with in an issue.
-ES: Dejar esta slide durante las preguntas. Las dos frases sobre el proyecto y el ponente van aquí, al final, no al principio: quién lo mantiene, desde cuándo, y que cada decisión es un ADR que cualquiera puede discutir en un issue.
+EN: Leave this slide up during questions. The signature is the one from the hook, forty minutes later, now telling the truth: that is the whole talk in one line. Two sentences about the project and the speaker go here, at the end: who maintains it, since when, and that every decision is an ADR anyone can argue with in an issue.
+ES: Dejar esta slide durante las preguntas. La firma es la del gancho, cuarenta minutos después, ahora diciendo la verdad: esa línea es toda la charla. Las dos frases sobre el proyecto y el ponente van aquí, al final: quién lo mantiene, desde cuándo, y que cada decisión es un ADR que cualquiera puede discutir en un issue.
 -->
 
 ---
@@ -390,7 +463,7 @@ ES: No forma parte de los 35 minutos. Saltar aquí desde la slide de cierre si u
 
 <!--
 EN: Chapter 6. Business says a full course is a waiting list, not an error. Either<Waitlisted, Enrolled> inside the Result: two legitimate answers on the success track. The switch still covers everything, and CourseFull disappears from the error type.
-ES: Capítulo 6. Negocio dice que un curso lleno es una lista de espera, no un error. Either<Waitlisted, Enrolled> dentro del Result: dos respuestas legítimas en la vía del éxito. El switch sigue cubriendo todo, y CourseFull desaparece del tipo de error.
+ES: Capítulo 6. Negocio dice que un curso lleno es una lista de espera, no un error. Either<Waitlisted, Enrolled> dentro del Result: dos respuestas legítimas en la vía Ok. El switch sigue cubriendo todo, y CourseFull desaparece del tipo de error.
 -->
 
 ---
