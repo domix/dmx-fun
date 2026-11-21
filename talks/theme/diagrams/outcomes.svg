@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 300" role="img" aria-label="One counter, tagged by outcome: Enrolled and Waitlisted on the Ok track, the error records on the Err track">
+  <style>
+    .lbl { font: 500 24px 'JetBrains Mono', ui-monospace, monospace; fill: var(--dmx-text, #c9d1d9); }
+    .val { font: 600 22px 'Inter Variable', Inter, system-ui, sans-serif; fill: var(--dmx-text-2, #8b949e); font-variant-numeric: tabular-nums; }
+    .bar.ok  { fill: var(--dmx-ok, #58a6ff); }
+    .bar.err { fill: var(--dmx-err, #d29922); }
+    .axis { stroke: var(--dmx-border, #30363d); stroke-width: 2; }
+    .tag { font: 650 22px 'Inter Variable', Inter, system-ui, sans-serif; }
+    .tag.ok { fill: var(--dmx-ok, #58a6ff); }
+    .tag.err { fill: var(--dmx-err, #d29922); }
+  </style>
+  <text x="1560" y="24" text-anchor="end" class="tag ok">Ok</text>
+  <text x="1560" y="190" text-anchor="end" class="tag err">Err</text>
+  <line x1="380" y1="8" x2="380" y2="292" class="axis"/>
+  <text x="356" y="54" text-anchor="end" class="lbl">Enrolled</text>
+  <rect x="380" y="34" width="1040" height="30" rx="6" class="bar ok"/>
+  <text x="1436" y="56" class="val">412</text>
+  <text x="356" y="108" text-anchor="end" class="lbl">Waitlisted</text>
+  <rect x="380" y="88" width="144" height="30" rx="6" class="bar ok"/>
+  <text x="540" y="110" class="val">57</text>
+  <text x="356" y="170" text-anchor="end" class="lbl">AlreadyEnrolled</text>
+  <rect x="380" y="150" width="58" height="30" rx="6" class="bar err"/>
+  <text x="454" y="172" class="val">23</text>
+  <text x="356" y="224" text-anchor="end" class="lbl">CourseNotFound</text>
+  <rect x="380" y="204" width="23" height="30" rx="6" class="bar err"/>
+  <text x="419" y="226" class="val">9</text>
+  <text x="356" y="278" text-anchor="end" class="lbl">PaymentFailed</text>
+  <rect x="380" y="258" width="15" height="30" rx="6" class="bar err"/>
+  <text x="411" y="280" class="val">6</text>
+</svg>
