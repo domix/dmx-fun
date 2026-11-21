@@ -28,8 +28,8 @@ To show new code: add the region to the source and the file to `snippets.json`; 
 
 ## Structure
 
-25 slides: 22 for the 35-minute talk (hook, return instead of throw, two tracks, all the errors at once,
-why this library, out the door, demo and its recording, start and contribute, Q&A) plus a 3-slide backup on chapters 6 and 7.
+26 slides: 23 for the 35-minute talk (naming, hook, return instead of throw, railway, all the errors at once,
+three gaps and integrations, out the door, demo and its recording, start and contribute, closing, Q&A) plus a 3-slide backup on chapters 6 and 7.
 Speaker notes carry the minute marks from the outline in issue #561. After each delivery, fill a section in
 `DELIVERIES.md` (questions asked, timing, what to change); that is what feeds the deck and the tutorial afterwards. `demo.md` has the commands for the demo block;
 `demo.cast` is its recording, played on the slide after the demo table through `components/Cast.vue` (asciinema-player).
