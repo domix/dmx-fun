@@ -34,6 +34,12 @@ jpmsTest {
 
 // assertj-core is on the classpath (unnamed module) at compile time but dmx.fun.assertj
 // is on the module path and requires it. This read allows the compiler to resolve it.
+// The JPMS module name mirrors the artifact (fun-jackson3) and ends in a digit on purpose;
+// javac's "module name component should avoid terminal digits" lint does not apply.
+tasks.named('compileJava') {
+    options.compilerArgs += ['-Xlint:-module']
+}
+
 tasks.named('compileTestJava') {
     options.compilerArgs += ['--add-reads', 'dmx.fun.assertj=ALL-UNNAMED']
 }
