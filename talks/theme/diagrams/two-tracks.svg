@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 520" role="img" aria-label="Railway: the Ok track above with five stations, the Err track below; a failure switches down and skips the remaining stations; recoverWith switches back up">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 520" role="img" aria-label="Railway: the Ok track above gains five stations one by one, the Err track below; a failure switches down and skips the remaining stations; recoverWith switches back up">
   <style>
     .rail      { fill: none; stroke-width: 8; stroke-linecap: round; }
     .glow      { fill: none; stroke-width: 26; stroke-linecap: round; opacity: 0.16; }
@@ -19,12 +19,18 @@
     .dot       { stroke: none; }
     .dot.ok    { fill: var(--dmx-ok, #58a6ff); }
     .dot.err   { fill: var(--dmx-err, #d29922); }
-    .station, .link { transition: opacity 0.4s ease; }
-    .scene     { opacity: 0; transition: opacity 0.4s ease; }
-    /* Click states: the slide wraps the diagram in .stage-0 / .stage-1 / .stage-2 */
-    .stage-1 #fail1, .stage-2 #fail2 { opacity: 1; }
-    .stage-1 .st3, .stage-1 .st4, .stage-1 .st5, .stage-1 .ln3, .stage-1 .ln4 { opacity: 0.25; }
-    .stage-2 .st4, .stage-2 .st5, .stage-2 .ln4 { opacity: 0.25; }
+    .station, .link, .scene { opacity: 0; transition: opacity 0.4s ease; }
+    /* Click states: the slide wraps the diagram in .stage-0 … .stage-7.
+       Stages 1–5 bring in one station each (and the operator that leads to it);
+       stage 6 is a failure switching down; stage 7 a failure recovered at the end. */
+    :is(.stage-1, .stage-2, .stage-3, .stage-4, .stage-5, .stage-6, .stage-7) .st1 { opacity: 1; }
+    :is(.stage-2, .stage-3, .stage-4, .stage-5, .stage-6, .stage-7) :is(.st2, .ln1) { opacity: 1; }
+    :is(.stage-3, .stage-4, .stage-5, .stage-6, .stage-7) :is(.st3, .ln2) { opacity: 1; }
+    :is(.stage-4, .stage-5, .stage-6, .stage-7) :is(.st4, .ln3) { opacity: 1; }
+    :is(.stage-5, .stage-6, .stage-7) :is(.st5, .ln4) { opacity: 1; }
+    .stage-6 #fail1, .stage-7 #fail2 { opacity: 1; }
+    .stage-6 :is(.st3, .st4, .st5, .ln3, .ln4) { opacity: 0.25; }
+    .stage-7 :is(.st4, .st5, .ln4) { opacity: 0.25; }
   </style>
 
   <!-- rails, with a soft glow under each -->
@@ -65,7 +71,7 @@
     <text x="1390" y="139" text-anchor="middle" class="mono">save</text>
   </g>
 
-  <!-- click 1: a failure after findCourse switches down; the rest of the Ok rail is skipped -->
+  <!-- click 6: a failure after findCourse switches down; the rest of the Ok rail is skipped -->
   <g id="fail1" class="scene">
     <path d="M 620 130 C 690 130, 690 400, 760 400" class="rail err"/>
     <circle cx="620" cy="130" r="9" class="dot err"/>
@@ -73,7 +79,7 @@
     <text x="1010" y="408" text-anchor="middle" class="pill-text err">CourseNotFound</text>
   </g>
 
-  <!-- click 2: a failure after ensureNotEnrolled rides the Err rail until recoverWith lifts it back -->
+  <!-- click 7: a failure after ensureNotEnrolled rides the Err rail until recoverWith lifts it back -->
   <g id="fail2" class="scene">
     <path d="M 920 130 C 990 130, 990 400, 1060 400" class="rail err"/>
     <circle cx="920" cy="130" r="9" class="dot err"/>
