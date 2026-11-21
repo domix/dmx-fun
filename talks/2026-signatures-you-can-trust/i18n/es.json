@@ -61,5 +61,15 @@
   "closing.speaker": "Domingo Suárez Torres · domix · Apache 2.0",
   "caller.caption": "Las excepciones no son valores: el tipo no lista ninguna, nada las compone, y cada capa las vuelve a declarar o las envuelve.",
   "contribute.open": "Apache 2.0. Repositorio público, ADRs públicos, issues abiertos a cualquiera.",
-  "recap.caption": "La firma dejó de mentir una reescritura a la vez; cada paso fue un cambio pequeño que compila."
+  "recap.caption": "La firma dejó de mentir una reescritura a la vez; cada paso fue un cambio pequeño que compila.",
+  "tx.caption": "Spring hace rollback ante excepciones, así que un Err devuelto haría commit. TxResult y @TransactionalResult hacen commit en Ok y rollback en Err; no hace falta lanzar nada.",
+  "farewell.title": "Gracias",
+  "farewell.library": "La librería",
+  "farewell.speaker": "El ponente",
+  "farewell.artifact": "codes.domix:fun en Maven Central · Apache 2.0",
+  "farewell.site": "domix.github.io/dmx-fun · guía, tutorial, blog, ADRs",
+  "farewell.repo": "github.com/domix/dmx-fun · issues y good first issues",
+  "farewell.name": "Domingo Suárez Torres",
+  "farewell.handle": "github.com/domix · domix",
+  "farewell.ask": "Abre un issue con el tipo de error que diseñaste. Esa es la conversación que quiero tener."
 }
