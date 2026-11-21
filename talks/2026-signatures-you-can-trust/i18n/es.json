@@ -34,9 +34,6 @@
   "qa.kotlin.q": "¿Por qué no Kotlin y Arrow?",
   "qa.kotlin.a": "El mismo hueco, otro lenguaje. Si puedes cambiar de lenguaje, hazlo. Si tu código es Java, esta es la respuesta idiomática en Java 25.",
   "qa.caption": "Las respuestas largas están en los tres posts.",
-  "backup.intro": "Si hay tiempo, o si alguien pregunta qué pasa después del capítulo 5.",
-  "either.caption": "Un curso lleno no es un fallo; es una lista de espera. Dos respuestas legítimas, así que el valor de éxito pasa a ser Either. La vía Err solo perdió un caso que nunca fue suyo.",
-  "nel.caption": "Dos reglas de cardinalidad pasan de los comentarios a los tipos. Un curso tiene al menos un horario; una cohorte a la que vale la pena escribir tiene al menos un estudiante. Nadie escribe isEmpty() para un caso que no puede ocurrir.",
   "naming.quote": "Solo hay dos cosas difíciles en informática: invalidar la caché y ponerle nombre a las cosas.",
   "naming.generic": "era la idea. Demasiado genérico él solo.",
   "naming.nickname": "el apodo, delante, para que el artefacto se pudiera encontrar.",
@@ -48,7 +45,7 @@
   "gaps.lang.body": "Java 25 como base: interfaces selladas, records, pattern matching, JSpecify, módulo JPMS. Lo enseña el código, no solo el README.",
   "gaps.lang.fact": "Una dependencia en el núcleo. Sin jerarquía de clases que aprender.",
   "gaps.docs.title": "Documentación que enseña",
-  "gaps.docs.body": "Una guía, un tutorial de diez capítulos y módulos de ejemplo en el repositorio: código de referencia que puedes ejecutar, no un listado de API.",
+  "gaps.docs.body": "Una guía, un tutorial de diez capítulos, el blog y módulos de ejemplo en el repositorio: código de referencia que puedes ejecutar, no un listado de API.",
   "gaps.docs.fact": "24 ADRs públicos, desde la versión de Java hasta la política de Jackson 2 y 3.",
   "gaps.eco.title": "Un ecosistema, no un zoológico de tipos",
   "gaps.eco.body": "Spring, Quarkus, Jackson, Reactor, Micrometer, Resilience4j: los tipos viajan por las herramientas que ya usas.",
@@ -61,5 +58,8 @@
   "integrations.obs.body": "Contadores, timers y spans etiquetados por resultado; retry y circuit breaker que devuelven Try en vez de lanzar.",
   "integrations.test.title": "Validación y tests",
   "integrations.test.body": "Bean Validation como Validated; adaptadores JSON-B y JAXB; aserciones que se leen como los tipos.",
-  "closing.speaker": "Domingo Suárez Torres · domix"
+  "closing.speaker": "Domingo Suárez Torres · domix · Apache 2.0",
+  "caller.caption": "Las excepciones no son valores: el tipo no lista ninguna, nada las compone, y cada capa las vuelve a declarar o las envuelve.",
+  "contribute.open": "Apache 2.0. Repositorio público, ADRs públicos, issues abiertos a cualquiera.",
+  "recap.caption": "La firma dejó de mentir una reescritura a la vez; cada paso fue un cambio pequeño que compila."
 }

@@ -47,30 +47,22 @@ public class ItemController {
         return service.findAll();
     }
 
-    // Option<Item> is handled by OptionHandlerMethodReturnValueHandler (auto-configured):
-    //   some(item) → HTTP 200 {"id":1,"name":"...","description":"..."}
-    //   none()     → HTTP 404 (empty body)
+    // #region endpoints
     @GetMapping("/{id}")
     public Option<Item> findById(@PathVariable("id") Long id) {
         return service.findById(id);
     }
 
-    // Result<Item,String> is handled by ResultHandlerMethodReturnValueHandler:
-    //   ok(item)   → HTTP 200 {"id":1,"name":"Widget","description":"…"}
-    //   err(error) → HTTP 500 "name must not be blank"
     @PostMapping
     public Result<Item, String> create(@RequestBody CreateItemRequest request) {
         return service.create(request.name(), request.description());
     }
 
-    // Result<NonEmptyList<Item>,String>: the handler unwraps the Result, then Jackson serializes
-    // the NonEmptyList through DmxFunModule (registered by fun-spring-boot):
-    //   ok(items) → HTTP 200 [{"id":1,...},{"id":2,...}]
-    //   err(msg)  → HTTP 500 "no items named 'x'"
     @GetMapping("/search")
     public Result<NonEmptyList<Item>, String> search(@RequestParam("name") String name) {
         return service.search(name);
     }
+    // #endregion endpoints
 
     @PutMapping("/{id}")
     public Result<Item, String> update(@PathVariable("id") Long id, @RequestBody UpdateItemRequest request) {

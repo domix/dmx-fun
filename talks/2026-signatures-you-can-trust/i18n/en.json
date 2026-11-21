@@ -34,9 +34,6 @@
   "qa.kotlin.q": "Why not Kotlin and Arrow?",
   "qa.kotlin.a": "Same gap, different language. If you can switch languages, do. If your codebase is Java, this is the idiomatic answer on Java 25.",
   "qa.caption": "The three posts have the long answers.",
-  "backup.intro": "If there is time, or if someone asks what happens after chapter 5.",
-  "either.caption": "A full course is not a failure; it is a waiting list. Two legitimate answers, so the success value becomes Either. The failure track only lost a case that never belonged there.",
-  "nel.caption": "Two cardinality rules move from comments into types. A course has at least one schedule; a cohort worth mailing has at least one student. Nobody writes isEmpty() for a case that cannot happen.",
   "naming.quote": "There are only two hard things in computer science: cache invalidation and naming things.",
   "naming.generic": "was the idea. Too generic on its own.",
   "naming.nickname": "the nickname, in front, so the artifact could be found.",
@@ -48,7 +45,7 @@
   "gaps.lang.body": "Java 25 as the baseline: sealed interfaces, records, pattern matching, JSpecify, a JPMS module. The codebase shows it, not only the README.",
   "gaps.lang.fact": "One dependency in the core. No class hierarchy to learn.",
   "gaps.docs.title": "Documentation that teaches",
-  "gaps.docs.body": "A guide, a ten-chapter tutorial and sample modules in the repository: reference code you can run, not an API listing.",
+  "gaps.docs.body": "A guide, a ten-chapter tutorial, the blog and sample modules in the repository: reference code you can run, not an API listing.",
   "gaps.docs.fact": "24 public ADRs, from the Java version to the Jackson 2 and 3 policy.",
   "gaps.eco.title": "An ecosystem, not a type zoo",
   "gaps.eco.body": "Spring, Quarkus, Jackson, Reactor, Micrometer, Resilience4j: the types travel through the tools you already use.",
@@ -61,5 +58,8 @@
   "integrations.obs.body": "Counters, timers and spans tagged by outcome; retry and circuit breaker that return Try instead of throwing.",
   "integrations.test.title": "Validation and tests",
   "integrations.test.body": "Bean Validation as Validated; JSON-B and JAXB adapters; assertions that read like the types.",
-  "closing.speaker": "Domingo Suárez Torres · domix"
+  "closing.speaker": "Domingo Suárez Torres · domix · Apache 2.0",
+  "caller.caption": "Exceptions are not values: the type lists none of them, nothing composes them, and every layer re-declares or wraps them.",
+  "contribute.open": "Apache 2.0. Public repository, public ADRs, issues open to anyone.",
+  "recap.caption": "The signature stopped lying one rewrite at a time; every step was a small change that compiles."
 }

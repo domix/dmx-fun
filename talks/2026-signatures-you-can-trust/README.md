@@ -25,11 +25,14 @@ Every snippet is imported from the compiled, tested sources in `samples/enrollme
 Java files. Slidev only imports from inside its workspace, so `scripts/sync-snippets.mjs` copies the
 files listed in `snippets.json` into `snippets/` (git-ignored) before every `dev`, `build` and `export`.
 To show new code: add the region to the source and the file to `snippets.json`; never paste code into the deck.
+The exceptions are the illustrative `findUser` signatures on the hook and closing slides and the five quoted
+signatures on the recap slide, which are kept in step with the tutorial chapters by hand.
 
 ## Structure
 
-26 slides: 23 for the 35-minute talk (naming, hook, return instead of throw, railway, all the errors at once,
-three gaps and integrations, out the door, demo and its recording, start and contribute, closing, Q&A) plus a 3-slide backup on chapters 6 and 7.
+26 slides: naming and the three gaps the library fills, the hook, chapter 0 from both sides, return instead of throw,
+railway, all the errors at once, integrations, out the door (status, metrics, the controller, the demo and its recording),
+start at one boundary, open source and four ways in, a five-line recap, the closing, and a Q&A appendix.
 Speaker notes carry the minute marks from the outline in issue #561. After each delivery, fill a section in
 `DELIVERIES.md` (questions asked, timing, what to change); that is what feeds the deck and the tutorial afterwards. `demo.md` has the commands for the demo block;
 `demo.cast` is its recording, played on the slide after the demo table through `components/Cast.vue` (asciinema-player).
