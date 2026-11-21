@@ -61,5 +61,15 @@
   "closing.speaker": "Domingo Suárez Torres · domix · Apache 2.0",
   "caller.caption": "Exceptions are not values: the type lists none of them, nothing composes them, and every layer re-declares or wraps them.",
   "contribute.open": "Apache 2.0. Public repository, public ADRs, issues open to anyone.",
-  "recap.caption": "The signature stopped lying one rewrite at a time; every step was a small change that compiles."
+  "recap.caption": "The signature stopped lying one rewrite at a time; every step was a small change that compiles.",
+  "tx.caption": "Spring rolls back on exceptions, so a returned Err would commit. TxResult and @TransactionalResult commit on Ok and roll back on Err; no exception is thrown to get there.",
+  "farewell.title": "Thank you",
+  "farewell.library": "The library",
+  "farewell.speaker": "The speaker",
+  "farewell.artifact": "codes.domix:fun on Maven Central · Apache 2.0",
+  "farewell.site": "domix.github.io/dmx-fun · guide, tutorial, blog, ADRs",
+  "farewell.repo": "github.com/domix/dmx-fun · issues and good first issues",
+  "farewell.name": "Domingo Suárez Torres",
+  "farewell.handle": "github.com/domix · domix",
+  "farewell.ask": "Open an issue with the error type you designed. That is the conversation I want to have."
 }

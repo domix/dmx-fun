@@ -11,6 +11,7 @@
     "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter05/FormValidation.java",
     "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter09/EnrollmentMetrics.java",
     "samples/enrollment-tutorial/src/main/java/dmx/fun/tutorial/chapter09/HttpMapping.java",
-    "samples/spring-boot-sample/src/main/java/dmx/fun/sample/item/ItemController.java"
+    "samples/spring-boot-sample/src/main/java/dmx/fun/sample/item/ItemController.java",
+    "samples/spring-boot-sample/src/main/java/dmx/fun/sample/item/ItemService.java"
   ]
 }

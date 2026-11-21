@@ -18,7 +18,7 @@ blocks:
   - { en: The signature that lies, es: La firma que miente, from: 4, to: 9 }
   - { en: Railway, es: Railway, from: 10, to: 12 }
   - { en: All the errors at once, es: Todos los errores a la vez, from: 13, to: 15 }
-  - { en: Out the door, es: Hacia fuera, from: 16, to: 25 }
+  - { en: Out the door, es: Hacia fuera, from: 16, to: 26 }
 layout: cover
 ---
 
@@ -307,8 +307,8 @@ ES: La costura. toResult convierte el Validated en un Result; mapError envuelve 
 <p class="caption"><Tk k="integrations.caption" /></p>
 
 <!--
-EN: [23–25] No logos. Each card is a separate set of artifacts under codes.domix; the BOM aligns versions. The point of the slide is the shape, not the list: the core knows nothing about any of these, and each one is small enough to read in an afternoon, which matters for the "contribute" slide.
-ES: [23–25] Sin logos. Cada tarjeta es un conjunto de artefactos separados bajo codes.domix; el BOM alinea versiones. El sentido de la slide es la forma, no la lista: el núcleo no sabe nada de ninguno de estos, y cada uno es lo bastante pequeño para leerse en una tarde, lo que importa para la slide de "contribuir".
+EN: [23–24] No logos. Each card is a separate set of artifacts under codes.domix; the BOM aligns versions. The point of the slide is the shape, not the list: the core knows nothing about any of these, and each one is small enough to read in an afternoon, which matters for the "contribute" slide. Say the matrix aloud rather than showing it: we do not pin you to our Spring or Jackson, CI tests yours on every pull request, and the two Jackson lines produce the same JSON, so a Boot 3 service and a Boot 4 service understand each other during a migration.
+ES: [23–24] Sin logos. Cada tarjeta es un conjunto de artefactos separados bajo codes.domix; el BOM alinea versiones. El sentido de la slide es la forma, no la lista: el núcleo no sabe nada de ninguno de estos, y cada uno es lo bastante pequeño para leerse en una tarde, lo que importa para la slide de "contribuir". La matriz se dice, no se enseña: no te atamos a nuestro Spring ni a nuestro Jackson, CI prueba los tuyos en cada pull request, y las dos líneas de Jackson producen el mismo JSON, así que un servicio en Boot 3 y otro en Boot 4 se entienden durante una migración.
 -->
 
 ---
@@ -354,6 +354,25 @@ ES: Un contador de Micrometer, etiquetado por lo que pasó. Las barras son lo qu
 <!--
 EN: The real file from spring-boot-sample, nothing elided. Click 1: Option<Item>, and the auto-configured handler turns none() into a 404. Click 2: Result<Item, String>; ok is the body, err is the status. Click 3: Result<NonEmptyList<Item>, String>, where the handler unwraps and Jackson writes the list as a plain array. No ResponseEntity, no @ExceptionHandler, no JSON code anywhere in the controller.
 ES: El archivo real de spring-boot-sample, sin recortes. Clic 1: Option<Item>, y el handler autoconfigurado convierte none() en un 404. Clic 2: Result<Item, String>; ok es el cuerpo, err es el status. Clic 3: Result<NonEmptyList<Item>, String>, donde el handler desenvuelve y Jackson escribe la lista como un array normal. Sin ResponseEntity, sin @ExceptionHandler, sin código JSON en ningún sitio del controller.
+-->
+
+---
+class: dense
+---
+
+# <T en="Transactions follow the value" es="Las transacciones siguen al valor" />
+
+<<< @/snippets/samples/spring-boot-sample/src/main/java/dmx/fun/sample/item/ItemService.java#programmatic java
+
+<div class="mt-2" />
+
+<<< @/snippets/samples/spring-boot-sample/src/main/java/dmx/fun/sample/item/ItemService.java#declarative java
+
+<p class="caption"><Tk k="tx.caption" /></p>
+
+<!--
+EN: The objection every backend room raises: "if I return Err instead of throwing, my @Transactional never rolls back." True, and this is the answer, from the same service the controller calls. Top: TxResult.execute wraps the pipeline; an Err result rolls the transaction back, an Ok commits. Bottom: the same contract as an annotation, @TransactionalResult, through an aspect that fun-spring-boot wires for you. Try and Validated have their twins. The commit follows the value, not the stack trace.
+ES: La objeción que levanta cualquier sala backend: "si devuelvo Err en vez de lanzar, mi @Transactional nunca hace rollback." Cierto, y esta es la respuesta, del mismo servicio al que llama el controller. Arriba: TxResult.execute envuelve el pipeline; un Err hace rollback, un Ok hace commit. Abajo: el mismo contrato como anotación, @TransactionalResult, con un aspecto que fun-spring-boot configura por ti. Try y Validated tienen sus gemelos. El commit sigue al valor, no al stack trace.
 -->
 
 ---
@@ -492,4 +511,31 @@ ES: Dejar esta slide durante las preguntas. La firma es la del gancho, cuarenta 
 <!--
 EN: [35–45] Show only if one of these is asked, or if the room is quiet. Immutability: records are small, escape analysis removes most short-lived allocations, and Valhalla is coming; the real costs are in large collections copied in loops, which this library does not ask you to do. Checked exceptions: they do solve the "visible in the signature" problem, but they do not compose: no lambdas, no map, no chaining, and every layer re-declares or wraps them. Kotlin: Arrow is the right answer in Kotlin; the question here is what to do in the Java you already have.
 ES: [35–45] Mostrar solo si preguntan una de estas, o si la sala está callada. Inmutabilidad: los records son pequeños, el escape analysis elimina casi todas las asignaciones de vida corta, y Valhalla viene en camino; los costes reales están en colecciones grandes copiadas en bucles, que esta librería no te pide hacer. Excepciones checked: sí resuelven lo de "visible en la firma", pero no componen: sin lambdas, sin map, sin encadenar, y cada capa las vuelve a declarar o las envuelve. Kotlin: Arrow es la respuesta correcta en Kotlin; la pregunta aquí es qué hacer con el Java que ya tienes.
+-->
+
+---
+layout: cover
+---
+
+# <span class="gradient-title"><Tk k="farewell.title" /></span>
+
+<p><Tk k="farewell.ask" /></p>
+
+<div class="farewell">
+  <div>
+    <h3><Tk k="farewell.library" /></h3>
+    <p><Tk k="farewell.artifact" /></p>
+    <p><Tk k="farewell.site" /></p>
+    <p><Tk k="farewell.repo" /></p>
+  </div>
+  <div>
+    <h3><Tk k="farewell.speaker" /></h3>
+    <p><Tk k="farewell.name" /></p>
+    <p class="muted"><Tk k="farewell.handle" /></p>
+  </div>
+</div>
+
+<!--
+EN: The last slide, after the questions; press End (or G, then the slide number) to reach it past the Q&A appendix. The mascot waves goodbye the same way it said hello on the cover. Say thank you, repeat the one ask, and leave this on screen while people pack up: the two addresses are what they will photograph.
+ES: La última slide, después de las preguntas; End (o G y el número de slide) llega hasta aquí saltando el apéndice. La mascota se despide igual que saludó en la portada. Dar las gracias, repetir la única petición, y dejarla en pantalla mientras la gente recoge: las dos direcciones son lo que van a fotografiar.
 -->

@@ -30,9 +30,9 @@ signatures on the recap slide, which are kept in step with the tutorial chapters
 
 ## Structure
 
-26 slides: naming and the three gaps the library fills, the hook, chapter 0 from both sides, return instead of throw,
-railway, all the errors at once, integrations, out the door (status, metrics, the controller, the demo and its recording),
-start at one boundary, open source and four ways in, a five-line recap, the closing, and a Q&A appendix.
+28 slides: naming and the three gaps the library fills, the hook, chapter 0 from both sides, return instead of throw,
+railway, all the errors at once, integrations, out the door (status, metrics, the controller, transactions, the demo and its recording),
+start at one boundary, open source and four ways in, a five-line recap, the closing, a Q&A appendix, and a farewell slide with the library's and the speaker's details.
 Speaker notes carry the minute marks from the outline in issue #561. After each delivery, fill a section in
 `DELIVERIES.md` (questions asked, timing, what to change); that is what feeds the deck and the tutorial afterwards. `demo.md` has the commands for the demo block;
 `demo.cast` is its recording, played on the slide after the demo table through `components/Cast.vue` (asciinema-player).

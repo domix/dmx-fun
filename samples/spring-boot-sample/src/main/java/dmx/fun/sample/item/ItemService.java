@@ -42,6 +42,7 @@ public class ItemService {
      * <p>Uses {@link TxResult#execute} so the transaction rolls back automatically
      * when the returned {@code Result} is {@code Err}.
      */
+    // #region programmatic
     public Result<Item, String> create(String name, String description) {
         return txResult.execute(
             () -> mustNotBeBlank.check(name)
@@ -51,6 +52,7 @@ public class ItemService {
                 .flatMap(this::internalSave)
         );
     }
+    // #endregion programmatic
 
     private Result<Item, String> internalSave(Item save) {
         return Try.of(() -> repository.save(save))
@@ -66,6 +68,7 @@ public class ItemService {
      * <p>Annotated with {@link TransactionalResult}: {@link dmx.fun.spring.DmxTransactionalAspect}
      * intercepts the call and rolls back when the returned {@code Result} is {@code Err}.
      */
+    // #region declarative
     @TransactionalResult
     public Result<Item, String> update(Long id, String name) {
         String normalized = name == null ? null : name.strip();
@@ -75,6 +78,7 @@ public class ItemService {
             .flatMap(_ -> this.findById(id).toResult("item not found: %d".formatted(id)))
             .flatMap(item -> this.internalSave(new Item(item.id(), normalized, item.description())));
     }
+    // #endregion declarative
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
