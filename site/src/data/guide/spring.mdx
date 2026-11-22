@@ -69,7 +69,8 @@ explicit `@Bean` declarations required:
 | `TxTry` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
 | `TxValidated` | `spring-tx` on classpath **and** a `PlatformTransactionManager` bean is present |
 | `DmxTransactionalAspect` | Same as above **and** `aspectjweaver` is also on the classpath |
-| `DmxFunModule` | `jackson-databind` **and** `fun-jackson` are both on the classpath |
+| `DmxFunModule` (Jackson 3) | `tools.jackson.core:jackson-databind` **and** `fun-jackson3` are both on the classpath |
+| `DmxFunModule` (Jackson 2) | `com.fasterxml.jackson.core:jackson-databind` **and** `fun-jackson2` are both on the classpath |
 | `DmxTracing` | `micrometer-tracing` **and** `fun-tracing` on classpath **and** a `Tracer` bean is present |
 | `optionReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
 | `resultReturnValueHandlerPostProcessor` | `spring-webmvc` on classpath (enabled by default, see [MVC handlers](#spring-mvc-return-value-handlers)) |
@@ -77,7 +78,7 @@ explicit `@Bean` declarations required:
 
 `PlatformTransactionManager` is auto-configured by Spring Boot for every registered `DataSource`; if you add a `DataSource` (e.g. via `spring-boot-starter-data-jpa` or `spring-boot-starter-jdbc`), no explicit transaction manager declaration is needed.
 
-`DmxFunModule` is the Jackson serializer/deserializer for all dmx-fun types. When it is registered as a bean, Spring Boot's `JacksonAutoConfiguration` applies it to the `ObjectMapper` automatically — `Result`, `Option`, `Try`, and the other types serialize to JSON without any extra wiring. To opt out, set `dmx.fun.jackson.enabled=false`. See the [Jackson Integration guide](./jackson#auto-configuration-with-fun-spring-boot) for the full reference.
+`DmxFunModule` is the Jackson serializer/deserializer for all dmx-fun types. When it is registered as a bean, Spring Boot's `JacksonAutoConfiguration` applies it to the `ObjectMapper` automatically — `Result`, `Option`, `Try`, and the other types serialize to JSON without any extra wiring. To opt out, set `dmx.fun.jackson2.enabled=false`. See the [Jackson Integration guide](./jackson#auto-configuration-with-fun-spring-boot) for the full reference.
 
 All beans are guarded by `@ConditionalOnMissingBean`, so you can override any of them
 with your own `@Bean` declaration (see [Customizing auto-configured beans](#customizing-auto-configured-beans) below).
@@ -327,15 +328,16 @@ Each property is documented in the JAR's
 `META-INF/additional-spring-configuration-metadata.json`, so IDE autocompletion works
 out of the box.
 
-### Interaction with `fun-jackson`
+### Interaction with `fun-jackson3` / `fun-jackson2`
 
 The handlers delegate body serialization to Spring's existing body processor. When
-`fun-jackson` is on the classpath and `DmxFunModule` is registered (which `fun-spring-boot`
+a dmx-fun Jackson module (`fun-jackson3` on Boot 4, `fun-jackson2` on Boot 3) is on the
+classpath and `DmxFunModule` is registered (which `fun-spring-boot`
 does automatically), the **unwrapped** value or error is serialized — not the wrapper type.
 This means `Result.ok(item)` produces `{"id":1,"name":"Widget"}`, not `{"ok":{"id":1,...}}`.
 
 If you want the wrapped JSON shape (`{"ok":{...}}` / `{"err":"..."}`), disable the Result
-handler (`dmx.fun.mvc.result-handler.enabled=false`) and let `fun-jackson` serialize the
+handler (`dmx.fun.mvc.result-handler.enabled=false`) and let the Jackson module serialize the
 `Result` directly.
 
 ---
@@ -357,7 +359,7 @@ the `spring/` module:
 To test locally against a specific version:
 
 ```bash
-./gradlew :spring:test -PspringVersion=7.0.8
+./gradlew :spring:test -PspringVersion=7.0.10
 ```
 
 ### Spring Boot (`fun-spring-boot`)

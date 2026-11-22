@@ -238,3 +238,4 @@ itself is plain Java: sealed interfaces and records, no library required. The
 ---
 
 *Found a bug or have a suggestion? Open an issue on [GitHub](https://github.com/domix/dmx-fun).*
+- [From exceptions to signatures you can trust](/dmx-fun/guide/tutorial/01-return-instead-of-throw) — chapter 1 of the tutorial, where `EnrollmentError` is designed case by case

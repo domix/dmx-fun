@@ -26,5 +26,8 @@ pnpm-debug.log*
 # Generated javadocs
 public/javadoc
 
+# Talk decks built from ../talks (copied in by CI or by `make talks`)
+public/talks
+
 # Use pnpm — no npm lockfile
 package-lock.json

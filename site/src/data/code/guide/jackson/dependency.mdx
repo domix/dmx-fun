@@ -1,24 +1,25 @@
 ---
-fileName: 'build.gradle / pom.xml'
+fileName: 'build.gradle / pom.xml — Jackson 2'
 ---
 
 ```groovy
 // Gradle
-implementation("codes.domix:fun-jackson:0.2.0")
-// Jackson itself — bring your own version (2.14.x – 2.22.x)
-implementation("com.fasterxml.jackson.core:jackson-databind:2.22.1")
+implementation("codes.domix:fun-jackson2:0.3.0")
+// Jackson 2 itself — bring your own version (2.14.x – 2.23.x).
+// Spring Boot 3 users: the Boot BOM already manages com.fasterxml.jackson.
+implementation("com.fasterxml.jackson.core:jackson-databind:2.23.0")
 ```
 
 ```xml
 <!-- Maven -->
 <dependency>
     <groupId>codes.domix</groupId>
-    <artifactId>fun-jackson</artifactId>
-    <version>0.2.0</version>
+    <artifactId>fun-jackson2</artifactId>
+    <version>0.3.0</version>
 </dependency>
 <dependency>
     <groupId>com.fasterxml.jackson.core</groupId>
     <artifactId>jackson-databind</artifactId>
-    <version>2.22.1</version>
+    <version>2.23.0</version>
 </dependency>
 ```

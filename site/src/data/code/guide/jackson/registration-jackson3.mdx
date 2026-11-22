@@ -1,0 +1,28 @@
+---
+fileName: 'Demo.java — Jackson 3'
+---
+
+```java
+import dmx.fun.jackson3.DmxFunModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+
+// Jackson 3 mappers are immutable: modules go through the builder.
+ObjectMapper mapper = JsonMapper.builder()
+    .addModule(new DmxFunModule())
+    .build();
+
+// Auto-discovery (recommended) — DmxFunModule is registered as a
+// tools.jackson.databind.JacksonModule service provider via META-INF.
+ObjectMapper auto = JsonMapper.builder().findAndAddModules().build();
+
+// Spring Boot 4 with fun-spring-boot — no registration needed.
+// DmxFunJackson3AutoConfiguration exposes DmxFunModule as a JacksonModule bean and
+// Boot's JacksonAutoConfiguration adds it to every JsonMapper it builds.
+
+// Spring Boot 4 without fun-spring-boot — declare the bean yourself.
+@Bean
+public JacksonModule dmxFunModule() {
+    return new DmxFunModule();
+}
+```

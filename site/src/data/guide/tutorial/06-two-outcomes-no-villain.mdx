@@ -1,0 +1,72 @@
+---
+title: "Tutorial 6 — Two outcomes, no villain"
+description: "Chapter 6 of the dmx-fun tutorial: a full course puts the student on a waiting list; two legitimate outcomes become Either<Waitlisted, Enrolled> inside the Result, and CourseFull leaves the error type."
+order: 107
+h1: "6. Two outcomes, no villain"
+---
+
+import {Content as Outcome}  from '../../code/guide/tutorial/06/outcome.mdx';
+import {Content as Seat}     from '../../code/guide/tutorial/06/seat-or-waiting-list.mdx';
+import {Content as Enroll}   from '../../code/guide/tutorial/06/enroll.mdx';
+import {Content as Describe} from '../../code/guide/tutorial/06/describe.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+Since chapter 1, a full course has been an error: `CourseFull`. Then the business rule changes.
+A student who finds the course full is not turned away; they join a waiting list and are told
+their position. Nothing went wrong. The student simply gets a different answer.
+
+## Not every second answer is a failure
+
+The temptation is to keep `CourseFull` and attach the position to it. That makes the waiting
+list an error the caller has to "recover" from, and it puts something that is not a failure on
+the failure track, where `recoverWith` and `mapError` would treat it as one. A model that
+matches the business has two success shapes:
+
+<Outcome/>
+
+`Either<Waitlisted, Enrolled>` says exactly that. Unlike `Result`, `Either` is **neutral**:
+neither side is the good one. `Left` and `Right` are just two legitimate outcomes, and which goes
+on which side is a convention you pick and document. `Result` remains the type for the failure
+track; the two compose, as the return type now shows: `Result<Either<Waitlisted, Enrolled>, EnrollmentError>`.
+
+## The step that forks
+
+<Seat/>
+
+One step, two exits. A full course returns `Left` with the position and never reaches `charge`,
+which is the real business consequence: nobody is billed for a spot in a queue. An available
+seat goes through payment and persistence as before and returns `Right`.
+
+## The chain
+
+<Enroll/>
+
+The pipeline is the same shape as chapter 5 with one fewer step; `ensureSeatAvailable` was
+folded into the fork. `EnrollmentError` lost `CourseFull` and gained nothing: the error type got
+**smaller** as the model came closer to the business rule, which is a good sign that the case
+never belonged there. The `AlreadyEnrolled` recovery now returns the existing enrollment as a `Right`.
+
+## The caller, with nested patterns
+
+<Describe/>
+
+Record patterns reach through both layers: `Result.Ok(Either.Right(Enrolled(var e)))`. The
+`switch` is still exhaustive over both the outer `Result` and the inner `Either`. Callers who
+do not care which side they got can use `fold(onLeft, onRight)`, which treats both sides alike;
+there is no `getOrElse` here because there is nothing to fall back from.
+
+## When to reach for Either
+
+Use `Either` when both outcomes are valid and neither is "the problem": enrolled or waitlisted,
+cash or card, cached or fetched. Use `Result` when one side is a failure you may want to recover
+from, map, or log as such. If you catch yourself naming the left side `...Error`, you want
+`Result`. The reasoning is in <a href={`${base}adr/adr-007-either-neutral`}>ADR-007</a>.
+
+## What changed since chapter 5
+
+- `enroll` returns `Result<Either<Waitlisted, Enrolled>, EnrollmentError>`.
+- `CourseFull` is gone from `EnrollmentError`; a full course is a `Left`, and it is never charged.
+- The caller's `switch` matches through `Result` and `Either` in one pattern.
+
+<p>Reference: <a href={`${base}guide/either`}>`Either<L, R>`</a> · Previous: <a href={`${base}guide/tutorial/05-all-the-errors-at-once`}>5. All the errors at once</a> · Next: <a href={`${base}guide/tutorial/07-at-least-one`}>7. At least one</a></p>

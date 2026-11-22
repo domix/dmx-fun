@@ -20,8 +20,10 @@ dependencies {
     compileOnly libs.spring.context  // BeanFactory, @Configuration, @EnableAspectJAutoProxy
     compileOnly libs.spring.tx       // PlatformTransactionManager
     compileOnly libs.aspectj.weaver  // Aspect (for @ConditionalOnClass guard)
-    compileOnly project(':serialization:jackson')        // DmxFunModule (for @ConditionalOnClass guard)
+    compileOnly project(':serialization:jackson2')        // DmxFunModule (for @ConditionalOnClass guard)
     compileOnly libs.jackson.databind      // ObjectMapper (for @ConditionalOnClass guard)
+    compileOnly project(':serialization:jackson3')        // DmxFunModule for Jackson 3 (for @ConditionalOnClass guard)
+    compileOnly libs.jackson3.databind     // tools.jackson ObjectMapper (for @ConditionalOnClass guard)
     compileOnly libs.spring.webmvc          // HandlerMethodReturnValueHandler, RequestMappingHandlerAdapter
     compileOnly libs.jakarta.servlet.api    // HttpServletResponse (provided by servlet container at runtime)
     compileOnly project(':observability:tracing')                                            // DmxTracing (for @ConditionalOnClass guard)
@@ -39,8 +41,10 @@ dependencies {
     testImplementation libs.spring.context
     testImplementation libs.spring.tx
     testImplementation libs.aspectj.weaver
-    testImplementation project(':serialization:jackson')
+    testImplementation project(':serialization:jackson2')
     testImplementation libs.jackson.databind
+    testImplementation project(':serialization:jackson3')
+    testImplementation libs.jackson3.databind
     testImplementation libs.spring.webmvc
     testImplementation libs.jakarta.servlet.api
     testImplementation project(':observability:tracing')
@@ -62,8 +66,8 @@ dependencies {
 // explicitly so the JVM resolves it into the module graph during tests.
 jpmsTest {
     moduleName   = 'dmx.fun.spring.boot'
-    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet', 'dmx.fun.jackson', 'com.fasterxml.jackson.databind', 'micrometer.tracing', 'dmx.fun.tracing', 'micrometer.core', 'dmx.fun.observation', 'dmx.fun.spring.webflux', 'spring.webflux', 'reactor.core']
-    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop', 'spring.boot.autoconfigure', 'spring.webmvc', 'spring.web', 'spring.webflux', 'com.fasterxml.jackson.databind']
+    extraModules = ['spring.boot.autoconfigure', 'org.aspectj.weaver', 'java.sql', 'spring.webmvc', 'spring.web', 'jakarta.servlet', 'dmx.fun.jackson2', 'com.fasterxml.jackson.databind', 'dmx.fun.jackson3', 'tools.jackson.databind', 'micrometer.tracing', 'dmx.fun.tracing', 'micrometer.core', 'dmx.fun.observation', 'dmx.fun.spring.webflux', 'spring.webflux', 'reactor.core']
+    extraOpens   = ['ALL-UNNAMED', 'spring.core', 'spring.beans', 'spring.context', 'spring.aop', 'spring.boot.autoconfigure', 'spring.webmvc', 'spring.web', 'spring.webflux', 'com.fasterxml.jackson.databind', 'tools.jackson.databind']
 }
 
 mavenPublishing {

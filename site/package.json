@@ -5,7 +5,7 @@
   "private": true,
   "packageManager": "pnpm@11.15.1",
   "scripts": {
-    "copy:javadocs": "cp -r ../build/reports/javadoc/ public/",
+    "copy:javadocs": "rm -rf public/javadoc && cp -r ../build/reports/javadoc public/javadoc",
     "predev": "pnpm run copy:javadocs",
     "dev": "astro dev",
     "prebuild": "pnpm run copy:javadocs",
@@ -14,9 +14,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^7.0.3",
+    "@astrojs/mdx": "^8.1.6",
     "@astrojs/rss": "^4.0.19",
-    "astro": "^7.1.3",
-    "astro-expressive-code": "^0.44.1"
+    "astro": "^7.4.12",
+    "astro-expressive-code": "^0.44.3"
   }
 }

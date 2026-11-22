@@ -1,0 +1,77 @@
+---
+title: "Tutorial 10 — What you just did has a name"
+description: "Chapter 10 of the dmx-fun tutorial: the vocabulary, last. Functor, monad and applicative as the names of operations you have already used in chapters 2, 3 and 5, and where to read next."
+order: 111
+h1: "10. What you just did has a name"
+---
+
+export const base = import.meta.env.BASE_URL;
+
+Nine chapters without a word of theory, on purpose. You now have working intuitions for every
+operation in this library, and intuitions are what the vocabulary is for. The names below do
+not add behaviour; they let you recognise the same shape in another library, another language,
+or a paper, and they let you read the rest of the literature without a dictionary.
+
+## `map`: a functor
+
+In chapter 2 you wrote `.map(_ -> catalog.save(...))` on a `Result`, and in chapter 3
+`.map(percent -> fee - fee * percent / 100)` on an `Option`. Same operation, different box:
+apply a plain function to the value inside, leave the box alone. A type that offers `map` with
+two obvious rules, mapping the identity changes nothing and mapping `f` then `g` equals mapping
+`g ∘ f`, is called a **functor**. `Result`, `Option`, `Try`, `Either`, `Validated`, `Lazy` and
+`NonEmptyList` all are. When you see `map` on a new type, you already know what it does.
+
+## `flatMap`: a monad
+
+Chapter 2's chain was five `flatMap`s. Each step returned a new `Result`, and `flatMap` fed the
+value forward while letting a failure skip the rest. A functor whose steps can themselves return
+the box, with a way to put a plain value into the box (`Result.ok`, `Option.some`) and a
+`flatMap` that does not nest boxes, is a **monad**. The "two tracks" picture from chapter 2 is
+the monad for `Result`; the "skip to `getOrElse`" picture from chapter 3 is the monad for
+`Option`. Sequential, dependent steps: that is the whole idea.
+
+## `combine`: an applicative
+
+Chapter 5 was the one place where `flatMap` was the wrong tool. Three independent field checks
+had to run regardless of each other and report every failure. `Validated.combine`, and `Guard.allOf`
+on top of it, run the checks side by side and merge the outcomes. A type that can combine
+independent computations this way is an **applicative**. The practical distinction from chapter
+5 is the whole theory: dependent steps compose with `flatMap` and stop at the first failure;
+independent checks compose with `combine` and accumulate. `Validated` deliberately has no
+useful `flatMap` across errors, because that would quietly turn accumulation back into
+short-circuiting.
+
+## Everything else, in one line each
+
+- `recoverWith` and `mapError` (chapters 2 and 5): the same two operations, on the other track.
+- `Either.fold` (chapter 6): collapse both sides into one value; the pattern-matching `switch` is
+  the same thing with the compiler watching.
+- `Option.toResult`, `Try.toResult`, `Validated.toResult` (chapters 3, 4, 5): the bridges. Every
+  type here converts to its neighbours, and the conversions are where you choose which failures
+  become which.
+- `Lazy` (chapter 8): a functor and a monad over "not computed yet".
+- `NonEmptyList` (chapter 7): a functor whose extra guarantee is a size.
+- Not in this tutorial: `Tuple2..4`, `Accumulator` and the `Pipelines` helpers. They are small and
+  the reference pages explain them in a screen each.
+
+## What you do with the names
+
+Nothing new in your code. Use them to read: Vavr, Arrow, cats and fp-ts use the same words for
+the same shapes, and the <a href={`${base}blog/vavr-arrow-cats-fp-ts-what-problems-they-solve`}>comparison post</a>
+maps them to dmx-fun. Use them to explain: "this is a `flatMap` chain" is shorter than chapter 2.
+And use them as a smell test: if a type in your codebase has `map` but the two rules above do not
+hold, something is wrong with it.
+
+## Where to go next
+
+- The <a href={`${base}guide/introduction`}>reference guide</a>, type by type, now that each type
+  has a story attached.
+- The posts that this tutorial condensed: <a href={`${base}blog/error-handling-without-exceptions`}>error handling without exceptions</a>,
+  <a href={`${base}blog/designing-a-good-error-type`}>designing a good error type</a>,
+  <a href={`${base}blog/mapping-the-error-channel-transforming-failures`}>mapping the error channel</a>
+  and <a href={`${base}blog/validated-accumulating-errors`}>Validated</a>.
+- The <a href={`${base}adr`}>architecture decision records</a>, for why the types are shaped the way they are.
+- The <a href="https://github.com/domix/dmx-fun/tree/main/samples/enrollment-tutorial">tutorial code</a>,
+  to run, break and extend. Add a case to `EnrollmentError` and follow the compiler.
+
+<p>Previous: <a href={`${base}guide/tutorial/09-out-the-door`}>9. Out the door</a> · <a href={`${base}guide/tutorial`}>Tutorial index</a></p>

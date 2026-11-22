@@ -1,0 +1,21 @@
+---
+fileName: 'chapter05/FormValidation.java — by hand'
+---
+
+```java
+    public static Validated<NonEmptyList<String>, EnrollmentForm> byHand(EnrollmentForm form) {
+        Validated<NonEmptyList<String>, String> studentId = form.studentId().isBlank()
+            ? Validated.invalidNel("studentId: must not be blank")
+            : Validated.valid(form.studentId());
+        Validated<NonEmptyList<String>, String> email = form.email().contains("@")
+            ? Validated.valid(form.email())
+            : Validated.invalidNel("email: must contain @");
+        Validated<NonEmptyList<String>, String> age = isAtLeast16(form.age())
+            ? Validated.valid(form.age())
+            : Validated.invalidNel("age: must be a number, 16 or more");
+
+        return studentId
+            .combine(email, NonEmptyList::concat, (_, _) -> form)
+            .combine(age, NonEmptyList::concat, (_, _) -> form);
+    }
+```

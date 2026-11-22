@@ -1,0 +1,21 @@
+// ── Enrollment tutorial ───────────────────────────────────────────────────────
+// Companion code for the didactic guide (site: guide/tutorial). One package per
+// chapter; every chapter rewrites the same `enroll` operation with one more dmx-fun
+// type. The site pulls its snippets from these sources so that what readers see
+// always compiles and is covered by the tests here. NOT published to Maven Central.
+plugins {
+    id 'dmx-fun.java-base'
+}
+
+javadoc.enabled = false
+jacocoTestReport.enabled = false
+
+dependencies {
+    implementation project(':core:lib')
+    implementation libs.micrometer.core          // chapter 9: counting outcomes by variant
+
+    testImplementation project(':core:assertj')
+    testImplementation libs.assertj.core
+    testImplementation project(':serialization:jackson3')  // chapter 9: the JSON shape of an outcome
+    testImplementation libs.jackson3.databind
+}

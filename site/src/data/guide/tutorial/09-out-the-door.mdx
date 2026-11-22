@@ -1,0 +1,78 @@
+---
+title: "Tutorial 9 — Out the door"
+description: "Chapter 9 of the dmx-fun tutorial: the same Result<Either<Waitlisted, Enrolled>, EnrollmentError> becomes an HTTP status, a Micrometer counter and a JSON document, with Spring Boot doing the wiring."
+order: 110
+h1: "9. Out the door"
+---
+
+import {Content as HttpMapping} from '../../code/guide/tutorial/09/http-mapping.mdx';
+import {Content as Metrics}     from '../../code/guide/tutorial/09/metrics.mdx';
+import {Content as Json}        from '../../code/guide/tutorial/09/json.mdx';
+import {Content as Controller}  from '../../code/guide/tutorial/09/controller.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+Eight chapters built one value: `Result<Either<Waitlisted, Enrolled>, EnrollmentError>`. It is
+precise, exhaustive and framework-free. None of that is worth much if turning it into an HTTP
+response takes a page of boilerplate. This chapter shows that the opposite is true: because the
+outcome is a value with a known shape, every door it leaves through is a short, checked function.
+
+## A status for every case
+
+<HttpMapping/>
+
+A `switch`, nothing else. It is exhaustive over both the `Either` and the sealed error, so adding
+a case to `EnrollmentError` breaks this method until someone decides what status the new case
+deserves. That is the right failure: the decision is forced at compile time, in one place, instead
+of discovered as a 500 in production. Note what is **not** here: no exception hierarchy mapped to
+status codes, no `@ExceptionHandler`, no `instanceof` chain.
+
+## A metric for every case
+
+<Metrics/>
+
+Failures are records with names, so the tag is the simple class name. A dashboard shows
+`PaymentFailed` next to `Waitlisted` without anyone having designed a logging format. `record`
+returns the result it was given, so it drops into the pipeline as a pass-through step.
+
+## A document for every case
+
+The Jackson modules, `fun-jackson3` for Jackson 3 and `fun-jackson2` for Jackson 2, serialize
+every dmx-fun type with one fixed shape; the tests in this chapter pin it down:
+
+<Json/>
+
+`Result` becomes `{"ok": ...}` or `{"err": ...}`, `Either` becomes `{"right": ...}` or
+`{"left": ...}`, and your records serialize as they always did. Clients can switch on the key
+the way the server switches on the type. The full table of shapes is in the
+<a href={`${base}guide/jackson`}>Jackson guide</a>.
+
+## Spring Boot does the wiring
+
+With `fun-spring-boot` on the classpath nothing above needs to be registered by hand. The
+auto-configuration adds the Jackson module to Boot's mapper and installs return-value handlers
+for controllers that return dmx-fun types directly. The repository's
+<a href="https://github.com/domix/dmx-fun/tree/main/samples/spring-boot-sample">Spring Boot sample</a>
+is the running proof; its controller is the real code:
+
+<Controller/>
+
+Returning `Option<T>` gives 200 with the value or 404 with no body. Returning `Result<T, E>`
+gives 200 with the **unwrapped** value or 500 with the error, by default. When you want the finer
+statuses from `HttpMapping` above, return a `ResponseEntity` built from it, or disable the default
+handler with `dmx.fun.mvc.result-handler.enabled=false` and let Jackson emit the wrapped
+`{"ok": ...}` shape. The <a href={`${base}guide/spring`}>Spring guide</a> covers both routes, and
+`fun-spring-webflux` offers the same for functional endpoints.
+
+This chapter adds no Spring code to the tutorial module on purpose: the mapping, the metric and
+the JSON shape are plain functions of the outcome, and they would look the same in Quarkus, a
+CLI, or a Kafka consumer.
+
+## What changed since chapter 8
+
+- `HttpMapping.statusFor` decides a status for every outcome, checked by the compiler.
+- `EnrollmentMetrics.record` counts outcomes by variant with one Micrometer counter.
+- The JSON shape of the outcome is tested with `fun-jackson3`; Spring Boot wires all of it
+  through `fun-spring-boot`, as the sample shows.
+
+<p>Reference: <a href={`${base}guide/spring`}>Spring</a>, <a href={`${base}guide/jackson`}>Jackson</a>, <a href={`${base}guide/micrometer`}>Micrometer</a> · Previous: <a href={`${base}guide/tutorial/08-laziness-and-resources`}>8. Laziness and resources</a> · Next: <a href={`${base}guide/tutorial/10-what-you-just-did-has-a-name`}>10. What you just did has a name</a></p>

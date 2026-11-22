@@ -1,0 +1,17 @@
+---
+fileName: 'chapter09/HttpMapping.java'
+---
+
+```java
+    public static int statusFor(Result<Either<Waitlisted, Enrolled>, EnrollmentError> result) {
+        return switch (result) {
+            case Result.Ok(Either.Right(Enrolled _))     -> 201;  // Created
+            case Result.Ok(Either.Left(Waitlisted _))    -> 202;  // Accepted, pending a seat
+            case Result.Err(InvalidForm _)               -> 422;  // Unprocessable Content
+            case Result.Err(StudentNotFound _)           -> 404;
+            case Result.Err(CourseNotFound _)            -> 404;
+            case Result.Err(AlreadyEnrolled _)           -> 409;  // Conflict
+            case Result.Err(PaymentFailed _)             -> 502;  // Bad Gateway: the payment provider failed
+        };
+    }
+```

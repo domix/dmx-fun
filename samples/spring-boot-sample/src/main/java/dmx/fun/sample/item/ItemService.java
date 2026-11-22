@@ -1,6 +1,7 @@
 package dmx.fun.sample.item;
 
 import dmx.fun.Guard;
+import dmx.fun.NonEmptyList;
 import dmx.fun.Option;
 import dmx.fun.Result;
 import dmx.fun.Try;
@@ -41,6 +42,7 @@ public class ItemService {
      * <p>Uses {@link TxResult#execute} so the transaction rolls back automatically
      * when the returned {@code Result} is {@code Err}.
      */
+    // #region programmatic
     public Result<Item, String> create(String name, String description) {
         return txResult.execute(
             () -> mustNotBeBlank.check(name)
@@ -50,6 +52,7 @@ public class ItemService {
                 .flatMap(this::internalSave)
         );
     }
+    // #endregion programmatic
 
     private Result<Item, String> internalSave(Item save) {
         return Try.of(() -> repository.save(save))
@@ -65,6 +68,7 @@ public class ItemService {
      * <p>Annotated with {@link TransactionalResult}: {@link dmx.fun.spring.DmxTransactionalAspect}
      * intercepts the call and rolls back when the returned {@code Result} is {@code Err}.
      */
+    // #region declarative
     @TransactionalResult
     public Result<Item, String> update(Long id, String name) {
         String normalized = name == null ? null : name.strip();
@@ -74,6 +78,7 @@ public class ItemService {
             .flatMap(_ -> this.findById(id).toResult("item not found: %d".formatted(id)))
             .flatMap(item -> this.internalSave(new Item(item.id(), normalized, item.description())));
     }
+    // #endregion declarative
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -94,5 +99,16 @@ public class ItemService {
 
     public List<Item> findByName(String name) {
         return repository.findByName(name);
+    }
+
+    /**
+     * Returns {@link Result#ok} with a {@link NonEmptyList} of the items named {@code name},
+     * or {@link Result#err} when there are none.
+     *
+     * <p>The non-emptiness lives in the type: callers never check for an empty list.
+     */
+    public Result<NonEmptyList<Item>, String> search(String name) {
+        return NonEmptyList.fromList(repository.findByName(name))
+            .toResult("no items named '" + name + "'");
     }
 }

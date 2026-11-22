@@ -7,6 +7,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-21
+
+Two Jackson lines. Spring Boot 4 and Spring Framework 7 default to Jackson 3, so dmx-fun now
+ships one module per Jackson major, both actively maintained and producing the same JSON. The
+release also completes JSON support for every core type, adds type-id handling for polymorphic
+mappers, and brings a ten-chapter tutorial with a runnable sample.
+
+### ⚠ Breaking changes
+
+- **`fun-jackson` is renamed to `fun-jackson2`** (#552, #562). Every Jackson line now carries its
+  major version in the name; `fun-jackson:0.2.0` stays on Maven Central. Migration:
+
+  | | 0.2.x | 0.3.0 |
+  |---|---|---|
+  | Artifact | `codes.domix:fun-jackson` | `codes.domix:fun-jackson2` |
+  | JPMS module / package | `dmx.fun.jackson` | `dmx.fun.jackson2` |
+  | Spring Boot opt-out property | `dmx.fun.jackson.enabled` | `dmx.fun.jackson2.enabled` |
+
+  The JSON shapes are unchanged.
+
+### Added
+
+- **`fun-jackson3` — Jackson 3 (`tools.jackson`) serializers and deserializers (new module)**,
+  with the same JSON shapes as `fun-jackson2`, so documents travel between the two lines. Tested
+  in CI against Jackson 3.0 to 3.3 (#553, #563). Policy recorded in ADR-024, now Accepted (#555, #565).
+- **`fun-spring-boot`** — `DmxFunJackson3AutoConfiguration` registers the Jackson 3 module on
+  Spring Boot 4 with no configuration (`dmx.fun.jackson3.enabled` to opt out); the Jackson 2
+  auto-configuration becomes `DmxFunJackson2AutoConfiguration`. Both can be active at once (#554, #564).
+- **`NonEmptySet` and `NonEmptyMap` in both Jackson lines** — a set is a JSON array and a map a
+  JSON object, head first; empty input and `null` elements, keys or values fail with a databind
+  exception (#576, #577, #593, #596).
+- **Type ids for every dmx-fun value in both Jackson lines** — every serializer implements
+  `serializeWithType`, so values work under default typing and `@JsonTypeInfo`; the id names the
+  dmx-fun type under every id style. Payloads, elements, keys and values are written through the
+  serializer of their declared type, honouring property formats and `@JsonSerialize(typing)`, as
+  Jackson does for `List`, `Set` and `Map` (#595, #599).
+- **`Guard`** — `allOf` / `anyOf` single-pass factories, `mapMessages`, `contramap(mapper,
+  fieldName)`, `narrow`, `ofCatching` for throwing predicates, and `Guard<? super T>` variance on
+  `and` / `or` / `andThen` (#506, #519).
+- **`NonFatal` and `Try.rethrowFatal()`** — one definition of fatal throwables and a strict border
+  that rethrows them after a capture, walking the cause chain and restoring the interrupt flag
+  (#537, #538).
+- **`fun-assertj`** — `NonEmptyListAssert`, `NonEmptySetAssert` and `NonEmptyMapAssert` (#579, #580,
+  #589, #590).
+- **Tutorial** — ten chapters that rewrite one `enroll` method from exceptions to signatures you
+  can trust, backed by the compiled and tested `samples/enrollment-tutorial` module (#566–#571).
+
+### Changed
+
+- **`spring-boot-sample`** runs on Spring Boot 4 with `fun-jackson3` and no Jackson code of its own:
+  no exclusions, no hand-written `ObjectMapper`, no deprecated converter (#564).
+- **Compatibility matrices** — Jackson 2 refreshed to the latest patches of 2.14 to 2.23; Jackson 3
+  added for 3.0 to 3.3 (#562, #563).
+- Dependency bumps: Spring Framework 7.0.10, Spring Boot 4.1.2, Quarkus 3.40.1, Jackson 2.23.0,
+  Jackson 3.3.0 (#562, #563, #587).
+
+### Fixed
+
+- **`NonFatal`** — the fatal check walks suppressed throwables with an identity set, so mutual
+  suppression (`a` suppresses `b`, `b` suppresses `a`) no longer re-queues forever and starves a
+  fatal sibling (#538).
+- **`NonEmptySetAssert.containsExactlyInAnyOrder`** counts repeated expected elements (#590).
+- **Security** — Dependabot alerts resolved across the Gradle build, plugin and test classpaths,
+  including Guava forced over the Quarkus enforced platform (#587, #608).
+- **Build** — the module-name lint no longer warns on `dmx.fun.jackson2` and `dmx.fun.jackson3`,
+  whose names end in a digit on purpose (#597, #609).
+
 ## [0.2.0] - 2026-07-01
 
 First-anniversary release. The headline additions are two new reactive modules —
@@ -676,7 +743,8 @@ Initial development: `Result`, `Try`, `Option`, and `Tuple2` types; interoperabi
 between all four types; monadic laws test suite (Spock); Java 24 toolchain; Maven
 Central publication setup.
 
-[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/domix/dmx-fun/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/domix/dmx-fun/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/domix/dmx-fun/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/domix/dmx-fun/compare/v0.0.15...v0.1.0
 [0.0.15]: https://github.com/domix/dmx-fun/compare/v0.0.14...v0.0.15

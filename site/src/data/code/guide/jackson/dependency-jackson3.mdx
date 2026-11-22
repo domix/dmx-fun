@@ -1,0 +1,25 @@
+---
+fileName: 'build.gradle / pom.xml — Jackson 3'
+---
+
+```groovy
+// Gradle
+implementation("codes.domix:fun-jackson3:0.3.0")
+// Jackson 3 itself — bring your own version (3.0.x – 3.3.x).
+// Spring Boot 4 users: the Boot BOM already manages tools.jackson.
+implementation("tools.jackson.core:jackson-databind:3.3.0")
+```
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>codes.domix</groupId>
+    <artifactId>fun-jackson3</artifactId>
+    <version>0.3.0</version>
+</dependency>
+<dependency>
+    <groupId>tools.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>3.3.0</version>
+</dependency>
+```

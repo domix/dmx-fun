@@ -1,0 +1,36 @@
+---
+fileName: 'chapter02/EnrollmentService.java — the steps'
+---
+
+```java
+    private Result<Student, EnrollmentError> findStudent(String studentId) {
+        Student student = catalog.findStudent(studentId);
+        return student == null ? Result.err(new StudentNotFound(studentId)) : Result.ok(student);
+    }
+
+    private Result<Course, EnrollmentError> findCourse(String courseId) {
+        Course course = catalog.findCourse(courseId);
+        return course == null ? Result.err(new CourseNotFound(courseId)) : Result.ok(course);
+    }
+
+    private Result<Course, EnrollmentError> ensureNotEnrolled(String studentId, Course course) {
+        return catalog.isEnrolled(studentId, course.id())
+            ? Result.err(new AlreadyEnrolled(studentId, course.id()))
+            : Result.ok(course);
+    }
+
+    private Result<Course, EnrollmentError> ensureSeatAvailable(Course course) {
+        return catalog.enrolledCount(course.id()) >= course.capacity()
+            ? Result.err(new CourseFull(course.id(), course.capacity()))
+            : Result.ok(course);
+    }
+
+    private Result<Course, EnrollmentError> charge(String studentId, Course course) {
+        try {
+            payments.charge(studentId, course.feeCents());
+            return Result.ok(course);
+        } catch (PaymentException e) {
+            return Result.err(new PaymentFailed(e.getMessage())); // chapter 4 removes this try/catch
+        }
+    }
+```

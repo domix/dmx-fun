@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import { calculateReadingTime, formatReadingTime } from '../../utils/readingTime';
 import Pagination from '../../components/Pagination.astro';
-import { PAGE_SIZE, FIRST_PAGE_SIZE, normalizeCategorySlug } from '../../utils/blog';
+import { PAGE_SIZE, FIRST_PAGE_SIZE, normalizeCategorySlug, countByCategory } from '../../utils/blog';
 
 const base = import.meta.env.BASE_URL;
 
@@ -18,6 +18,7 @@ const gridPosts = pagePosts.slice(1);
 const heroReadingTime = heroPost ? formatReadingTime(calculateReadingTime(heroPost.body)) : '';
 
 const categories = [...new Set(allPosts.map(post => post.data.category))];
+const categoryCounts = countByCategory(allPosts);
 ---
 
 <DocsLayout title="Blog" description="Articles, tutorials, and insights about functional programming in Java">
@@ -38,10 +39,11 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
   </div>
 
   <div class="blog-filters">
-    <a href={`${base}blog`} class="filter-btn active">All Posts</a>
+    <a href={`${base}blog`} class="filter-btn active" aria-label={`All posts, ${allPosts.length} posts`}>All Posts<span class="filter-count" aria-hidden="true">{allPosts.length}</span></a>
     {categories.map(category => (
-      <a href={`${base}blog/category/${normalizeCategorySlug(category)}`} class="filter-btn">
-        {category}
+      <a href={`${base}blog/category/${normalizeCategorySlug(category)}`} class="filter-btn"
+         aria-label={`${category}, ${categoryCounts.get(category)} posts`}>
+        {category}<span class="filter-count" aria-hidden="true">{categoryCounts.get(category)}</span>
       </a>
     ))}
   </div>
@@ -185,6 +187,23 @@ const categories = [...new Set(allPosts.map(post => post.data.category))];
     transition: border-color 0.15s, color 0.15s, background-color 0.15s;
     font-weight: 500;
     font-size: 0.8rem;
+  }
+
+
+  .filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.45rem;
+    padding: 0 0.45em;
+    min-width: 1.6em;
+    height: 1.6em;
+    border-radius: 999px;
+    font-size: 0.72em;
+    font-weight: 600;
+    line-height: 1;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    font-variant-numeric: tabular-nums;
   }
 
   .filter-btn:hover {

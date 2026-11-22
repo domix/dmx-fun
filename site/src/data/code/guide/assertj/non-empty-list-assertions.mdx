@@ -1,0 +1,24 @@
+---
+fileName: 'RosterTest.java'
+---
+
+```java
+import static dmx.fun.assertj.DmxFunAssertions.assertThat;
+
+import org.assertj.core.api.Assertions;
+
+NonEmptyList<String> roster = NonEmptyList.of("ana", List.of("bo", "cy"));
+
+// Head, size and membership in one chain
+assertThat(roster)
+    .hasHead("ana")
+    .hasSize(3)
+    .contains("cy", "bo");
+
+// Exact contents and order
+assertThat(roster).containsExactly("ana", "bo", "cy");
+
+// Assert on the tail (everything after the head; empty for a singleton)
+assertThat(roster)
+    .hasTailSatisfying(tail -> Assertions.assertThat(tail).containsExactly("bo", "cy"));
+```

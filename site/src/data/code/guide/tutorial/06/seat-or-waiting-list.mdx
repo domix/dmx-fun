@@ -1,0 +1,15 @@
+---
+fileName: 'chapter06/EnrollmentService.java — seatOrWaitingList'
+---
+
+```java
+    /** Full course: left, nothing charged. Seat available: charge, save, right. */
+    private Result<Either<Waitlisted, Enrolled>, EnrollmentError> seatOrWaitingList(EnrollmentForm form, Course course) {
+        if (catalog.enrolledCount(course.id()) >= course.capacity()) {
+            return Result.ok(Either.left(waitingList.add(form.studentId(), course.id())));
+        }
+        return charge(form.studentId(), priceFor(course, form.discountCode()))
+            .map(_ -> catalog.save(new Enrollment(form.studentId(), course.id())))
+            .map(enrollment -> Either.right(new Enrolled(enrollment)));
+    }
+```

@@ -1,0 +1,62 @@
+---
+title: "Tutorial 8 — Laziness and resources"
+description: "Chapter 8 of the dmx-fun tutorial: Lazy describes the price computation so waiting-list students never pay for it, and Resource exports the roster to a file that is always closed."
+order: 109
+h1: "8. Laziness and resources"
+---
+
+import {Content as LazyPrice}    from '../../code/guide/tutorial/08/lazy-price.mdx';
+import {Content as RosterExport} from '../../code/guide/tutorial/08/roster-export.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+Two small tools, both about *when* something happens. One delays work until it is needed; the
+other guarantees that something happens at the end no matter what came before.
+
+## Work you may not need
+
+In a real system `priceFor` asks a pricing service, and that call is the slowest thing in the
+pipeline. Since chapter 6, a student who lands on the waiting list is never charged, so computing
+their price is wasted work. The naive fix is to move the call into the seat-available branch;
+the problem is that the price depends on the course and the discount code, which the branch
+would then have to receive and know about.
+
+<LazyPrice/>
+
+`Lazy.of(() -> ...)` turns the computation into a value that has not run yet. The pipeline passes
+it along like any other argument. The waiting-list branch returns without touching it, and the
+seat branch calls `get()`, which runs the supplier once and remembers the answer: a second `get()`
+is free. The decision *what* to compute stays where the information is; the decision *whether*
+moves to the one place that knows.
+
+The tests count calls to `priceFor`: one for a seat, zero for a waiting-list spot, zero for an
+invalid form.
+
+## Something that must always happen
+
+The term ends and the registrar wants the roster as a file. Writing a file means opening it and
+closing it, and closing has to happen whether the write succeeded or blew up halfway. Java has
+`try-with-resources` for this; `Resource` is the same guarantee as a value:
+
+<RosterExport/>
+
+`Resource.fromAutoCloseable` pairs the acquire step, opening the writer, with the release step,
+`close()`. `use` runs the body in between and returns a `Try`: `Success(path)` if everything
+went well, `Failure(exception)` if the directory did not exist or the disk was full. Either way
+the writer was closed; the tests prove it by giving a release step that flips a flag and a body
+that throws.
+
+Because the outcome is a `Try` and not a statement block, it composes with the rest: map it,
+convert it to a `Result` with a domain error, or chain a second resource with `flatMap` for a
+file that is copied into another.
+
+## What changed since chapter 7
+
+- The price reaches the fork as a `Lazy<Integer>`; only a confirmed seat evaluates it.
+- `RosterExport.write` opens, writes and closes through `Resource`, returning a `Try<Path>`.
+- `enroll` itself did not change shape; this chapter is about *when*, not *what*.
+
+Still to come: the same `Result<Either<...>>` leaving the service as an HTTP response, a metric
+and a JSON document.
+
+<p>Reference: <a href={`${base}guide/lazy`}>`Lazy<T>`</a> and <a href={`${base}guide/resource`}>`Resource<T>`</a> · Previous: <a href={`${base}guide/tutorial/07-at-least-one`}>7. At least one</a> · Next: <a href={`${base}guide/tutorial/09-out-the-door`}>9. Out the door</a></p>

@@ -1,0 +1,29 @@
+{
+  "name": "@domix/talk-2026-signatures-you-can-trust",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/sync-snippets.mjs && node scripts/check-i18n.mjs",
+    "predev": "node scripts/sync-snippets.mjs && node scripts/check-i18n.mjs",
+    "dev": "slidev --open",
+    "prebuild": "node scripts/sync-snippets.mjs && node scripts/check-i18n.mjs",
+    "build": "slidev build --base /dmx-fun/talks/2026-signatures-you-can-trust/",
+    "export": "node scripts/sync-snippets.mjs && node scripts/check-i18n.mjs && VITE_DECK_LANG=en slidev export --output deck-en.pdf && VITE_DECK_LANG=es slidev export --output deck-es.pdf",
+    "export:en": "VITE_DECK_LANG=en slidev export --output deck-en.pdf",
+    "export:es": "VITE_DECK_LANG=es slidev export --output deck-es.pdf",
+    "qr": "node scripts/make-qr.mjs",
+    "demo:record": "bash scripts/record-demo.sh",
+    "demo:play": "asciinema play demo.cast"
+  },
+  "dependencies": {
+    "@slidev/cli": "53.1.0",
+    "@slidev/types": "53.1.0",
+    "asciinema-player": "3.18.1",
+    "slidev-theme-dmx-fun": "workspace:*",
+    "vue": "3.5.45"
+  },
+  "devDependencies": {
+    "playwright-chromium": "1.65.1",
+    "qrcode": "1.5.4"
+  }
+}

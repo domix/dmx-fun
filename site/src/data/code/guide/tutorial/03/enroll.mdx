@@ -1,0 +1,18 @@
+---
+fileName: 'chapter03/EnrollmentService.java — enroll'
+---
+
+```java
+    public Result<Enrollment, EnrollmentError> enroll(String studentId, String courseId, Option<String> discountCode) {
+        return findStudent(studentId)
+            .flatMap(_ -> findCourse(courseId))
+            .flatMap(course -> ensureNotEnrolled(studentId, course))
+            .flatMap(course -> ensureSeatAvailable(course))
+            .flatMap(course -> charge(studentId, priceFor(course, discountCode)))
+            .map(_ -> catalog.save(new Enrollment(studentId, courseId)))
+            .recoverWith(error -> switch (error) {
+                case AlreadyEnrolled(var s, var c) -> Result.ok(new Enrollment(s, c));
+                default -> Result.err(error);
+            });
+    }
+```

@@ -44,7 +44,7 @@ const types = [
 ];
 
 const modules = [
-    { name: 'Jackson',              href: `${base}guide/jackson`,             summary: 'Serializers and deserializers for all dmx-fun types via the optional fun-jackson module.',                                                                                                                                                       tag: 'JSON' },
+    { name: 'Jackson',              href: `${base}guide/jackson`,             summary: 'Serializers and deserializers for all dmx-fun types via the optional fun-jackson3 (Jackson 3) and fun-jackson2 (Jackson 2) modules.',                                                                                                                                                       tag: 'JSON' },
     { name: 'AssertJ',              href: `${base}guide/assertj`,             summary: 'Fluent AssertJ custom assertions for Option, Result, Try, Validated, and Tuple types.',                                                                                                                                                          tag: 'Testing' },
     { name: 'Spring',               href: `${base}guide/spring`,              summary: 'TxResult and TxTry: programmatic transaction support that rolls back when Result.isError() or Try.isFailure(), without relying on exceptions.',                                                                                                  tag: 'Spring' },
     { name: 'Quarkus',              href: `${base}guide/quarkus`,             summary: 'TxResult and TxTry: CDI transaction support that rolls back when Result.isError() or Try.isFailure(). Declarative @TransactionalResult and @TransactionalTry via a CDI interceptor.',                                                           tag: 'Quarkus' },
@@ -85,6 +85,10 @@ const decisions = [
       <p class="hero-sub">
         Deep reference for every type in dmx-fun: design rationale, every combinator,
         composition patterns, and pitfalls to avoid.
+      </p>
+      <p class="hero-sub">
+        New here? Start with the <a href={`${base}guide/tutorial`}>tutorial</a>: one example,
+        rewritten chapter by chapter, from exceptions to signatures you can trust.
       </p>
     </div>
     <div class="hero-actions">

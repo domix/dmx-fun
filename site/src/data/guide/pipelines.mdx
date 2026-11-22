@@ -16,7 +16,8 @@ All CI/CD is handled by GitHub Actions. The workflows live in `.github/workflows
 | `gradle.yml`                 | push / PR to `main` (code paths)       | Full build, tests, coverage, Javadoc, dependency graph submission       |
 | `publish.yml`                | push to `main` — stable version only   | Publish all modules to Maven Central, create git tag and GitHub Release |
 | `publish-snapshot.yml`       | push to `main` — SNAPSHOT version only | Publish SNAPSHOT artifacts to Maven Central                             |
-| `jackson-compatibility.yaml` | PR touching `jackson/**`               | Matrix test against Jackson 2.14.x – 2.22.x                             |
+| `jackson2-compatibility.yaml` | PR touching `serialization/jackson2/**`               | Matrix test against Jackson 2.14.x – 2.23.x                             |
+| `jackson3-compatibility.yaml` | PR touching `serialization/jackson3/**`               | Matrix test against Jackson 3.0.x – 3.3.x                               |
 | `assertj-compatibility.yaml`             | PR touching `assertj/**`                           | Matrix test against AssertJ 3.21.x – 3.27.x                              |
 | `spring-boot-compatibility.yaml`         | PR touching `spring-boot/**` or `spring/**`        | Matrix test of `fun-spring-boot` against Spring Boot 3.3.x – 4.1.x       |
 | `spring-boot-sample-compatibility.yaml`  | PR touching `spring-boot-sample/**` or `spring/**` | Matrix test of the Spring Boot sample app against Boot 3.4.x – 4.1.x     |
@@ -48,7 +49,7 @@ Uses `dorny/paths-filter` on PRs to skip the build entirely when no relevant fil
 
 ## `publish.yml` — Stable release
 
-**Triggers**: push to `main` when any of `lib/**`, `jackson/**`, `assertj/**`, `gradle/**`,
+**Triggers**: push to `main` when any of `lib/**`, `serialization/jackson2/**`, `assertj/**`, `gradle/**`,
 `gradle.properties`, `gradlew`, `gradlew.bat`, or the workflow file itself changes.
 
 **Gotcha**: the workflow reads `version` from `gradle.properties` at runtime.
@@ -96,13 +97,13 @@ Stable versions cause all steps to be skipped.
 
 ---
 
-## `jackson-compatibility.yaml` — Jackson matrix
+## `jackson2-compatibility.yaml` — Jackson 2 matrix
 
-**Triggers**: PR where at least one changed file matches `jackson/**` or the workflow file itself.
+**Triggers**: PR where at least one changed file matches `serialization/jackson2/**` or the workflow file itself.
 
 Runs only on pull requests — not on push to `main`.
 
-**What it does**: runs `:jackson:test` for each Jackson version in the matrix:
+**What it does**: runs `:serialization:jackson2:test` for each Jackson version in the matrix:
 
 | Jackson version | Status |
 |-----------------|--------|
@@ -110,15 +111,40 @@ Runs only on pull requests — not on push to `main`.
 | 2.15.4          | tested |
 | 2.16.2          | tested |
 | 2.17.3          | tested |
-| 2.18.7          | tested |
+| 2.18.12         | tested |
 | 2.19.4          | tested |
 | 2.20.2          | tested |
-| 2.21.4          | tested |
-| 2.22.1          | tested |
+| 2.21.8          | tested |
+| 2.22.4          | tested |
+| 2.23.0          | tested |
 
 **Local equivalent**:
 ```bash
-./gradlew :jackson:test -PjacksonVersion=2.17.3
+./gradlew :serialization:jackson2:test -Pjackson2Version=2.17.3
+```
+
+**Secrets required**: none.
+
+---
+
+## `jackson3-compatibility.yaml` — Jackson 3 matrix
+
+**Triggers**: PR where at least one changed file matches `serialization/jackson3/**` or the workflow file itself.
+
+Runs only on pull requests — not on push to `main`.
+
+**What it does**: runs `:serialization:jackson3:test` for each Jackson 3 version in the matrix:
+
+| Jackson version | Status |
+|-----------------|--------|
+| 3.0.4           | tested |
+| 3.1.8           | tested |
+| 3.2.4           | tested |
+| 3.3.0           | tested |
+
+**Local equivalent**:
+```bash
+./gradlew :serialization:jackson3:test -Pjackson3Version=3.1.8
 ```
 
 **Secrets required**: none.
@@ -170,11 +196,11 @@ Boot 4.x aligns with Spring Framework 7.x, which is the baseline this project ta
 | 3.3.13              | tested |
 | 3.4.13              | tested |
 | 3.5.13              | tested |
-| 4.1.0               | tested |
+| 4.1.2               | tested |
 
 **Local equivalent**:
 ```bash
-./gradlew :spring-boot:test -PspringBootVersion=4.1.0
+./gradlew :spring-boot:test -PspringBootVersion=4.1.2
 ```
 
 **Secrets required**: none.
@@ -200,7 +226,7 @@ controller → service → database via Testcontainers.
 |---------------------|--------|
 | 3.4.13              | tested |
 | 3.5.13              | tested |
-| 4.1.0               | tested |
+| 4.1.2               | tested |
 
 **Local equivalent**:
 ```bash
@@ -213,19 +239,23 @@ controller → service → database via Testcontainers.
 
 ## `pages.yml` — Documentation site deploy
 
-**Triggers**: push to `main` (no path filter — any push rebuilds the site).
+**Triggers**: push to `main` touching `site/**`, `talks/**`, any library module, the samples or the Gradle files, or manual dispatch.
 
 **What it does**:
 1. Runs `./gradlew aggregateJavadoc` to generate the API reference
-2. Copies the Javadoc output into `site/public/javadoc/`
-3. Runs `pnpm run build` inside `site/`
-4. Deploys the `dist/` directory to GitHub Pages
+2. Builds and exports every talk deck under `talks/` (`pnpm build && pnpm export`: a static Slidev site plus `deck-en.pdf` and `deck-es.pdf` per deck)
+3. Copies each deck into `site/public/talks/<slug>/`, where the Talks page links to it
+4. Copies the Javadoc output into `site/public/javadoc/` and runs `pnpm run build` inside `site/`
+5. Deploys the `dist/` directory to GitHub Pages
+
+**Gotcha**: the PDF export runs Chromium through `playwright-chromium`, downloaded by `pnpm install` in `talks/`.
+If the export fails on the runner, the deploy fails: the Talks page would otherwise link to PDFs that do not exist.
 
 **Secrets required**: none (uses `GITHUB_TOKEN` with `pages: write` permission).
 
 **Local equivalent**:
 ```bash
 ./gradlew aggregateJavadoc
-cd site && pnpm run build
+cd site && make talks && pnpm run build   # `make talks` builds the decks and copies them into public/talks/
 # open dist/ in a local static server
 ```

@@ -1,8 +1,11 @@
 ---
-fileName: 'Demo.java'
+fileName: 'Demo.java — Jackson 2'
 ---
 
 ```java
+import dmx.fun.jackson2.DmxFunModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 // Manual registration
 ObjectMapper mapper = new ObjectMapper()
     .registerModule(new DmxFunModule());
@@ -12,8 +15,8 @@ ObjectMapper mapper = new ObjectMapper()
 ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
 // Spring Boot with fun-spring-boot — no registration needed.
-// DmxFunJacksonAutoConfiguration registers DmxFunModule as a bean automatically
-// when both jackson-databind and fun-jackson are on the classpath.
+// DmxFunJackson2AutoConfiguration registers DmxFunModule as a bean automatically
+// when both jackson-databind and fun-jackson2 are on the classpath.
 
 // Spring Boot without fun-spring-boot — declare the bean manually;
 // Spring's JacksonAutoConfiguration applies it to the ObjectMapper.

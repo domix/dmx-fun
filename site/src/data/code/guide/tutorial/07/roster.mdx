@@ -1,0 +1,15 @@
+---
+fileName: 'chapter07/EnrollmentService.java — roster'
+---
+
+```java
+    /** Everyone enrolled so far, or {@code None} if nobody is. Callers of {@code Some} get a list with a head. */
+    public Option<NonEmptyList<Enrollment>> roster(String courseId) {
+        return NonEmptyList.fromList(catalog.enrollmentsFor(courseId));
+    }
+
+    public static String compose(String courseId, NonEmptyList<Enrollment> cohort) {
+        return "Welcome to " + courseId + ", " + cohort.head().studentId()
+            + (cohort.size() == 1 ? "" : " and " + (cohort.size() - 1) + " more");
+    }
+```

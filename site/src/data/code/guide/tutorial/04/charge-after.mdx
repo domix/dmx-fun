@@ -1,0 +1,12 @@
+---
+fileName: 'chapter04/EnrollmentService.java — charge, after'
+---
+
+```java
+    private Result<Integer, EnrollmentError> charge(String studentId, int amountCents) {
+        return Try.run(() -> payments.charge(studentId, amountCents))
+            .rethrowFatal()
+            .map(_ -> amountCents)
+            .toResult(e -> new PaymentFailed(e.getMessage()));
+    }
+```

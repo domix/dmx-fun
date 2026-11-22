@@ -1,0 +1,15 @@
+---
+fileName: 'chapter09/EnrollmentMetrics.java'
+---
+
+```java
+    public Result<Either<Waitlisted, Enrolled>, EnrollmentError> record(Result<Either<Waitlisted, Enrolled>, EnrollmentError> result) {
+        String outcome = switch (result) {
+            case Result.Ok(Either.Right(Enrolled _))  -> "Enrolled";
+            case Result.Ok(Either.Left(Waitlisted _)) -> "Waitlisted";
+            case Result.Err(var error)                -> error.getClass().getSimpleName();
+        };
+        registry.counter("enrollment.outcome", "outcome", outcome).increment();
+        return result;
+    }
+```

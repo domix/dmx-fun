@@ -3,6 +3,9 @@ package dmx.fun.assertj;
 import dmx.fun.Accumulator;
 import dmx.fun.Either;
 import dmx.fun.Guard;
+import dmx.fun.NonEmptyList;
+import dmx.fun.NonEmptyMap;
+import dmx.fun.NonEmptySet;
 import dmx.fun.Option;
 import dmx.fun.Resource;
 import dmx.fun.Result;
@@ -27,6 +30,9 @@ import org.jspecify.annotations.NullMarked;
  * assertThat(resource).succeedsWith("value");
  * assertThat(guard).accepts("alice").rejects("!!");
  * assertThat(accumulator).hasValue(42).accumulationContains("step1");
+ * assertThat(nonEmptyList).hasHead("a").hasSize(3);
+ * assertThat(nonEmptySet).contains("a", "b");
+ * assertThat(nonEmptyMap).containsEntry("key", 1);
  * }</pre>
  */
 @NullMarked
@@ -163,5 +169,39 @@ public final class DmxFunAssertions {
      */
     public static <E, A> AccumulatorAssert<E, A> assertThat(Accumulator<E, A> actual) {
         return new AccumulatorAssert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for a {@link NonEmptyList}.
+     *
+     * @param <T>    the element type
+     * @param actual the NonEmptyList to assert on
+     * @return a new {@link NonEmptyListAssert}
+     */
+    public static <T> NonEmptyListAssert<T> assertThat(NonEmptyList<T> actual) {
+        return new NonEmptyListAssert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for a {@link NonEmptySet}.
+     *
+     * @param <T>    the element type
+     * @param actual the NonEmptySet to assert on
+     * @return a new {@link NonEmptySetAssert}
+     */
+    public static <T> NonEmptySetAssert<T> assertThat(NonEmptySet<T> actual) {
+        return new NonEmptySetAssert<>(actual);
+    }
+
+    /**
+     * Creates an assertion for a {@link NonEmptyMap}.
+     *
+     * @param <K>    the key type
+     * @param <V>    the value type
+     * @param actual the NonEmptyMap to assert on
+     * @return a new {@link NonEmptyMapAssert}
+     */
+    public static <K, V> NonEmptyMapAssert<K, V> assertThat(NonEmptyMap<K, V> actual) {
+        return new NonEmptyMapAssert<>(actual);
     }
 }

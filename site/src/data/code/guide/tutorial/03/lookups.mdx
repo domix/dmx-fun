@@ -1,0 +1,15 @@
+---
+fileName: 'chapter03/EnrollmentService.java — lookups'
+---
+
+```java
+    private Result<Student, EnrollmentError> findStudent(String studentId) {
+        return Option.ofNullable(catalog.findStudent(studentId))
+            .toResult(new StudentNotFound(studentId));
+    }
+
+    private Result<Course, EnrollmentError> findCourse(String courseId) {
+        return Option.ofNullable(catalog.findCourse(courseId))
+            .toResult(new CourseNotFound(courseId));
+    }
+```

@@ -1,0 +1,39 @@
+---
+fileName: 'chapter00/EnrollmentService.java'
+---
+
+```java
+public class EnrollmentService {
+
+    private final Catalog catalog;
+    private final PaymentGateway payments;
+
+    public EnrollmentService(Catalog catalog, PaymentGateway payments) {
+        this.catalog = catalog;
+        this.payments = payments;
+    }
+
+    public @Nullable Enrollment enroll(String studentId, String courseId) {
+        Student student = catalog.findStudent(studentId);
+        if (student == null) {
+            throw new StudentNotFoundException(studentId);
+        }
+        Course course = catalog.findCourse(courseId);
+        if (course == null) {
+            throw new CourseNotFoundException(courseId);
+        }
+        if (catalog.isEnrolled(studentId, courseId)) {
+            return null; // "already enrolled" — every caller has to remember to check for this
+        }
+        if (catalog.enrolledCount(courseId) >= course.capacity()) {
+            throw new CourseFullException(courseId);
+        }
+        try {
+            payments.charge(studentId, course.feeCents());
+        } catch (Exception e) {
+            throw new RuntimeException("payment failed", e);
+        }
+        return catalog.save(new Enrollment(studentId, courseId));
+    }
+}
+```

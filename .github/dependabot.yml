@@ -1,0 +1,40 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/site"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "site"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      site-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Talk decks: a pnpm workspace (Slidev, Vue, asciinema-player, playwright-chromium) with one lockfile at talks/pnpm-lock.yaml.
+  - package-ecosystem: "npm"
+    directory: "/talks"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "documentation"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      talks-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

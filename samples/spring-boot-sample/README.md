@@ -1,6 +1,6 @@
 # spring-boot-sample
 
-End-to-end Spring Boot demo showing how `fun-spring-boot`, `fun-jackson`, and `fun-assertj`
+End-to-end Spring Boot demo showing how `fun-spring-boot`, `fun-jackson3` (or `fun-jackson2` on Spring Boot 3), and `fun-assertj`
 fit together in a realistic, production-style Spring Boot project.
 
 This module is **not published** to Maven Central — it lives in the repository as
@@ -14,7 +14,8 @@ documentation-by-code.
 | Create item — validation failure, transaction rolls back | `TxResult`                                        |
 | Update item — success / not-found                        | `@TransactionalResult` (declarative)              |
 | Fetch item — wraps `Optional` in `Option`                | `ItemService.findById`                            |
-| REST response serializes `Result<Item,String>` to JSON   | `fun-jackson` + `DmxFunModule`                    |
+| REST response serializes `Result<Item,String>` to JSON   | `ResultHandlerMethodReturnValueHandler` (unwraps)  |
+| `GET /items/search` returns `NonEmptyList<Item>` as array | `fun-jackson3` + `DmxFunModule`, auto-registered   |
 | Integration tests with fluent assertions                 | `fun-assertj` + Testcontainers                    |
 | Local dev starts PostgreSQL automatically                | Spring Boot Docker Compose + `docker-compose.yml` |
 | CI runs full suite against real PostgreSQL               | Testcontainers                                    |
@@ -44,6 +45,10 @@ curl -s -X POST http://localhost:8080/items \
   -H 'Content-Type: application/json' \
   -d '{"name":"","description":"desc"}' | jq .
 # → {"err":"name must not be blank"}
+
+# Search by name — Result<NonEmptyList<Item>,String>; the array is produced by DmxFunModule
+curl -s 'http://localhost:8080/items/search?name=Widget' | jq .
+# → [{"id":1,"name":"Widget","description":"A fine widget"}]
 
 # Fetch an item (Option → 200 or 404)
 curl -s http://localhost:8080/items/1 | jq .
@@ -79,7 +84,8 @@ Both styles roll back automatically when the returned `Result` is `Err`.
 ### `Result<Item, String>` in the REST layer
 
 The controller returns `Result<Item, String>` directly from `@PostMapping` / `@PutMapping`
-methods. Spring's Jackson integration serializes it via `DmxFunModule`:
+methods. Spring Boot's Jackson auto-configuration picks up `DmxFunModule` (registered by
+`fun-spring-boot`) and serializes it:
 
 ```json
 // Success
@@ -108,7 +114,7 @@ spring-boot-sample/
 └── src/
     ├── main/
     │   ├── java/dmx/fun/sample/
-    │   │   ├── SampleApplication.java        # @SpringBootApplication + DmxFunModule bean
+    │   │   ├── SampleApplication.java        # @SpringBootApplication (no Jackson config)
     │   │   └── item/
     │   │       ├── Item.java                 # domain record (@Table, @Id)
     │   │       ├── ItemRepository.java       # Spring Data JDBC CrudRepository

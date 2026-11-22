@@ -5,3 +5,7 @@
 build
 .ides
 .idea
+.codegraph
+graphify-out
+
+.DS_Store

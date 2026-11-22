@@ -1,0 +1,59 @@
+---
+title: "Tutorial 4 — Capture at the edge"
+description: "Chapter 4 of the dmx-fun tutorial: the third-party payment gateway throws; Try captures it on one line, lets fatal errors through, and converts the rest into a typed PaymentFailed."
+order: 105
+h1: "4. Capture at the edge"
+---
+
+import {Content as Before} from '../../code/guide/tutorial/04/charge-before.mdx';
+import {Content as After}  from '../../code/guide/tutorial/04/charge-after.mdx';
+
+export const base = import.meta.env.BASE_URL;
+
+One `try/catch` is left in the service, around the payment call. It is there for a good reason:
+`PaymentGateway` is someone else's API and it reports failure by throwing. We cannot change
+that, and we should not pretend it does not happen. What we can do is decide **where** the
+exception stops existing.
+
+## Before
+
+<Before/>
+
+This works, and it has two quiet problems. It only catches `PaymentException`; a
+`RuntimeException` from a flaky gateway escapes the pipeline and becomes a chapter 0 situation
+again. And the shape of the code, `try`, call, `return ok`, `catch`, `return err`, is the same
+five lines every time you talk to anything that throws.
+
+## After
+
+<After/>
+
+`Try.run` executes the call and captures whatever it throws, checked or not, as a `Failure`.
+`rethrowFatal` immediately lets the errors you must never swallow, like `OutOfMemoryError`,
+continue up the stack. `map` replaces the `Void` result with the amount we charged. `toResult`
+converts the `Try` into the pipeline's `Result`, translating the throwable into our own
+`PaymentFailed` so the rest of the service never sees an exception type.
+
+The exception lives for exactly one line. On either side of it, code deals in values.
+
+## Try is for code you do not own
+
+`Try` is the type for the boundary: a library that throws, a JDBC driver, an HTTP client, a
+parser. Inside the boundary, your own methods return `Result` with a domain error, as every
+other step in `enroll` does. If you find yourself writing `Try.of` around your own code, the
+method you are calling should probably return a `Result` instead.
+
+The conversion is also where you choose how much of the failure to keep. Here only the message
+survives; if callers needed the exception class or a retry hint, `PaymentFailed` would carry
+that too. Translating at the edge is what keeps `EnrollmentError` free of `Throwable`.
+
+## What changed since chapter 3
+
+- The last `try/catch` in the service is gone; `charge` is a four-line chain.
+- Any exception from the gateway, checked or unchecked, becomes `PaymentFailed`; fatal errors
+  still propagate.
+- `EnrollmentError` still contains no `Throwable`.
+
+Still to come: the sign-up form, where one error at a time is not good enough.
+
+<p>Reference: <a href={`${base}guide/try`}>`Try<T>`</a> · Previous: <a href={`${base}guide/tutorial/03-absence-is-not-failure`}>3. Absence is not failure</a> · Next: <a href={`${base}guide/tutorial/05-all-the-errors-at-once`}>5. All the errors at once</a></p>

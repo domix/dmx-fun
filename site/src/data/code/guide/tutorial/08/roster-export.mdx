@@ -1,0 +1,18 @@
+---
+fileName: 'chapter08/RosterExport.java'
+---
+
+```java
+    public static Try<Path> write(Path target, String courseId, NonEmptyList<Enrollment> roster) {
+        return Resource.<BufferedWriter>fromAutoCloseable(() -> Files.newBufferedWriter(target))
+            .use(writer -> {
+                writer.write("# roster for " + courseId);
+                writer.newLine();
+                for (Enrollment e : roster.toList()) {
+                    writer.write(e.studentId());
+                    writer.newLine();
+                }
+                return target;
+            });
+    }
+```
