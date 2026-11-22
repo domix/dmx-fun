@@ -28,3 +28,8 @@ date: 2026-05-05
 
 - **Abstract class `AbstractGuard<T>`:** allows `final` on composition methods but prevents lambda usage and multiple inheritance.
 - **Concrete class `Guard<T>` with a `Function` field:** more rigid, not extensible as an interface.
+
+## Amendments
+
+- Amended by [ADR-025 — Guard naming](https://domix.github.io/dmx-fun/adr/adr-025-guard-naming/): `name()`/`named(String)` refine
+  the "no state" consequence to *no state affecting `check`*.
