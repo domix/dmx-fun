@@ -1,0 +1,7 @@
+# Configuration for the release notes GitHub generates when publish.yml creates a release
+# (softprops/action-gh-release with generate_release_notes: true).
+# https://docs.github.com/repositories/releasing-projects-on-github/automatically-generated-release-notes
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
