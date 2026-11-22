@@ -6,6 +6,12 @@ author: "domix"
 authorImage: "https://gravatar.com/avatar/797a8fc41feef42d4bc41aff8cecb986d6f3fbbc157e49a65b2d5a5b6cd42640?s=200"
 category: "Release"
 tags: ["Release", "0.3.0", "Jackson", "Jackson 3", "Spring Boot 4", "Guard", "Try", "Tutorial", "Functional Programming"]
+image: "https://images.pexels.com/photos/6301737/pexels-photo-6301737.jpeg"
+imageCredit:
+    author: "Wolfgang Sender"
+    authorUrl: "https://www.pexels.com/@wolfgang-sender-1648721/"
+    source: "Pexels"
+    sourceUrl: "https://www.pexels.com/photo/bird-s-eye-view-of-railroad-tracks-6301737/"
 ---
 
 `dmx-fun 0.3.0` is out.
