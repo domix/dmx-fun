@@ -1,5 +1,5 @@
 ---
-number: 24
+number: 25
 title: "Guard naming: name()/named() with decorator-preserving propagation"
 status: Accepted
 date: 2026-07-26

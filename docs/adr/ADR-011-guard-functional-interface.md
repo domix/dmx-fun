@@ -31,5 +31,5 @@ date: 2026-05-05
 
 ## Amendments
 
-- Amended by [ADR-024 — Guard naming](https://domix.github.io/dmx-fun/adr/adr-024-guard-naming/): `name()`/`named(String)` refine
+- Amended by [ADR-025 — Guard naming](https://domix.github.io/dmx-fun/adr/adr-025-guard-naming/): `name()`/`named(String)` refine
   the "no state" consequence to *no state affecting `check`*.

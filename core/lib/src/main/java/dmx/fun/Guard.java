@@ -603,7 +603,7 @@ public interface Guard<T> {
      * {@link #narrow} — preserve the name. Operators that <em>compose</em> guards —
      * {@link #and}, {@link #or}, {@link #andThen}, {@link #allOf}, {@link #anyOf} — produce a
      * new anonymous guard, so name the composite after composing. The rationale is documented
-     * in <a href="https://domix.github.io/dmx-fun/adr/adr-024-guard-naming/">ADR-024 — Guard
+     * in <a href="https://domix.github.io/dmx-fun/adr/adr-025-guard-naming/">ADR-025 — Guard
      * naming</a>.
      *
      * <p>Example:
