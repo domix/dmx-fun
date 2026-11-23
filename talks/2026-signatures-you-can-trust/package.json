@@ -20,7 +20,7 @@
     "@slidev/types": "53.1.0",
     "asciinema-player": "3.18.1",
     "slidev-theme-dmx-fun": "workspace:*",
-    "vue": "3.5.45"
+    "vue": "3.5.46"
   },
   "devDependencies": {
     "playwright-chromium": "1.65.1",
