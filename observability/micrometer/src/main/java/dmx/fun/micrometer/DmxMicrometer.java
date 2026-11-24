@@ -1,6 +1,7 @@
 package dmx.fun.micrometer;
 
 import dmx.fun.CheckedSupplier;
+import dmx.fun.NonFatal;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.core.instrument.Counter;
@@ -103,11 +104,18 @@ public final class DmxMicrometer {
     /**
      * Executes the supplier and records metrics under {@code name}.
      *
+     * <p>Fatal throwables are never captured: if the supplier fails with one — per
+     * {@link NonFatal}, including one reachable through the cause chain or suppressed
+     * exceptions — the {@code failure} outcome, the duration and the exception counter are
+     * recorded first, and then it is rethrown via {@link NonFatal#rethrowIfFatal(Throwable)},
+     * with the interrupt flag restored when an {@link InterruptedException} is involved.
+     *
      * @param <V> the value type returned on success
      * @param name the base metric name; must not be null
      * @param tags additional tags to attach to all metrics; must not be null
      * @param supplier the operation to execute; must not be null
-     * @return {@code Success(value)} on success, {@code Failure(cause)} on any exception
+     * @return {@code Success(value)} on success, {@code Failure(cause)} on any non-fatal
+     *         exception
      */
     public <V> Try<V> recordTry(String name, Tags tags, CheckedSupplier<V> supplier) {
         Objects.requireNonNull(name, "name");
@@ -136,17 +144,21 @@ public final class DmxMicrometer {
                 .increment();
         }
 
-        return result;
+        // Recorded first, so a fatal failure is still visible in metrics before it propagates.
+        return result.rethrowFatal();
     }
 
     /**
      * Executes the supplier and records metrics under {@code name}.
      *
+     * <p>Fatal throwables are rethrown rather than returned as {@code Err} — see
+     * {@link #recordTry(String, Tags, CheckedSupplier)}.
+     *
      * @param <V> the value type returned on success
      * @param name the base metric name; must not be null
      * @param tags additional tags to attach to all metrics; must not be null
      * @param supplier the operation to execute; must not be null
-     * @return {@code Ok(value)} on success, {@code Err(cause)} on any exception
+     * @return {@code Ok(value)} on success, {@code Err(cause)} on any non-fatal exception
      */
     public <V> Result<V, Throwable> recordResult(String name, Tags tags, CheckedSupplier<V> supplier) {
         return recordTry(name, tags, supplier).toResult();

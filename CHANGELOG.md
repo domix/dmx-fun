@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`fun-resilience4j`, `fun-micrometer`** — `executeTry` / `executeResult` on `DmxRetry`,
+  `DmxCircuitBreaker`, `DmxBulkhead` and `DmxRateLimiter`, and `DmxMicrometer.recordTry` /
+  `recordResult`, no longer capture fatal throwables as a `Failure`. They go through
+  `NonFatal.rethrowIfFatal`, so a `VirtualMachineError` or `LinkageError` propagates and an
+  `InterruptedException` is rethrown with the interrupt flag restored. `recordTry` records the
+  `failure` outcome and the duration before rethrowing (#614).
+- **Interrupt flag on unwrap** — `Lazy.get()` and the `executeResultTyped` methods of the
+  Resilience4J adapters restore the thread's interrupt flag before wrapping a checked exception
+  that is, or was caused by, an `InterruptedException`. The exceptions they throw are unchanged.
+  `Resource` and `ReactorFun` now document where to apply `rethrowFatal()` (#539).
+
 ## [0.3.0] - 2026-11-21
 
 Two Jackson lines. Spring Boot 4 and Spring Framework 7 default to Jackson 3, so dmx-fun now

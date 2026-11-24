@@ -3,11 +3,13 @@ package dmx.fun.resilience4j;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import java.io.IOException;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DmxRetryTest {
@@ -83,5 +85,51 @@ class DmxRetryTest {
     @Test
     void of_nullRetry_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> DmxRetry.of(null));
+    }
+
+    // ── fatal throwables ───────────────────────────────────────────────────────
+
+    @Test
+    void executeTry_interruptedException_isRethrownWithInterruptFlagSet() {
+        var interruption = new InterruptedException("stop");
+        try {
+            assertThatThrownBy(() -> noRetry().executeTry(() -> {
+                throw interruption;
+            }))
+                .isInstanceOf(CompletionException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // do not leak the flag into other tests
+        }
+    }
+
+    @Test
+    void executeTry_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> noRetry().executeTry(() -> {
+            throw overflow;
+        })).isSameAs(overflow);
+    }
+
+    @Test
+    void executeResult_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> noRetry().executeResult(() -> {
+            throw overflow;
+        })).isSameAs(overflow);
+    }
+
+    @Test
+    void executeTry_nonFatalError_staysFailure() {
+        var failed = new AssertionError("not fatal");
+        var result = noRetry().executeTry(() -> {
+            throw failed;
+        });
+
+        assertThat(result).failsWith(AssertionError.class);
+        assertThat(result.getCause()).isSameAs(failed);
     }
 }

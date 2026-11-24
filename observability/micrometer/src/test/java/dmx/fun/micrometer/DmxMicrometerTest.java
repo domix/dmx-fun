@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.io.IOException;
+import java.util.concurrent.CompletionException;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
@@ -255,5 +256,59 @@ class DmxMicrometerTest {
         assertThat(exception.count()).isEqualTo((double) expectedFailures);
         assertThat(successTimer.count()).isEqualTo(expectedSuccesses);
         assertThat(failureTimer.count()).isEqualTo(expectedFailures);
+    }
+
+    // ── recordTry — fatal throwables ───────────────────────────────────────────
+
+    @Test
+    void recordTry_interruptedException_isRethrownWithInterruptFlagSet() {
+        var interruption = new InterruptedException("stop");
+        try {
+            assertThatThrownBy(() -> dmx.recordTry("op", Tags.empty(), () -> { throw interruption; }))
+                .isInstanceOf(CompletionException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // do not leak the flag into other tests
+        }
+    }
+
+    @Test
+    void recordTry_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> dmx.recordTry("op", Tags.empty(), () -> { throw overflow; }))
+            .isSameAs(overflow);
+    }
+
+    @Test
+    void recordTry_fatalError_recordsFailureMetricsBeforeRethrowing() {
+        assertThatThrownBy(() -> dmx.recordTry("op", Tags.empty(), () -> {
+            throw new StackOverflowError("deep");
+        })).isInstanceOf(StackOverflowError.class);
+
+        assertThat(registry.get("op.count").tag("outcome", "failure").counter().count())
+            .isEqualTo(1.0);
+        assertThat(registry.get("op.duration").tag("outcome", "failure").timer().count())
+            .isEqualTo(1L);
+        assertThat(registry.get("op.failure").tag("exception", "StackOverflowError").counter().count())
+            .isEqualTo(1.0);
+    }
+
+    @Test
+    void recordTry_nonFatalError_staysFailure() {
+        var failed = new AssertionError("not fatal");
+        var result = dmx.recordTry("op", Tags.empty(), () -> { throw failed; });
+
+        assertThat(result).failsWith(AssertionError.class);
+        assertThat(result.getCause()).isSameAs(failed);
+    }
+
+    @Test
+    void recordResult_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> dmx.recordResult("op", Tags.empty(), () -> { throw overflow; }))
+            .isSameAs(overflow);
     }
 }

@@ -27,6 +27,24 @@ import org.jspecify.annotations.NullMarked;
  *       {@code Try.failure(bodyException)} is returned.</li>
  * </ul>
  *
+ * <h2>Fatal throwables</h2>
+ * <p>{@code Resource} captures every {@code Throwable} thrown by acquire, body and release —
+ * including the ones {@link NonFatal} classifies as fatal ({@link VirtualMachineError},
+ * {@link LinkageError}, {@link InterruptedException}) — because release must run whatever the
+ * body did. It has no rethrow point of its own. To make a border strict, apply
+ * {@link Try#rethrowFatal()} to the value returned by {@link #use(CheckedFunction) use(fn)}:
+ * it also inspects suppressed exceptions, so a fatal release failure parked on the body's
+ * exception is found.
+ *
+ * <pre>{@code
+ * Try<Report> report = connResource.use(conn -> buildReport(conn)).rethrowFatal();
+ * }</pre>
+ *
+ * <p>{@link #useAsResult(Function, Function) useAsResult} and
+ * {@link #useAsEither(Function, Function) useAsEither} hand the captured throwable to
+ * {@code onError}; call {@link NonFatal#rethrowIfFatal(Throwable)} there if fatal conditions
+ * must not be mapped to a domain error.
+ *
  * <h2>Composition</h2>
  * <ul>
  *   <li>{@link #map(Function) map} transforms the resource value without changing
