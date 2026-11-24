@@ -33,6 +33,13 @@ import reactor.core.publisher.Mono;
  * <p>Empty-Mono policy: a {@code Mono} that completes without a value is treated as
  * a missing value — {@link Option#none()} for the Option conversions, and a failure
  * carrying {@link NoSuchElementException} for the Try and Result conversions.
+ *
+ * <p>Fatal throwables: the conversions absorb whatever error signal the {@code Mono}
+ * delivers without classifying it, so a throwable that {@link dmx.fun.NonFatal} treats as
+ * fatal — an {@link InterruptedException} in particular — arrives as an ordinary
+ * {@code Failure} / {@code Err}. There is no rethrow point inside a reactive pipeline; at
+ * a synchronous border, apply {@link Try#rethrowFatal()} to the extracted {@link Try}, or
+ * call {@link dmx.fun.NonFatal#rethrowIfFatal(Throwable)} from the {@code errorMapper}.
  */
 @NullMarked
 public final class ReactorFun {

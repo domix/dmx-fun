@@ -4,6 +4,8 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import java.io.IOException;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 
 import static dmx.fun.assertj.DmxFunAssertions.assertThat;
@@ -88,5 +90,90 @@ class DmxCircuitBreakerTest {
     @Test
     void of_nullCircuitBreaker_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> DmxCircuitBreaker.of(null));
+    }
+
+    // ── fatal throwables ───────────────────────────────────────────────────────
+
+    @Test
+    void executeTry_interruptedException_isRethrownWithInterruptFlagSet() {
+        var interruption = new InterruptedException("stop");
+        try {
+            assertThatThrownBy(() -> closedCircuit().executeTry(() -> {
+                throw interruption;
+            }))
+                .isInstanceOf(CompletionException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // do not leak the flag into other tests
+        }
+    }
+
+    @Test
+    void executeTry_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> closedCircuit().executeTry(() -> {
+            throw overflow;
+        })).isSameAs(overflow);
+    }
+
+    @Test
+    void executeResult_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> closedCircuit().executeResult(() -> {
+            throw overflow;
+        })).isSameAs(overflow);
+    }
+
+    @Test
+    void executeTry_nonFatalError_staysFailure() {
+        var failed = new AssertionError("not fatal");
+        var result = closedCircuit().executeTry(() -> {
+            throw failed;
+        });
+
+        assertThat(result).failsWith(AssertionError.class);
+        assertThat(result.getCause()).isSameAs(failed);
+    }
+
+    @Test
+    void executeResultTyped_interruptedException_wrapsAndRestoresInterruptFlag() {
+        var interruption = new InterruptedException("stop");
+        try {
+            assertThatThrownBy(() -> closedCircuit().executeResultTyped(() -> {
+                throw interruption;
+            }))
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void executeResultTyped_interruptionAsCause_restoresInterruptFlag() {
+        var wrapped = new ExecutionException(new InterruptedException("stop"));
+        try {
+            assertThatThrownBy(() -> closedCircuit().executeResultTyped(() -> {
+                throw wrapped;
+            }))
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasCause(wrapped);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void executeResultTyped_checkedExceptionWithoutInterruption_leavesInterruptFlagClear() {
+        assertThatThrownBy(() -> closedCircuit().executeResultTyped(() -> {
+            throw new IOException("boom");
+        })).isInstanceOf(RuntimeException.class);
+
+        assertThat(Thread.currentThread().isInterrupted()).isFalse();
     }
 }

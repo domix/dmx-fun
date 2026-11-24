@@ -4,6 +4,8 @@ import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import java.io.IOException;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import org.junit.jupiter.api.Test;
@@ -124,5 +126,90 @@ class DmxBulkheadTest {
     @Test
     void of_nullBulkhead_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> DmxBulkhead.of(null));
+    }
+
+    // ── fatal throwables ───────────────────────────────────────────────────────
+
+    @Test
+    void executeTry_interruptedException_isRethrownWithInterruptFlagSet() {
+        var interruption = new InterruptedException("stop");
+        try {
+            assertThatThrownBy(() -> withMaxConcurrent(10).executeTry(() -> {
+                throw interruption;
+            }))
+                .isInstanceOf(CompletionException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // do not leak the flag into other tests
+        }
+    }
+
+    @Test
+    void executeTry_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> withMaxConcurrent(10).executeTry(() -> {
+            throw overflow;
+        })).isSameAs(overflow);
+    }
+
+    @Test
+    void executeResult_fatalError_isRethrown() {
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> withMaxConcurrent(10).executeResult(() -> {
+            throw overflow;
+        })).isSameAs(overflow);
+    }
+
+    @Test
+    void executeTry_nonFatalError_staysFailure() {
+        var failed = new AssertionError("not fatal");
+        var result = withMaxConcurrent(10).executeTry(() -> {
+            throw failed;
+        });
+
+        assertThat(result).failsWith(AssertionError.class);
+        assertThat(result.getCause()).isSameAs(failed);
+    }
+
+    @Test
+    void executeResultTyped_interruptedException_wrapsAndRestoresInterruptFlag() {
+        var interruption = new InterruptedException("stop");
+        try {
+            assertThatThrownBy(() -> withMaxConcurrent(10).executeResultTyped(() -> {
+                throw interruption;
+            }))
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void executeResultTyped_interruptionAsCause_restoresInterruptFlag() {
+        var wrapped = new ExecutionException(new InterruptedException("stop"));
+        try {
+            assertThatThrownBy(() -> withMaxConcurrent(10).executeResultTyped(() -> {
+                throw wrapped;
+            }))
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasCause(wrapped);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void executeResultTyped_checkedExceptionWithoutInterruption_leavesInterruptFlagClear() {
+        assertThatThrownBy(() -> withMaxConcurrent(10).executeResultTyped(() -> {
+            throw new IOException("boom");
+        })).isInstanceOf(RuntimeException.class);
+
+        assertThat(Thread.currentThread().isInterrupted()).isFalse();
     }
 }

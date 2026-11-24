@@ -1,6 +1,7 @@
 package dmx.fun.resilience4j;
 
 import dmx.fun.CheckedSupplier;
+import dmx.fun.NonFatal;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import io.github.resilience4j.retry.Retry;
@@ -60,6 +61,11 @@ public final class DmxRetry {
     /**
      * Executes the supplier through the retry policy.
      *
+     * <p>Fatal throwables are never captured: if the call fails with one — per
+     * {@link NonFatal}, including one reachable through the cause chain or suppressed
+     * exceptions — it is rethrown via {@link NonFatal#rethrowIfFatal(Throwable)}, with the
+     * interrupt flag restored when an {@link InterruptedException} is involved.
+     *
      * @param <V>      the value type
      * @param supplier the operation to execute
      * @return {@code Success(value)} if the call eventually succeeds,
@@ -69,12 +75,16 @@ public final class DmxRetry {
         try {
             return Try.success(retry.executeCheckedSupplier(supplier::get));
         } catch (Throwable t) {
+            NonFatal.rethrowIfFatal(t);
             return Try.failure(t);
         }
     }
 
     /**
      * Executes the supplier through the retry policy.
+     *
+     * <p>Fatal throwables are rethrown rather than returned as {@code Err} — see
+     * {@link #executeTry(CheckedSupplier)}.
      *
      * @param <V>      the value type
      * @param supplier the operation to execute

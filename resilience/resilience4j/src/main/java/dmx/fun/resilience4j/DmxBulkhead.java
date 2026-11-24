@@ -1,6 +1,7 @@
 package dmx.fun.resilience4j;
 
 import dmx.fun.CheckedSupplier;
+import dmx.fun.NonFatal;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import io.github.resilience4j.bulkhead.Bulkhead;
@@ -56,6 +57,11 @@ public final class DmxBulkhead {
     /**
      * Executes the supplier through the bulkhead.
      *
+     * <p>Fatal throwables are never captured: if the call fails with one — per
+     * {@link NonFatal}, including one reachable through the cause chain or suppressed
+     * exceptions — it is rethrown via {@link NonFatal#rethrowIfFatal(Throwable)}, with the
+     * interrupt flag restored when an {@link InterruptedException} is involved.
+     *
      * @param <V>      the value type
      * @param supplier the operation to execute
      * @return {@code Success(value)} on success,
@@ -66,12 +72,16 @@ public final class DmxBulkhead {
         try {
             return Try.success(bulkhead.executeCheckedSupplier(supplier::get));
         } catch (Throwable t) {
+            NonFatal.rethrowIfFatal(t);
             return Try.failure(t);
         }
     }
 
     /**
      * Executes the supplier through the bulkhead.
+     *
+     * <p>Fatal throwables are rethrown rather than returned as {@code Err} — see
+     * {@link #executeTry(CheckedSupplier)}.
      *
      * @param <V>      the value type
      * @param supplier the operation to execute
@@ -84,6 +94,11 @@ public final class DmxBulkhead {
     /**
      * Executes the supplier through the bulkhead, surfacing bulkhead-full rejections
      * as a typed error.
+     *
+     * <p>A checked exception from the call is rethrown wrapped in a
+     * {@link RuntimeException}; if it is, or was caused by, an
+     * {@link InterruptedException}, the current thread's interrupt flag is restored
+     * before the wrap.
      *
      * @param <V>      the value type
      * @param supplier the operation to execute
@@ -101,7 +116,7 @@ public final class DmxBulkhead {
         } catch (Error e) {
             throw e;
         } catch (Throwable t) {
-            throw new RuntimeException(t);
+            throw Unchecked.wrap(t);
         }
     }
 }

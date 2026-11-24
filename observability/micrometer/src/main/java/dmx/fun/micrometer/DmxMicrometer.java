@@ -1,6 +1,7 @@
 package dmx.fun.micrometer;
 
 import dmx.fun.CheckedSupplier;
+import dmx.fun.NonFatal;
 import dmx.fun.Result;
 import dmx.fun.Try;
 import io.micrometer.core.instrument.Counter;
@@ -103,11 +104,21 @@ public final class DmxMicrometer {
     /**
      * Executes the supplier and records metrics under {@code name}.
      *
+     * <p>Fatal throwables are never captured: if the supplier fails with one — per
+     * {@link NonFatal}, including one reachable through the cause chain or suppressed
+     * exceptions — the {@code failure} outcome, the duration and the exception counter are
+     * recorded first, and then it is rethrown via {@link NonFatal#rethrowIfFatal(Throwable)},
+     * with the interrupt flag restored when an {@link InterruptedException} is involved.
+     * The fatal throwable still propagates if recording itself throws — from the
+     * {@code exceptionClassifier}, for instance — and it takes precedence over that exception.
+     * After a non-fatal result, an exception thrown while recording propagates as is.
+     *
      * @param <V> the value type returned on success
      * @param name the base metric name; must not be null
      * @param tags additional tags to attach to all metrics; must not be null
      * @param supplier the operation to execute; must not be null
-     * @return {@code Success(value)} on success, {@code Failure(cause)} on any exception
+     * @return {@code Success(value)} on success, {@code Failure(cause)} on any non-fatal
+     *         exception
      */
     public <V> Try<V> recordTry(String name, Tags tags, CheckedSupplier<V> supplier) {
         Objects.requireNonNull(name, "name");
@@ -122,31 +133,40 @@ public final class DmxMicrometer {
             result = Try.failure(t);
         }
 
-        String outcome = result.isSuccess() ? "success" : "failure";
-        Tags withOutcome = tags.and("outcome", outcome);
+        try {
+            String outcome = result.isSuccess() ? "success" : "failure";
+            Tags withOutcome = tags.and("outcome", outcome);
 
-        Counter.builder(name + ".count").tags(withOutcome).register(registry).increment();
-        sample.stop(Timer.builder(name + ".duration").tags(withOutcome).register(registry));
+            Counter.builder(name + ".count").tags(withOutcome).register(registry).increment();
+            sample.stop(Timer.builder(name + ".duration").tags(withOutcome).register(registry));
 
-        if (result.isFailure()) {
-            Counter.builder(name + ".failure")
-                .tags(tags)
-                .tag("exception", exceptionClassifier.apply(result.getCause()))
-                .register(registry)
-                .increment();
+            if (result.isFailure()) {
+                Counter.builder(name + ".failure")
+                    .tags(tags)
+                    .tag("exception", exceptionClassifier.apply(result.getCause()))
+                    .register(registry)
+                    .increment();
+            }
+        } finally {
+            // Recorded first, so a fatal failure is visible in metrics before it propagates.
+            // In a finally so a fatal still wins if recording itself throws (e.g. the
+            // classifier); for a non-fatal result this is a no-op and that exception propagates.
+            result.rethrowFatal();
         }
-
         return result;
     }
 
     /**
      * Executes the supplier and records metrics under {@code name}.
      *
+     * <p>Fatal throwables are rethrown rather than returned as {@code Err} — see
+     * {@link #recordTry(String, Tags, CheckedSupplier)}.
+     *
      * @param <V> the value type returned on success
      * @param name the base metric name; must not be null
      * @param tags additional tags to attach to all metrics; must not be null
      * @param supplier the operation to execute; must not be null
-     * @return {@code Ok(value)} on success, {@code Err(cause)} on any exception
+     * @return {@code Ok(value)} on success, {@code Err(cause)} on any non-fatal exception
      */
     public <V> Result<V, Throwable> recordResult(String name, Tags tags, CheckedSupplier<V> supplier) {
         return recordTry(name, tags, supplier).toResult();

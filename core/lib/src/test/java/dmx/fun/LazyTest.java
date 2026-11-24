@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -389,6 +390,58 @@ class LazyTest {
         assertThatThrownBy(lazy::get)
             .isInstanceOf(RuntimeException.class)
             .hasCause(cause);
+    }
+
+    // ---------- get: interrupt flag on checked-exception wrapping ----------
+
+    @Test
+    void get_throwingInterruptedException_wrapsAndRestoresInterruptFlag() {
+        var interruption = new InterruptedException("stop");
+        var lazy = Lazy.<String>of(() -> sneakyThrow(interruption));
+        try {
+            assertThatThrownBy(lazy::get)
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted(); // do not leak the flag into other tests
+        }
+    }
+
+    @Test
+    void get_throwingCheckedExceptionCausedByInterruption_restoresInterruptFlag() {
+        var wrapped = new ExecutionException(new InterruptedException("stop"));
+        var lazy = Lazy.<String>of(() -> sneakyThrow(wrapped));
+        try {
+            assertThatThrownBy(lazy::get)
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasCause(wrapped);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void get_throwingCheckedExceptionWithoutInterruption_leavesInterruptFlagClear() {
+        var lazy = Lazy.<String>of(() -> sneakyThrow(new IOException("checked")));
+
+        assertThatThrownBy(lazy::get).isInstanceOf(RuntimeException.class);
+        assertThat(Thread.currentThread().isInterrupted()).isFalse();
+    }
+
+    @Test
+    void fromFuture_failedFutureWithInterruptedException_restoresInterruptFlag() {
+        var interruption = new InterruptedException("stop");
+        var lazy = Lazy.fromFuture(CompletableFuture.<String>failedFuture(interruption));
+        try {
+            assertThatThrownBy(lazy::get)
+                .isInstanceOf(RuntimeException.class)
+                .hasRootCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
     }
 
     // ---------- toOptional ----------

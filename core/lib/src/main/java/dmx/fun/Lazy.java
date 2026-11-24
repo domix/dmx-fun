@@ -31,6 +31,9 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public final class Lazy<T> {
 
+    /** Backstop against cause cycles and pathological chains when looking for an interruption. */
+    private static final int MAX_CAUSE_DEPTH = 1000;
+
     private final Supplier<? extends T> supplier;
     /**
      * {@code null} means unevaluated; non-null holds the cached {@link Try} (success or failure).
@@ -60,6 +63,11 @@ public final class Lazy<T> {
      *
      * <p>The supplier is called at most once. All subsequent calls return the cached value.
      * This method is thread-safe.
+     *
+     * <p>A memoized failure is rethrown: a {@link RuntimeException} or an {@link Error} as
+     * is, and a checked exception wrapped in a {@code RuntimeException}. When that checked
+     * exception is, or was caused by, an {@link InterruptedException}, the calling thread's
+     * interrupt flag is set before the wrapper is thrown.
      *
      * @return the (possibly cached) value; never {@code null}
      * @throws NullPointerException if the supplier returns {@code null}
@@ -282,10 +290,23 @@ public final class Lazy<T> {
      * Returns the cause as a {@link RuntimeException} if it already is one, or wraps it.
      * Rethrows {@link Error} directly — {@code Error} subclasses signal unrecoverable JVM
      * conditions and must not be wrapped.
+     *
+     * <p>This is an unwrap bridge, not a fatality classifier: it rethrows every
+     * {@code Error}, a wider set than {@link NonFatal} treats as fatal. The one piece of
+     * that policy it does share is interrupt hygiene — before wrapping a checked cause that
+     * is, or was caused by, an {@link InterruptedException}, the current thread's interrupt
+     * flag is restored so the wrap does not hide the interruption.
      */
     private static RuntimeException rethrowOrWrap(Throwable cause) {
         if (cause instanceof RuntimeException re) return re;
         if (cause instanceof Error e) throw e;
+        var depth = 0;
+        for (var t = cause; t != null && depth < MAX_CAUSE_DEPTH; t = t.getCause(), depth++) {
+            if (t instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
         return new RuntimeException(cause);
     }
 
