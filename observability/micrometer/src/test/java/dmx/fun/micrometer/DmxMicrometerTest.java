@@ -305,6 +305,46 @@ class DmxMicrometerTest {
     }
 
     @Test
+    void recordTry_fatalError_isRethrownEvenWhenClassifierThrows() {
+        var failing = DmxMicrometer.of(registry, cause -> {
+            throw new IllegalStateException("classifier failed");
+        });
+        var overflow = new StackOverflowError("deep");
+
+        assertThatThrownBy(() -> failing.recordTry("op", Tags.empty(), () -> { throw overflow; }))
+            .isSameAs(overflow);
+    }
+
+    @Test
+    void recordTry_interruptedException_restoresInterruptFlagEvenWhenClassifierThrows() {
+        var failing = DmxMicrometer.of(registry, cause -> {
+            throw new IllegalStateException("classifier failed");
+        });
+        var interruption = new InterruptedException("stop");
+        try {
+            assertThatThrownBy(() -> failing.recordTry("op", Tags.empty(), () -> { throw interruption; }))
+                .isInstanceOf(CompletionException.class)
+                .hasCause(interruption);
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void recordTry_nonFatalFailure_classifierExceptionPropagates() {
+        var failing = DmxMicrometer.of(registry, cause -> {
+            throw new IllegalStateException("classifier failed");
+        });
+
+        assertThatThrownBy(() -> failing.recordTry("op", Tags.empty(), () -> {
+            throw new IOException("boom");
+        }))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("classifier failed");
+    }
+
+    @Test
     void recordResult_fatalError_isRethrown() {
         var overflow = new StackOverflowError("deep");
 
